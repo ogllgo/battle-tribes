@@ -10,9 +10,9 @@ import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { LootComponent } from "../../components/LootComponent";
 import { createHitbox } from "../../hitboxes";
-import { SnowberryBushDeadComponent } from "../../components/SnowberryBushDeadComponent";
+import { SnowberryBushComponent } from "../../components/SnowberryBushComponent";
 
-export function createSnowberryBushDeadConfig(position: Point, angle: number): EntityConfig {
+export function createSnowberryBushConfig(position: Point, angle: number): EntityConfig {
    const transformComponent = new TransformComponent();
    
    const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 28), 0.9, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
@@ -25,16 +25,16 @@ export function createSnowberryBushDeadConfig(position: Point, angle: number): E
 
    const lootComponent = new LootComponent();
    
-   const snowberryBushDeadComponent = new SnowberryBushDeadComponent();
+   const snowberryBushComponent = new SnowberryBushComponent();
    
    return {
-      entityType: EntityType.snowberryBushDead,
+      entityType: EntityType.snowberryBush,
       components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.loot]: lootComponent,
-         [ServerComponentType.snowberryBushDead]: snowberryBushDeadComponent
+         [ServerComponentType.snowberryBush]: snowberryBushComponent
       },
       lights: []
    };

@@ -17,6 +17,7 @@ export interface FootprintComponentParams {
    readonly footstepSize: number;
    readonly footstepLifetime: number;
    readonly footstepSoundIntervalDist: number;
+   readonly doDoubleFootprints: boolean;
 }
 
 export interface FootprintComponent {
@@ -25,6 +26,7 @@ export interface FootprintComponent {
    readonly footstepSize: number;
    readonly footstepLifetime: number;
    readonly footstepSoundIntervalDist: number;
+   readonly doDoubleFootprints: boolean;
    
    numFootstepsTaken: number;
    distanceTracker: number;
@@ -36,13 +38,14 @@ export const FootprintComponentArray = new ClientComponentArray<FootprintCompone
    onTick: onTick
 });
 
-export function createFootprintComponentParams(footstepParticleIntervalSeconds: number, footstepOffset: number, footstepSize: number, footstepLifetime: number, footstepSoundIntervalDist: number): FootprintComponentParams {
+export function createFootprintComponentParams(footstepParticleIntervalSeconds: number, footstepOffset: number, footstepSize: number, footstepLifetime: number, footstepSoundIntervalDist: number, doDoubleFootprints: boolean): FootprintComponentParams {
    return {
       footstepParticleIntervalSeconds: footstepParticleIntervalSeconds,
       footstepOffset: footstepOffset,
       footstepSize: footstepSize,
       footstepLifetime: footstepLifetime,
-      footstepSoundIntervalDist: footstepSoundIntervalDist
+      footstepSoundIntervalDist: footstepSoundIntervalDist,
+      doDoubleFootprints: doDoubleFootprints
    };
 }
 
@@ -55,6 +58,7 @@ function createComponent(entityParams: EntityParams): FootprintComponent {
       footstepSize: footprintComponentParams.footstepSize,
       footstepLifetime: footprintComponentParams.footstepLifetime,
       footstepSoundIntervalDist: footprintComponentParams.footstepSoundIntervalDist,
+      doDoubleFootprints: footprintComponentParams.doDoubleFootprints,
       numFootstepsTaken: 0,
       distanceTracker: 0
    }
@@ -107,7 +111,12 @@ function onTick(entity: Entity): void {
       
       // Footsteps
       if (velocity.length() >= 50 && !entityIsInRiver(transformComponent, entity) && Board.tickIntervalHasPassed(footprintComponent.footstepParticleIntervalSeconds)) {
-         createFootprintParticle(entity, footprintComponent.numFootstepsTaken, footprintComponent.footstepOffset, footprintComponent.footstepSize, footprintComponent.footstepLifetime);
+         if (footprintComponent.doDoubleFootprints) {
+            createFootprintParticle(entity, false, footprintComponent.footstepOffset, footprintComponent.footstepSize, footprintComponent.footstepLifetime);
+            createFootprintParticle(entity, true, footprintComponent.footstepOffset, footprintComponent.footstepSize, footprintComponent.footstepLifetime);
+         } else {
+            createFootprintParticle(entity, footprintComponent.numFootstepsTaken % 2 === 0, footprintComponent.footstepOffset, footprintComponent.footstepSize, footprintComponent.footstepLifetime);
+         }
          footprintComponent.numFootstepsTaken++;
       }
       footprintComponent.distanceTracker += velocity.length() / Settings.TPS;

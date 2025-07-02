@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { assert, customTickIntervalHasPassed, lerp, randInt, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
-import { TileType, TILE_FRICTIONS } from "battletribes-shared/tiles";
+import { TILE_PHYSICS_INFO_RECORD, TileType } from "battletribes-shared/tiles";
 import Board from "../../Board";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import Particle from "../../Particle";
@@ -58,19 +58,21 @@ const applyHitboxKinematics = (transformComponent: TransformComponent, entity: E
       }
    }
 
-   const friction = TILE_FRICTIONS[tile.type];
+   const tilePhysicsInfo = TILE_PHYSICS_INFO_RECORD[tile.type];
+   const tileFriction = tilePhysicsInfo.friction;
 
    let velX = hitbox.box.position.x - hitbox.previousPosition.x;
    let velY = hitbox.box.position.y - hitbox.previousPosition.y;
       
    // Air friction
-   velX *= 1 - friction / Settings.TPS * 2;
-   velY *= 1 - friction / Settings.TPS * 2;
+   // @Bug? the tile's friction shouldn't affect air friction?
+   velX *= 1 - tileFriction / Settings.TPS * 2;
+   velY *= 1 - tileFriction / Settings.TPS * 2;
 
    // Ground friction
    const velocityMagnitude = Math.hypot(velX, velY);
    if (velocityMagnitude > 0) {
-      const groundFriction = Math.min(friction, velocityMagnitude);
+      const groundFriction = Math.min(tileFriction, velocityMagnitude);
       velX -= groundFriction * velX / velocityMagnitude / Settings.TPS;
       velY -= groundFriction * velY / velocityMagnitude / Settings.TPS;
    }

@@ -32,7 +32,6 @@ import { createSlimewispConfig } from "../entities/mobs/slimewisp";
 import { createSlimeConfig } from "../entities/mobs/slime";
 import { createFishConfig } from "../entities/mobs/fish";
 import { createLilypadConfig } from "../entities/lilypad";
-import { createGolemConfig } from "../entities/mobs/golem";
 import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
 import Tribe from "../Tribe";
 import { TribeType } from "../../../shared/src/tribes";
@@ -43,15 +42,11 @@ import { createDesertShrubConfig } from "../entities/desert/desert-shrub";
 import { createTumbleweedLiveConfig } from "../entities/desert/tumbleweed-live";
 import { createTumbleweedDeadConfig } from "../entities/desert/tumbleweed-dead";
 import { createPalmTreeConfig } from "../entities/desert/palm-tree";
-import { createKrumblidConfig } from "../entities/mobs/krumblid";
-import { createDustfleaConfig } from "../entities/desert/dustflea";
 import { createSandstoneRockConfig } from "../entities/desert/sandstone-rock";
-import { createOkrenConfig } from "../entities/desert/okren";
 import { createCowConfig } from "../entities/mobs/cow";
 import { createSpruceTreeConfig } from "../entities/tundra/spruce-tree";
 import { createTundraRockConfig } from "../entities/tundra/tundra-rock";
-import { createSnowberryBushLiveConfig } from "../entities/tundra/snowberry-bush-live";
-import { createSnowberryBushDeadConfig } from "../entities/tundra/snowberry-bush-dead";
+import { createSnowberryBushConfig } from "../entities/tundra/snowberry-bush";
 import { createSnobeConfig } from "../entities/tundra/snobe";
 
 const enum Vars {
@@ -678,7 +673,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       }
    });
    registerNewSpawnInfo({
-      entityTypes: [EntityType.snowberryBushLive, EntityType.snowberryBushDead],
+      entityTypes: [EntityType.snowberryBush],
       layer: surfaceLayer,
       spawnRate: 0.001,
       biome: Biome.tundra,
@@ -694,11 +689,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          spawnRange: 80
       },
       createEntity: (pos: Point, angle: number): EntityConfig | null => {
-         if (Math.random() < 0.5) {
-            return createSnowberryBushLiveConfig(pos, angle);
-         } else {
-            return createSnowberryBushDeadConfig(pos, angle);
-         }
+         return createSnowberryBushConfig(pos, angle);
       }
    });
    registerNewSpawnInfo({

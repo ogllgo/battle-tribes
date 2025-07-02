@@ -19,6 +19,7 @@ export interface RandomSoundComponent {
    sounds: ReadonlyArray<string>;
 }
 
+// @Cleanup this system is so shit
 export function updateRandomSoundComponentSounds(randomSoundComponent: RandomSoundComponent, minSoundIntervalTicks: number, maxSoundIntervalTicks: number, sounds: ReadonlyArray<string>, volume: number) {
    // Don't update if already updated
    if (randomSoundComponent.sounds === sounds) {

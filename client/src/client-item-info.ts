@@ -777,7 +777,31 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       textureSource: "items/large/dustflea-egg.png",
       toolTextureSource: "",
       name: "Dustflea Egg",
-      namePlural: "Dustflea Egg",
+      namePlural: "Dustflea Eggs",
+      description: ""
+   },
+   [ItemType.snowberry]: {
+      entityTextureSource: "items/small/snowberry.png",
+      textureSource: "items/large/snowberry.png",
+      toolTextureSource: "",
+      name: "Snowberry",
+      namePlural: "Snowberries",
+      description: ""
+   },
+   [ItemType.rawSnobeMeat]: {
+      entityTextureSource: "items/small/raw-snobe-meat.png",
+      textureSource: "items/large/raw-snobe-meat.png",
+      toolTextureSource: "",
+      name: "Raw Snobe Meat",
+      namePlural: "Raw Snobe Meats",
+      description: ""
+   },
+   [ItemType.snobeStew]: {
+      entityTextureSource: "items/small/snobe-stew.png",
+      textureSource: "items/large/snobe-stew.png",
+      toolTextureSource: "",
+      name: "Snobe Stew",
+      namePlural: "Snobe Stews",
       description: ""
    }
 };

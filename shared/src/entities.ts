@@ -113,8 +113,7 @@ export const enum EntityType {
    dustfleaEgg,
    spruceTree,
    tundraRock,
-   snowberryBushLive,
-   snowberryBushDead,
+   snowberryBush,
    snobe
 }
 
@@ -230,8 +229,7 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.dustfleaEgg]: "Dustflea Egg",
    [EntityType.spruceTree]: "Spruce Tree",
    [EntityType.tundraRock]: "Tundra Rock",
-   [EntityType.snowberryBushLive]: "Snowberry Bush Live",
-   [EntityType.snowberryBushDead]: "Snowberry Bush Dead",
+   [EntityType.snowberryBush]: "Snowberry Bush",
    [EntityType.snobe]: "Snobe",
 };
 

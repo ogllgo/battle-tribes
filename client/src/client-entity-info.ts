@@ -450,13 +450,9 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Tundra Rock",
       internalName: "tundra-rock"
    },
-   [EntityType.snowberryBushLive]: {
-      name: "Snowberry Bush Live",
-      internalName: "snowberry-bush-live"
-   },
-   [EntityType.snowberryBushDead]: {
-      name: "Snowberry Bush Dead",
-      internalName: "snowberry-bush-dead"
+   [EntityType.snowberryBush]: {
+      name: "Snowberry Bush",
+      internalName: "snowberry-bush"
    },
    [EntityType.snobe]: {
       name: "Snobe",

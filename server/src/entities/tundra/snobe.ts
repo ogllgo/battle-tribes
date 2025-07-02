@@ -1,25 +1,45 @@
-import { DecorationType, ServerComponentType } from "battletribes-shared/components";
+import { ServerComponentType } from "battletribes-shared/components";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { Point, randInt } from "battletribes-shared/utils";
-import { Box, HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
-import RectangularBox from "battletribes-shared/boxes/RectangularBox";
+import { Point } from "battletribes-shared/utils";
+import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import { EntityConfig } from "../../components";
-import { TransformComponent, addHitboxToTransformComponent } from "../../components/TransformComponent";
-import { createHitbox } from "../../hitboxes";
+import { TransformComponent, TransformComponentArray, addHitboxToTransformComponent } from "../../components/TransformComponent";
+import { applyAbsoluteKnockback, createHitbox, Hitbox } from "../../hitboxes";
 import { HealthComponent } from "../../components/HealthComponent";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { SnobeComponent } from "../../components/SnobeComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
-import { accelerateEntityToPosition, turnToPosition } from "../../ai-shared";
+import { turnToPosition } from "../../ai-shared";
 import { EscapeAI } from "../../ai/EscapeAI";
 import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 import { Settings } from "../../../../shared/src/settings";
 import { tetherHitboxes } from "../../tethers";
+import { getEntityAgeTicks } from "../../world";
+import WanderAI from "../../ai/WanderAI";
+import { Biome } from "../../../../shared/src/biomes";
+import Layer from "../../Layer";
+import { FollowAI } from "../../ai/FollowAI";
 
-const moveFunc = (krumblid: Entity, pos: Point, acceleration: number): void => {
-   accelerateEntityToPosition(krumblid, pos, acceleration);
+export const SNOBE_EAR_IDEAL_ANGLE = -Math.PI * 0.2;
+
+function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: number): boolean {
+   const biome = layer.getBiomeAtPosition(x, y);
+   return biome === Biome.tundra;
+}
+
+const moveFunc = (snobe: Entity, pos: Point, acceleration: number): void => {
+   const ageTicks = getEntityAgeTicks(snobe);
+   if ((ageTicks + snobe) % Math.floor(Settings.TPS / 3.5) === 0) {
+      const transformComponent = TransformComponentArray.getComponent(snobe);
+      const hitbox = transformComponent.children[0] as Hitbox;
+      
+      const direction = hitbox.box.position.calculateAngleBetween(pos);
+      applyAbsoluteKnockback(snobe, hitbox, 320 / 1600 * acceleration, direction);
+   }
+   
+   // accelerateEntityToPosition(krumblid, pos, acceleration);
 }
 
 const turnFunc = (krumblid: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
@@ -29,14 +49,14 @@ const turnFunc = (krumblid: Entity, pos: Point, turnSpeed: number, turnDamping: 
 export function createSnobeConfig(position: Point, angle: number): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const bodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 24), 0.65, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.SNOBE_BODY]);
+   const bodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 24), 0.45, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.SNOBE_BODY]);
    addHitboxToTransformComponent(transformComponent, bodyHitbox);
    
    const idealButtDistance = 20;
    const buttOffset = new Point(0, -idealButtDistance);
    const buttPosition = position.copy();
    buttPosition.add(buttOffset);
-   const buttHitbox = createHitbox(transformComponent, null, new CircularBox(buttPosition, new Point(0, 0), 0, 12), 0.15, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.SNOBE_BUTT]);
+   const buttHitbox = createHitbox(transformComponent, null, new CircularBox(buttPosition, new Point(0, 0), 0, 12), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.SNOBE_BUTT]);
    addHitboxToTransformComponent(transformComponent, buttHitbox);
    
    tetherHitboxes(buttHitbox, bodyHitbox, transformComponent, transformComponent, idealButtDistance, 25, 1);
@@ -58,13 +78,19 @@ export function createSnobeConfig(position: Point, angle: number): EntityConfig 
    for (let i = 0; i < 2; i++) {
       const sideIsFlipped = i === 0;
 
-      const earOffset = new Point(20, -8);
+      const earOffset = new Point(22, -8);
       const earPosition = position.copy();
       earPosition.add(earOffset);
-      const earHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(earPosition, earOffset, -Math.PI * 0.2, 8), 0.05, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.SNOBE_EAR]);
+      const earHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(earPosition, earOffset, SNOBE_EAR_IDEAL_ANGLE, 8), 0.05, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.SNOBE_EAR]);
       earHitbox.box.flipX = sideIsFlipped;
       // @Hack
       earHitbox.box.totalFlipXMultiplier = sideIsFlipped ? -1 : 1;
+      earHitbox.relativeAngleConstraints.push({
+         idealAngle: earHitbox.box.relativeAngle,
+         springConstant: 30,
+         damping: 0.15
+      });
+
       addHitboxToTransformComponent(transformComponent, earHitbox);
    }
    
@@ -72,8 +98,10 @@ export function createSnobeConfig(position: Point, angle: number): EntityConfig 
    
    const healthComponent = new HealthComponent(10);
    
-   const aiHelperComponent = new AIHelperComponent(bodyHitbox, 200, moveFunc, turnFunc);
+   const aiHelperComponent = new AIHelperComponent(bodyHitbox, 280, moveFunc, turnFunc);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(1000, 8 * Math.PI, 0.4, 0.35, wanderPositionIsValid);
    aiHelperComponent.ais[AIType.escape] = new EscapeAI(1600, 8 * Math.PI, 0.6, 5);
+   aiHelperComponent.ais[AIType.follow] = new FollowAI(8 * Settings.TPS, 16 * Settings.TPS, 0.1, 34);
 
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
    

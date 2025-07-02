@@ -3,7 +3,7 @@ import { RIVER_STEPPING_STONE_SIZES } from "../../shared/src/client-server-types
 import { CollisionBit } from "../../shared/src/collision";
 import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
-import { TileType, TILE_MOVE_SPEED_MULTIPLIERS, TILE_FRICTIONS } from "../../shared/src/tiles";
+import { TILE_PHYSICS_INFO_RECORD, TileType } from "../../shared/src/tiles";
 import { assert, clampAngleA, getAngleDiff, getTileIndexIncludingEdges, Point, TileIndex } from "../../shared/src/utils";
 import { PhysicsComponentArray } from "./components/PhysicsComponent";
 import { EntityAttachInfo, entityChildIsEntity, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
@@ -18,6 +18,13 @@ export interface HitboxAngularTether {
    readonly damping: number;
    /** Radians either side of the ideal angle for which the link is allowed to be in without being pulled */
    readonly padding: number;
+}
+
+/** Puts an angular spring on the hitbox's relative angle. */
+export interface HitboxRelativeAngleConstraint {
+   readonly idealAngle: number;
+   readonly springConstant: number;
+   readonly damping: number;
 }
 
 export interface Hitbox {
@@ -37,6 +44,7 @@ export interface Hitbox {
    angularAcceleration: number;
    // NOTE: Angular tethers only work correctly when the hitbox has a normalised pivot point of (0, -0.5)
    readonly angularTethers: Array<HitboxAngularTether>;
+   readonly relativeAngleConstraints: Array<HitboxRelativeAngleConstraint>;
    
    mass: number;
    collisionType: HitboxCollisionType;
@@ -65,6 +73,7 @@ export function createHitbox(transformComponent: TransformComponent, parent: Hit
       previousRelativeAngle: box.relativeAngle,
       angularAcceleration: 0,
       angularTethers: [],
+      relativeAngleConstraints: [],
       mass: mass,
       collisionType: collisionType,
       collisionBit: collisionBit,
@@ -213,7 +222,8 @@ export function applyAccelerationFromGround(entity: Entity, hitbox: Hitbox, acce
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
    
    const tileIndex = getHitboxTile(hitbox);
-   const tileType = getEntityLayer(entity).tileTypes[tileIndex];
+   const tileType = getEntityLayer(entity).getTileType(tileIndex);
+   const tilePhysicsInfo = TILE_PHYSICS_INFO_RECORD[tileType];
    
    // @Speed: very complicated logic
    let moveSpeedMultiplier: number;
@@ -222,12 +232,11 @@ export function applyAccelerationFromGround(entity: Entity, hitbox: Hitbox, acce
    } else if (tileType === TileType.water && !hitboxIsInRiver(entity, hitbox)) {
       moveSpeedMultiplier = physicsComponent.moveSpeedMultiplier;
    } else {
-      moveSpeedMultiplier = TILE_MOVE_SPEED_MULTIPLIERS[tileType] * physicsComponent.moveSpeedMultiplier;
+      moveSpeedMultiplier = tilePhysicsInfo.moveSpeedMultiplier * physicsComponent.moveSpeedMultiplier;
    }
 
-   const tileFriction = TILE_FRICTIONS[tileType];
-   
    // Calculate the desired velocity based on acceleration
+   const tileFriction = tilePhysicsInfo.friction;
    const desiredVelocityX = accelerationX * tileFriction * moveSpeedMultiplier;
    const desiredVelocityY = accelerationY * tileFriction * moveSpeedMultiplier;
 

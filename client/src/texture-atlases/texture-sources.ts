@@ -507,11 +507,12 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/tundra-rock/rock-1.png",
    "entities/tundra-rock/rock-2.png",
    "entities/tundra-rock/rock-3.png",
-   "entities/snowberry-bush-live/stage-1.png",
-   "entities/snowberry-bush-dead/snowberry-bush-dead.png",
+   "entities/snowberry-bush/stage-0.png",
+   // "entities/snowberry-bush/stage-1.png",
+   // "entities/snowberry-bush/stage-2.png",
+   "entities/snowberry-bush/stage-3.png",
    "entities/snobe/body.png",
    "entities/snobe/butt.png",
-   "entities/snobe/butt-butt.png",
    "entities/snobe/ear.png",
 ];
 

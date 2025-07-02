@@ -139,8 +139,7 @@ export enum ServerComponentType {
    dustfleaEgg,
    spruceTree,
    tundraRock,
-   snowberryBushLive,
-   snowberryBushDead,
+   snowberryBush,
    snobe,
 }
 
@@ -273,8 +272,7 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.dustfleaEgg]: "Dustflea Egg Component",
    [ServerComponentType.spruceTree]: "Spruce Tree Component",
    [ServerComponentType.tundraRock]: "Tundra Rock Component",
-   [ServerComponentType.snowberryBushLive]: "Snowberry Bush Live Component",
-   [ServerComponentType.snowberryBushDead]: "Snowberry Bush Dead Component",
+   [ServerComponentType.snowberryBush]: "Snowberry Bush Component",
    [ServerComponentType.snobe]: "Snobe Component",
 };
 
@@ -393,8 +391,7 @@ export const EntityComponents = {
    [EntityType.dustfleaEgg]: [],
    [EntityType.spruceTree]: [],
    [EntityType.tundraRock]: [],
-   [EntityType.snowberryBushLive]: [],
-   [EntityType.snowberryBushDead]: [],
+   [EntityType.snowberryBush]: [],
    [EntityType.snobe]: [],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;
 

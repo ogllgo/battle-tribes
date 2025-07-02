@@ -217,7 +217,7 @@ function onTick(slime: Entity): void {
    const layer = getEntityLayer(slime);
 
    const tileIndex = getHitboxTile(slimeHitbox);
-   const tileType = layer.tileTypes[tileIndex];
+   const tileType = layer.getTileType(tileIndex);
    
    // Slimes move at normal speed on slime and sludge blocks
    const physicsComponent = PhysicsComponentArray.getComponent(slime);

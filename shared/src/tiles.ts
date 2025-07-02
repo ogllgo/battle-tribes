@@ -50,7 +50,78 @@ export const TileTypeString: Record<TileType, string> = {
 
 export const NUM_TILE_TYPES = Object.keys(TileTypeString).length;
 
-// @Robustness this is so breakable
-//                                                                 grass dirt  water sludge slime rock  darkRock sand  sandyDirt sandyDirtDark sandstone snow  ice  permafrost magma lava  frost dropdown stone stoneWallFloor
-export const TILE_FRICTIONS: ReadonlyArray<number>              = [0.65, 0.65, 1,    0.9,   1,    0.65, 0.65,    0.65, 0.65,     0.65,         0.65,     0.9,  0.2, 0.65,      0.65, 0.85, 0.65, 0.65,    0.65, 0.65];
-export const TILE_MOVE_SPEED_MULTIPLIERS: ReadonlyArray<number> = [1,    1,    0.6,  0.6,   0.3,  1,    1,       1,    1,        1,            1,        0.65, 1.5, 1,         1,    1,    1,    1,       1,    1];
+export interface TilePhysicsInfo {
+   readonly friction: number;
+   readonly moveSpeedMultiplier: number;
+}
+
+export const TILE_PHYSICS_INFO_RECORD: Record<TileType, TilePhysicsInfo> = {
+   [TileType.grass]: {
+      friction: 0.65,
+      moveSpeedMultiplier: 1
+   },
+   [TileType.dirt]: {
+      friction: 0.65,
+      moveSpeedMultiplier: 1
+   },
+   [TileType.water]: {
+      friction: 1,
+      moveSpeedMultiplier: 0.6
+   },
+   [TileType.sludge]: {
+      friction: 0.9,
+      moveSpeedMultiplier: 0.6
+   },
+   [TileType.slime]: {
+      friction: 1,
+      moveSpeedMultiplier: 0.3
+   },
+   [TileType.rock]: {
+      friction: 0.65,
+      moveSpeedMultiplier: 1
+   },
+   [TileType.sand]: {
+      friction: 0.65,
+      moveSpeedMultiplier: 1
+   },
+   [TileType.sandyDirt]: {
+      friction: 0.65,
+      moveSpeedMultiplier: 1
+   },
+   [TileType.sandyDirtDark]: {
+      friction: 0.65,
+      moveSpeedMultiplier: 1
+   },
+   [TileType.snow]: {
+      friction: 0.9,
+      moveSpeedMultiplier: 0.65
+   },
+   [TileType.ice]: {
+      friction: 0.2,
+      moveSpeedMultiplier: 1.5
+   },
+   [TileType.permafrost]: {
+      friction: 0.4,
+      moveSpeedMultiplier: 1.2
+   },
+   [TileType.magma]: {
+      friction: 0.65,
+      moveSpeedMultiplier: 1
+   },
+   [TileType.lava]: {
+      friction: 0.85,
+      moveSpeedMultiplier: 1
+   },
+   [TileType.dropdown]: {
+      friction: 0.65,
+      moveSpeedMultiplier: 1
+   },
+   [TileType.stone]: {
+      friction: 0.65,
+      moveSpeedMultiplier: 1
+   },
+   [TileType.stoneWallFloor]: {
+      friction: 0.65,
+      moveSpeedMultiplier: 1
+   },
+};

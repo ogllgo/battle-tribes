@@ -50,30 +50,30 @@ export function getEntityClientComponentConfigs(entityType: EntityType): ClientS
    switch (entityType) {
       case EntityType.cow: {
          return {
-            [ClientComponentType.footprint]: createFootprintComponentParams(0.3, 20, 64, 5, 40)
+            [ClientComponentType.footprint]: createFootprintComponentParams(0.3, 20, 64, 5, 40, false)
          };
       }
       case EntityType.player: {
          return {
-            [ClientComponentType.footprint]: createFootprintComponentParams(0.2, 20, 64, 4, 64),
+            [ClientComponentType.footprint]: createFootprintComponentParams(0.2, 20, 64, 4, 64, false),
             [ClientComponentType.equipment]: createEquipmentComponentParams()
-         }
+         };
       }
       case EntityType.tribeWorker: {
          return {
-            [ClientComponentType.footprint]: createFootprintComponentParams(0.15, 20, 64, 4, 50),
+            [ClientComponentType.footprint]: createFootprintComponentParams(0.15, 20, 64, 4, 50, false),
             [ClientComponentType.equipment]: createEquipmentComponentParams()
-         }
+         };
       }
       case EntityType.tribeWarrior: {
          return {
-            [ClientComponentType.footprint]: createFootprintComponentParams(0.15, 20, 64, 4, 64),
+            [ClientComponentType.footprint]: createFootprintComponentParams(0.15, 20, 64, 4, 64, false),
             [ClientComponentType.equipment]: createEquipmentComponentParams()
-         }
+         };
       }
       case EntityType.krumblid: {
          return {
-            [ClientComponentType.footprint]: createFootprintComponentParams(0.3, 20, 64, 5, 50)
+            [ClientComponentType.footprint]: createFootprintComponentParams(0.3, 20, 64, 5, 50, false)
          };
       }
       case EntityType.lilypad: {
@@ -93,7 +93,7 @@ export function getEntityClientComponentConfigs(entityType: EntityType): ClientS
       }
       case EntityType.pebblum: {
          return {
-            [ClientComponentType.footprint]: createFootprintComponentParams(0.3, 20, 64, 5, 40)
+            [ClientComponentType.footprint]: createFootprintComponentParams(0.3, 20, 64, 5, 40, false)
          };
       }
       case EntityType.wallSpikes:
@@ -165,6 +165,12 @@ export function getEntityClientComponentConfigs(entityType: EntityType): ClientS
       case EntityType.glurbTailSegment: {
          return {
             [ClientComponentType.glurbTailSegment]: {}
+         };
+      }
+      case EntityType.snobe: {
+         return {
+            [ClientComponentType.footprint]: createFootprintComponentParams(0.3, 20, 64, 5, 40, true),
+            [ClientComponentType.randomSound]: createRandomSoundComponentParams()
          };
       }
    }

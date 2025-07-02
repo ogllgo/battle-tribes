@@ -1,7 +1,7 @@
 import { Settings } from "battletribes-shared/settings";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { TileType, TILE_FRICTIONS } from "battletribes-shared/tiles";
+import { TILE_PHYSICS_INFO_RECORD, TileType } from "battletribes-shared/tiles";
 import { ComponentArray } from "./ComponentArray";
 import { entityCanBlockPathfinding } from "../pathfinding";
 import { registerDirtyEntity } from "../server/player-clients";
@@ -10,7 +10,7 @@ import { Packet } from "battletribes-shared/packets";
 import { getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
 import { updateEntityLights } from "../light-levels";
-import { addHitboxAngularAcceleration, applyAcceleration, getHitboxAngularVelocity, getHitboxConnectedMass, getHitboxTile, Hitbox, hitboxIsInRiver } from "../hitboxes";
+import { addHitboxAngularAcceleration, applyAcceleration, getHitboxAngularVelocity, getHitboxConnectedMass, getHitboxTile, getTotalMass, Hitbox, hitboxIsInRiver } from "../hitboxes";
 import { getAngleDiff, Point } from "../../../shared/src/utils";
 
 // @Cleanup: Variable names
@@ -74,7 +74,7 @@ const applyHitboxKinematics = (entity: Entity, hitbox: Hitbox, transformComponen
    const layer = getEntityLayer(entity);
    
    const tileIndex = getHitboxTile(hitbox);
-   const tileType = layer.tileTypes[tileIndex];
+   const tileType = layer.getTileType(tileIndex);
 
    // If the game object is in a river, push them in the flow direction of the river
    // The tileMoveSpeedMultiplier check is so that game objects on stepping stones aren't pushed
@@ -84,7 +84,8 @@ const applyHitboxKinematics = (entity: Entity, hitbox: Hitbox, transformComponen
    }
 
    // @Cleanup: shouldn't be used by air friction.
-   const friction = TILE_FRICTIONS[tileType];
+   const tilePhysicsInfo = TILE_PHYSICS_INFO_RECORD[tileType];
+   const friction = tilePhysicsInfo.friction;
    
    let velX = hitbox.box.position.x - hitbox.previousPosition.x;
    let velY = hitbox.box.position.y - hitbox.previousPosition.y;
@@ -225,12 +226,12 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
          // const diffY = rotatedY - hitbox.box.position.y;
 
          // const accMag = force / getHitboxConnectedMass(hitbox) * originHitbox.box.position.calculateDistanceBetween(hitbox.box.position);
-         const hitboxAccMag = force / getHitboxConnectedMass(hitbox) * 40;
+         const hitboxAccMag = force / getTotalMass(hitbox) * 40;
          const hitboxAccDir = originToHitboxDirection + Math.PI/2;
          const hitboxAcc = Point.fromVectorForm(hitboxAccMag, hitboxAccDir);
          applyAcceleration(hitbox, hitboxAcc.x, hitboxAcc.y);
 
-         const originHitboxAccMag = -force / getHitboxConnectedMass(originHitbox) * 40;
+         const originHitboxAccMag = -force / getTotalMass(originHitbox) * 40;
          const originHitboxAccDir = originToHitboxDirection - Math.PI/2;
          const originHitboxAcc = Point.fromVectorForm(originHitboxAccMag, originHitboxAccDir);
          applyAcceleration(hitbox, originHitboxAcc.x, originHitboxAcc.y);
@@ -249,7 +250,25 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
 
          const force = rotationForce + dampingForce;
          
-         addHitboxAngularAcceleration(hitbox, force / getHitboxConnectedMass(hitbox));
+         addHitboxAngularAcceleration(hitbox, force / getTotalMass(hitbox));
+      }
+   }
+}
+
+const applyHitboxRelativeAngleConstraints = (hitbox: Hitbox): void => {
+   for (const constraint of hitbox.relativeAngleConstraints) {
+      // Restrict the hitboxes' angle to match its direction
+      const angleDiff = getAngleDiff(hitbox.box.relativeAngle, constraint.idealAngle);
+      // @Hack @Cleanup: hardcoded
+      const anglePadding = 0;
+      if (Math.abs(angleDiff) > anglePadding) {
+         const rotationForce = (angleDiff - anglePadding * Math.sign(angleDiff)) * constraint.springConstant;
+
+         const dampingForce = -getHitboxAngularVelocity(hitbox) * constraint.damping;
+
+         const force = rotationForce + dampingForce;
+         
+         addHitboxAngularAcceleration(hitbox, force / getTotalMass(hitbox));
       }
    }
 }
@@ -258,8 +277,9 @@ const applyHitboxTethers = (hitbox: Hitbox, transformComponent: TransformCompone
    // @Cleanup: basically a wrapper now
    
    applyHitboxAngularTethers(hitbox);
+   applyHitboxRelativeAngleConstraints(hitbox);
 
-   if (hitbox.angularTethers.length > 0) {
+   if (hitbox.angularTethers.length > 0 || hitbox.relativeAngleConstraints.length > 0) {
       // @Speed: Is this necessary every tick?
       transformComponent.isDirty = true;
    }

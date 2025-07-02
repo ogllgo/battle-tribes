@@ -4,7 +4,8 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { entityExists, getEntityType } from "../world";
 import { applyAccelerationFromGround, Hitbox } from "../hitboxes";
-import { randInt } from "../../../shared/src/utils";
+import { Point, randInt } from "../../../shared/src/utils";
+import { AIHelperComponentArray } from "../components/AIHelperComponent";
 
 export class FollowAI {
    public readonly minFollowCooldownTicks: number;
@@ -66,7 +67,8 @@ export function followAISetFollowTarget(followAI: FollowAI, followedEntity: Enti
    // moveEntityToPosition(entity, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y, acceleration, turnSpeed);
 };
 
-export function continueFollowingEntity(entity: Entity, followAI: FollowAI, followTarget: Entity, acceleration: number, turnSpeed: number): void {
+export function continueFollowingEntity(entity: Entity, followAI: FollowAI, followTarget: Entity, acceleration: number, turnSpeed: number, turnDamping: number): void {
+   const aiHelperComponent = AIHelperComponentArray.getComponent(entity);
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    const entityHitbox = transformComponent.children[0] as Hitbox;
@@ -85,18 +87,19 @@ export function continueFollowingEntity(entity: Entity, followAI: FollowAI, foll
    }
    const distance = getDistanceFromPointToEntity(followTargetHitbox.box.position, transformComponent) - radius;
    if (willStopAtDesiredDistance(entityHitbox, followAI.followDistance, distance - 4)) {
-      // Too close, move backwards!
-      turnToPosition(entity, followTargetHitbox.box.position, turnSpeed, 1);
+      // Too close, move backwards with half acceleration!
 
-      const moveDirection = entityHitbox.box.position.calculateAngleBetween(followTargetHitbox.box.position) + Math.PI;
-      const accelerationX = acceleration * Math.sin(moveDirection);
-      const accelerationY = acceleration * Math.cos(moveDirection);
-      applyAccelerationFromGround(entity, entityHitbox, accelerationX, accelerationY);
-   }
-   if (willStopAtDesiredDistance(entityHitbox, followAI.followDistance, distance)) {
-      turnToPosition(entity, followTargetHitbox.box.position, turnSpeed, 1);
+      aiHelperComponent.turnFunc(entity, followTargetHitbox.box.position, turnSpeed, turnDamping)
+
+      const awayDirection = followTargetHitbox.box.position.calculateAngleBetween(entityHitbox.box.position);
+      const moveTargetX = entityHitbox.box.position.x + 500 * Math.sin(awayDirection);
+      const moveTargetY = entityHitbox.box.position.y + 500 * Math.cos(awayDirection);
+      aiHelperComponent.moveFunc(entity, new Point(moveTargetX, moveTargetY), acceleration * 0.5);
+   } else if (willStopAtDesiredDistance(entityHitbox, followAI.followDistance, distance)) {
+      aiHelperComponent.turnFunc(entity, followTargetHitbox.box.position, turnSpeed, turnDamping);
    } else {
-      moveEntityToPosition(entity, followTargetHitbox.box.position.x, followTargetHitbox.box.position.y, acceleration, turnSpeed, 1);
+      aiHelperComponent.turnFunc(entity, followTargetHitbox.box.position, turnSpeed, turnDamping);
+      aiHelperComponent.moveFunc(entity, followTargetHitbox.box.position, acceleration);
    }
 }
 

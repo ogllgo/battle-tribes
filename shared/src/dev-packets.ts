@@ -130,8 +130,7 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.dustfleaEgg]: {},
    [ServerComponentType.spruceTree]: {},
    [ServerComponentType.tundraRock]: {},
-   [ServerComponentType.snowberryBushDead]: {},
-   [ServerComponentType.snowberryBushLive]: {},
+   [ServerComponentType.snowberryBush]: {},
    [ServerComponentType.snobe]: {},
 } satisfies Record<ServerComponentType, object>;
 

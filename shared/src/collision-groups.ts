@@ -161,8 +161,7 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.dustfleaEgg]: CollisionGroup.default,
    [EntityType.spruceTree]: CollisionGroup.boring,
    [EntityType.tundraRock]: CollisionGroup.boring,
-   [EntityType.snowberryBushLive]: CollisionGroup.boring,
-   [EntityType.snowberryBushDead]: CollisionGroup.boring,
+   [EntityType.snowberryBush]: CollisionGroup.boring,
    [EntityType.snobe]: CollisionGroup.default,
 };
 

@@ -467,11 +467,7 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       effectiveDamageTypes: [DamageType.pickaxe],
       stoppedDamageTypes: []
    },
-   [EntityType.snowberryBushLive]: {
-      effectiveDamageTypes: [DamageType.weapon],
-      stoppedDamageTypes: []
-   },
-   [EntityType.snowberryBushDead]: {
+   [EntityType.snowberryBush]: {
       effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
    },
