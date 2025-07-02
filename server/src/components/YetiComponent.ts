@@ -218,13 +218,8 @@ const throwSnow = (yeti: Entity): void => {
 const entityIsTargetted = (yeti: Entity, entity: Entity, attackingEntitiesComponent: AttackingEntitiesComponent, yetiComponent: YetiComponent): boolean => {
    const entityType = getEntityType(entity);
    
-   // @Temporary for shot
-   if (1+1===2&&(entityType === EntityType.tribeWorker||entityType===EntityType.wall||entityType===EntityType.door||entityType===EntityType.barrel||entityType===EntityType.workbench||entityType===EntityType.workerHut||entityType===EntityType.furnace||entityType===EntityType.fireTorch)) {
-      return true;
-   }
-   
    // Don't chase entities without health or natural tundra resources or snowballs
-   if (!HealthComponentArray.hasComponent(entity) || entityType === EntityType.iceSpikes || entityType === EntityType.snowball) {
+   if (!HealthComponentArray.hasComponent(entity) || entityType === EntityType.iceSpikes || entityType === EntityType.spruceTree || entityType === EntityType.tundraRock || entityType === EntityType.snowball) {
       return false;
    }
    
@@ -453,8 +448,8 @@ function onHitboxCollision(yeti: Entity, collidingEntity: Entity, affectedHitbox
    
    const collidingEntityType = getEntityType(collidingEntity);
    
-   // Don't damage ice spikes
-   if (collidingEntityType === EntityType.iceSpikes) return;
+   // Don't damage native tundra plants
+   if (collidingEntityType === EntityType.iceSpikes || collidingEntityType === EntityType.spruceTree || collidingEntityType === EntityType.tundraRock) return;
 
    // Don't damage snowballs thrown by the yeti
    if (collidingEntityType === EntityType.snowball) {

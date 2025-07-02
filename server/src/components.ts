@@ -124,6 +124,11 @@ import { OkrenTongueTipComponent } from "./components/OkrenTongueTipComponent";
 import { OkrenTongueComponent } from "./components/OkrenTongueComponent";
 import { DustfleaEggComponent } from "./components/DustfleaEggComponent";
 import { OkrenClawComponent } from "./components/OkrenClawComponent";
+import { SpruceTreeComponent } from "./components/SpruceTreeComponent";
+import { TundraRockComponent } from "./components/TundraRockComponent";
+import { SnowberryBushLiveComponent } from "./components/SnowberryBushLiveComponent";
+import { SnowberryBushDeadComponent } from "./components/SnowberryBushDeadComponent";
+import { SnobeComponent } from "./components/SnobeComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -248,6 +253,11 @@ const ComponentClassRecord = {
    [ServerComponentType.okrenTongueSegment]: () => OkrenTongueSegmentComponent,
    [ServerComponentType.okrenTongueTip]: () => OkrenTongueTipComponent,
    [ServerComponentType.dustfleaEgg]: () => DustfleaEggComponent,
+   [ServerComponentType.spruceTree]: () => SpruceTreeComponent,
+   [ServerComponentType.tundraRock]: () => TundraRockComponent,
+   [ServerComponentType.snowberryBushLive]: () => SnowberryBushLiveComponent,
+   [ServerComponentType.snowberryBushDead]: () => SnowberryBushDeadComponent,
+   [ServerComponentType.snobe]: () => SnobeComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

@@ -21,7 +21,11 @@ export const enum HitboxFlag {
    OKREN_EYE,
    OKREN_MANDIBLE,
    KRUMBLID_BODY,
-   KRUMBLID_MANDIBLE
+   KRUMBLID_MANDIBLE,
+   SNOBE_BODY,
+   SNOBE_BUTT,
+   SNOBE_BUTT_BUTT,
+   SNOBE_EAR
 }
 
 export const enum HitboxCollisionType {

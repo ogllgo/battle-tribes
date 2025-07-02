@@ -158,6 +158,7 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
       const ballHitbox = ballConfig.components[ServerComponentType.transform]!.children[0] as Hitbox;
       const angularTether: HitboxAngularTether = {
          originHitbox: entityHitbox,
+         idealAngle: 0,
          springConstant: 10,
          damping: 0.4,
          padding: 0

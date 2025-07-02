@@ -314,14 +314,14 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
 
    // Moses
    registerNewSpawnInfo({
-      entityType: EntityType.moss,
+      entityTypes: [EntityType.moss],
       layer: undergroundLayer,
       spawnRate: 0.05,
       biome: Biome.caves,
       tileTypes: [TileType.stone],
       packSpawning: {
-         getPackSize: (x: number, y: number): number => {
-            const humidity = getMossHumidity(undergroundLayer, x, y);
+         getPackSize: (pos: Point): number => {
+            const humidity = getMossHumidity(undergroundLayer, pos.x, pos.y);
             const minPackSize = Math.floor(lerp(1, 3, humidity));
             const maxPackSize = Math.floor(lerp(2, 5, humidity));
             return randInt(minPackSize, maxPackSize);
@@ -333,8 +333,8 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       spawnDistribution: mossSpawnDistribution,
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null, layer: Layer): EntityConfig | null => {
-         const humidity = getMossHumidity(layer, x, y);
+      createEntity: (pos: Point, angle: number, firstEntityConfig: EntityConfig | null, layer: Layer): EntityConfig | null => {
+         const humidity = getMossHumidity(layer, pos.x, pos.y);
          const minSize = lerp(0, 1, humidity);
          const maxSize = lerp(0, 3, humidity);
          let size = Math.floor(lerp(minSize, maxSize, Math.random()));
@@ -342,8 +342,8 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
             size = 2;
          }
          
-         const colour = firstEntityConfig === null ?  getMossColour(x, y): firstEntityConfig.components[ServerComponentType.moss]!.colour;
-         return createMossConfig(new Point(x, y), angle, size, colour);
+         const colour = firstEntityConfig === null ?  getMossColour(pos.x, pos.y): firstEntityConfig.components[ServerComponentType.moss]!.colour;
+         return createMossConfig(pos, angle, size, colour);
       }
    });
 
@@ -411,7 +411,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
    }
 
    registerNewSpawnInfo({
-      entityType: EntityType.boulder,
+      entityTypes: [EntityType.boulder],
       layer: undergroundLayer,
       spawnRate: 0.005,
       biome: Biome.caves,
@@ -421,12 +421,12 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       spawnDistribution: createRawSpawnDistribution(16, 0.025),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createBoulderConfig(new Point(x, y), angle);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createBoulderConfig(pos, angle);
       }
    });
    registerNewSpawnInfo({
-      entityType: EntityType.glurb,
+      entityTypes: [EntityType.glurb],
       layer: undergroundLayer,
       spawnRate: 0.0025,
       biome: Biome.caves,
@@ -436,13 +436,13 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       spawnDistribution: createRawSpawnDistribution(32, 0.004),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createGlurbConfig(x, y, angle);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createGlurbConfig(pos, angle);
       }
    });
    // @HACK: Just so that mithril ore nodes get registered so tribesman know how to gather them
    registerNewSpawnInfo({
-      entityType: EntityType.mithrilOreNode,
+      entityTypes: [EntityType.mithrilOreNode],
       layer: undergroundLayer,
       spawnRate: 0.0025,
       biome: Biome.caves,
@@ -452,7 +452,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       spawnDistribution: createRawSpawnDistribution(4, 0),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
          return null;
       }
    });

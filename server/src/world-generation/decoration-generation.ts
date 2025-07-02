@@ -125,33 +125,6 @@ export function generateDecorations(): void {
          hasUniformGroups: false
       },
       {
-         decorationTypes: [DecorationType.blackRockSmall],
-         spawnableTileTypes: [TileType.snow, TileType.permafrost],
-         spawnChancePerTile: 0.02,
-         minGroupSize: 1,
-         maxGroupSize: 2,
-         isAffectedByTemperature: false,
-         hasUniformGroups: false
-      },
-      {
-         decorationTypes: [DecorationType.blackRock],
-         spawnableTileTypes: [TileType.snow, TileType.permafrost],
-         spawnChancePerTile: 0.02,
-         minGroupSize: 1,
-         maxGroupSize: 1,
-         isAffectedByTemperature: false,
-         hasUniformGroups: false
-      },
-      {
-         decorationTypes: [DecorationType.snowPile],
-         spawnableTileTypes: [TileType.ice, TileType.permafrost],
-         spawnChancePerTile: 0.02,
-         minGroupSize: 1,
-         maxGroupSize: 1,
-         isAffectedByTemperature: false,
-         hasUniformGroups: false
-      },
-      {
          decorationTypes: [DecorationType.flower1, DecorationType.flower2, DecorationType.flower3, DecorationType.flower4],
          spawnableTileTypes: [TileType.grass],
          spawnChancePerTile: 0.005,

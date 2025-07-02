@@ -1,0 +1,41 @@
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
+import { EntityType } from "battletribes-shared/entities";
+import { Point } from "battletribes-shared/utils";
+import { ServerComponentType } from "battletribes-shared/components";
+import { EntityConfig } from "../../components";
+import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
+import CircularBox from "battletribes-shared/boxes/CircularBox";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
+import { HealthComponent } from "../../components/HealthComponent";
+import { StatusEffectComponent } from "../../components/StatusEffectComponent";
+import { LootComponent } from "../../components/LootComponent";
+import { createHitbox } from "../../hitboxes";
+import { SnowberryBushLiveComponent } from "../../components/SnowberryBushLiveComponent";
+
+export function createSnowberryBushLiveConfig(position: Point, angle: number): EntityConfig {
+   const transformComponent = new TransformComponent();
+   
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 28), 0.9, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   addHitboxToTransformComponent(transformComponent, hitbox);
+   transformComponent.collisionBit = CollisionBit.plants;
+   
+   const healthComponent = new HealthComponent(10);
+   
+   const statusEffectComponent = new StatusEffectComponent(0);
+
+   const lootComponent = new LootComponent();
+   
+   const snowberryBushLiveComponent = new SnowberryBushLiveComponent();
+   
+   return {
+      entityType: EntityType.snowberryBushLive,
+      components: {
+         [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.health]: healthComponent,
+         [ServerComponentType.statusEffect]: statusEffectComponent,
+         [ServerComponentType.loot]: lootComponent,
+         [ServerComponentType.snowberryBushLive]: snowberryBushLiveComponent
+      },
+      lights: []
+   };
+}

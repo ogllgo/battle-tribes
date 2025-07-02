@@ -159,6 +159,11 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.okrenTongueSegment]: CollisionGroup.default,
    [EntityType.okrenTongueTip]: CollisionGroup.default,
    [EntityType.dustfleaEgg]: CollisionGroup.default,
+   [EntityType.spruceTree]: CollisionGroup.boring,
+   [EntityType.tundraRock]: CollisionGroup.boring,
+   [EntityType.snowberryBushLive]: CollisionGroup.boring,
+   [EntityType.snowberryBushDead]: CollisionGroup.boring,
+   [EntityType.snobe]: CollisionGroup.default,
 };
 
 export function getEntityCollisionGroup(entityType: EntityType): CollisionGroup {

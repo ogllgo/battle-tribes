@@ -139,6 +139,11 @@ import { OkrenTongueTipComponent, OkrenTongueTipComponentArray, OkrenTongueTipCo
 import { OkrenTongueComponent, OkrenTongueComponentArray, OkrenTongueComponentParams } from "./server-components/OkrenTongueComponent";
 import { DustfleaEggComponent, DustfleaEggComponentArray, DustfleaEggComponentParams } from "./server-components/DustfleaEggComponent";
 import { OkrenClawComponent, OkrenClawComponentArray, OkrenClawComponentParams } from "./server-components/OkrenClawComponent";
+import { SpruceTreeComponent, SpruceTreeComponentArray, SpruceTreeComponentParams } from "./server-components/SpruceTreeComponent";
+import { TundraRockComponent, TundraRockComponentArray, TundraRockComponentParams } from "./server-components/TundraRockComponent";
+import { SnowberryBushDeadComponent, SnowberryBushDeadComponentArray, SnowberryBushDeadComponentParams } from "./server-components/SnowberryBushDeadComponent";
+import { SnowberryBushLiveComponent, SnowberryBushLiveComponentArray, SnowberryBushLiveComponentParams } from "./server-components/SnowberryBushLiveComponent";
+import { SnobeComponent, SnobeComponentArray, SnobeComponentParams } from "./server-components/SnobeComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -286,6 +291,11 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.okrenTongueSegment]: OkrenTongueSegmentComponentArray,
    [ServerComponentType.okrenTongueTip]: OkrenTongueTipComponentArray,
    [ServerComponentType.dustfleaEgg]: DustfleaEggComponentArray,
+   [ServerComponentType.spruceTree]: SpruceTreeComponentArray,
+   [ServerComponentType.tundraRock]: TundraRockComponentArray,
+   [ServerComponentType.snowberryBushLive]: SnowberryBushLiveComponentArray,
+   [ServerComponentType.snowberryBushDead]: SnowberryBushDeadComponentArray,
+   [ServerComponentType.snobe]: SnobeComponentArray,
 };
 
 const ServerComponentRecord = {
@@ -409,6 +419,11 @@ const ServerComponentRecord = {
    [ServerComponentType.okrenTongueSegment]: (): OkrenTongueSegmentComponent => 0 as any,
    [ServerComponentType.okrenTongueTip]: (): OkrenTongueTipComponent => 0 as any,
    [ServerComponentType.dustfleaEgg]: (): DustfleaEggComponent => 0 as any,
+   [ServerComponentType.spruceTree]: (): SpruceTreeComponent => 0 as any,
+   [ServerComponentType.tundraRock]: (): TundraRockComponent => 0 as any,
+   [ServerComponentType.snowberryBushLive]: (): SnowberryBushLiveComponent => 0 as any,
+   [ServerComponentType.snowberryBushDead]: (): SnowberryBushDeadComponent => 0 as any,
+   [ServerComponentType.snobe]: (): SnobeComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
 
 export type ServerComponent<T extends ServerComponentType> = ReturnType<typeof ServerComponentRecord[T]>;
@@ -534,6 +549,11 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.okrenTongueSegment]: (): OkrenTongueSegmentComponentParams => 0 as any,
    [ServerComponentType.okrenTongueTip]: (): OkrenTongueTipComponentParams => 0 as any,
    [ServerComponentType.dustfleaEgg]: (): DustfleaEggComponentParams => 0 as any,
+   [ServerComponentType.spruceTree]: (): SpruceTreeComponentParams => 0 as any,
+   [ServerComponentType.tundraRock]: (): TundraRockComponentParams => 0 as any,
+   [ServerComponentType.snowberryBushLive]: (): SnowberryBushLiveComponentParams => 0 as any,
+   [ServerComponentType.snowberryBushDead]: (): SnowberryBushDeadComponentParams => 0 as any,
+   [ServerComponentType.snobe]: (): SnobeComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

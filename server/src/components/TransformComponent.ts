@@ -475,6 +475,7 @@ export function resolveEntityBorderCollisions(transformComponent: TransformCompo
    }
 
    // If the entity is outside the world border after resolving border collisions, throw an error
+   // @Robustness this should be impossible to trigger
    for (const hitbox of transformComponent.children) {
       if (entityChildIsHitbox(hitbox)) {
          if (hitbox.box.position.x < 0 || hitbox.box.position.x >= Settings.BOARD_UNITS || hitbox.box.position.y < 0 || hitbox.box.position.y >= Settings.BOARD_UNITS) {

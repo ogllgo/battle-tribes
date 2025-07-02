@@ -189,8 +189,9 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
       const originHitbox = angularTether.originHitbox;
 
       const originToHitboxDirection = originHitbox.box.position.calculateAngleBetween(hitbox.box.position);
+      const idealAngle = originHitbox.box.angle + angularTether.idealAngle;
       
-      const directionDiff = getAngleDiff(originToHitboxDirection, originHitbox.box.angle);
+      const directionDiff = getAngleDiff(originToHitboxDirection, idealAngle);
       
       if (Math.abs(directionDiff) > angularTether.padding) {
          const rotationForce = (directionDiff - angularTether.padding * Math.sign(directionDiff)) * angularTether.springConstant;

@@ -42,7 +42,7 @@ registerEntityTamingSpec(EntityType.glurb, {
    }
 });
 
-export function createGlurbConfig(x: number, y: number, rotation: number): EntityConfig {
+export function createGlurbConfig(position: Point, angle: number): EntityConfig {
    // @Incomplete: Will always have same offset shape! Straight, going upwards!
 
    const transformComponent = new TransformComponent();
@@ -58,8 +58,8 @@ export function createGlurbConfig(x: number, y: number, rotation: number): Entit
    
    const childConfigs = new Array<EntityConfig>();
 
-   let currentX = x;
-   let currentY = y;
+   let currentX = position.x;
+   let currentY = position.y;
    
    let lastHitbox: Hitbox | undefined;
    let lastTransformComponent: TransformComponent | undefined;

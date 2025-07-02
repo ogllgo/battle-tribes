@@ -44,12 +44,12 @@ registerEntityLootOnDeath(EntityType.tree, [
 
 const TREE_RADII: ReadonlyArray<number> = [40, 50];
 
-export function createTreeConfig(position: Point, rotation: number): EntityConfig {
+export function createTreeConfig(position: Point, angle: number): EntityConfig {
    const size: TreeSize = Math.random() > 1/3 ? 1 : 0;
    
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, TREE_RADII[size]), 1.25 + size * 0.25, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, TREE_RADII[size]), 1.25 + size * 0.25, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionBit = CollisionBit.plants;
    

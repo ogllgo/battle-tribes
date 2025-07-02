@@ -13,6 +13,7 @@ import { getEntityLayer, getEntityType } from "./world";
 
 export interface HitboxAngularTether {
    readonly originHitbox: Hitbox;
+   readonly idealAngle: number;
    readonly springConstant: number;
    readonly damping: number;
    /** Radians either side of the ideal angle for which the link is allowed to be in without being pulled */

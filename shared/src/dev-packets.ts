@@ -128,6 +128,11 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.okrenTongueSegment]: {},
    [ServerComponentType.okrenTongueTip]: {},
    [ServerComponentType.dustfleaEgg]: {},
+   [ServerComponentType.spruceTree]: {},
+   [ServerComponentType.tundraRock]: {},
+   [ServerComponentType.snowberryBushDead]: {},
+   [ServerComponentType.snowberryBushLive]: {},
+   [ServerComponentType.snobe]: {},
 } satisfies Record<ServerComponentType, object>;
 
 export type ComponentSummonData<T extends ServerComponentType> = typeof SUMMON_DATA_RECORD[T];

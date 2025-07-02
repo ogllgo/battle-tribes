@@ -13,7 +13,6 @@ export const enum TileType {
    permafrost,
    magma,
    lava,
-   fimbultur,
    dropdown,
    stone,
    stoneWallFloor
@@ -24,6 +23,7 @@ export const enum SubtileType {
    rockWall,
    sandstoneWall,
    stoneWall,
+   permafrostWall,
 
    _LENGTH_
 }
@@ -43,7 +43,6 @@ export const TileTypeString: Record<TileType, string> = {
    [TileType.permafrost]: "permafrost",
    [TileType.magma]: "magma",
    [TileType.lava]: "lava",
-   [TileType.fimbultur]: "fimbultur",
    [TileType.dropdown]: "dropdown",
    [TileType.stone]: "stone",
    [TileType.stoneWallFloor]: "Stone Wall Floor",
@@ -51,6 +50,7 @@ export const TileTypeString: Record<TileType, string> = {
 
 export const NUM_TILE_TYPES = Object.keys(TileTypeString).length;
 
+// @Robustness this is so breakable
 //                                                                 grass dirt  water sludge slime rock  darkRock sand  sandyDirt sandyDirtDark sandstone snow  ice  permafrost magma lava  frost dropdown stone stoneWallFloor
 export const TILE_FRICTIONS: ReadonlyArray<number>              = [0.65, 0.65, 1,    0.9,   1,    0.65, 0.65,    0.65, 0.65,     0.65,         0.65,     0.9,  0.2, 0.65,      0.65, 0.85, 0.65, 0.65,    0.65, 0.65];
 export const TILE_MOVE_SPEED_MULTIPLIERS: ReadonlyArray<number> = [1,    1,    0.6,  0.6,   0.3,  1,    1,       1,    1,        1,            1,        0.65, 1.5, 1,         1,    1,    1,    1,       1,    1];

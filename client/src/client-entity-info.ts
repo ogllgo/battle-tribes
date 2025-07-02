@@ -442,6 +442,26 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Dustflea Egg",
       internalName: "dustflea-egg"
    },
+   [EntityType.spruceTree]: {
+      name: "Spruce Tree",
+      internalName: "spruce-tree"
+   },
+   [EntityType.tundraRock]: {
+      name: "Tundra Rock",
+      internalName: "tundra-rock"
+   },
+   [EntityType.snowberryBushLive]: {
+      name: "Snowberry Bush Live",
+      internalName: "snowberry-bush-live"
+   },
+   [EntityType.snowberryBushDead]: {
+      name: "Snowberry Bush Dead",
+      internalName: "snowberry-bush-dead"
+   },
+   [EntityType.snobe]: {
+      name: "Snobe",
+      internalName: "snobe"
+   },
 };
 
 export default CLIENT_ENTITY_INFO_RECORD;

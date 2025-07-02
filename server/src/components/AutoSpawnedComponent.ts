@@ -1,16 +1,16 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { assert } from "../../../shared/src/utils";
-import { addEntityToSpawnDistribution, EntitySpawnInfo, removeEntityFromSpawnDistributions } from "../entity-spawn-info";
+import { addEntityToSpawnDistribution, EntitySpawnEvent, removeEntityFromSpawnDistributions } from "../entity-spawn-info";
 import { ComponentArray } from "./ComponentArray";
 import { getTransformComponentFirstHitbox, TransformComponentArray } from "./TransformComponent";
 
 // @Cleanup: perhaps put all the auto spawned logic in this file???
 
 export class AutoSpawnedComponent {
-   public readonly spawnInfo: EntitySpawnInfo;
+   public readonly spawnInfo: EntitySpawnEvent;
 
-   constructor(spawnInfo: EntitySpawnInfo) {
+   constructor(spawnInfo: EntitySpawnEvent) {
       this.spawnInfo = spawnInfo;
    }
 }

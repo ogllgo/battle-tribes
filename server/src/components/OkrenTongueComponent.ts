@@ -87,6 +87,7 @@ const addTongueSegment = (tongue: Entity, okren: Entity, okrenHitbox: Hitbox, pr
    // (Make sure the root of the tongue begins at the okren's mouth)
    const angularTether: HitboxAngularTether = {
       originHitbox: okrenHitbox,
+      idealAngle: 0,
       springConstant: 2.5/60,
       damping: 0.5,
       padding: 0
@@ -98,6 +99,7 @@ const addTongueSegment = (tongue: Entity, okren: Entity, okrenHitbox: Hitbox, pr
    segmentConfig.attachInfo = createEntityConfigAttachInfo(tongue, null, true);
    previousBaseHitbox.angularTethers.push({
       originHitbox: newSegmentHitbox,
+      idealAngle: 0,
       springConstant: 1,
       damping: 0.1,
       padding: 0.03
@@ -189,6 +191,7 @@ export function startRetractingTongue(tongue: Entity, okrenTongueComponent: Okre
    // Create a tether on the new base hitbox back to the okren to further encourage it!
    const angularTether: HitboxAngularTether = {
       originHitbox: okrenHitbox,
+      idealAngle: 0,
       springConstant: 2.5/60,
       damping: 0.5,
       padding: 0
@@ -304,6 +307,7 @@ const regressTongue = (tongue: Entity, tongueTransformComponent: TransformCompon
          // Create a tether on the new base hitbox back to the okren to further encourage it!
          const angularTether: HitboxAngularTether = {
             originHitbox: okrenHitbox,
+            idealAngle: 0,
             springConstant: 2.5/60,
             damping: 0.5,
             padding: 0

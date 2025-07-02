@@ -202,8 +202,10 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
    addHitboxToTransformComponent(transformComponent, headHitbox);
 
    tetherHitboxes(headHitbox, bodyHitbox, transformComponent, transformComponent, idealHeadDist, 25, 1);
+   // @Hack: method of adding
    headHitbox.angularTethers.push({
       originHitbox: bodyHitbox,
+      idealAngle: 0,
       springConstant: 18,
       damping: 0,
       padding: Math.PI * 0.08

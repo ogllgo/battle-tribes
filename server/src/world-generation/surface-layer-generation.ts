@@ -10,7 +10,7 @@ import Layer from "../Layer";
 import { generateCaveEntrances } from "./cave-entrance-generation";
 import { groupLocalBiomes, setWallInSubtiles } from "./terrain-generation-utils";
 import { Biome } from "../../../shared/src/biomes";
-import { createRawSpawnDistribution, EntitySpawnInfo, isTooCloseToSteppingStone, registerNewSpawnInfo } from "../entity-spawn-info";
+import { createRawSpawnDistribution, EntitySpawnEvent, isTooCloseToSteppingStone, registerNewSpawnInfo } from "../entity-spawn-info";
 import { EntityType } from "../../../shared/src/entities";
 import { getEntitiesInRange } from "../ai-shared";
 import { getEntityType } from "../world";
@@ -48,6 +48,11 @@ import { createDustfleaConfig } from "../entities/desert/dustflea";
 import { createSandstoneRockConfig } from "../entities/desert/sandstone-rock";
 import { createOkrenConfig } from "../entities/desert/okren";
 import { createCowConfig } from "../entities/mobs/cow";
+import { createSpruceTreeConfig } from "../entities/tundra/spruce-tree";
+import { createTundraRockConfig } from "../entities/tundra/tundra-rock";
+import { createSnowberryBushLiveConfig } from "../entities/tundra/snowberry-bush-live";
+import { createSnowberryBushDeadConfig } from "../entities/tundra/snowberry-bush-dead";
+import { createSnobeConfig } from "../entities/tundra/snobe";
 
 const enum Vars {
    TRIBESMAN_SPAWN_EXCLUSION_RANGE = 1200
@@ -488,7 +493,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    }
 
    registerNewSpawnInfo({
-      entityType: EntityType.cow,
+      entityTypes: [EntityType.cow],
       layer: surfaceLayer,
       spawnRate: 0.01,
       biome: Biome.grasslands,
@@ -502,13 +507,13 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(16, 0.003),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: false,
-      createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
+      createEntity: (pos: Point, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
          const species = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig.components[ServerComponentType.cow]!.species;
-         return createCowConfig(new Point(x, y), angle, species);
+         return createCowConfig(pos, angle, species);
       }
    });
    registerNewSpawnInfo({
-      entityType: EntityType.berryBush,
+      entityTypes: [EntityType.berryBush],
       layer: surfaceLayer,
       spawnRate: 0.001,
       biome: Biome.grasslands,
@@ -518,12 +523,12 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(8, 0.0025),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createBerryBushConfig(new Point(x, y), angle);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createBerryBushConfig(pos, angle);
       }
    });
    registerNewSpawnInfo({
-      entityType: EntityType.tree,
+      entityTypes: [EntityType.tree],
       layer: surfaceLayer,
       spawnRate: 0.013,
       biome: Biome.grasslands,
@@ -533,8 +538,8 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(8, 0.02),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createTreeConfig(new Point(x, y), angle);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createTreeConfig(pos, angle);
       }
    });
    // @TEMPORARY cuz they're messing up my shot!!!!
@@ -554,7 +559,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    //    }
    // });
    registerNewSpawnInfo({
-      entityType: EntityType.boulder,
+      entityTypes: [EntityType.boulder],
       layer: surfaceLayer,
       spawnRate: 0.005,
       biome: Biome.mountains,
@@ -564,8 +569,8 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(8, 0.025),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createBoulderConfig(new Point(x, y), angle);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createBoulderConfig(pos, angle);
       }
    });
    // @Temporary
@@ -589,29 +594,48 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    //    }
    // });
    registerNewSpawnInfo({
-      entityType: EntityType.yeti,
+      entityTypes: [EntityType.yeti],
       layer: surfaceLayer,
-      spawnRate: 0.0004,
+      spawnRate: 0.0001,
       biome: Biome.tundra,
-      tileTypes: [TileType.snow, TileType.ice, TileType.permafrost, TileType.fimbultur],
+      tileTypes: [TileType.snow, TileType.ice, TileType.permafrost],
       onlySpawnsInNight: false,
       minSpawnDistance: 90,
-      spawnDistribution: createRawSpawnDistribution(64, 0.0008),
+      spawnDistribution: createRawSpawnDistribution(128, 0.00015),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         const tileX = Math.floor(x / Settings.TILE_SIZE);
-         const tileY = Math.floor(y / Settings.TILE_SIZE);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         const tileX = Math.floor(pos.x / Settings.TILE_SIZE);
+         const tileY = Math.floor(pos.y / Settings.TILE_SIZE);
          const territory = generateYetiTerritoryTiles(tileX, tileY);
          if (yetiTerritoryIsValid(territory)) {
-            return createYetiConfig(new Point(x, y), angle, territory);
+            return createYetiConfig(pos, angle, territory);
          } else {
             return null;
          }
       }
    });
    registerNewSpawnInfo({
-      entityType: EntityType.iceSpikes,
+      entityTypes: [EntityType.spruceTree],
+      layer: surfaceLayer,
+      spawnRate: 0.015,
+      biome: Biome.tundra,
+      tileTypes: [TileType.snow],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 80,
+      spawnDistribution: createRawSpawnDistribution(32, 0.04),
+      balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: false,
+      packSpawning: {
+         getPackSize: () => randInt(1, 4),
+         spawnRange: 100
+      },
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createSpruceTreeConfig(pos, angle);
+      }
+   });
+   registerNewSpawnInfo({
+      entityTypes: [EntityType.iceSpikes],
       layer: surfaceLayer,
       spawnRate: 0.015,
       biome: Biome.tundra,
@@ -621,12 +645,85 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(4, 0.06),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: false,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createIceSpikesConfig(new Point(x, y), angle, 0);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createIceSpikesConfig(pos, angle, 0);
       }
    });
    registerNewSpawnInfo({
-      entityType: EntityType.slimewisp,
+      entityTypes: [EntityType.tundraRock],
+      layer: surfaceLayer,
+      spawnRate: 0.002,
+      biome: Biome.tundra,
+      tileTypes: [TileType.snow, TileType.permafrost],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 30,
+      spawnDistribution: createRawSpawnDistribution(32, 0.029),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: false,
+      doStrictCollisionCheck: true,
+      packSpawning: {
+         getPackSize: () => randInt(3, 9),
+         spawnRange: 80
+      },
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         // @Hack @Copynpaste
+         const tileX = Math.floor(pos.x / Settings.TILE_SIZE);
+         const tileY = Math.floor(pos.y / Settings.TILE_SIZE);
+         const temperature = temperatureMap[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
+         if (temperature > 0.25) {
+            return null;
+         }
+         
+         return createTundraRockConfig(pos, angle);
+      }
+   });
+   registerNewSpawnInfo({
+      entityTypes: [EntityType.snowberryBushLive, EntityType.snowberryBushDead],
+      layer: surfaceLayer,
+      spawnRate: 0.001,
+      biome: Biome.tundra,
+      tileTypes: [TileType.snow],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 30,
+      spawnDistribution: createRawSpawnDistribution(32, 0.01),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: false,
+      doStrictCollisionCheck: true,
+      packSpawning: {
+         getPackSize: () => randInt(1, 3),
+         spawnRange: 80
+      },
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         if (Math.random() < 0.5) {
+            return createSnowberryBushLiveConfig(pos, angle);
+         } else {
+            return createSnowberryBushDeadConfig(pos, angle);
+         }
+      }
+   });
+   registerNewSpawnInfo({
+      entityTypes: [EntityType.snobe],
+      layer: surfaceLayer,
+      spawnRate: 0.001,
+      biome: Biome.tundra,
+      tileTypes: [TileType.snow, TileType.ice],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 30,
+      spawnDistribution: createRawSpawnDistribution(32, 0.0025),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: false,
+      doStrictCollisionCheck: true,
+      packSpawning: {
+         getPackSize: () => Math.random() < 0.5 ? 2 : 4,
+         spawnRange: 120
+      },
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createSnobeConfig(pos, angle);
+      }
+   });
+
+   registerNewSpawnInfo({
+      entityTypes: [EntityType.slimewisp],
       layer: surfaceLayer,
       spawnRate: 0.2,
       biome: Biome.swamp,
@@ -636,14 +733,14 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(4, 0.3),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createSlimewispConfig(new Point(x, y), angle);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createSlimewispConfig(pos, angle);
       }
    });
    // @HACK @ROBUSTNESS: This is just here so that when tribesmen want to kill slimes, it registers where slimes can be found...
    // but this should instead be inferred from the fact that slimewisps merge together to make slimes!
    registerNewSpawnInfo({
-      entityType: EntityType.slime,
+      entityTypes: [EntityType.slime],
       layer: surfaceLayer,
       spawnRate: 0,
       biome: Biome.swamp,
@@ -653,8 +750,8 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(4, 0),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createSlimeConfig(new Point(x, y), angle, 0);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createSlimeConfig(pos, angle, 0);
       }
    });
 
@@ -705,7 +802,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    // });
    
    registerNewSpawnInfo({
-      entityType: EntityType.fish,
+      entityTypes: [EntityType.fish],
       layer: surfaceLayer,
       spawnRate: 0.015,
       biome: Biome.river,
@@ -719,13 +816,13 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(4, 0.03),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
+      createEntity: (pos: Point, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
          const colour = firstEntityConfig === null ? randInt(0, 3) : firstEntityConfig.components[ServerComponentType.fish]!.colour;
-         return createFishConfig(new Point(x, y), angle, colour);
+         return createFishConfig(pos, angle, colour);
       }
    });
    registerNewSpawnInfo({
-      entityType: EntityType.lilypad,
+      entityTypes: [EntityType.lilypad],
       layer: surfaceLayer,
       spawnRate: 0,
       biome: Biome.river,
@@ -739,11 +836,11 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(4, 0.03),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
-      customSpawnIsValidFunc: (spawnInfo: EntitySpawnInfo, x: number, y: number): boolean => {
+      customSpawnIsValidFunc: (spawnInfo: EntitySpawnEvent, x: number, y: number): boolean => {
          return !isTooCloseToSteppingStone(x, y, 50) && !isTooCloseToReedOrLilypad(spawnInfo.layer, x, y);
       },
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createLilypadConfig(new Point(x, y), angle);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createLilypadConfig(pos, angle);
       }
    });
    // @TEMPORARY: crashes fo some reason...
@@ -763,7 +860,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    //    }
    // });
    registerNewSpawnInfo({
-      entityType: EntityType.cactus,
+      entityTypes: [EntityType.cactus],
       layer: surfaceLayer,
       spawnRate: 0.005,
       biome: Biome.desert,
@@ -773,12 +870,12 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(8, 0.045),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createCactusConfig(new Point(x, y), angle);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createCactusConfig(pos, angle);
       }
    });
    registerNewSpawnInfo({
-      entityType: EntityType.desertBushLively,
+      entityTypes: [EntityType.desertBushLively],
       layer: surfaceLayer,
       spawnRate: 0.002,
       biome: Biome.desert,
@@ -788,12 +885,12 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(8, 0.05),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createDesertBushLivelyConfig(new Point(x, y), angle);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createDesertBushLivelyConfig(pos, angle);
       }
    });
    registerNewSpawnInfo({
-      entityType: EntityType.desertShrub,
+      entityTypes: [EntityType.desertShrub],
       layer: surfaceLayer,
       spawnRate: 0.002,
       biome: Biome.desert,
@@ -803,12 +900,12 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(8, 0.028),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createDesertShrubConfig(new Point(x, y), angle);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createDesertShrubConfig(pos, angle);
       }
    });
    registerNewSpawnInfo({
-      entityType: EntityType.desertBushSandy,
+      entityTypes: [EntityType.desertBushSandy],
       layer: surfaceLayer,
       spawnRate: 0.002,
       biome: Biome.desert,
@@ -822,12 +919,12 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          getPackSize: () => randInt(2, 3),
          spawnRange: 80
       },
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createDesertBushSandyConfig(new Point(x, y), angle);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createDesertBushSandyConfig(pos, angle);
       }
    });
    registerNewSpawnInfo({
-      entityType: EntityType.desertSmallWeed,
+      entityTypes: [EntityType.desertSmallWeed],
       layer: surfaceLayer,
       spawnRate: 0.002,
       biome: Biome.desert,
@@ -837,12 +934,12 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(4, 0.12),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createDesertSmallWeedConfig(new Point(x, y), angle);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createDesertSmallWeedConfig(pos, angle);
       }
    });
    registerNewSpawnInfo({
-      entityType: EntityType.tumbleweedLive,
+      entityTypes: [EntityType.tumbleweedLive],
       layer: surfaceLayer,
       spawnRate: 0.002,
       biome: Biome.desert,
@@ -852,12 +949,12 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(32, 0.002),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createTumbleweedLiveConfig(new Point(x, y), angle);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createTumbleweedLiveConfig(pos, angle);
       }
    });
    registerNewSpawnInfo({
-      entityType: EntityType.tumbleweedDead,
+      entityTypes: [EntityType.tumbleweedDead],
       layer: surfaceLayer,
       spawnRate: 0.002,
       biome: Biome.desert,
@@ -867,13 +964,12 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(32, 0.003),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createTumbleweedDeadConfig(new Point(x, y), angle);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createTumbleweedDeadConfig(pos, angle);
       }
    });
-   // @Temporary
    registerNewSpawnInfo({
-      entityType: EntityType.sandstoneRock,
+      entityTypes: [EntityType.sandstoneRock],
       layer: surfaceLayer,
       spawnRate: 0.002,
       biome: Biome.desert,
@@ -888,9 +984,9 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          getPackSize: () => randInt(3, 9),
          spawnRange: 80
       },
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         const tileX = Math.floor(x / Settings.TILE_SIZE);
-         const tileY = Math.floor(y / Settings.TILE_SIZE);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         const tileX = Math.floor(pos.x / Settings.TILE_SIZE);
+         const tileY = Math.floor(pos.y / Settings.TILE_SIZE);
          const temperature = temperatureMap[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
          if (temperature < 0.82) {
             return null;
@@ -905,7 +1001,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
             size = 2;
          }
          
-         return createSandstoneRockConfig(new Point(x, y), angle, size);
+         return createSandstoneRockConfig(pos, angle, size);
       }
    });
 
@@ -913,7 +1009,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    // Oasis
    // 
    registerNewSpawnInfo({
-      entityType: EntityType.palmTree,
+      entityTypes: [EntityType.palmTree],
       layer: surfaceLayer,
       spawnRate: 0.002,
       biome: Biome.desertOasis,
@@ -923,12 +1019,12 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(16, 0.05),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createPalmTreeConfig(new Point(x, y), angle);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createPalmTreeConfig(pos, angle);
       }
    });
    registerNewSpawnInfo({
-      entityType: EntityType.desertBushLively,
+      entityTypes: [EntityType.desertBushLively],
       layer: surfaceLayer,
       spawnRate: 0.002,
       biome: Biome.desertOasis,
@@ -938,12 +1034,12 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(8, 0.15),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createDesertBushLivelyConfig(new Point(x, y), angle);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createDesertBushLivelyConfig(pos, angle);
       }
    });
    registerNewSpawnInfo({
-      entityType: EntityType.desertShrub,
+      entityTypes: [EntityType.desertShrub],
       layer: surfaceLayer,
       spawnRate: 0.002,
       biome: Biome.desertOasis,
@@ -953,12 +1049,12 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(8, 0.08),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createDesertShrubConfig(new Point(x, y), angle);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createDesertShrubConfig(pos, angle);
       }
    });
    registerNewSpawnInfo({
-      entityType: EntityType.desertSmallWeed,
+      entityTypes: [EntityType.desertSmallWeed],
       layer: surfaceLayer,
       spawnRate: 0.002,
       biome: Biome.desertOasis,
@@ -968,12 +1064,12 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(4, 0.19),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
-      createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-         return createDesertSmallWeedConfig(new Point(x, y), angle);
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createDesertSmallWeedConfig(pos, angle);
       }
    });
    registerNewSpawnInfo({
-      entityType: EntityType.fish,
+      entityTypes: [EntityType.fish],
       layer: surfaceLayer,
       spawnRate: 0.015,
       biome: Biome.desertOasis,
@@ -983,16 +1079,16 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       spawnDistribution: createRawSpawnDistribution(4, 0.06),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
-      createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
+      createEntity: (pos: Point, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
          const colour = firstEntityConfig === null ? randInt(0, 3) : firstEntityConfig.components[ServerComponentType.fish]!.colour;
-         return createFishConfig(new Point(x, y), angle, colour);
+         return createFishConfig(pos, angle, colour);
       }
    });
 
    if (OPTIONS.spawnTribes) {
       // Grasslands
       registerNewSpawnInfo({
-         entityType: EntityType.tribeWorker,
+         entityTypes: [EntityType.tribeWorker],
          layer: surfaceLayer,
          spawnRate: 0.002,
          biome: Biome.grasslands,
@@ -1005,13 +1101,13 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          customSpawnIsValidFunc(spawnInfo, spawnOriginX, spawnOriginY) {
             return tribesmanSpawnPositionIsValid(spawnInfo.layer, spawnOriginX, spawnOriginY);
          },
-         createEntity: (x: number, y: number, angle: number, _firstEntityConfig: EntityConfig | null, layer: Layer): EntityConfig | null => {
-            return createTribeWorkerConfig(new Point(x, y), angle, new Tribe(getTribeType(layer, x, y), true, new Point(x, y)));
+         createEntity: (pos: Point, angle: number, _firstEntityConfig: EntityConfig | null, layer: Layer): EntityConfig | null => {
+            return createTribeWorkerConfig(pos, angle, new Tribe(getTribeType(layer, pos.x, pos.y), true, pos.copy()));
          }
       });
       // Mountains
       registerNewSpawnInfo({
-         entityType: EntityType.tribeWorker,
+         entityTypes: [EntityType.tribeWorker],
          layer: surfaceLayer,
          spawnRate: 0.002,
          biome: Biome.mountains,
@@ -1024,13 +1120,13 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          customSpawnIsValidFunc(spawnInfo, spawnOriginX, spawnOriginY) {
             return tribesmanSpawnPositionIsValid(spawnInfo.layer, spawnOriginX, spawnOriginY);
          },
-         createEntity: (x: number, y: number, angle: number, _firstEntityConfig: EntityConfig | null, layer: Layer): EntityConfig | null => {
-            return createTribeWorkerConfig(new Point(x, y), angle, new Tribe(getTribeType(layer, x, y), true, new Point(x, y)));
+         createEntity: (pos: Point, angle: number, _firstEntityConfig: EntityConfig | null, layer: Layer): EntityConfig | null => {
+            return createTribeWorkerConfig(pos, angle, new Tribe(getTribeType(layer, pos.x, pos.y), true, pos.copy()));
          }
       });
       // Desert
       registerNewSpawnInfo({
-         entityType: EntityType.tribeWorker,
+         entityTypes: [EntityType.tribeWorker],
          layer: surfaceLayer,
          spawnRate: 0.002,
          biome: Biome.desert,
@@ -1043,13 +1139,13 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          customSpawnIsValidFunc(spawnInfo, spawnOriginX, spawnOriginY) {
             return tribesmanSpawnPositionIsValid(spawnInfo.layer, spawnOriginX, spawnOriginY);
          },
-         createEntity: (x: number, y: number, angle: number, _firstEntityConfig: EntityConfig | null, layer: Layer): EntityConfig | null => {
-            return createTribeWorkerConfig(new Point(x, y), angle, new Tribe(getTribeType(layer, x, y), true, new Point(x, y)));
+         createEntity: (pos: Point, angle: number, _firstEntityConfig: EntityConfig | null, layer: Layer): EntityConfig | null => {
+            return createTribeWorkerConfig(pos, angle, new Tribe(getTribeType(layer, pos.x, pos.y), true, pos.copy()));
          }
       });
       // Tundra
       registerNewSpawnInfo({
-         entityType: EntityType.tribeWorker,
+         entityTypes: [EntityType.tribeWorker],
          layer: surfaceLayer,
          spawnRate: 0.002,
          biome: Biome.tundra,
@@ -1062,8 +1158,8 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          customSpawnIsValidFunc(spawnInfo, spawnOriginX, spawnOriginY) {
             return tribesmanSpawnPositionIsValid(spawnInfo.layer, spawnOriginX, spawnOriginY);
          },
-         createEntity: (x: number, y: number, angle: number, _firstEntityConfig: EntityConfig | null, layer: Layer): EntityConfig | null => {
-            return createTribeWorkerConfig(new Point(x, y), angle, new Tribe(getTribeType(layer, x, y), true, new Point(x, y)));
+         createEntity: (pos: Point, angle: number, _firstEntityConfig: EntityConfig | null, layer: Layer): EntityConfig | null => {
+            return createTribeWorkerConfig(pos, angle, new Tribe(getTribeType(layer, pos.x, pos.y), true, pos.copy()));
          }
       });
    }

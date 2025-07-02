@@ -25,6 +25,7 @@ export function createOkrenTongueConfig(position: Point, angle: number, okrenHit
    // @Copynpaste
    const angularTether: HitboxAngularTether = {
       originHitbox: okrenHitbox,
+      idealAngle: 0,
       springConstant: 1/60,
       damping: 0.5,
       padding: 0

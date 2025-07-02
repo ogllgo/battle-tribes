@@ -91,33 +91,13 @@ const BIOME_GENERATION_INFO: ReadonlyArray<BiomeGenerationInfo> = [
       },
       floorTiles: [
          {
-            tileType: TileType.ice,
-            requirements: {
-               customNoise: [
-                  {
-                     scale: 5,
-                     minWeight: 0.8,
-                  }
-               ],
-               minDist: 8
-            }
-         },
-         {
-            tileType: TileType.fimbultur,
-            requirements: {
-               customNoise: [
-                  {
-                     scale: 8,
-                     minWeight: 0.2
-                  }
-               ],
-               minDist: 20
-            }
-         },
-         {
             tileType: TileType.permafrost,
             requirements: {
                customNoise: [
+                  {
+                     scale: 28,
+                     minWeight: 0.65,
+                  },
                   {
                      scale: 7,
                      minWeight: 0.2,
@@ -127,24 +107,16 @@ const BIOME_GENERATION_INFO: ReadonlyArray<BiomeGenerationInfo> = [
             }
          },
          {
-            tileType: TileType.permafrost,
-            requirements: {
-               customNoise: [
-                  {
-                     scale: 7,
-                     minWeight: 0.65,
-                  }
-               ],
-               minDist: 8
-            }
-         },
-         {
             tileType: TileType.ice,
             requirements: {
                customNoise: [
                   {
-                     scale: 7,
+                     scale: 8,
                      minWeight: 0.65,
+                  },
+                  {
+                     scale: 9,
+                     minWeight: 0.65
                   }
                ],
                minDist: 1
@@ -154,7 +126,28 @@ const BIOME_GENERATION_INFO: ReadonlyArray<BiomeGenerationInfo> = [
             tileType: TileType.snow
          }
       ],
-      wallTiles: []
+      wallTiles: [
+         {
+            subtileType: SubtileType.permafrostWall,
+            requirements: {
+               customNoise: [
+                  {
+                     scale: 28,
+                     minWeight: 0.75
+                  },
+                  {
+                     scale: 7,
+                     minWeight: 0.35,
+                  },
+                  {
+                     scale: 5,
+                     minWeight: 0.6
+                  }
+               ],
+               minDist: 12
+            }
+         }
+      ]
    },
    {
       biome: Biome.desertOasis,

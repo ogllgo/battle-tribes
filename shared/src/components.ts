@@ -1,6 +1,6 @@
 import { StatusEffectData } from "./client-server-types";
 import { CraftingStation } from "./items/crafting-recipes";
-import { CowSpecies, DeathInfo, DoorToggleType, FishColour, FrozenYetiAttackType, RockSpikeProjectileSize, SlimeSize, SnowballSize, TreeSize, LimbAction, TribeTotemBanner, EntityType } from "./entities";
+import { CowSpecies, DeathInfo, DoorToggleType, FishColour, SlimeSize, SnowballSize, TreeSize, TribeTotemBanner, EntityType } from "./entities";
 import { Inventory, InventoryName, ItemType } from "./items/items";
 import { Settings } from "./settings";
 import { StatusEffect } from "./status-effects";
@@ -136,7 +136,12 @@ export enum ServerComponentType {
    okrenTongue,
    okrenTongueSegment,
    okrenTongueTip,
-   dustfleaEgg
+   dustfleaEgg,
+   spruceTree,
+   tundraRock,
+   snowberryBushLive,
+   snowberryBushDead,
+   snobe,
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -266,6 +271,11 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.okrenTongueSegment]: "Okren Tongue Segment Component",
    [ServerComponentType.okrenTongueTip]: "Okren Tongue Tip Component",
    [ServerComponentType.dustfleaEgg]: "Dustflea Egg Component",
+   [ServerComponentType.spruceTree]: "Spruce Tree Component",
+   [ServerComponentType.tundraRock]: "Tundra Rock Component",
+   [ServerComponentType.snowberryBushLive]: "Snowberry Bush Live Component",
+   [ServerComponentType.snowberryBushDead]: "Snowberry Bush Dead Component",
+   [ServerComponentType.snobe]: "Snobe Component",
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;
@@ -381,6 +391,11 @@ export const EntityComponents = {
    [EntityType.okrenTongueSegment]: [],
    [EntityType.okrenTongueTip]: [],
    [EntityType.dustfleaEgg]: [],
+   [EntityType.spruceTree]: [],
+   [EntityType.tundraRock]: [],
+   [EntityType.snowberryBushLive]: [],
+   [EntityType.snowberryBushDead]: [],
+   [EntityType.snobe]: [],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;
 
 export type EntityComponentTypes<T extends EntityType> = typeof EntityComponents[T];
@@ -830,9 +845,6 @@ export enum DecorationType {
    sandstoneRockDark,
    sandstoneRockDarkBig1,
    sandstoneRockDarkBig2,
-   blackRockSmall,
-   blackRock,
-   snowPile,
    flower1,
    flower2,
    flower3,
