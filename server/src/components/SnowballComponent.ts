@@ -1,4 +1,4 @@
-import { Entity, EntityType, DamageSource, SnowballSize } from "battletribes-shared/entities";
+import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Point, randFloat } from "battletribes-shared/utils";
@@ -8,14 +8,14 @@ import { Settings } from "battletribes-shared/settings";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { applyKnockback, getHitboxVelocity, Hitbox } from "../hitboxes";
-import { TransformComponentArray } from "./TransformComponent";
 
 export class SnowballComponent {
    public readonly yeti: Entity;
-   public readonly size: SnowballSize;
+   public readonly size: number;
    public readonly lifetimeTicks = Math.floor(randFloat(10, 15) * Settings.TPS);
 
-   constructor(yeti: Entity, size: SnowballSize) {
+   constructor(yeti: Entity, size: number) {
+
       this.yeti = yeti;
       this.size = size;
    }
@@ -62,6 +62,11 @@ function onHitboxCollision(snowball: Entity, collidingEntity: Entity, snowballHi
       if (collidingEntity === snowballComponent.yeti) {
          return;
       }
+   }
+
+   // @Hack so that snobes don't kill themselves when digging
+   if (getEntityType(collidingEntity) === EntityType.snobe || getEntityType(collidingEntity) === EntityType.snobeMound) {
+      return;
    }
    
    const velocity = getHitboxVelocity(snowballHitbox).length();

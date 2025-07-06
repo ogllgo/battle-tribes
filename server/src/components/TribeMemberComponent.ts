@@ -7,7 +7,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import { getEntityLayer, getEntityType } from "../world";
 import { tribeMemberCanPickUpItem, VACUUM_RANGE } from "../entities/tribes/tribe-member";
 import { Settings } from "../../../shared/src/settings";
-import { lerp } from "../../../shared/src/utils";
+import { lerp, Point } from "../../../shared/src/utils";
 import { itemEntityCanBePickedUp, ItemComponentArray } from "./ItemComponent";
 import { TribesmanComponentArray } from "./TribesmanComponent";
 import { registerPlayerDroppedItemPickup } from "../server/player-clients";
@@ -81,7 +81,7 @@ function onTick(tribeMember: Entity): void {
                forceMult = lerp(0.5, 1, forceMult);
 
                const vacuumDirection = itemEntityHitbox.box.position.calculateAngleBetween(tribeMemberHitbox.box.position);
-               addHitboxVelocity(itemEntityHitbox, Vars.VACUUM_STRENGTH * forceMult * Math.sin(vacuumDirection), Vars.VACUUM_STRENGTH * forceMult * Math.cos(vacuumDirection));
+               addHitboxVelocity(itemEntityHitbox, Point.fromVectorForm(Vars.VACUUM_STRENGTH * forceMult, vacuumDirection));
             }
          }
       }

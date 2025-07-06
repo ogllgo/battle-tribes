@@ -20,6 +20,8 @@ export enum RenderLayer {
    lilypads,
    reeds,
    lowEntities,
+   // So that mound is below the snobe
+   snobeMound,
    // So that the tongue is rendfered below okrens
    okrenTongue,
    // so that the limbs are rendered below okrens
@@ -174,6 +176,9 @@ export function getEntityRenderLayer(entityType: EntityType, entityParams: Entit
       }
       case EntityType.desertSmallWeed: {
          return RenderLayer.desertLowestPlants;
+      }
+      case EntityType.snobeMound: {
+         return RenderLayer.snobeMound;
       }
       case EntityType.okrenTongueSegment:
       case EntityType.okrenTongueTip: {

@@ -15,7 +15,7 @@ import { createBallistaWoodenBoltConfig } from "../entities/projectiles/ballista
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { TransformComponentArray, TransformComponent, entityChildIsHitbox } from "./TransformComponent";
 import { getEntityRelationship, EntityRelationship, TribeComponentArray } from "./TribeComponent";
-import { UtilVars } from "battletribes-shared/utils";
+import { Point, UtilVars } from "battletribes-shared/utils";
 import { boxIsCircular } from "battletribes-shared/boxes/boxes";
 import { getEntityLayer, getEntityType } from "../world";
 import { registerDirtyEntity } from "../server/player-clients";
@@ -169,7 +169,7 @@ const createProjectile = (turret: Entity, transformComponent: TransformComponent
    }
 
    const projectileHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
-   addHitboxVelocity(projectileHitbox, ammoInfo.projectileSpeed * Math.sin(fireDirection), ammoInfo.projectileSpeed * Math.cos(fireDirection));
+   addHitboxVelocity(projectileHitbox, Point.fromVectorForm(ammoInfo.projectileSpeed, fireDirection));
 
    createEntity(config, getEntityLayer(turret), 0)
 }

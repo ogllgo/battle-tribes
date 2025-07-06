@@ -151,7 +151,7 @@ export function createIceShardExplosion(layer: Layer, originX: number, originY: 
       const config = createIceShardConfig(position, moveDirection);
 
       const iceShardHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
-      addHitboxVelocity(iceShardHitbox, 700 * Math.sin(moveDirection), 700 * Math.cos(moveDirection));
+      addHitboxVelocity(iceShardHitbox, Point.fromVectorForm(700, moveDirection));
 
       createEntity(config, layer, 0);
    }

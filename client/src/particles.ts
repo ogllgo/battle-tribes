@@ -328,6 +328,44 @@ export function createSnowParticle(spawnPositionX: number, spawnPositionY: numbe
    Board.lowMonocolourParticles.push(particle);
 }
 
+// @Copynpaste, basically just so the snobe particles are above snobes
+export function createHighSnowParticle(spawnPositionX: number, spawnPositionY: number, moveSpeed: number): void {
+   const lifetime = randFloat(0.6, 0.8);
+
+   const velocityDirection = 2 * Math.PI * Math.random();
+   const velocityX = moveSpeed * Math.sin(velocityDirection);
+   const velocityY = moveSpeed * Math.cos(velocityDirection);
+   
+   const particle = new Particle(lifetime);
+   particle.getOpacity = (): number => {
+      return 1 - particle.age / lifetime;
+   };
+
+   const pixelSize = 4 * randInt(1, 2);
+
+   const colourLerp = Math.random();
+   // @HACK @ASS
+   const r = lerp(SNOW_PARTICLE_COLOUR_LOW[0] * 0.8, SNOW_PARTICLE_COLOUR_HIGH[0] * 1.05, colourLerp);
+   const g = lerp(SNOW_PARTICLE_COLOUR_LOW[1] * 0.8, SNOW_PARTICLE_COLOUR_HIGH[1] * 1.05, colourLerp);
+   const b = lerp(SNOW_PARTICLE_COLOUR_LOW[2] * 0.8, SNOW_PARTICLE_COLOUR_HIGH[2] * 1.05, colourLerp);
+   
+   addMonocolourParticleToBufferContainer(
+      particle,
+      ParticleRenderLayer.high,
+      pixelSize, pixelSize,
+      spawnPositionX, spawnPositionY,
+      velocityX, velocityY,
+      0, 0,
+      0,
+      2 * Math.PI * Math.random(),
+      0,
+      0,
+      0,
+      r, g, b
+   );
+   Board.highMonocolourParticles.push(particle);
+}
+
 export function createWhiteSmokeParticle(spawnPositionX: number, spawnPositionY: number, strength: number): void {
    const velocityMagnitude = 125 * randFloat(0.8, 1.2) * strength;
    const velocityDirection = 2 * Math.PI * Math.random();

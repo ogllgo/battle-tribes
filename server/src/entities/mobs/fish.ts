@@ -97,7 +97,7 @@ const moveFunc = (fish: Entity, pos: Point, acceleration: number): void => {
 
       const fishComponent = FishComponentArray.getComponent(fish);
       if (customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TPS, Vars.LUNGE_INTERVAL)) {
-         addHitboxVelocity(fishHitbox, Vars.LUNGE_FORCE * Math.sin(direction), Vars.LUNGE_FORCE * Math.cos(direction));
+         addHitboxVelocity(fishHitbox, Point.fromVectorForm(Vars.LUNGE_FORCE, direction));
       }
    }
 }

@@ -133,6 +133,7 @@ const CROSSBOW_CHARGE_TEXTURE_SOURCES: ReadonlyArray<string> = [
 
 type FilterHealingItemTypes<T extends ItemType> = (typeof ITEM_TYPE_RECORD)[T] extends "healing" ? never : T;
 
+// @Robustness: this should be determined automatically
 const FOOD_EATING_COLOURS: { [T in ItemType as Exclude<T, FilterHealingItemTypes<T>>]: Array<ParticleColour> } = {
    [ItemType.berry]: [
       [222/255, 57/255, 42/255],
@@ -231,6 +232,21 @@ const FOOD_EATING_COLOURS: { [T in ItemType as Exclude<T, FilterHealingItemTypes
       [190/255, 96/255, 166/255],
       [211/255, 107/255, 184/255],
       [216/255, 127/255, 201/255],
+   ],
+   [ItemType.snowberry]: [
+      [160/255, 216/255, 237/255],
+      [118/255, 195/255, 223/255],
+      [111/255, 107/255, 184/255],
+   ],
+   [ItemType.rawSnobeMeat]: [
+      [184/255, 78/255, 97/255],
+      [217/255, 92/255, 111/255],
+      [217/255, 151/255, 161/255],
+   ],
+   [ItemType.snobeStew]: [
+      [184/255, 78/255, 97/255],
+      [217/255, 92/255, 111/255],
+      [217/255, 151/255, 161/255],
    ],
 };
 

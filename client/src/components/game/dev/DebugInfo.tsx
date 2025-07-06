@@ -17,6 +17,7 @@ import { InventoryNameString } from "../../../../../shared/src/items/items";
 import { StructureComponentArray } from "../../../entity-components/server-components/StructureComponent";
 import { getTileLocalBiome } from "../../../local-biomes";
 import { getHitboxVelocity, Hitbox } from "../../../hitboxes";
+import { SnobeComponentArray } from "../../../entity-components/server-components/SnobeComponent";
 
 export let updateDebugInfoTile: (tile: Tile | null) => void = () => {};
 
@@ -150,6 +151,15 @@ const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
                   return <li key={i}>{connection.entity}</li>
                })}
             </ul>
+         </>;
+      })() : undefined}
+
+      {SnobeComponentArray.hasComponent(entity) ? (() => {
+         const snobeComponent = SnobeComponentArray.getComponent(entity);
+
+         return <>
+            <p>Is digging:{snobeComponent.isDigging ? "true" : "false"}</p>
+            <p>Digging progress:{snobeComponent.diggingProgress.toFixed(2)}</p>
          </>;
       })() : undefined}
 

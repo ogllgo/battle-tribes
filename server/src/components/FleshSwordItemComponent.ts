@@ -177,7 +177,7 @@ function onTick(fleshSword: Entity): void {
       // @Hack: should instead change angularvelocity
       const moveAngle = directMoveAngle + moveAngleOffset;
       hitbox.box.relativeAngle = moveAngle - Math.PI/4;
-      addHitboxVelocity(hitbox, moveSpeed! * Math.sin(moveAngle), moveSpeed! * Math.cos(moveAngle));
+      addHitboxVelocity(hitbox, Point.fromVectorForm(moveSpeed!, moveAngle));
 
       transformComponent.isDirty = true;
    }

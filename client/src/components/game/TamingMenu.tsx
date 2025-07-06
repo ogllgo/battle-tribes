@@ -277,7 +277,7 @@ const TamingMenu = () => {
       </Menu>
 
       {hoveredSkill !== null ? (
-         <TamingSkillTooltip tamingComponent={tamingComponent} skillNode={hoveredSkill} />
+         <TamingSkillTooltip entityType={getEntityType(entity)} tamingComponent={tamingComponent} skillNode={hoveredSkill} />
       ) : null}
    </>;
 }

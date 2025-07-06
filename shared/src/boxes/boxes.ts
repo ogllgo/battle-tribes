@@ -24,8 +24,10 @@ export const enum HitboxFlag {
    KRUMBLID_MANDIBLE,
    SNOBE_BODY,
    SNOBE_BUTT,
-   SNOBE_BUTT_BUTT,
-   SNOBE_EAR
+   SNOBE_EAR,
+   WRAITH_HEAD,
+   WRAITH_BODY,
+   WRAITH_EAR
 }
 
 export const enum HitboxCollisionType {

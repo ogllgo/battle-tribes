@@ -526,6 +526,16 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
       aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
       craftingStation: CraftingStation.mithrilAnvil
    },
+   // @Temporary: this makes no sense to be made in the workbench but thats all that can be done rn
+   {
+      product: ItemType.snobeStew,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.rawSnobeMeat]: 5
+      }),
+      aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
+      craftingStation: CraftingStation.workbench
+   },
 ];
 
 export function getItemRecipe(itemType: ItemType): CraftingRecipe | null {

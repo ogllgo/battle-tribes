@@ -15,6 +15,7 @@ import { YetiComponentArray } from "./components/YetiComponent";
 import { EnergyStoreComponentArray } from "./components/EnergyStoreComponent";
 import { EnergyStomachComponentArray } from "./components/EnergyStomachComponent";
 import { OkrenComponentArray } from "./components/OkrenComponent";
+import { SnobeComponentArray } from "./components/SnobeComponent";
 
 const getPlanDebugString = (plan: AIPlan): string => {
    switch (plan.type) {

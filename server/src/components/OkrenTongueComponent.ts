@@ -108,9 +108,7 @@ const addTongueSegment = (tongue: Entity, okren: Entity, okrenHitbox: Hitbox, pr
    createEntity(segmentConfig, getEntityLayer(okren), 0);
 
    // Apply some initial velocity
-   const vx = 200 * Math.sin(okrenHitbox.box.angle);
-   const vy = 200 * Math.cos(okrenHitbox.box.angle);
-   addHitboxVelocity(newSegmentHitbox, vx, vy);
+   addHitboxVelocity(newSegmentHitbox, Point.fromVectorForm(200, okrenHitbox.box.angle));
 }
 
 const advanceTongue = (tongue: Entity, tongueTransformComponent: TransformComponent, okrenTongueComponent: OkrenTongueComponent, okren: Entity): void => {
@@ -211,11 +209,7 @@ export function startRetractingTongue(tongue: Entity, okrenTongueComponent: Okre
       const partHitbox = partTransformComponent.children[0] as Hitbox;
 
       const directionToOkren = partHitbox.box.position.calculateAngleBetween(okrenHitbox.box.position);
-      
-      const vel = 200;
-      const pushX = vel * Math.sin(directionToOkren);
-      const pushY = vel * Math.cos(directionToOkren);
-      addHitboxVelocity(partHitbox, pushX, pushY);
+      addHitboxVelocity(partHitbox, Point.fromVectorForm(200, directionToOkren));
    }
 }
 

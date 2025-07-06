@@ -634,5 +634,5 @@ function onHitboxCollision(cow: Entity, collidingEntity: Entity, affectedHitbox:
    const cowTransformComponent = TransformComponentArray.getComponent(cow);
    const cowBodyHitbox = cowTransformComponent.children[0] as Hitbox;
    const cowVelocity = getHitboxVelocity(cowBodyHitbox);
-   addHitboxVelocity(cowBodyHitbox, cowVelocity.x * -0.5, cowVelocity.y * -0.5);
+   addHitboxVelocity(cowBodyHitbox, new Point(cowVelocity.x * -0.5, cowVelocity.y * -0.5));
 }

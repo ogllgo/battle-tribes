@@ -497,3 +497,7 @@ export function clampAngleA(angle: number): number {
 export function clampAngleB(angle: number): number {
    return clampAngleA(angle + Math.PI) - Math.PI;
 }
+
+export function secondsToTicks(sex: number): number {
+   return Math.floor(sex * Settings.TPS);
+}

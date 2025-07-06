@@ -45,10 +45,10 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
    [TamingSkillID.follow]: {
       id: TamingSkillID.follow,
       name: "Follow",
-      description: "Allows you to command the cow to follow you.",
+      description: "Allows you to command the [[CREATURE_NAME]] to follow you.",
       requirements: [
          {
-            description: "Time around cow",
+            description: "Time spent around creature",
             amountRequired: 30,
             suffix: " seconds"
          }
@@ -57,7 +57,7 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
    [TamingSkillID.riding]: {
       id: TamingSkillID.riding,
       name: "Riding",
-      description: "Allows you to ride the cow.",
+      description: "Allows you to ride the [[CREATURE_NAME]].",
       requirements: [
          {
             description: "Mount attempts",
@@ -69,7 +69,7 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
    [TamingSkillID.move]: {
       id: TamingSkillID.move,
       name: "Move",
-      description: "Allows you to command the cow to move to a specific location.",
+      description: "Allows you to command the [[CREATURE_NAME]] to move to a specific location.",
       requirements: [
          {
             description: "Time spent following",
@@ -81,7 +81,7 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
    [TamingSkillID.carry]: {
       id: TamingSkillID.carry,
       name: "Carry",
-      description: "Allows you to command the cow to pick up an entity.",
+      description: "Allows you to command the [[CREATURE_NAME]] to pick up an entity.",
       requirements: [
          {
             description: "Time spent riding",
@@ -93,7 +93,7 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
    [TamingSkillID.attack]: {
       id: TamingSkillID.attack,
       name: "Attack",
-      description: "Allows you to command the cow to attack enemies.",
+      description: "Allows you to command the [[CREATURE_NAME]] to attack enemies.",
       requirements: [
          {
             description: "Time spent being moved",

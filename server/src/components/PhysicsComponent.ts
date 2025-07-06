@@ -13,7 +13,7 @@ import { updateEntityLights } from "../light-levels";
 import { addHitboxAngularAcceleration, applyAcceleration, getHitboxAngularVelocity, getHitboxConnectedMass, getHitboxTile, getTotalMass, Hitbox, hitboxIsInRiver } from "../hitboxes";
 import { getAngleDiff, Point } from "../../../shared/src/utils";
 
-// @Cleanup: Variable names
+// @Cleanup: Variable names (also is shit generally, shouldn't keep)
 const a = [0];
 const b = [0];
 for (let i = 0; i < 8; i++) {
@@ -46,7 +46,7 @@ const tickHitboxAngularPhysics = (entity: Entity, hitbox: Hitbox, transformCompo
       return;
    }
 
-   // We don't use the getAngularVelocity function as that multplies it by the tps (it's the instantaneous velocity)
+   // We don't use the getAngularVelocity function as that multplies it by the tps (it's the instantaneous angular velocity)
    let angularVelocityTick = getAngleDiff(hitbox.previousRelativeAngle, hitbox.box.relativeAngle);
    // @Hack??
    angularVelocityTick *= 0.98;
@@ -62,11 +62,6 @@ const tickHitboxAngularPhysics = (entity: Entity, hitbox: Hitbox, transformCompo
 }
 
 const applyHitboxKinematics = (entity: Entity, hitbox: Hitbox, transformComponent: TransformComponent, physicsComponent: PhysicsComponent): void => {
-   // @Speed: There are a whole bunch of conditions in here which rely on physicsComponent.isAffectedByFriction,
-   // which is only set at the creation of an entity. To remove these conditions we could probably split the physics
-   // entities into two groups, and call two different applyPhysicsFriction and applyPhysicsNoFriction functions to
-   // the corresponding groups
-
    if (isNaN(hitbox.box.position.x) || isNaN(hitbox.box.position.y)) {
       throw new Error();
    }

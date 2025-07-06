@@ -48,6 +48,7 @@ import { createSpruceTreeConfig } from "../entities/tundra/spruce-tree";
 import { createTundraRockConfig } from "../entities/tundra/tundra-rock";
 import { createSnowberryBushConfig } from "../entities/tundra/snowberry-bush";
 import { createSnobeConfig } from "../entities/tundra/snobe";
+import { createWraithConfig } from "../entities/tundra/wraith";
 
 const enum Vars {
    TRIBESMAN_SPAWN_EXCLUSION_RANGE = 1200
@@ -692,24 +693,41 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          return createSnowberryBushConfig(pos, angle);
       }
    });
+   // @Temporary cuz they b crashing the game!!
+   // registerNewSpawnInfo({
+   //    entityTypes: [EntityType.snobe],
+   //    layer: surfaceLayer,
+   //    spawnRate: 0.001,
+   //    biome: Biome.tundra,
+   //    tileTypes: [TileType.snow, TileType.ice],
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 30,
+   //    spawnDistribution: createRawSpawnDistribution(32, 0.0025),
+   //    balanceSpawnDistribution: true,
+   //    doStrictTileTypeCheck: false,
+   //    doStrictCollisionCheck: true,
+   //    packSpawning: {
+   //       getPackSize: () => Math.random() < 0.5 ? 2 : 4,
+   //       spawnRange: 120
+   //    },
+   //    createEntity: (pos: Point, angle: number): EntityConfig | null => {
+   //       return createSnobeConfig(pos, angle);
+   //    }
+   // });
    registerNewSpawnInfo({
-      entityTypes: [EntityType.snobe],
+      entityTypes: [EntityType.wraith],
       layer: surfaceLayer,
       spawnRate: 0.001,
       biome: Biome.tundra,
-      tileTypes: [TileType.snow, TileType.ice],
+      tileTypes: [TileType.permafrost],
       onlySpawnsInNight: false,
       minSpawnDistance: 30,
       spawnDistribution: createRawSpawnDistribution(32, 0.0025),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
       doStrictCollisionCheck: true,
-      packSpawning: {
-         getPackSize: () => Math.random() < 0.5 ? 2 : 4,
-         spawnRange: 120
-      },
       createEntity: (pos: Point, angle: number): EntityConfig | null => {
-         return createSnobeConfig(pos, angle);
+         return createWraithConfig(pos, angle);
       }
    });
 

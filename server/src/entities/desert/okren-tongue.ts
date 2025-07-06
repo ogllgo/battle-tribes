@@ -34,9 +34,7 @@ export function createOkrenTongueConfig(position: Point, angle: number, okrenHit
    
    // @Copynpaste
    // Apply some initial velocity
-   const vx = 200 * Math.sin(okrenHitbox.box.angle);
-   const vy = 200 * Math.cos(okrenHitbox.box.angle);
-   addHitboxVelocity(tongueTipHitbox, vx, vy);
+   addHitboxVelocity(tongueTipHitbox, Point.fromVectorForm(200, okrenHitbox.box.angle));
    
    return {
       entityType: EntityType.okrenTongue,

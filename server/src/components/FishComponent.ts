@@ -169,7 +169,7 @@ function onTick(fish: Entity): void {
          const flailDirection = 2 * Math.PI * Math.random();
          
          addHitboxAngularVelocity(fishHitbox, randFloat(1.5, 2.2) * randSign());
-         addHitboxVelocity(fishHitbox, 200 * Math.sin(flailDirection), 200 * Math.cos(flailDirection));
+         addHitboxVelocity(fishHitbox, Point.fromVectorForm(200, flailDirection));
    
          fishComponent.flailTimer = 0;
       }

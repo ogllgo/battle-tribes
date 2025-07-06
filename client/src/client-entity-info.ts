@@ -458,6 +458,14 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Snobe",
       internalName: "snobe"
    },
+   [EntityType.snobeMound]: {
+      name: "Snobe Mound",
+      internalName: "snobe-mound"
+   },
+   [EntityType.wraith]: {
+      name: "Wraith",
+      internalName: "wraith"
+   },
 };
 
 export default CLIENT_ENTITY_INFO_RECORD;

@@ -1,8 +1,11 @@
-import { TamingSkill, TamingSkillNode } from "../../../../shared/src/taming";
+import { EntityType } from "../../../../shared/src/entities";
+import { TamingSkillNode } from "../../../../shared/src/taming";
+import CLIENT_ENTITY_INFO_RECORD from "../../client-entity-info";
 import { getTamingSkillLearning, hasTamingSkill, skillLearningIsComplete, TamingComponent } from "../../entity-components/server-components/TamingComponent";
 import { cursorX, cursorY } from "../../mouse";
 
 interface TamingSkillTooltipProps {
+   readonly entityType: EntityType;
    readonly tamingComponent: TamingComponent;
    readonly skillNode: TamingSkillNode;
 }
@@ -17,8 +20,10 @@ const TamingSkillTooltip = (props: TamingSkillTooltipProps) => {
 
    const skillLearning = getTamingSkillLearning(props.tamingComponent, skill.id);
    
+   const description  = skill.description.replace("[[CREATURE_NAME]]", CLIENT_ENTITY_INFO_RECORD[props.entityType].name.toLowerCase());
+   
    return <div id="taming-skill-tooltip" style={{top: y + "px", left: x + "px"}}>
-      <p className="description">{skill.description}</p>
+      <p className="description">{description}</p>
 
       {!hasTamingSkill(tamingComponent, skill.id) ? <>
          {skillNode.requiredTamingTier <= tamingComponent.tamingTier ? (

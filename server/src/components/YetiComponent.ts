@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { SnowThrowStage, YETI_SNOW_THROW_COOLDOWN } from "../entities/mobs/yeti";
 import { ComponentArray } from "./ComponentArray";
-import { DamageSource, Entity, EntityType, SnowballSize } from "battletribes-shared/entities";
+import { DamageSource, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Biome } from "battletribes-shared/biomes";
 import { getTileIndexIncludingEdges, getTileX, getTileY, Point, randFloat, randItem, TileIndex, tileIsInWorld, UtilVars } from "battletribes-shared/utils";
@@ -170,7 +170,7 @@ function onJoin(yeti: Entity): void {
    }
 }
 
-const throwSnowball = (yeti: Entity, size: SnowballSize, throwAngle: number): void => {
+const throwSnowball = (yeti: Entity, size: number, throwAngle: number): void => {
    const transformComponent = TransformComponentArray.getComponent(yeti);
    const yetiHitbox = transformComponent.rootChildren[0] as Hitbox;
    
@@ -181,7 +181,7 @@ const throwSnowball = (yeti: Entity, size: SnowballSize, throwAngle: number): vo
    position.y += Vars.SNOW_THROW_OFFSET * Math.cos(angle);
 
    let velocityMagnitude: number;
-   if (size === SnowballSize.small) {
+   if (size === 2) {
       velocityMagnitude = randFloat(Vars.SMALL_SNOWBALL_THROW_SPEED_MIN, Vars.SMALL_SNOWBALL_THROW_SPEED_MAX);
    } else {
       velocityMagnitude = randFloat(Vars.LARGE_SNOWBALL_THROW_SPEED_MIN, Vars.LARGE_SNOWBALL_THROW_SPEED_MAX);
@@ -190,7 +190,7 @@ const throwSnowball = (yeti: Entity, size: SnowballSize, throwAngle: number): vo
    const config = createSnowballConfig(position, 2 * Math.PI * Math.random(), yeti, size);
 
    const snowballHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
-   addHitboxVelocity(snowballHitbox, velocityMagnitude * Math.sin(angle), velocityMagnitude * Math.cos(angle));
+   addHitboxVelocity(snowballHitbox, Point.fromVectorForm(velocityMagnitude, angle));
 
    createEntity(config, getEntityLayer(yeti), 0);
 }
@@ -203,12 +203,12 @@ const throwSnow = (yeti: Entity): void => {
 
    // Large snowballs
    for (let i = 0; i < 2; i++) {
-      throwSnowball(yeti, SnowballSize.large, throwAngle);
+      throwSnowball(yeti, 3, throwAngle);
    }
 
    // Small snowballs
    for (let i = 0; i < 3; i++) {
-      throwSnowball(yeti, SnowballSize.small, throwAngle);
+      throwSnowball(yeti, 2, throwAngle);
    }
 
    // Kickback

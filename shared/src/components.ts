@@ -1,6 +1,6 @@
 import { StatusEffectData } from "./client-server-types";
 import { CraftingStation } from "./items/crafting-recipes";
-import { CowSpecies, DeathInfo, DoorToggleType, FishColour, SlimeSize, SnowballSize, TreeSize, TribeTotemBanner, EntityType } from "./entities";
+import { CowSpecies, DeathInfo, DoorToggleType, FishColour, SlimeSize, TreeSize, TribeTotemBanner, EntityType } from "./entities";
 import { Inventory, InventoryName, ItemType } from "./items/items";
 import { Settings } from "./settings";
 import { StatusEffect } from "./status-effects";
@@ -141,6 +141,8 @@ export enum ServerComponentType {
    tundraRock,
    snowberryBush,
    snobe,
+   snobeMound,
+   wraith
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -274,6 +276,8 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.tundraRock]: "Tundra Rock Component",
    [ServerComponentType.snowberryBush]: "Snowberry Bush Component",
    [ServerComponentType.snobe]: "Snobe Component",
+   [ServerComponentType.snobeMound]: "Snobe Mound Component",
+   [ServerComponentType.wraith]: "Wraith Component",
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;
@@ -393,6 +397,8 @@ export const EntityComponents = {
    [EntityType.tundraRock]: [],
    [EntityType.snowberryBush]: [],
    [EntityType.snobe]: [],
+   [EntityType.snobeMound]: [],
+   [EntityType.wraith]: [],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;
 
 export type EntityComponentTypes<T extends EntityType> = typeof EntityComponents[T];
@@ -579,13 +585,6 @@ export interface SlimeSpitComponentData extends BaseComponentData {
 
 export interface SlimewispComponentData extends BaseComponentData {
    readonly componentType: ServerComponentType.slimewisp;
-}
-
-/* Snowball Component */
-
-export interface SnowballComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.snowball;
-   readonly size: SnowballSize;
 }
 
 /* Status Effect Component */

@@ -49,7 +49,8 @@ export interface Hitbox {
    mass: number;
    collisionType: HitboxCollisionType;
    readonly collisionBit: CollisionBit;
-   readonly collisionMask: number;
+   // @Temporary: this isn't readonly so that snobes can temporarily not collide with snowballs when digging
+   collisionMask: number;
    readonly flags: ReadonlyArray<HitboxFlag>;
 
    // @Memory: entities without physics components don't need these 4.
@@ -119,10 +120,10 @@ export function getRootHitbox(hitbox: Hitbox): Hitbox {
    return currentHitbox;
 }
 
-export function addHitboxVelocity(hitbox: Hitbox, pushX: number, pushY: number): void {
+export function addHitboxVelocity(hitbox: Hitbox, addVec: Point): void {
    const pushedHitbox = getRootHitbox(hitbox);
-   pushedHitbox.box.position.x += pushX / Settings.TPS;
-   pushedHitbox.box.position.y += pushY / Settings.TPS;
+   pushedHitbox.box.position.x += addVec.x / Settings.TPS;
+   pushedHitbox.box.position.y += addVec.y / Settings.TPS;
 }
 
 export function translateHitbox(hitbox: Hitbox, translationX: number, translationY: number): void {
@@ -189,7 +190,7 @@ export function applyKnockback(entity: Entity, hitbox: Hitbox, knockback: number
    const knockbackForce = knockback / totalMass;
 
    const rootHitbox = getRootHitbox(hitbox);
-   addHitboxVelocity(rootHitbox, knockbackForce * Math.sin(knockbackDirection), knockbackForce * Math.cos(knockbackDirection));
+   addHitboxVelocity(rootHitbox, Point.fromVectorForm(knockbackForce, knockbackDirection));
 
    // @Hack?
    if (getEntityType(entity) === EntityType.player) {
@@ -209,7 +210,7 @@ export function applyAbsoluteKnockback(entity: Entity, hitbox: Hitbox, knockback
    }
    
    const rootHitbox = getRootHitbox(hitbox);
-   addHitboxVelocity(rootHitbox, knockback * Math.sin(knockbackDirection), knockback * Math.cos(knockbackDirection));
+   addHitboxVelocity(rootHitbox, Point.fromVectorForm(knockback, knockbackDirection));
 
    // @Hack?
    if (getEntityType(entity) === EntityType.player) {

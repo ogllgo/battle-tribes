@@ -149,7 +149,7 @@ export function resolveEntityCollisions(layer: Layer): void {
    // Main goal: Completely skip pair checks where both chunks are inactive.
    // Ideally we would also be able to completely skip pair checks where only 1 chunk is inactive. That would actually improve the performance for cases where even the whole board is full
 
-   /*
+   /* results from a shitty perf:
                                  v  only care about this! like 95% of pairs are useless
                     none   one   both
    surfaceLayer     23601  7942  1225
@@ -205,7 +205,7 @@ export function resolveEntityCollisions(layer: Layer): void {
       const affectedEntity = pair[0];
       const collidingEntity = pair[1];
 
-      // @Speed? What does this even do?
+      // @Speed? What does this even do? awful shittery
       let collisionInfo: EntityPairCollisionInfo | undefined;
       for (let j = 0; j < globalCollisionInfo[affectedEntity]!.length; j++) {
          const currentCollisionInfo = globalCollisionInfo[affectedEntity]![j];

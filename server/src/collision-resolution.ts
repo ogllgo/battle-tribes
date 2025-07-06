@@ -60,14 +60,14 @@ const resolveHardCollisionAndFlip = (affectedHitbox: Hitbox, pushInfo: Collision
    // Keep the velocity in the separation axis
    setHitboxVelocity(affectedHitbox, separationAxisProjY * velocitySeparationCoeff, separationAxisProjX * velocitySeparationCoeff);
    // Reverse the velocity in the push axis
-   addHitboxVelocity(affectedHitbox, -pushAxisProjX * velocityPushCoeff, -pushAxisProjY * velocityPushCoeff);
+   addHitboxVelocity(affectedHitbox, new Point(-pushAxisProjX * velocityPushCoeff, -pushAxisProjY * velocityPushCoeff));
 }
 
 const resolveSoftCollision = (affectedHitbox: Hitbox, pushingHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
    const totalAffectedMass = getHitboxConnectedMass(affectedHitbox);
    if (totalAffectedMass !== 0) {
       const pushForce = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * pushInfo.amountIn * pushingHitbox.mass / totalAffectedMass;
-      addHitboxVelocity(affectedHitbox, pushForce * Math.sin(pushInfo.direction), pushForce * Math.cos(pushInfo.direction));
+      addHitboxVelocity(affectedHitbox, Point.fromVectorForm(pushForce, pushInfo.direction));
    }
 }
 

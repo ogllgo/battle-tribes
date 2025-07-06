@@ -419,6 +419,8 @@ export function sortComponentArrays(): void {
       [ServerComponentType.tundraRock]: ComponentArrayPriority.medium,
       [ServerComponentType.snowberryBush]: ComponentArrayPriority.medium,
       [ServerComponentType.snobe]: ComponentArrayPriority.medium,
+      [ServerComponentType.snobeMound]: ComponentArrayPriority.medium,
+      [ServerComponentType.wraith]: ComponentArrayPriority.medium,
       [ServerComponentType.health]: ComponentArrayPriority.high,
       // The physics component ticking must be done at the end so there is time for the positionIsDirty and hitboxesAreDirty flags to collect
       [ServerComponentType.physics]: ComponentArrayPriority.high

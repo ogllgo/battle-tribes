@@ -32,13 +32,12 @@ const createFragmentProjectile = (guardian: Entity): void => {
 
    const velocityMagnitude = randFloat(450, 700);
    const velocityDirection = offsetDirection + randFloat(-0.2, 0.2);
-   const vx = velocityMagnitude * Math.sin(velocityDirection);
-   const vy = velocityMagnitude * Math.cos(velocityDirection);
+   const vel = Point.fromVectorForm(velocityMagnitude, velocityDirection);
    
    const config = createGuardianGemFragmentProjectileConfig(new Point(originX, originY), 2 * Math.PI * Math.random(), guardian);
 
    const snowballHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
-   addHitboxVelocity(snowballHitbox, vx, vy);
+   addHitboxVelocity(snowballHitbox, vel);
    addHitboxAngularVelocity(snowballHitbox, randFloat(3.5 * Math.PI, 6 * Math.PI) * randSign());
 
    createEntity(config, getEntityLayer(guardian), 0);

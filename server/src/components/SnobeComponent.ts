@@ -4,20 +4,42 @@ import { AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { PhysicsComponentArray } from "./PhysicsComponent";
-import { entityExists, getEntityLayer, getEntityType } from "../world";
+import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 import { entityChildIsHitbox, TransformComponent, TransformComponentArray } from "./TransformComponent";
-import { addHitboxAngularVelocity, getHitboxTile, Hitbox } from "../hitboxes";
+import { addHitboxAngularAcceleration, addHitboxAngularVelocity, addHitboxVelocity, getHitboxAngularVelocity, getHitboxTile, Hitbox, teleportHitbox } from "../hitboxes";
 import { TileType } from "../../../shared/src/tiles";
 import { Settings } from "../../../shared/src/settings";
-import { getAbsAngleDiff, randFloat, randInt, randSign } from "../../../shared/src/utils";
+import { customTickIntervalHasPassed, getAbsAngleDiff, Point, randAngle, randFloat, randInt, randSign, secondsToTicks } from "../../../shared/src/utils";
 import { HitboxFlag } from "../../../shared/src/boxes/boxes";
 import { SNOBE_EAR_IDEAL_ANGLE } from "../entities/tundra/snobe";
 import { updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget, continueFollowingEntity } from "../ai/FollowAI";
+import { ItemComponentArray } from "./ItemComponent";
+import { ItemType } from "../../../shared/src/items/items";
+import { CollisionVars, entitiesAreColliding } from "../collision-detection";
+import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
+import { registerEntityTickEvent } from "../server/player-clients";
+import { healEntity } from "./HealthComponent";
+import { TamingComponentArray } from "./TamingComponent";
+import { createSnowballConfig } from "../entities/snowball";
+import { createEntity } from "../Entity";
+import { Packet } from "../../../shared/src/packets";
+import { CollisionBit } from "../../../shared/src/collision";
+import { createSnobeMoundConfig } from "../entities/tundra/snobe-mound";
 
 const MIN_EAR_WIGGLE_COOLDOWN_TICKS = 1.5 * Settings.TPS;
 const MAX_EAR_WIGGLE_COOLDOWN_TICKS = 5.5 * Settings.TPS;
 
+/** Chance to want to dig per second */
+// const SNOW_DIG_CHANCE = 0.02;
+const SNOW_DIG_CHANCE = 0.1;
+const DIG_TIME_TICKS = secondsToTicks(2.5);
+
 export class SnobeComponent {
+   public isDigging = false;
+   public ticksSpentDigging = 0;
+   public diggingStartPosition = new Point(0, 0);
+   public diggingMound: Entity = 0;
+   
    public earWiggleCooldowns = [randInt(MIN_EAR_WIGGLE_COOLDOWN_TICKS, MAX_EAR_WIGGLE_COOLDOWN_TICKS), randInt(MIN_EAR_WIGGLE_COOLDOWN_TICKS, MAX_EAR_WIGGLE_COOLDOWN_TICKS)];
 }
 
@@ -66,7 +88,7 @@ function onTick(snobe: Entity): void {
       return;
    }
 
-   // For wander AI and follow AI and standing still, wiggle ears on occasion
+   // When not in immediate danger, wiggle ears on occasion
    const snobeComponent = SnobeComponentArray.getComponent(snobe);
    for (let i = 0; i < 2; i++) {
       const earHitbox = getEarHitbox(transformComponent, i);
@@ -81,8 +103,112 @@ function onTick(snobe: Entity): void {
       }
    }
 
+   // Go to follow target if possible
+   // @Copynpaste
+   const tamingComponent = TamingComponentArray.getComponent(snobe);
+   if (entityExists(tamingComponent.followTarget)) {
+      const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.followTarget);
+      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+      
+      aiHelperComponent.turnFunc(snobe, targetHitbox.box.position, 8 * Math.PI, 0.5);
+      aiHelperComponent.moveFunc(snobe, targetHitbox.box.position, 800);
+      return;
+   }
+
+   if (snobeComponent.isDigging) {
+      if (snobeComponent.ticksSpentDigging < DIG_TIME_TICKS) {
+         snobeComponent.ticksSpentDigging++;
+
+         const progressSeconds = snobeComponent.ticksSpentDigging / Settings.TPS;
+         // minus pi/2 so that it starts on the come up
+         let acceleration = 64 * Math.PI * Math.sin(progressSeconds * 28 - Math.PI/2);
+         acceleration *= 0.2 + progressSeconds * 1.66;
+         addHitboxAngularAcceleration(hitbox, acceleration);
+
+         // Dig up snow when still digging
+         if (customTickIntervalHasPassed(snobeComponent.ticksSpentDigging, 0.25)) {
+            const offsetDir = randAngle();
+            const position = hitbox.box.position.offset(randFloat(2, 8), offsetDir);
+            const snowballConfig = createSnowballConfig(position, randAngle(), snobe, Math.random() < 0.75 ? 0 : 1);
+
+            const snowballTransformComponent = snowballConfig.components[ServerComponentType.transform]!;
+            const snowballHitbox = snowballTransformComponent.children[0] as Hitbox;
+            addHitboxVelocity(snowballHitbox, Point.fromVectorForm(randFloat(50, 80), offsetDir + randFloat(0.1, 0.3) * randSign()))
+            
+            createEntity(snowballConfig, getEntityLayer(snobe), 0);
+         }
+      } else if (Math.random() < 0.1 / Settings.TPS) {
+         // When done digging, chance to stop after a while
+         snobeComponent.isDigging = false;
+
+         // Return the collision mask back to normal
+         for (const child of transformComponent.children) {
+            if (entityChildIsHitbox(child)) {
+               child.collisionMask |= CollisionBit.snowball;
+            }
+         }
+
+         if (entityExists(snobeComponent.diggingMound)) {
+            destroyEntity(snobeComponent.diggingMound);
+         }
+      }
+
+      // @HACK AAAAAAAAAAAAAAAAAA
+      teleportHitbox(hitbox, snobeComponent.diggingStartPosition);
+
+      return;
+   }
+   
+   // Eat snowberries
+   // @Copynpaste from yeti component
+   {
+      let minDist = Number.MAX_SAFE_INTEGER;
+      let closestFoodItem: Entity | null = null;
+      for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
+         const entity = aiHelperComponent.visibleEntities[i];
+         if (getEntityType(entity) !== EntityType.itemEntity) {
+            continue;
+         }
+
+         const itemComponent = ItemComponentArray.getComponent(entity);
+         if (itemComponent.itemType === ItemType.snowberry) {
+            const entityTransformComponent = TransformComponentArray.getComponent(entity);
+            const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+            
+            const distance = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+            if (distance < minDist) {
+               minDist = distance;
+               closestFoodItem = entity;
+            }
+         }
+      }
+      if (closestFoodItem !== null) {
+         const foodTransformComponent = TransformComponentArray.getComponent(closestFoodItem);
+         const foodHitbox = foodTransformComponent.children[0] as Hitbox;
+         
+         aiHelperComponent.turnFunc(snobe, foodHitbox.box.position, 8 * Math.PI, 0.5);
+         aiHelperComponent.moveFunc(snobe, foodHitbox.box.position, 800);
+
+         if (entitiesAreColliding(snobe, closestFoodItem) !== CollisionVars.NO_COLLISION) {
+            healEntity(snobe, 3, snobe);
+            destroyEntity(closestFoodItem);
+            
+            const tamingComponent = TamingComponentArray.getComponent(snobe);
+            tamingComponent.foodEatenInTier++;
+
+            // @Hack`
+            const tickEvent: EntityTickEvent = {
+               entityID: snobe,
+               type: EntityTickEventType.cowEat,
+               data: 0
+            };
+            registerEntityTickEvent(snobe, tickEvent);
+         }
+         return;
+      }
+   }
+
    // @COPYNPASTE
-   // Follow AI: Make the krumblid like to hide in cacti
    const followAI = aiHelperComponent.getFollowAI();
    updateFollowAIComponent(followAI, aiHelperComponent.visibleEntities, 5);
 
@@ -102,6 +228,26 @@ function onTick(snobe: Entity): void {
       }
    }
 
+   if (Math.abs(getHitboxAngularVelocity(hitbox)) < 0.02 && Math.random() < SNOW_DIG_CHANCE / Settings.TPS) {
+      snobeComponent.isDigging = true;
+      snobeComponent.ticksSpentDigging = 0;
+
+      // @HACK: this is so bad, basically temporarily make the snobe not collide with any snowball.
+      // ideally this would just be not colliding with snowballs the snobe has created
+      for (const child of transformComponent.children) {
+         if (entityChildIsHitbox(child)) {
+            child.collisionMask &= ~CollisionBit.snowball;
+         }
+      }
+
+      snobeComponent.diggingStartPosition.x = hitbox.box.position.x;
+      snobeComponent.diggingStartPosition.y = hitbox.box.position.y;
+
+      // create the mound too
+      const snobeMound = createSnobeMoundConfig(hitbox.box.position.copy(), randAngle());
+      snobeComponent.diggingMound = createEntity(snobeMound, getEntityLayer(snobe), 0);
+   }
+
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(snobe);
@@ -112,7 +258,14 @@ function onTick(snobe: Entity): void {
 }
 
 function getDataLength(): number {
-   return 0;
+   return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-function addDataToPacket(): void {}
+function addDataToPacket(packet: Packet, snobe: Entity): void {
+   const snobeComponent = SnobeComponentArray.getComponent(snobe);
+   packet.addBoolean(snobeComponent.isDigging);
+   packet.padOffset(3);
+
+   const diggingProgress = snobeComponent.isDigging ? Math.min(snobeComponent.ticksSpentDigging / DIG_TIME_TICKS, 1) : 0;
+   packet.addNumber(diggingProgress);
+}

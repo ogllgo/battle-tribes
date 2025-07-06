@@ -12,9 +12,10 @@ import { createTranslationMatrix, matrixMultiplyInPlace } from "../../rendering/
 import { playSound } from "../../sound";
 import { GameInteractState } from "./GameScreen";
 import { playerInstance } from "../../player";
-import { getRootEntity, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
+import { getRootEntity, hasTamingSkill, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
 import { Hitbox } from "../../hitboxes";
 import { setShittyCarrier } from "./GameInteractableLayer";
+import { TamingSkillID } from "../../../../shared/src/taming";
 
 export const enum AnimalStaffCommandType {
    follow,
@@ -196,15 +197,25 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
       }
    }, [entity]);
    
-   if (!isVisible || entity === null) {
+   if (!isVisible || entity === null || !entityExists(entity)) {
       return null;
    }
 
+   const tamingComponent = TamingComponentArray.getComponent(entity);
+
    return <div id="animal-staff-options" style={{left: x + "px", bottom: y + "px"}} onContextMenu={e => e.preventDefault()} onMouseOver={onMouseOver} onMouseMove={onMouseMove} onMouseOut={onMouseOut}>
-      <div className={`option follow${followOptionIsSelected ? " active" : ""}`} onClick={pressFollowOption}></div>
-      <div className="option move" onClick={pressMoveOption}></div>
-      <div className="option carry" onClick={pressCarryOption}></div>
-      <div className="option attack" onClick={pressAttackOption}></div>
+      {hasTamingSkill(tamingComponent, TamingSkillID.follow) ? (
+         <div className={`option follow${followOptionIsSelected ? " active" : ""}`} onClick={pressFollowOption}></div>
+      ) : null}
+      {hasTamingSkill(tamingComponent, TamingSkillID.move) ? (
+         <div className="option move" onClick={pressMoveOption}></div>
+      ) : null}
+      {hasTamingSkill(tamingComponent, TamingSkillID.carry) ? (
+         <div className="option carry" onClick={pressCarryOption}></div>
+      ) : null}
+      {hasTamingSkill(tamingComponent, TamingSkillID.attack) ? (
+         <div className="option attack" onClick={pressAttackOption}></div>
+      ) : null}
    </div>;
 }
 

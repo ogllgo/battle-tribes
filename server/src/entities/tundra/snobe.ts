@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { Point } from "battletribes-shared/utils";
+import { Point, randInt } from "battletribes-shared/utils";
 import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import { EntityConfig } from "../../components";
 import { TransformComponent, TransformComponentArray, addHitboxToTransformComponent } from "../../components/TransformComponent";
@@ -21,8 +21,39 @@ import WanderAI from "../../ai/WanderAI";
 import { Biome } from "../../../../shared/src/biomes";
 import Layer from "../../Layer";
 import { FollowAI } from "../../ai/FollowAI";
+import { TamingComponent } from "../../components/TamingComponent";
+import { registerEntityLootOnDeath } from "../../components/LootComponent";
+import { ItemType } from "../../../../shared/src/items/items";
+import { registerEntityTamingSpec } from "../../taming-specs";
+import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
+import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 
 export const SNOBE_EAR_IDEAL_ANGLE = -Math.PI * 0.2;
+
+registerEntityLootOnDeath(EntityType.snobe, [
+   {
+      itemType: ItemType.rawSnobeMeat,
+      getAmount: () => randInt(2, 3)
+   }
+]);
+
+registerEntityTamingSpec(EntityType.snobe, {
+   maxTamingTier: 1,
+   skillNodes: [
+      {
+         skill: getTamingSkill(TamingSkillID.follow),
+         x: 0,
+         y: 10,
+         parent: null,
+         requiredTamingTier: 1
+      }
+   ],
+   foodItemType: ItemType.snowberry,
+   tierFoodRequirements: {
+      0: 0,
+      1: 5
+   }
+});
 
 function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    const biome = layer.getBiomeAtPosition(x, y);
@@ -56,7 +87,7 @@ export function createSnobeConfig(position: Point, angle: number): EntityConfig 
    const buttOffset = new Point(0, -idealButtDistance);
    const buttPosition = position.copy();
    buttPosition.add(buttOffset);
-   const buttHitbox = createHitbox(transformComponent, null, new CircularBox(buttPosition, new Point(0, 0), 0, 12), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.SNOBE_BUTT]);
+   const buttHitbox = createHitbox(transformComponent, null, new CircularBox(buttPosition, new Point(0, 0), 0, 12), 0.15, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.SNOBE_BUTT]);
    addHitboxToTransformComponent(transformComponent, buttHitbox);
    
    tetherHitboxes(buttHitbox, bodyHitbox, transformComponent, transformComponent, idealButtDistance, 25, 1);
@@ -97,6 +128,8 @@ export function createSnobeConfig(position: Point, angle: number): EntityConfig 
    const physicsComponent = new PhysicsComponent();
    
    const healthComponent = new HealthComponent(10);
+
+   const statusEffectComponent = new StatusEffectComponent(0);
    
    const aiHelperComponent = new AIHelperComponent(bodyHitbox, 280, moveFunc, turnFunc);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(1000, 8 * Math.PI, 0.4, 0.35, wanderPositionIsValid);
@@ -104,6 +137,8 @@ export function createSnobeConfig(position: Point, angle: number): EntityConfig 
    aiHelperComponent.ais[AIType.follow] = new FollowAI(8 * Settings.TPS, 16 * Settings.TPS, 0.1, 34);
 
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
+   
+   const tamingComponent = new TamingComponent();
    
    const snobeComponent = new SnobeComponent();
    
@@ -113,8 +148,10 @@ export function createSnobeConfig(position: Point, angle: number): EntityConfig 
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
+         [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
+         [ServerComponentType.taming]: tamingComponent,
          [ServerComponentType.snobe]: snobeComponent
       },
       lights: []

@@ -114,7 +114,9 @@ export const enum EntityType {
    spruceTree,
    tundraRock,
    snowberryBush,
-   snobe
+   snobe,
+   snobeMound,
+   wraith
 }
 
 export const EntityTypeString: Record<EntityType, string> = {
@@ -231,6 +233,8 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.tundraRock]: "Tundra Rock",
    [EntityType.snowberryBush]: "Snowberry Bush",
    [EntityType.snobe]: "Snobe",
+   [EntityType.snobeMound]: "Snobe Mound",
+   [EntityType.wraith]: "Wraith",
 };
 
 export const NUM_ENTITY_TYPES = Object.keys(EntityTypeString).length;
@@ -274,16 +278,6 @@ export interface TribeTotemBanner {
    readonly layer: number;
    readonly direction: number;
 }
-
-export enum SnowballSize {
-   small,
-   large
-}
-
-export const SNOWBALL_SIZES: Record<SnowballSize, number> = {
-   [SnowballSize.small]: 44,
-   [SnowballSize.large]: 60
-};
 
 export enum DamageSource {
    yeti,

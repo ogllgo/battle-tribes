@@ -143,6 +143,8 @@ import { SpruceTreeComponent, SpruceTreeComponentArray, SpruceTreeComponentParam
 import { TundraRockComponent, TundraRockComponentArray, TundraRockComponentParams } from "./server-components/TundraRockComponent";
 import { SnowberryBushComponent, SnowberryBushComponentArray, SnowberryBushComponentParams } from "./server-components/SnowberryBushComponent";
 import { SnobeComponent, SnobeComponentArray, SnobeComponentParams } from "./server-components/SnobeComponent";
+import { SnobeMoundComponent, SnobeMoundComponentArray, SnobeMoundComponentParams } from "./server-components/SnobeMoundComponent";
+import { WraithComponent, WraithComponentArray, WraithComponentParams } from "./server-components/WraithComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -294,6 +296,8 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.tundraRock]: TundraRockComponentArray,
    [ServerComponentType.snowberryBush]: SnowberryBushComponentArray,
    [ServerComponentType.snobe]: SnobeComponentArray,
+   [ServerComponentType.snobeMound]: SnobeMoundComponentArray,
+   [ServerComponentType.wraith]: WraithComponentArray,
 };
 
 const ServerComponentRecord = {
@@ -421,6 +425,8 @@ const ServerComponentRecord = {
    [ServerComponentType.tundraRock]: (): TundraRockComponent => 0 as any,
    [ServerComponentType.snowberryBush]: (): SnowberryBushComponent => 0 as any,
    [ServerComponentType.snobe]: (): SnobeComponent => 0 as any,
+   [ServerComponentType.snobeMound]: (): SnobeMoundComponent => 0 as any,
+   [ServerComponentType.wraith]: (): WraithComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
 
 export type ServerComponent<T extends ServerComponentType> = ReturnType<typeof ServerComponentRecord[T]>;
@@ -550,6 +556,8 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.tundraRock]: (): TundraRockComponentParams => 0 as any,
    [ServerComponentType.snowberryBush]: (): SnowberryBushComponentParams => 0 as any,
    [ServerComponentType.snobe]: (): SnobeComponentParams => 0 as any,
+   [ServerComponentType.snobeMound]: (): SnobeMoundComponentParams => 0 as any,
+   [ServerComponentType.wraith]: (): WraithComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;
