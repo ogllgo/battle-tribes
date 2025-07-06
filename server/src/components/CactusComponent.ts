@@ -3,7 +3,7 @@ import { Entity, EntityType, DamageSource, CactusFlowerSize } from "battletribes
 import { ComponentArray } from "./ComponentArray";
 import { Packet } from "battletribes-shared/packets";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
-import { Point, randInt } from "../../../shared/src/utils";
+import { Point, randAngle, randInt } from "../../../shared/src/utils";
 import { getEntityType, destroyEntity, getEntityLayer } from "../world";
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { applyAbsoluteKnockback, Hitbox } from "../hitboxes";
@@ -66,7 +66,7 @@ function onTick(cactus: Entity): void {
             const cactusHitbox = transformComponent.children[0] as Hitbox;
             const cactusRadius = (cactusHitbox.box as CircularBox).radius;
       
-            const offsetDirection = 2 * Math.PI * Math.random();
+            const offsetDirection = randAngle();
             const offsetX = cactusRadius * Math.sin(offsetDirection);
             const offsetY = cactusRadius * Math.cos(offsetDirection);
       
@@ -74,7 +74,7 @@ function onTick(cactus: Entity): void {
             const y = cactusHitbox.box.position.y + offsetY;
             const position = new Point(x, y);
             
-            const fruitConfig = createPricklyPearConfig(position, 2 * Math.PI * Math.random());
+            const fruitConfig = createPricklyPearConfig(position, randAngle());
             fruitConfig.attachInfo = createEntityConfigAttachInfo(cactus, cactusHitbox, true);
             createEntity(fruitConfig, getEntityLayer(cactus), 0);
       

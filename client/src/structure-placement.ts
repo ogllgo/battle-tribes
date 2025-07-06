@@ -1,13 +1,13 @@
-import { updateBox, boxIsCircular } from "../../shared/src/boxes/boxes";
+import { boxIsCircular } from "../../shared/src/boxes/boxes";
 import RectangularBox from "../../shared/src/boxes/RectangularBox";
 import { boxIsCollidingWithSubtile } from "../../shared/src/collision";
 import { getEntityCollisionGroup, CollisionGroup } from "../../shared/src/collision-groups";
-import { Entity, EntityType, EntityTypeString } from "../../shared/src/entities";
+import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { STRUCTURE_TYPES, StructureType } from "../../shared/src/structures";
 import { getSubtileIndex, subtileIsInWorld, getSubtileX, getSubtileY } from "../../shared/src/subtiles";
 import { SubtileType } from "../../shared/src/tiles";
-import { Point, alignAngleToClosestAxis, getAbsAngleDiff, distance, getTileIndexIncludingEdges } from "../../shared/src/utils";
+import { Point, alignAngleToClosestAxis, getAbsAngleDiff, distance, getTileIndexIncludingEdges, polarVec2 } from "../../shared/src/utils";
 import { Hitbox } from "./hitboxes";
 import { ItemComponentArray } from "./entity-components/server-components/ItemComponent";
 import { entityChildIsHitbox, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
@@ -277,7 +277,7 @@ const structurePlaceIsValid = (hitboxes: ReadonlyArray<Hitbox>, layer: Layer): b
 const calculateRegularPlacePosition = (placeOrigin: Point, placingEntityRotation: number, entityType: EntityType): Point => {
    // @Hack?
    if (entityType === EntityType.bracings) {
-      const placePosition = Point.fromVectorForm(Vars.STRUCTURE_PLACE_DISTANCE + Settings.TILE_SIZE * 0.5, placingEntityRotation);
+      const placePosition = polarVec2(Vars.STRUCTURE_PLACE_DISTANCE + Settings.TILE_SIZE * 0.5, placingEntityRotation);
       placePosition.add(placeOrigin);
       return placePosition;
    }
@@ -318,7 +318,7 @@ const calculateRegularPlacePosition = (placeOrigin: Point, placingEntityRotation
    const boundingAreaHeight = entityMaxY - entityMinY;
    const placeOffsetY = boundingAreaHeight * 0.5;
    
-   const placePosition = Point.fromVectorForm(Vars.STRUCTURE_PLACE_DISTANCE + placeOffsetY, placingEntityRotation);
+   const placePosition = polarVec2(Vars.STRUCTURE_PLACE_DISTANCE + placeOffsetY, placingEntityRotation);
    placePosition.add(placeOrigin);
    return placePosition;
 }
@@ -395,7 +395,7 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
 
          // Add snap positions for each direction off the connecting entity hitbox
          for (let i = 0; i < 4; i++) {
-            const offsetDirection = connectingEntityHitbox.box.angle + i * Math.PI / 2;
+            const offsetDir = connectingEntityHitbox.box.angle + i * Math.PI / 2;
       
             const connectingEntityOffset = i % 2 === 0 ? hitboxHalfHeight : hitboxHalfWidth;
    
@@ -403,7 +403,7 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
             
             let placingEntityOffset: number;
             // Direction to the snapping entity is opposite of the offset from the snapping entity
-            const angleDiff = getAbsAngleDiff(offsetDirection + Math.PI, placingEntityAngle);
+            const angleDiff = getAbsAngleDiff(offsetDir + Math.PI, placingEntityAngle);
             if (angleDiff < Math.PI * 0.5) {
                // Top or bottom is bing connected
                placingEntityOffset = placingEntityHitboxHalfHeight;
@@ -418,10 +418,10 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
             for (let xi = -1; xi <= 1; xi++) {
                const sideOffset = (maxLength - minLength) * 0.5 * xi;
                
-               const position = Point.fromVectorForm(connectingEntityOffset + placingEntityOffset, offsetDirection);
+               const position = polarVec2(connectingEntityOffset + placingEntityOffset, offsetDir);
                position.add(snapOrigin);
-               position.x += sideOffset * Math.sin(offsetDirection + Math.PI * 0.5);
-               position.y += sideOffset * Math.cos(offsetDirection + Math.PI * 0.5);
+               position.x += sideOffset * Math.sin(offsetDir + Math.PI * 0.5);
+               position.y += sideOffset * Math.cos(offsetDir + Math.PI * 0.5);
                positions.push(position);
             }
 

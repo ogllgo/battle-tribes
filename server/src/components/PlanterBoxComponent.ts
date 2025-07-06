@@ -12,6 +12,7 @@ import { createTreePlantedConfig } from "../entities/resources/tree-planted";
 import { createIceSpikesPlantedConfig } from "../entities/resources/ice-spikes-planted";
 import { createBerryBushPlantedConfig } from "../entities/resources/berry-bush-planted";
 import { Hitbox } from "../hitboxes";
+import { randAngle } from "../../../shared/src/utils";
 
 const enum Vars {
    FERTILISER_DURATION_TICKS = 300 * Settings.TPS
@@ -79,15 +80,15 @@ export function placePlantInPlanterBox(planterBox: Entity, plantedEntityType: Pl
    let config: EntityConfig;
    switch (plantedEntityType) {
       case EntityType.treePlanted: {
-         config = createTreePlantedConfig(planterBoxHitbox.box.position.copy(), 2 * Math.PI * Math.random(), planterBox);
+         config = createTreePlantedConfig(planterBoxHitbox.box.position.copy(), randAngle(), planterBox);
          break;
       }
       case EntityType.berryBushPlanted: {
-         config = createBerryBushPlantedConfig(planterBoxHitbox.box.position.copy(), 2 * Math.PI * Math.random(), planterBox);
+         config = createBerryBushPlantedConfig(planterBoxHitbox.box.position.copy(), randAngle(), planterBox);
          break;
       }
       case EntityType.iceSpikesPlanted: {
-         config = createIceSpikesPlantedConfig(planterBoxHitbox.box.position.copy(), 2 * Math.PI * Math.random(), planterBox);
+         config = createIceSpikesPlantedConfig(planterBoxHitbox.box.position.copy(), randAngle(), planterBox);
          break;
       }
    }

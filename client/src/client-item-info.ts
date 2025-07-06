@@ -803,6 +803,14 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       name: "Snobe Stew",
       namePlural: "Snobe Stews",
       description: ""
+   },
+   [ItemType.wraithTooth]: {
+      entityTextureSource: "items/small/wraith-tooth.png",
+      textureSource: "items/large/wraith-tooth.png",
+      toolTextureSource: "",
+      name: "Wraith Tooth",
+      namePlural: "Wraith Teeth",
+      description: ""
    }
 };
 

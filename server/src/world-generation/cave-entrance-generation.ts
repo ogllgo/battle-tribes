@@ -2,7 +2,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { SubtileType, TileType } from "battletribes-shared/tiles";
-import { getTileIndexIncludingEdges, getTileX, getTileY, lerp, Point, randItem, TileIndex } from "battletribes-shared/utils";
+import { getTileIndexIncludingEdges, getTileX, getTileY, lerp, Point, randAngle, randItem, TileIndex } from "battletribes-shared/utils";
 import { getEntitiesInRange } from "../ai-shared";
 import { createGuardianConfig } from "../entities/mobs/guardian";
 import { createEntity } from "../Entity";
@@ -64,7 +64,7 @@ export function generateCaveEntrances(surfaceLayer: Layer): void {
       //    continue;
       // }
 
-      const caveDirection = 2 * Math.PI * Math.random();
+      const caveDirection = randAngle();
 
       // Clear any existing walls in the cave generation area
       for (let xOffset = -4; xOffset <= 4; xOffset++) {
@@ -224,7 +224,7 @@ export function spawnGuardians(): void {
             }
 
             if (isValid) {
-               const config = createGuardianConfig(new Point(x, y), 2 * Math.PI * Math.random(), tiles);
+               const config = createGuardianConfig(new Point(x, y), randAngle(), tiles);
                createEntity(config, surfaceLayer, 0);
                break;
             }

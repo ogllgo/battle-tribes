@@ -6,7 +6,7 @@ import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../..
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
-import { randFloat, randInt } from "../../../../shared/src/utils";
+import { randAngle, randFloat, randInt } from "../../../../shared/src/utils";
 import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle } from "../../particles";
 import { playSoundOnHitbox } from "../../sound";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
@@ -105,7 +105,7 @@ function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
 
-   const moveDirection = 2 * Math.PI * Math.random();
+   const moveDirection = randAngle();
    
    const spawnPositionX = hitbox.box.position.x + RADIUS * Math.sin(moveDirection);
    const spawnPositionY = hitbox.box.position.y + RADIUS * Math.cos(moveDirection);
@@ -126,11 +126,11 @@ function onDie(entity: Entity): void {
 
    for (let i = 0; i < 6; i++) {
       const offsetMagnitude = RADIUS * Math.random();
-      const spawnOffsetDirection = 2 * Math.PI * Math.random();
+      const spawnOffsetDirection = randAngle();
       const spawnPositionX = hitbox.box.position.x + offsetMagnitude * Math.sin(spawnOffsetDirection);
       const spawnPositionY = hitbox.box.position.y + offsetMagnitude * Math.cos(spawnOffsetDirection);
 
-      createLeafParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), LeafParticleSize.small);
+      createLeafParticle(spawnPositionX, spawnPositionY, randAngle(), LeafParticleSize.small);
    }
    
    // Create leaf specks

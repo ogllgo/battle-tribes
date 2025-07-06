@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { playSoundOnHitbox, SoundInfo } from "../../sound";
 import { Settings } from "battletribes-shared/settings";
-import { lerp } from "battletribes-shared/utils";
+import { lerp, randAngle } from "battletribes-shared/utils";
 import { createAcidParticle, createPoisonBubble } from "../../particles";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { TransformComponentArray } from "./TransformComponent";
@@ -74,7 +74,7 @@ function onTick(entity: Entity): void {
    if (Vars.MAX_RANGE * Math.random() < range) {
       // Calculate spawn position
       const offsetMagnitude = range * Math.random();
-      const moveDirection = 2 * Math.PI * Math.random();
+      const moveDirection = randAngle();
       const spawnPositionX = hitbox.box.position.x + offsetMagnitude * Math.sin(moveDirection);
       const spawnPositionY = hitbox.box.position.y + offsetMagnitude * Math.cos(moveDirection);
 
@@ -86,7 +86,7 @@ function onTick(entity: Entity): void {
    }
 
    const offsetMagnitude = range * Math.random();
-   const offsetDirection = 2 * Math.PI * Math.random();
+   const offsetDirection = randAngle();
    const x = hitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
    const y = hitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);
 

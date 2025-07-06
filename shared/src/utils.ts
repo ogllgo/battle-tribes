@@ -173,11 +173,6 @@ export class Point {
    public static unpackage(packagedPoint: [number, number]): Point {
       return new Point(packagedPoint[0], packagedPoint[1]);
    }
-   public static fromVectorForm(magnitude: number, direction: number): Point {
-      const x = magnitude * Math.sin(direction);
-      const y = magnitude * Math.cos(direction);
-      return new Point(x, y);
-   }
 }
 
 export class Vector {
@@ -500,4 +495,10 @@ export function clampAngleB(angle: number): number {
 
 export function secondsToTicks(sex: number): number {
    return Math.floor(sex * Settings.TPS);
+}
+
+export function polarVec2(magnitude: number, direction: number): Point {
+   const x = magnitude * Math.sin(direction);
+   const y = magnitude * Math.cos(direction);
+   return new Point(x, y);
 }

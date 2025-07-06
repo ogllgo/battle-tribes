@@ -9,7 +9,7 @@ import { createEntity } from "../Entity";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Settings } from "../../../shared/src/settings";
 import { StatusEffect } from "../../../shared/src/status-effects";
-import { Point } from "../../../shared/src/utils";
+import { Point, randAngle } from "../../../shared/src/utils";
 import { HealthComponentArray, damageEntity } from "./HealthComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "./StatusEffectComponent";
 import { applyKnockback, getHitboxVelocity, Hitbox } from "../hitboxes";
@@ -57,7 +57,7 @@ function preRemove(spit: Entity): void {
       const transformComponent = TransformComponentArray.getComponent(spit);
       const spitHitbox = transformComponent.children[0] as Hitbox;
 
-      const config = createSpitPoisonAreaConfig(spitHitbox.box.position.copy(), 2 * Math.PI * Math.random());
+      const config = createSpitPoisonAreaConfig(spitHitbox.box.position.copy(), randAngle());
       createEntity(config, getEntityLayer(spit), 0);
    }
 }

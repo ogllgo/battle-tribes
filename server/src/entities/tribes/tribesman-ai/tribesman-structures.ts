@@ -2,7 +2,7 @@ import { TribesmanAIType } from "battletribes-shared/components";
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { PathfindingSettings } from "battletribes-shared/settings";
 import { TribesmanTitle } from "battletribes-shared/titles";
-import { angle, assert, getAbsAngleDiff, getAngleDiff } from "battletribes-shared/utils";
+import { angle, assert, getAbsAngleDiff, getAngleDiff, polarVec2 } from "battletribes-shared/utils";
 import Tribe from "../../../Tribe";
 import { getDistanceFromPointToEntity, willStopAtDesiredDistance } from "../../../ai-shared";
 import { HealthComponentArray } from "../../../components/HealthComponent";
@@ -116,9 +116,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          // 
 
          const acceleration = getTribesmanSlowAcceleration(tribesman);
-         const accelerationX = acceleration * Math.sin(targetDirection + Math.PI);
-         const accelerationY = acceleration * Math.cos(targetDirection + Math.PI);
-         applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+         applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, targetDirection + Math.PI));
 
          turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 0.5, false);
          
@@ -194,9 +192,8 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
    if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange, distance)) {
       // If the tribesman will stop too close to the target, move back a bit
       if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange - 20, distance)) {
-         const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle + Math.PI);
-         const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle + Math.PI);
-         applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+         const acceleration = getTribesmanSlowAcceleration(tribesman);
+         applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, tribesmanHitbox.box.angle + Math.PI));
       }
 
       const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(buildingHitbox.box.position);
@@ -262,9 +259,8 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
    if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange, distance)) {
       // If the tribesman will stop too close to the target, move back a bit
       if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange - 20, distance)) {
-         const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle + Math.PI);
-         const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle + Math.PI);
-         applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+         const acceleration = getTribesmanSlowAcceleration(tribesman);
+         applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, tribesmanHitbox.box.angle + Math.PI));
       }
 
       const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(buildingHitbox.box.position);

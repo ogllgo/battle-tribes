@@ -1,6 +1,6 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
-import { randFloat } from "../../../../shared/src/utils";
+import { randAngle, randFloat } from "../../../../shared/src/utils";
 import { Hitbox } from "../../hitboxes";
 import { createDirtParticle } from "../../particles";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
@@ -42,7 +42,7 @@ function onSpawn(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
    for (let i = 0; i < 7; i++) {
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const offsetMagnitude = randFloat(0, 10);
       const x = hitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
       const y = hitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);

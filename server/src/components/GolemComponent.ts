@@ -4,7 +4,7 @@ import { ComponentArray } from "./ComponentArray";
 import { DamageSource, Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
-import { randFloat, lerp, randInt, Point } from "battletribes-shared/utils";
+import { randFloat, lerp, randInt, Point, polarVec2, randAngle } from "battletribes-shared/utils";
 import { createPebblumConfig } from "../entities/mobs/pebblum";
 import { createEntity } from "../Entity";
 import { PebblumComponentArray } from "./PebblumComponent";
@@ -50,7 +50,7 @@ const generateRockInfoArray = (children: ReadonlyArray<TransformNode>): Array<Ro
       const box = hitbox.box as CircularBox;
 
       const offsetMagnitude = BODY_GENERATION_RADIUS * Math.random()
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
 
       rockInfoArray.push({
          hitbox: hitbox,
@@ -128,7 +128,7 @@ const shiftRocks = (golem: Entity, golemComponent: GolemComponent): void => {
          rockInfo.lastOffsetX = rockInfo.targetOffsetX;
          rockInfo.lastOffsetY = rockInfo.targetOffsetY;
          const offsetMagnitude = randFloat(0, 3);
-         const offsetDirection = 2 * Math.PI * Math.random();
+         const offsetDirection = randAngle();
          rockInfo.targetOffsetX = rockInfo.awakeOffsetX + offsetMagnitude * Math.sin(offsetDirection);
          rockInfo.targetOffsetY = rockInfo.awakeOffsetY + offsetMagnitude * Math.cos(offsetDirection);
          rockInfo.currentShiftTimerTicks = 0;
@@ -152,11 +152,11 @@ const summonPebblums = (golem: Entity, golemComponent: GolemComponent, target: E
    const numPebblums = randInt(2, 3);
    for (let i = 0; i < numPebblums; i++) {
       const offsetMagnitude = randFloat(200, 350);
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const x = golemHitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
       const y = golemHitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);
       
-      const config = createPebblumConfig(new Point(x, y), 2 * Math.PI * Math.random());
+      const config = createPebblumConfig(new Point(x, y), randAngle());
       config.components[ServerComponentType.pebblum]!.targetEntityID = target;
       const pebblum = createEntity(config, layer, 0);
       
@@ -239,7 +239,7 @@ function onTick(golem: Entity): void {
    const targetTransformComponent = TransformComponentArray.getComponent(target);
    const targetHitbox = targetTransformComponent.children[0] as Hitbox;
 
-   const angleToTarget = golemHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+   const targetDir = golemHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
 
    // Wake up
    if (golemComponent.wakeTimerTicks < GOLEM_WAKE_TIME_TICKS) {
@@ -248,7 +248,7 @@ function onTick(golem: Entity): void {
       
       golemComponent.wakeTimerTicks++;
 
-      turnHitboxToAngle(golemHitbox, angleToTarget, Math.PI / 4, 0.5, false);
+      turnHitboxToAngle(golemHitbox, targetDir, Math.PI / 4, 0.5, false);
       return;
    }
 
@@ -263,11 +263,9 @@ function onTick(golem: Entity): void {
       }
    }
 
-   const accelerationX = 350 * Math.sin(angleToTarget);
-   const accelerationY = 350 * Math.cos(angleToTarget);
-   applyAccelerationFromGround(golem, golemHitbox, accelerationX, accelerationY);
+   applyAccelerationFromGround(golem, golemHitbox, polarVec2(350, targetDir));
 
-   turnHitboxToAngle(golemHitbox, angleToTarget, Math.PI / 1.5, 0.5, false);
+   turnHitboxToAngle(golemHitbox, targetDir, Math.PI / 1.5, 0.5, false);
 }
 
 function getDataLength(): number {

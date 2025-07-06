@@ -1,7 +1,7 @@
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import { angle, curveWeight, Point, lerp, rotateXAroundPoint, rotateYAroundPoint, distance, distBetweenPointAndRectangle, TileIndex, getTileIndexIncludingEdges, assert } from "battletribes-shared/utils";
+import { angle, curveWeight, Point, lerp, rotateXAroundPoint, rotateYAroundPoint, distance, distBetweenPointAndRectangle, TileIndex, getTileIndexIncludingEdges, assert, polarVec2 } from "battletribes-shared/utils";
 import Layer from "./Layer";
 import { getEntityPathfindingGroupID } from "./pathfinding";
 import { entityChildIsEntity, entityChildIsHitbox, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
@@ -77,9 +77,7 @@ export function accelerateEntityToPosition(entity: Entity, pos: Point, accelerat
 
    const targetDirection = entityHitbox.box.position.calculateAngleBetween(pos);
 
-   const accelerationX = acceleration * Math.sin(targetDirection);
-   const accelerationY = acceleration * Math.cos(targetDirection);
-   applyAccelerationFromGround(entity, entityHitbox, accelerationX, accelerationY);
+   applyAccelerationFromGround(entity, entityHitbox, polarVec2(acceleration, targetDirection));
 }
 
 export function moveEntityToPosition(entity: Entity, x: number, y: number, acceleration: number, turnSpeed: number, turnDamping: number): void {
@@ -89,9 +87,7 @@ export function moveEntityToPosition(entity: Entity, x: number, y: number, accel
 
    const targetDirection = angle(x - entityHitbox.box.position.x, y - entityHitbox.box.position.y);
 
-   const accelerationX = acceleration * Math.sin(targetDirection);
-   const accelerationY = acceleration * Math.cos(targetDirection);
-   applyAccelerationFromGround(entity, entityHitbox, accelerationX, accelerationY);
+   applyAccelerationFromGround(entity, entityHitbox, polarVec2(acceleration, targetDirection));
 
    turnHitboxToAngle(entityHitbox, targetDirection, turnSpeed, turnDamping, false);
 }

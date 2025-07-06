@@ -2,7 +2,7 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { Settings } from "../../../../shared/src/settings";
-import { randFloat, Point } from "../../../../shared/src/utils";
+import { randFloat, Point, randAngle } from "../../../../shared/src/utils";
 import { Hitbox } from "../../hitboxes";
 import { createSlurbParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
@@ -146,7 +146,7 @@ function onTick(glurb: Entity): void {
 
 function onHit(entity: Entity, _hitbox: Hitbox, hitPosition: Point): void {
    for (let i = 0; i < 10; i++) {
-      createSlurbParticle(hitPosition.x, hitPosition.y, 2 * Math.PI * Math.random(), randFloat(80, 120), 0, 0);
+      createSlurbParticle(hitPosition.x, hitPosition.y, randAngle(), randFloat(80, 120), 0, 0);
    }
 
    playSound("glurb-hit.mp3", 0.4, randFloat(0.9, 1.2), hitPosition, getEntityLayer(entity));
@@ -158,7 +158,7 @@ function onDie(entity: Entity): void {
 
    for (let i = 0; i < 3; i++) {
       const pos = getRandomPositionInBox(hitbox.box);
-      createSlurbParticle(pos.x, pos.y, 2 * Math.PI * Math.random(), randFloat(80, 120), 0, 0);
+      createSlurbParticle(pos.x, pos.y, randAngle(), randFloat(80, 120), 0, 0);
    }
 
    playSoundOnHitbox("glurb-death.mp3", 0.2, 1, entity, hitbox, false);

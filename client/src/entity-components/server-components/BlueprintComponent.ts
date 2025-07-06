@@ -1,5 +1,5 @@
 import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
-import { assertUnreachable, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { assertUnreachable, randAngle, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { playSoundOnHitbox } from "../../sound";
 import { createDustCloud, createLightWoodSpeckParticle, createRockParticle, createRockSpeckParticle, createSawdustCloud, createWoodShardParticle } from "../../particles";
 import { getEntityTextureAtlas, getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -387,9 +387,9 @@ make the origin point for the offset be based on the partial render part (random
 
 const createStoneBlueprintWorkParticleEffects = (originX: number, originY: number): void => {
    for (let i = 0; i < 3; i++) {
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const offsetAmount = 12 * Math.random();
-      createRockParticle(originX + offsetAmount * Math.sin(offsetDirection), originY + offsetAmount * Math.cos(offsetDirection), 2 * Math.PI * Math.random(), randFloat(50, 70), ParticleRenderLayer.high);
+      createRockParticle(originX + offsetAmount * Math.sin(offsetDirection), originY + offsetAmount * Math.cos(offsetDirection), randAngle(), randFloat(50, 70), ParticleRenderLayer.high);
    }
 
    for (let i = 0; i < 10; i++) {
@@ -681,9 +681,9 @@ function onDie(entity: Entity): void {
       case BlueprintType.stoneDoor:
       case BlueprintType.stoneBracings: {
          for (let i = 0; i < 5; i++) {
-            const offsetDirection = 2 * Math.PI * Math.random();
+            const offsetDirection = randAngle();
             const offsetAmount = 32 * Math.random();
-            createRockParticle(hitbox.box.position.x + offsetAmount * Math.sin(offsetDirection), hitbox.box.position.y + offsetAmount * Math.cos(offsetDirection), 2 * Math.PI * Math.random(), randFloat(50, 70), ParticleRenderLayer.high);
+            createRockParticle(hitbox.box.position.x + offsetAmount * Math.sin(offsetDirection), hitbox.box.position.y + offsetAmount * Math.cos(offsetDirection), randAngle(), randFloat(50, 70), ParticleRenderLayer.high);
          }
       
          for (let i = 0; i < 10; i++) {

@@ -4,12 +4,12 @@ import { AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { PhysicsComponentArray } from "./PhysicsComponent";
-import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
 import { entityChildIsHitbox, TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { addHitboxAngularAcceleration, addHitboxAngularVelocity, addHitboxVelocity, getHitboxAngularVelocity, getHitboxTile, Hitbox, teleportHitbox } from "../hitboxes";
 import { TileType } from "../../../shared/src/tiles";
 import { Settings } from "../../../shared/src/settings";
-import { customTickIntervalHasPassed, getAbsAngleDiff, Point, randAngle, randFloat, randInt, randSign, secondsToTicks } from "../../../shared/src/utils";
+import { customTickIntervalHasPassed, getAbsAngleDiff, Point, polarVec2, randAngle, randFloat, randInt, randSign, secondsToTicks } from "../../../shared/src/utils";
 import { HitboxFlag } from "../../../shared/src/boxes/boxes";
 import { SNOBE_EAR_IDEAL_ANGLE } from "../entities/tundra/snobe";
 import { updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget, continueFollowingEntity } from "../ai/FollowAI";
@@ -133,7 +133,7 @@ function onTick(snobe: Entity): void {
 
             const snowballTransformComponent = snowballConfig.components[ServerComponentType.transform]!;
             const snowballHitbox = snowballTransformComponent.children[0] as Hitbox;
-            addHitboxVelocity(snowballHitbox, Point.fromVectorForm(randFloat(50, 80), offsetDir + randFloat(0.1, 0.3) * randSign()))
+            addHitboxVelocity(snowballHitbox, polarVec2(randFloat(50, 80), offsetDir + randFloat(0.1, 0.3) * randSign()))
             
             createEntity(snowballConfig, getEntityLayer(snobe), 0);
          }

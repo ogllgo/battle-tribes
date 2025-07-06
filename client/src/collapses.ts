@@ -1,6 +1,6 @@
 import { Settings } from "../../shared/src/settings";
 import { SubtileType } from "../../shared/src/tiles";
-import { customTickIntervalHasPassed, distance, lerp, Point, randFloat, randInt } from "../../shared/src/utils";
+import { customTickIntervalHasPassed, distance, lerp, Point, randAngle, randFloat, randInt } from "../../shared/src/utils";
 import Board from "./Board";
 import Camera from "./Camera";
 import { getSubtileX, getSubtileY } from "./Layer";
@@ -90,12 +90,12 @@ export function tickCollapse(collapsingSubtileIndex: number, ageTicks: number): 
 const createSpeckDebris = (x: number, y: number, subtileType: SubtileType): void => {
    // @Copynpaste from Layer registerSubtileUpdate function
    
-   const spawnOffsetDirection = 2 * Math.PI * Math.random();
+   const spawnOffsetDirection = randAngle();
    const spawnPositionX = x + 12 * Math.sin(spawnOffsetDirection);
    const spawnPositionY = y + 12 * Math.cos(spawnOffsetDirection);
 
    const velocityMagnitude = randFloat(50, 70);
-   const velocityDirection = 2 * Math.PI * Math.random();
+   const velocityDirection = randAngle();
    const velocityX = velocityMagnitude * Math.sin(velocityDirection);
    const velocityY = velocityMagnitude * Math.cos(velocityDirection);
 
@@ -131,7 +131,7 @@ const createSpeckDebris = (x: number, y: number, subtileType: SubtileType): void
       velocityX, velocityY,
       0, 0,
       velocityMagnitude / lifetime / 0.7,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       angularVelocity,
       0,
       Math.abs(angularVelocity) / lifetime / 1.5,
@@ -148,7 +148,7 @@ const createLargeDebrisParticle = (x: number, y: number, subtileType: SubtileTyp
    // @Copynpaste from Layer registerSubtileUpdate function
    
    const spawnOffsetMagnitude = 8 * Math.random();
-   const spawnOffsetDirection = 2 * Math.PI * Math.random();
+   const spawnOffsetDirection = randAngle();
    const particleX = x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
    const particleY = y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
    
@@ -164,7 +164,7 @@ const createLargeDebrisParticle = (x: number, y: number, subtileType: SubtileTyp
    }
 
    const moveSpeed = randFloat(20, 40);
-   const moveDirection = 2 * Math.PI * Math.random();
+   const moveDirection = randAngle();
    const velocityX = moveSpeed * Math.sin(moveDirection);
    const velocityY = moveSpeed * Math.cos(moveDirection);
 
@@ -185,7 +185,7 @@ const createLargeDebrisParticle = (x: number, y: number, subtileType: SubtileTyp
       velocityX, velocityY,
       0, 0,
       moveSpeed * 1.5,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       1 * Math.PI * spinDirection,
       0,
       Math.abs(Math.PI * spinDirection),

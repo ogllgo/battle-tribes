@@ -29,7 +29,7 @@ import { registerDirtyRenderInfo } from "../rendering/render-part-matrices";
 import { Biome } from "../../../shared/src/biomes";
 import { ExtendedTribe, readExtendedTribeData, readShortTribeData, Tribe, tribes, updatePlayerTribe } from "../tribes";
 import { readPacketDevData } from "./dev-packet-processing";
-import { assert, Point, randFloat, TileIndex } from "../../../shared/src/utils";
+import { assert, Point, randAngle, randFloat, TileIndex } from "../../../shared/src/utils";
 import { playerInstance, setPlayerInstance } from "../player";
 import { gameScreenSetIsDead } from "../components/game/GameScreen";
 import { selectItemSlot } from "../components/game/GameInteractableLayer";
@@ -627,7 +627,7 @@ export function processGameDataPacket(reader: PacketReader): void {
             const transformComponent = TransformComponentArray.getComponent(hitEntity);
             const hitbox = transformComponent.children[0] as Hitbox;
             for (let i = 0; i < 6; i++) {
-               const position = hitbox.box.position.offset(randFloat(0, 6), 2 * Math.PI * Math.random());
+               const position = hitbox.box.position.offset(randFloat(0, 6), randAngle());
                createSparkParticle(position.x, position.y);
             }
          } else {

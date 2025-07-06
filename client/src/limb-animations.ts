@@ -1,5 +1,5 @@
 import { Settings } from "battletribes-shared/settings";
-import { Point, customTickIntervalHasPassed, lerp, randFloat, randInt, randItem, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { Point, customTickIntervalHasPassed, lerp, randAngle, randFloat, randInt, randItem, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { Entity, LimbAction } from "battletribes-shared/entities";
 import { InventoryUseComponentArray, LimbInfo } from "./entity-components/server-components/InventoryUseComponent";
 import { getTextureArrayIndex } from "./texture-atlases/texture-atlases";
@@ -37,7 +37,7 @@ const INGREDIENT_PARTICLE_COLOURS: Partial<Record<ItemType, ReadonlyArray<Partic
 const MEDICINE_PARTICLE_COLOURS: ReadonlyArray<ParticleColour> = [[217/255, 26/255, 20/255], [63/255, 204/255, 91/255]];
 
 export function generateRandomLimbPosition(): Point {
-   const offsetDirection = 2 * Math.PI * Math.random();
+   const offsetDirection = randAngle();
    const offsetMagnitude = 8 * Math.random();
 
    const x = offsetMagnitude * Math.sin(offsetDirection);
@@ -95,12 +95,12 @@ const createBandageRenderPart = (entity: Entity): void => {
    const renderPart = new TexturedRenderPart(
       hitbox,
       6,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       getTextureArrayIndex("entities/miscellaneous/bandage.png")
    );
 
    const offsetMagnitude = 32 * Math.random();
-   const offsetDirection = 2 * Math.PI * Math.random();
+   const offsetDirection = randAngle();
    renderPart.offset.x = offsetMagnitude * Math.sin(offsetDirection);
    renderPart.offset.y = offsetMagnitude * Math.cos(offsetDirection);
 

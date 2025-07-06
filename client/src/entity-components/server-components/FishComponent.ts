@@ -1,4 +1,4 @@
-import { randFloat, randInt } from "battletribes-shared/utils";
+import { randAngle, randFloat, randInt } from "battletribes-shared/utils";
 import { Entity, FishColour } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -87,7 +87,7 @@ function onTick(entity: Entity): void {
    const tile = getHitboxTile(layer, hitbox);
    if (tile.type !== TileType.water && Board.tickIntervalHasPassed(0.4)) {
       for (let i = 0; i < 8; i++) {
-         const spawnOffsetDirection = 2 * Math.PI * Math.random();
+         const spawnOffsetDirection = randAngle();
          const spawnPositionX = hitbox.box.position.x + 8 * Math.sin(spawnOffsetDirection);
          const spawnPositionY = hitbox.box.position.y + 8 * Math.cos(spawnOffsetDirection);
 
@@ -107,8 +107,8 @@ function updateFromData(reader: PacketReader): void {
 function onHit(entity: Entity, hitbox: Hitbox): void {
    // Blood particles
    for (let i = 0; i < 5; i++) {
-      const position = hitbox.box.position.offset(16, 2 * Math.PI * Math.random());
-      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, position.x, position.y, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
+      const position = hitbox.box.position.offset(16, randAngle());
+      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, position.x, position.y, randAngle(), randFloat(150, 250), true);
    }
 
    playSoundOnHitbox("fish-hurt-" + randInt(1, 4) + ".mp3", 0.4, 1, entity, hitbox, false);

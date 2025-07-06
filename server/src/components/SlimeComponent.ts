@@ -5,7 +5,7 @@ import { ComponentArray } from "./ComponentArray";
 import { Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import { lerp, Point, UtilVars } from "battletribes-shared/utils";
+import { lerp, Point, polarVec2, randAngle, UtilVars } from "battletribes-shared/utils";
 import { turnAngle, getEntitiesInRange, moveEntityToPosition } from "../ai-shared";
 import { createSlimeSpitConfig } from "../entities/projectiles/slime-spit";
 import { createEntity } from "../Entity";
@@ -47,7 +47,7 @@ export class SlimeComponent {
    /** Progress in charging the spit attack in ticks */
    public spitChargeTicks = 0;
    
-   public eyeAngle = 2 * Math.PI * Math.random();
+   public eyeAngle = randAngle();
    public mergeTimer = SLIME_MERGE_TIME;
    public mergeWeight: number;
    public lastMergeTicks: number;
@@ -115,7 +115,7 @@ const createSpit = (slime: Entity, slimeComponent: SlimeComponent): void => {
    const x = slimeHitbox.box.position.x + SLIME_RADII[slimeComponent.size] * Math.sin(slimeHitbox.box.angle);
    const y = slimeHitbox.box.position.y + SLIME_RADII[slimeComponent.size] * Math.cos(slimeHitbox.box.angle);
 
-   const config = createSlimeSpitConfig(new Point(x, y), 2 * Math.PI * Math.random(), slimeComponent.size === SlimeSize.large ? 1 : 0);
+   const config = createSlimeSpitConfig(new Point(x, y), randAngle(), slimeComponent.size === SlimeSize.large ? 1 : 0);
 
    const spitHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
    setHitboxVelocity(spitHitbox, 500 * Math.sin(slimeHitbox.box.angle), 500 * Math.cos(slimeHitbox.box.angle));
@@ -263,9 +263,7 @@ function onTick(slime: Entity): void {
 
       // @Hack
       const speedMultiplier = SLIME_SPEED_MULTIPLIERS[slimeComponent.size];
-      const accelerationX = Vars.ACCELERATION * speedMultiplier * Math.sin(slimeHitbox.box.angle);
-      const accelerationY = Vars.ACCELERATION * speedMultiplier * Math.cos(slimeHitbox.box.angle);
-      applyAccelerationFromGround(slime, slimeHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(slime, slimeHitbox, polarVec2(Vars.ACCELERATION * speedMultiplier, slimeHitbox.box.angle));
       return;
    }
 
@@ -286,9 +284,7 @@ function onTick(slime: Entity): void {
       slimeComponent.eyeAngle = turnAngle(slimeComponent.eyeAngle, targetDirection, 5 * Math.PI);
 
       const speedMultiplier = SLIME_SPEED_MULTIPLIERS[slimeComponent.size];
-      const accelerationX = Vars.ACCELERATION * speedMultiplier * Math.sin(slimeHitbox.box.angle);
-      const accelerationY = Vars.ACCELERATION * speedMultiplier * Math.cos(slimeHitbox.box.angle);
-      applyAccelerationFromGround(slime, slimeHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(slime, slimeHitbox, polarVec2(Vars.ACCELERATION * speedMultiplier, slimeHitbox.box.angle));
 
       turnHitboxToAngle(slimeHitbox, targetDirection, Vars.TURN_SPEED, 0.5, false);
       return;
@@ -392,7 +388,7 @@ const merge = (slime1: Entity, slime2: Entity): void => {
       const x = (slime1Hitbox.box.position.x + slime2Hitbox.box.position.x) / 2;
       const y = (slime1Hitbox.box.position.y + slime2Hitbox.box.position.y) / 2;
 
-      const config = createSlimeConfig(new Point(x, y), 2 * Math.PI * Math.random(), slimeComponent1.size + 1);
+      const config = createSlimeConfig(new Point(x, y), randAngle(), slimeComponent1.size + 1);
       config.components[ServerComponentType.slime]!.orbSizes = orbSizes;
       createEntity(config, getEntityLayer(slime1), 0);
       

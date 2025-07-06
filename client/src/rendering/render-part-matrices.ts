@@ -5,7 +5,7 @@ import { RenderPartParent, RenderPart } from "../render-parts/render-parts";
 import { renderLayerIsChunkRendered, updateChunkRenderedEntity } from "./webgl/chunked-entity-rendering";
 import { getEntityRenderInfo } from "../world";
 import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
-import { Point } from "../../../shared/src/utils";
+import { Point, randAngle } from "../../../shared/src/utils";
 import { gl } from "../webgl";
 import { HealthComponentArray } from "../entity-components/server-components/HealthComponent";
 import { getHitboxVelocity, Hitbox } from "../hitboxes";
@@ -144,7 +144,7 @@ const calculateAndOverrideRenderThingMatrix = (thing: RenderPart): void => {
 
    // Shake
    if (thing.shakeAmount > 0) {
-      const direction = 2 * Math.PI * Math.random();
+      const direction = randAngle();
       tx += thing.shakeAmount * Math.sin(direction);
       ty += thing.shakeAmount * Math.cos(direction);
    }

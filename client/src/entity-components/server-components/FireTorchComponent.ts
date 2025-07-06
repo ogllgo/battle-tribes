@@ -4,7 +4,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { createLight, Light } from "../../lights";
 import { ItemType } from "../../../../shared/src/items/items";
-import { Point, randFloat } from "../../../../shared/src/utils";
+import { Point, randAngle, randFloat } from "../../../../shared/src/utils";
 import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import Board from "../../Board";
@@ -99,17 +99,17 @@ function onTick(entity: Entity): void {
       let spawnPositionY = hitbox.box.position.y;
 
       const spawnOffsetMagnitude = 7 * Math.random();
-      const spawnOffsetDirection = 2 * Math.PI * Math.random();
+      const spawnOffsetDirection = randAngle();
       spawnPositionX += spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
       spawnPositionY += spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 
-      createEmberParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(80, 120), 0, 0);
+      createEmberParticle(spawnPositionX, spawnPositionY, randAngle(), randFloat(80, 120), 0, 0);
    }
 
    // Smoke particles
    if (Board.tickIntervalHasPassed(0.18)) {
       const spawnOffsetMagnitude = 5 * Math.random();
-      const spawnOffsetDirection = 2 * Math.PI * Math.random();
+      const spawnOffsetDirection = randAngle();
       const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
       const spawnPositionY = hitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
       createSmokeParticle(spawnPositionX, spawnPositionY, 24);

@@ -5,7 +5,7 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Settings } from "../../../../shared/src/settings";
 import { StructureType } from "../../../../shared/src/structures";
 import { getSubtileIndex } from "../../../../shared/src/subtiles";
-import { getTileIndexIncludingEdges, Point, randFloat } from "../../../../shared/src/utils";
+import { getTileIndexIncludingEdges, Point, randAngle, randFloat } from "../../../../shared/src/utils";
 import { boxArraysAreColliding, boxHasCollisionWithBoxes } from "../../collision-detection";
 import { entityChildIsHitbox } from "../../components/TransformComponent";
 import { Hitbox } from "../../hitboxes";
@@ -175,7 +175,7 @@ export function generateBuildingCandidate(buildingLayer: TribeBuildingLayer, ent
    while (attempts++ < 999) {
       const x = randFloat(minX, maxX);
       const y = randFloat(minY, maxY);
-      const rotation = 2 * Math.PI * Math.random();
+      const rotation = randAngle();
       
       const candidate = createBuildingCandidate(entityType, buildingLayer, x, y, rotation);
 

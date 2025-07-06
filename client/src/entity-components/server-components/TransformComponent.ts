@@ -1,4 +1,4 @@
-import { assert, distance, Point, randSign, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { assert, distance, Point, randAngle, randSign, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { Tile } from "../../Tile";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
@@ -17,7 +17,7 @@ import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../../shared/src/col
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playerInstance } from "../../player";
 import { getHitboxVelocity, Hitbox, HitboxTether, setHitboxVelocity } from "../../hitboxes";
-import { padBoxData, padHitboxDataExceptLocalID, readBoxFromData, readHitboxFromData, updateHitboxExceptLocalIDFromData } from "../../networking/packet-hitboxes";
+import { padHitboxDataExceptLocalID, readBoxFromData, readHitboxFromData, updateHitboxExceptLocalIDFromData } from "../../networking/packet-hitboxes";
 import { ComponentArray } from "../ComponentArray";
 
 export interface EntityAttachInfo {
@@ -696,7 +696,7 @@ function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): voi
 export function getRandomPositionInBox(box: Box): Point {
    if (boxIsCircular(box)) {
       const offsetMagnitude = box.radius * Math.random();
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       return new Point(box.position.x + offsetMagnitude * Math.sin(offsetDirection), box.position.y + offsetMagnitude * Math.cos(offsetDirection));
    } else {
       const halfWidth = box.width / 2;
@@ -760,7 +760,7 @@ export function getRandomPositionInEntity(transformComponent: TransformComponent
 export function getRandomPositionOnBoxEdge(box: Box): Point {
    if (boxIsCircular(box)) {
       const offsetMagnitude = box.radius;
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       return new Point(box.position.x + offsetMagnitude * Math.sin(offsetDirection), box.position.y + offsetMagnitude * Math.cos(offsetDirection));
    } else {
       const halfWidth = box.width / 2;

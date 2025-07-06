@@ -6,7 +6,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { entityChildIsHitbox, getHitboxByLocalID, TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
-import { assert, randInt } from "../../../../shared/src/utils";
+import { assert, randAngle, randInt } from "../../../../shared/src/utils";
 import { playSoundOnHitbox } from "../../sound";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
@@ -145,7 +145,7 @@ function onHit(entity: Entity): void {
    // Create cactus spine particles when hurt
    const numSpines = randInt(3, 5);
    for (let i = 0; i < numSpines; i++) {
-      createCactusSpineParticle(transformComponent, CACTUS_RADIUS - 5, 2 * Math.PI * Math.random());
+      createCactusSpineParticle(transformComponent, CACTUS_RADIUS - 5, randAngle());
    }
 
    playSoundOnHitbox("cactus-hit.mp3", 0.4, 1, entity, hitbox, false);

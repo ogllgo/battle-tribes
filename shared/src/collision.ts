@@ -1,7 +1,7 @@
 import { Box } from "./boxes/boxes";
 import RectangularBox from "./boxes/RectangularBox";
 import { Settings } from "./settings";
-import { Mutable, Point, distance, rotateXAroundPoint, rotateYAroundPoint } from "./utils";
+import { Mutable, Point, distance, polarVec2, rotateXAroundPoint, rotateYAroundPoint } from "./utils";
 
 // @Speed: Maybe make into const enum?
 export const enum CollisionBit {
@@ -112,7 +112,7 @@ export function circleAndRectangleDoIntersect(circlePos: Point, circleRadius: nu
 /** Computes the axis for the line created by two points */
 export function computeSideAxis(point1: Point, point2: Point): Point {
    const direction = point1.calculateAngleBetween(point2);
-   return Point.fromVectorForm(1, direction);
+   return polarVec2(1, direction);
 }
 
 function getOverlap(proj1min: number, proj1max: number, proj2min: number, proj2max: number) {

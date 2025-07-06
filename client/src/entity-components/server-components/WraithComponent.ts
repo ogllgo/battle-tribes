@@ -72,10 +72,10 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
       const mult = (i === 0 ? 1 : -1);
       
       const light = createLight(
-         new Point(12 * mult, 4),
+         new Point(12 * mult, 2),
          0.35,
          0.2,
-         2,
+         1,
          33/255,
          225/255,
          255/255
@@ -83,7 +83,7 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
       intermediateInfo.lights.push({
          light: light,
          attachedRenderPart: headRenderPart
-      })
+      });
    }
 
    return {};

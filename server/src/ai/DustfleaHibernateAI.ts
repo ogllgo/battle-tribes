@@ -4,7 +4,7 @@ import { CollisionGroup, getEntityCollisionGroup } from "../../../shared/src/col
 import { Entity } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
-import { clampToSubtileBoardDimensions, distance, Point, positionIsInWorld, randFloat } from "../../../shared/src/utils";
+import { clampToSubtileBoardDimensions, distance, Point, positionIsInWorld, randAngle, randFloat } from "../../../shared/src/utils";
 import { getEntitiesInRange } from "../ai-shared";
 import { AIHelperComponent } from "../components/AIHelperComponent";
 import { removeAttachedEntity, TransformComponentArray } from "../components/TransformComponent";
@@ -170,7 +170,7 @@ export function runHibernateAI(dustflea: Entity, aiHelperComponent: AIHelperComp
       if (dustfleaHitbox.box.position.calculateDistanceBetween(ai.hibernateTargetPosition) < 1) {
          destroyEntity(dustflea);
 
-         const cocoonConfig = createDustfleaMorphCocoonConfig(dustfleaHitbox.box.position.copy(), 2 * Math.PI * Math.random());
+         const cocoonConfig = createDustfleaMorphCocoonConfig(dustfleaHitbox.box.position.copy(), randAngle());
          createEntity(cocoonConfig, getEntityLayer(dustflea), 0);
       }
    } else {

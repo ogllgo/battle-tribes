@@ -1,5 +1,5 @@
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
-import { Point, lerp, randFloat, randItem } from "battletribes-shared/utils";
+import { Point, lerp, randAngle, randFloat, randItem } from "battletribes-shared/utils";
 import { BlockType, ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -643,13 +643,13 @@ function onTick(entity: Entity): void {
                let spawnPositionY = renderPosition.y;
       
                const spawnOffsetMagnitude = 7 * Math.random();
-               const spawnOffsetDirection = 2 * Math.PI * Math.random();
+               const spawnOffsetDirection = randAngle();
                spawnPositionX += spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
                spawnPositionY += spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
       
                const vx = velocity.x;
                const vy = velocity.y;
-               createEmberParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(80, 120), vx, vy);
+               createEmberParticle(spawnPositionX, spawnPositionY, randAngle(), randFloat(80, 120), vx, vy);
             }
 
             // Smoke particles
@@ -657,7 +657,7 @@ function onTick(entity: Entity): void {
                const renderPosition = getRenderPartRenderPosition(activeItemRenderPart);
 
                const spawnOffsetMagnitude = 5 * Math.random();
-               const spawnOffsetDirection = 2 * Math.PI * Math.random();
+               const spawnOffsetDirection = randAngle();
                const spawnPositionX = renderPosition.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
                const spawnPositionY = renderPosition.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
                createSmokeParticle(spawnPositionX, spawnPositionY, 24);
@@ -678,11 +678,11 @@ function onTick(entity: Entity): void {
                let spawnPositionY = renderPosition.y;
 
                const spawnOffsetMagnitude = 7 * Math.random();
-               const spawnOffsetDirection = 2 * Math.PI * Math.random();
+               const spawnOffsetDirection = randAngle();
                spawnPositionX += spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
                spawnPositionY += spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 
-               createSlurbParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(80, 120), 0, 0);
+               createSlurbParticle(spawnPositionX, spawnPositionY, randAngle(), randFloat(80, 120), 0, 0);
             }
          }
       }
@@ -695,12 +695,12 @@ function onTick(entity: Entity): void {
             let spawnPositionY = hitbox.box.position.y + 37 * Math.cos(hitbox.box.angle);
 
             const spawnOffsetMagnitude = randFloat(0, 6);
-            const spawnOffsetDirection = 2 * Math.PI * Math.random();
+            const spawnOffsetDirection = randAngle();
             spawnPositionX += spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
             spawnPositionY += spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 
             let velocityMagnitude = randFloat(130, 170);
-            const velocityDirection = 2 * Math.PI * Math.random();
+            const velocityDirection = randAngle();
             const velocityX = velocityMagnitude * Math.sin(velocityDirection) + velocity.x;
             const velocityY = velocityMagnitude * Math.cos(velocityDirection) + velocity.y;
             velocityMagnitude += velocity.length();
@@ -723,7 +723,7 @@ function onTick(entity: Entity): void {
                velocityX, velocityY,
                0, 0,
                velocityMagnitude / lifetime / 1.3,
-               2 * Math.PI * Math.random(),
+               randAngle(),
                0,
                0,
                0,
@@ -1457,7 +1457,7 @@ const playBlockEffects = (x: number, y: number, blockType: BlockType): void => {
    
    for (let i = 0; i < 8; i++) {
       const offsetMagnitude = randFloat(0, 18);
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const particleX = x + offsetMagnitude * Math.sin(offsetDirection);
       const particleY = y + offsetMagnitude * Math.cos(offsetDirection);
       createBlockParticle(particleX, particleY, blockType);

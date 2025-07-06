@@ -8,7 +8,7 @@ import { Settings } from "../../shared/src/settings";
 import { STRUCTURE_TYPES, StructureType } from "../../shared/src/structures";
 import { getSubtileIndex, subtileIsInWorld, getSubtileX, getSubtileY } from "../../shared/src/subtiles";
 import { SubtileType } from "../../shared/src/tiles";
-import { Point, alignAngleToClosestAxis, getAbsAngleDiff, distance, getTileIndexIncludingEdges } from "../../shared/src/utils";
+import { Point, alignAngleToClosestAxis, getAbsAngleDiff, distance, getTileIndexIncludingEdges, polarVec2 } from "../../shared/src/utils";
 import { getEntitiesInRange } from "./ai-shared";
 import { getHitboxesCollidingEntities } from "./collision-detection";
 import { EntityConfig } from "./components";
@@ -225,7 +225,7 @@ const structurePlaceIsValid = (hitboxes: ReadonlyArray<Hitbox>, layer: Layer): b
 const calculateRegularPlacePosition = (placeOrigin: Point, placingEntityAngle: number, entityType: EntityType): Point => {
    // @Hack?
    if (entityType === EntityType.bracings) {
-      const placePosition = Point.fromVectorForm(Vars.STRUCTURE_PLACE_DISTANCE + Settings.TILE_SIZE * 0.5, placingEntityAngle);
+      const placePosition = polarVec2(Vars.STRUCTURE_PLACE_DISTANCE + Settings.TILE_SIZE * 0.5, placingEntityAngle);
       placePosition.add(placeOrigin);
       return placePosition;
    }
@@ -267,7 +267,7 @@ const calculateRegularPlacePosition = (placeOrigin: Point, placingEntityAngle: n
    const boundingAreaHeight = entityMaxY - entityMinY;
    const placeOffsetY = boundingAreaHeight * 0.5;
    
-   const placePosition = Point.fromVectorForm(Vars.STRUCTURE_PLACE_DISTANCE + placeOffsetY, placingEntityAngle);
+   const placePosition = polarVec2(Vars.STRUCTURE_PLACE_DISTANCE + placeOffsetY, placingEntityAngle);
    placePosition.add(placeOrigin);
    return placePosition;
 }
@@ -369,7 +369,7 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
             for (let xi = -1; xi <= 1; xi++) {
                const sideOffset = (maxLength - minLength) * 0.5 * xi;
                
-               const position = Point.fromVectorForm(connectingEntityOffset + placingEntityOffset, offsetDirection);
+               const position = polarVec2(connectingEntityOffset + placingEntityOffset, offsetDirection);
                position.add(snapOrigin);
                position.x += sideOffset * Math.sin(offsetDirection + Math.PI * 0.5);
                position.y += sideOffset * Math.cos(offsetDirection + Math.PI * 0.5);

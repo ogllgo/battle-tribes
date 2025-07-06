@@ -113,7 +113,7 @@ function onHit(entity: Entity, hitbox: Hitbox): void {
    }
 
    for (let i = 0; i < 7; i++) {
-      const position = hitbox.box.position.offset(20, 2 * Math.PI * Math.random());
+      const position = hitbox.box.position.offset(20, randAngle());
       createLightWoodSpeckParticle(position.x, position.y, 5);
    }
 }

@@ -3,7 +3,7 @@ import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
-import { Point, randInt } from "../../../shared/src/utils";
+import { Point, polarVec2, randInt } from "../../../shared/src/utils";
 import { createEntityConfigAttachInfoWithTether } from "../components";
 import { AIHelperComponent, AIType } from "../components/AIHelperComponent";
 import { HealthComponentArray } from "../components/HealthComponent";
@@ -93,9 +93,7 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
       }
 
       // move forwards
-      const accelerationX = sandBallingAI.acceleration * Math.sin(entityHitbox.box.angle);
-      const accelerationY = sandBallingAI.acceleration * Math.cos(entityHitbox.box.angle);
-      applyAccelerationFromGround(entity, entityHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(entity, entityHitbox, polarVec2(sandBallingAI.acceleration, entityHitbox.box.angle));
 
       const sandBallComponent = SandBallComponentArray.getComponent(sandBall);
 

@@ -1,5 +1,5 @@
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
-import { randFloat, randInt } from "battletribes-shared/utils";
+import { randAngle, randFloat, randInt } from "battletribes-shared/utils";
 import { playSoundOnHitbox } from "./sound";
 import { ItemType } from "battletribes-shared/items/items";
 import { entityExists } from "./world";
@@ -52,7 +52,7 @@ const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
 
          for (let i = 0; i < 5; i++) {
             const spawnOffsetRange = 6;
-            const spawnOffsetDirection = 2 * Math.PI * Math.random();
+            const spawnOffsetDirection = randAngle();
             const spawnPositionX = position.x + spawnOffsetRange * Math.sin(spawnOffsetDirection);
             const spawnPositionY = position.y + spawnOffsetRange * Math.cos(spawnOffsetDirection);
             createHotSparkParticle(spawnPositionX, spawnPositionY);

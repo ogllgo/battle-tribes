@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { angle, assert, UtilVars } from "battletribes-shared/utils";
+import { angle, assert, polarVec2, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition, runHerdAI } from "../ai-shared";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { runEscapeAI } from "../ai/EscapeAI";
@@ -303,9 +303,7 @@ function onTick(krumblid: Entity): void {
       const hitbox = transformComponent.children[0] as Hitbox;
       
       // @Incomplete: use new move func
-      const accelerationX = 200 * Math.sin(hitbox.box.angle);
-      const accelerationY = 200 * Math.cos(hitbox.box.angle);
-      applyAccelerationFromGround(krumblid, hitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(krumblid, hitbox, polarVec2(200, hitbox.box.angle));
       return;
    }
 

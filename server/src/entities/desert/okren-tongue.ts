@@ -1,6 +1,6 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
-import { Point } from "../../../../shared/src/utils";
+import { Point, polarVec2 } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { OkrenTongueComponent } from "../../components/OkrenTongueComponent";
@@ -34,7 +34,7 @@ export function createOkrenTongueConfig(position: Point, angle: number, okrenHit
    
    // @Copynpaste
    // Apply some initial velocity
-   addHitboxVelocity(tongueTipHitbox, Point.fromVectorForm(200, okrenHitbox.box.angle));
+   addHitboxVelocity(tongueTipHitbox, polarVec2(200, okrenHitbox.box.angle));
    
    return {
       entityType: EntityType.okrenTongue,

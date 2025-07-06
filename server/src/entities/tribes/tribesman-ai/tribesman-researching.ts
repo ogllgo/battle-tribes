@@ -12,7 +12,7 @@ import { TransformComponentArray } from "../../../components/TransformComponent"
 import { Inventory, ItemType } from "../../../../../shared/src/items/items";
 import { consumeItemFromSlot } from "../../../components/InventoryComponent";
 import Tribe from "../../../Tribe";
-import { assert } from "../../../../../shared/src/utils";
+import { assert, polarVec2 } from "../../../../../shared/src/utils";
 import { getEntityLayer } from "../../../world";
 import { PathfindingSettings } from "../../../../../shared/src/settings";
 import { PathfindFailureDefault } from "../../../pathfinding";
@@ -72,14 +72,12 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
       const benchTransformComponent = TransformComponentArray.getComponent(occupiedBench);
       const researchBenchHitbox = benchTransformComponent.children[0] as Hitbox;
       
-      const targetDirection = tribesmanHitbox.box.position.calculateAngleBetween(researchBenchHitbox.box.position);
+      const targetDir = tribesmanHitbox.box.position.calculateAngleBetween(researchBenchHitbox.box.position);
 
       const slowAcceleration = getTribesmanSlowAcceleration(tribesman);
-      const accelerationX = slowAcceleration * Math.sin(targetDirection);
-      const accelerationY = slowAcceleration * Math.cos(targetDirection);
-      applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(slowAcceleration, targetDir));
 
-      turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 0.5, false);
+      turnHitboxToAngle(tribesmanHitbox, targetDir, TRIBESMAN_TURN_SPEED, 0.5, false);
       
       continueResearching(occupiedBench, tribesman, tech);
       

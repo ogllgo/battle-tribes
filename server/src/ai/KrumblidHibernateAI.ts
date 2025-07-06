@@ -5,7 +5,7 @@ import { Entity } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { TamingSkillID } from "../../../shared/src/taming";
-import { clampToSubtileBoardDimensions, distance, Point, positionIsInWorld, randFloat } from "../../../shared/src/utils";
+import { clampToSubtileBoardDimensions, distance, Point, positionIsInWorld, randAngle, randFloat } from "../../../shared/src/utils";
 import { getEntitiesInRange } from "../ai-shared";
 import { AIHelperComponent } from "../components/AIHelperComponent";
 import { hasTamingSkill, TamingComponentArray } from "../components/TamingComponent";
@@ -177,7 +177,7 @@ export function runKrumblidHibernateAI(krumblid: Entity, aiHelperComponent: AIHe
          const tamingComponent = TamingComponentArray.getComponent(krumblid);
          const tribe = hasTamingSkill(tamingComponent, TamingSkillID.imprint) ? tamingComponent.tameTribe : null;
 
-         const cocoonConfig = createKrumblidMorphCocoonConfig(krumblidHitbox.box.position.copy(), 2 * Math.PI * Math.random(), tribe);
+         const cocoonConfig = createKrumblidMorphCocoonConfig(krumblidHitbox.box.position.copy(), randAngle(), tribe);
          createEntity(cocoonConfig, getEntityLayer(krumblid), 0);
       }
    } else {

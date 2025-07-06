@@ -1,4 +1,4 @@
-import { lerp, randFloat, randInt } from "battletribes-shared/utils";
+import { lerp, randAngle, randFloat, randInt } from "battletribes-shared/utils";
 import { Entity, SlimeSize } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -200,7 +200,7 @@ function onTick(entity: Entity): void {
 const createOrb = (slimeComponent: SlimeComponent, entity: Entity, size: SlimeSize): void => {
    const orbInfo: SlimeOrbInfo = {
       size: size,
-      rotation: 2 * Math.PI * Math.random(),
+      rotation: randAngle(),
       offset: Math.random(),
       angularVelocity: 0
    };

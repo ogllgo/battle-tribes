@@ -1,7 +1,7 @@
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 import { Settings } from "../../../shared/src/settings";
-import { Point, randFloat, randInt } from "../../../shared/src/utils";
+import { Point, polarVec2, randFloat, randInt } from "../../../shared/src/utils";
 import { getDistanceFromPointToEntity } from "../ai-shared";
 import { createEntityConfigAttachInfo } from "../components";
 import { AIHelperComponent, AIType } from "../components/AIHelperComponent";
@@ -161,14 +161,12 @@ export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperCompo
    // Make the okren lean into the swings
    for (const side of OKREN_SIDES) {
       if ((okrenComponent.swingStates[side] === OkrenSwingState.raising && okrenComponent.ticksInStates[side] > Math.floor(Settings.TPS * 0.25)) || (okrenComponent.swingStates[side] === OkrenSwingState.swinging && okrenComponent.ticksInStates[side] <= Math.floor(Settings.TPS * 0.15))) {
-         const angleToTarget = hitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-         const idealAngle = angleToTarget + (side === OkrenSide.right ? -0.6 : 0.6);
+         const targetDir = hitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+         const idealAngle = targetDir + (side === OkrenSide.right ? -0.6 : 0.6);
 
          // @COPYNPASTE
          // @HACK
-         const accelerationX = combatAI.acceleration * Math.sin(angleToTarget);
-         const accelerationY = combatAI.acceleration * Math.cos(angleToTarget);
-         applyAccelerationFromGround(okren, hitbox, accelerationX, accelerationY);
+         applyAccelerationFromGround(okren, hitbox, polarVec2(combatAI.acceleration, targetDir));
          turnHitboxToAngle(hitbox, idealAngle, combatAI.turnSpeed * 1.5, 1.5 / 1.5, false);
 
          isLeaning = true;

@@ -2,7 +2,7 @@ import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collis
 import { EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { distance, Point, randInt } from "battletribes-shared/utils";
+import { distance, Point, randAngle, randInt } from "battletribes-shared/utils";
 import { HealthComponent } from "../../components/HealthComponent";
 import { GolemComponent } from "../../components/GolemComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
@@ -81,7 +81,7 @@ export function createGolemConfig(position: Point, rotation: number): EntityConf
    let attempts = 0;
    while (i < 8 && ++attempts < 100) {
       const offsetMagnitude = BODY_GENERATION_RADIUS * Math.random();
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const x = offsetMagnitude * Math.sin(offsetDirection);
       const y = offsetMagnitude * Math.cos(offsetDirection);
 

@@ -21,7 +21,7 @@ function onTick(spear: Entity): void {
    // if (velocitySquared <= Vars.DROP_VELOCITY * Vars.DROP_VELOCITY) {
    //    const transformComponent = TransformComponentArray.getComponent(spear);
 
-   //    const config = createItemEntityConfig(transformComponent.position.copy(), 2 * Math.PI * Math.random(), ItemType.spear, 1, null);
+   //    const config = createItemEntityConfig(transformComponent.position.copy(), randAngle(), ItemType.spear, 1, null);
    //    createEntity(config, getEntityLayer(spear), 0);
       
    //    destroyEntity(spear);

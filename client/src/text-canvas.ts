@@ -1,5 +1,5 @@
 import { Settings } from "battletribes-shared/settings";
-import { distance, lerp, randFloat } from "battletribes-shared/utils";
+import { distance, lerp, randAngle, randFloat } from "battletribes-shared/utils";
 import Camera from "./Camera";
 import { halfWindowHeight, halfWindowWidth, windowHeight, windowWidth } from "./webgl";
 import OPTIONS from "./options";
@@ -101,7 +101,7 @@ const clearTextCanvas = (): void => {
 
 export function createDamageNumber(originX: number, originY: number, damage: number): void {
    // Add a random offset to the damage number
-   const spawnOffsetDirection = 2 * Math.PI * Math.random();
+   const spawnOffsetDirection = randAngle();
    const spawnOffsetMagnitude = randFloat(0, 30);
    damageNumberX = originX + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
    damageNumberY = originY + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);

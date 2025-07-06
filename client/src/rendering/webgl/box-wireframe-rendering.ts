@@ -1,4 +1,4 @@
-import { Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { Point, polarVec2, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { CollisionGroup, getEntityCollisionGroup } from "battletribes-shared/collision-groups";
 import { createWebGLProgram, gl } from "../../webgl";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
@@ -176,10 +176,10 @@ const addBoxVertices = (vertices: Array<number>, box: Box, adjustment: Point, r:
          const radians = i * 2 * Math.PI / CIRCLE_VERTEX_COUNT;
          // @Speed: Garbage collection
          
-         const bl = Point.fromVectorForm(radius, radians);
-         const br = Point.fromVectorForm(radius, radians + step);
-         const tl = Point.fromVectorForm(radius + BORDER_THICKNESS, radians);
-         const tr = Point.fromVectorForm(radius + BORDER_THICKNESS, radians + step);
+         const bl = polarVec2(radius, radians);
+         const br = polarVec2(radius, radians + step);
+         const tl = polarVec2(radius + BORDER_THICKNESS, radians);
+         const tr = polarVec2(radius + BORDER_THICKNESS, radians + step);
    
          bl.x += hitboxRenderPositionX;
          bl.y += hitboxRenderPositionY;

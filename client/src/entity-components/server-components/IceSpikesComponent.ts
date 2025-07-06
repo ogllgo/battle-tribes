@@ -4,7 +4,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { addMonocolourParticleToBufferContainer, ParticleColour, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { Entity } from "../../../../shared/src/entities";
-import { randFloat, randInt } from "../../../../shared/src/utils";
+import { randAngle, randFloat, randInt } from "../../../../shared/src/utils";
 import Board from "../../Board";
 import Particle from "../../Particle";
 import { playSoundOnHitbox } from "../../sound";
@@ -66,7 +66,7 @@ function padData(): void {}
 function updateFromData(): void {}
 
 const createIceSpeckProjectile = (hitbox: Hitbox): void => {
-   const spawnOffsetDirection = 2 * Math.PI * Math.random();
+   const spawnOffsetDirection = randAngle();
    const spawnPositionX = hitbox.box.position.x + SIZE / 2 * Math.sin(spawnOffsetDirection);
    const spawnPositionY = hitbox.box.position.y + SIZE / 2 * Math.cos(spawnOffsetDirection);
 

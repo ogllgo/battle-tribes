@@ -6,7 +6,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { Entity } from "../../../../shared/src/entities";
-import { randFloat } from "../../../../shared/src/utils";
+import { randAngle, randFloat } from "../../../../shared/src/utils";
 import { createPricklyPearParticle } from "../../particles";
 import { TransformComponentArray } from "./TransformComponent";
 import { playSoundOnHitbox } from "../../sound";
@@ -78,10 +78,10 @@ function onDie(fragment: Entity): void {
    playSoundOnHitbox("prickly-pear-fragment-projectile-explode.mp3", 0.4, randFloat(0.9, 1.1), fragment, hitbox, false);
    
    for (let i = 0; i < 4; i++) {
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const offsetMagnitude = randFloat(4, 8);
       const x = hitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
       const y = hitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);
-      createPricklyPearParticle(x, y, 2 * Math.PI * Math.random());
+      createPricklyPearParticle(x, y, randAngle());
    }
 }

@@ -1,7 +1,7 @@
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { Point } from "battletribes-shared/utils";
+import { Point, randAngle } from "battletribes-shared/utils";
 import { ItemComponent } from "../components/ItemComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig, LightCreationInfo } from "../components";
@@ -74,7 +74,7 @@ export function createItemsOverEntity(entity: Entity, itemType: ItemType, amount
       }
       
       // Create item entity
-      const config = createItemEntityConfig(spawnPosition, 2 * Math.PI * Math.random(), itemType, 1, null);
+      const config = createItemEntityConfig(spawnPosition, randAngle(), itemType, 1, null);
       createEntity(config, getEntityLayer(entity), 0);
    }
 }

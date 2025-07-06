@@ -5,7 +5,7 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
 import { Settings } from "../../../../shared/src/settings";
-import { angle, lerp, Point, randInt } from "../../../../shared/src/utils";
+import { angle, lerp, Point, polarVec2, randInt } from "../../../../shared/src/utils";
 import WanderAI from "../../ai/WanderAI";
 import { EntityConfig, LightCreationInfo } from "../../components";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
@@ -65,10 +65,10 @@ const moveFunc = (head: Entity, pos: Point): void => {
       const transformComponent = TransformComponentArray.getComponent(glurbSegment);
       const hitbox = transformComponent.children[0] as Hitbox;
    
-      let targetDirection: number;
+      let targetDir: number;
       
       if (GlurbHeadSegmentComponentArray.hasComponent(glurbSegment)) {
-         targetDirection = hitbox.box.position.calculateAngleBetween(pos);
+         targetDir = hitbox.box.position.calculateAngleBetween(pos);
       } else {
          // Move to next hitbox in chain
 
@@ -79,12 +79,10 @@ const moveFunc = (head: Entity, pos: Point): void => {
          const lastSegmentTransformComponent = TransformComponentArray.getComponent(lastChild.attachedEntity);
          const lastSegmentHitbox = lastSegmentTransformComponent.children[0] as Hitbox;
          
-         targetDirection = hitbox.box.position.calculateAngleBetween(lastSegmentHitbox.box.position);
+         targetDir = hitbox.box.position.calculateAngleBetween(lastSegmentHitbox.box.position);
       }
       
-      const accelerationX = acceleration * Math.sin(targetDirection);
-      const accelerationY = acceleration * Math.cos(targetDirection);
-      applyAccelerationFromGround(glurbSegment, hitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(glurbSegment, hitbox, polarVec2(acceleration, targetDir));
    }
 }
 

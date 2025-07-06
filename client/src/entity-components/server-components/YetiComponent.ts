@@ -1,4 +1,4 @@
-import { lerp, Point, randFloat, randItem } from "battletribes-shared/utils";
+import { lerp, Point, randAngle, randFloat, randItem } from "battletribes-shared/utils";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -140,7 +140,7 @@ function onTick(entity: Entity): void {
       
       for (let i = 0; i < 30; i++) {
          const offsetMagnitude = randFloat(0, 20);
-         const offsetDirection = 2 * Math.PI * Math.random();
+         const offsetDirection = randAngle();
          const positionX = impactPositionX + offsetMagnitude * Math.sin(offsetDirection);
          const positionY = impactPositionY + offsetMagnitude * Math.cos(offsetDirection);
          
@@ -170,7 +170,7 @@ function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
 
       const spawnPositionX = hitbox.box.position.x + YETI_SIZE / 2 * Math.sin(offsetDirection);
       const spawnPositionY = hitbox.box.position.y + YETI_SIZE / 2 * Math.cos(offsetDirection);
-      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
+      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, randAngle(), randFloat(150, 250), true);
    }
 }
 

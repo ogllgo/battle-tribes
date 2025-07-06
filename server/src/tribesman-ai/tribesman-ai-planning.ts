@@ -195,6 +195,7 @@ const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
    [ItemType.snowberry]: "sword",
    [ItemType.rawSnobeMeat]: "sword",
    [ItemType.snobeStew]: null,
+   [ItemType.wraithTooth]: "sword",
 };
 
 const createAssignment = <T extends AIPlan>(plan: T, children: Array<AIPlanAssignment>): AIPlanAssignment<T> => {

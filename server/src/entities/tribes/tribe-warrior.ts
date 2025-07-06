@@ -2,7 +2,7 @@ import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collis
 import { ScarInfo, ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { TRIBE_INFO_RECORD, TribeType } from "battletribes-shared/tribes";
-import { randInt, Point } from "battletribes-shared/utils";
+import { randInt, Point, randAngle } from "battletribes-shared/utils";
 import { TribesmanAIComponent } from "../../components/TribesmanAIComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import { EntityConfig } from "../../components";
@@ -40,7 +40,7 @@ const generateScars = (): ReadonlyArray<ScarInfo> => {
 
    const scars = new Array<ScarInfo>();
    for (let i = 0; i < numScars; i++) {
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const offsetMagnitude = 20 * Math.random();
       scars.push({
          offsetX: offsetMagnitude * Math.sin(offsetDirection),

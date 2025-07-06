@@ -6,13 +6,13 @@ import { TribesmanPathType, TribesmanAIComponentArray, TribesmanAIComponent } fr
 import { entityCanBlockPathfinding, getEntityPathfindingGroupID, PathfindFailureDefault, getEntityFootprint, PathfindOptions, positionIsAccessible, replacePathfindingNodeGroupID, entityHasReachedNode, getAngleToNode, getDistanceToNode, findMultiLayerPath, Path, convertEntityPathfindingGroupID } from "../../../pathfinding";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { distance, assert } from "battletribes-shared/utils";
+import { distance, assert, polarVec2 } from "battletribes-shared/utils";
 import { doorIsClosed, toggleDoor } from "../../../components/DoorComponent";
 import { InventoryUseComponentArray } from "../../../components/InventoryUseComponent";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import { TRIBE_INFO_RECORD } from "battletribes-shared/tribes";
 import { SpikesComponentArray } from "../../../components/SpikesComponent";
-import { InventoryName, Inventory, ItemInfoRecord, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, ToolItemInfo, HammerItemInfo } from "battletribes-shared/items/items";
+import { InventoryName, Inventory, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, HammerItemInfo } from "battletribes-shared/items/items";
 import { changeEntityLayer, TransformComponent, TransformComponentArray } from "../../../components/TransformComponent";
 import { getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks } from "../../../world";
 import CircularBox from "../../../../../shared/src/boxes/CircularBox";
@@ -219,9 +219,7 @@ export function continueCurrentPath(tribesman: Entity): boolean {
       const distFromNode = getDistanceToNode(transformComponent, nextNode);
       if (!willStopAtDesiredDistance(tribesmanHitbox, -2, distFromNode)) {
          const accelerationMagnitude = getTribesmanAcceleration(tribesman);
-         const accelerationX = accelerationMagnitude * Math.sin(tribesmanHitbox.box.angle);
-         const accelerationY = accelerationMagnitude * Math.cos(tribesmanHitbox.box.angle);
-         applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+         applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(accelerationMagnitude, tribesmanHitbox.box.angle));
       }
 
       // @Speed: only do this if we know the path has a door in it

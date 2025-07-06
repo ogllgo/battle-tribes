@@ -294,7 +294,7 @@ import { PacketReader } from "battletribes-shared/packets";
 //    const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
 //    const angleToPlayer = angle(playerTransformComponent.position.x - originX, playerTransformComponent.position.y - originY);
 //    for (let i = 0; i < 7; i++) {
-//       const spawnOffsetDirection = 2 * Math.PI * Math.random();
+//       const spawnOffsetDirection = randAngle();
 //       const spawnPositionX = originX + 12 * Math.sin(spawnOffsetDirection);
 //       const spawnPositionY = originY + 12 * Math.cos(spawnOffsetDirection);
    
@@ -325,7 +325,7 @@ import { PacketReader } from "battletribes-shared/packets";
 //          velocityX, velocityY,
 //          0, 0,
 //          velocityMagnitude / lifetime / 0.7,
-//          2 * Math.PI * Math.random(),
+//          randAngle(),
 //          angularVelocity,
 //          0,
 //          Math.abs(angularVelocity) / lifetime / 1.5,

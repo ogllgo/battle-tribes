@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { StatusEffectData } from "battletribes-shared/client-server-types";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { Point, customTickIntervalHasPassed, lerp, randFloat, randItem } from "battletribes-shared/utils";
+import { Point, customTickIntervalHasPassed, lerp, randAngle, randFloat, randItem } from "battletribes-shared/utils";
 import { playSoundOnHitbox } from "../../sound";
 import Board from "../../Board";
 import Particle from "../../Particle";
@@ -113,7 +113,7 @@ function onTick(entity: Entity): void {
       // Poison particles
       if (customTickIntervalHasPassed(poisonStatusEffect.ticksElapsed, 0.1)) {
          const spawnOffsetMagnitude = 30 * Math.random();
-         const spawnOffsetDirection = 2 * Math.PI * Math.random()
+         const spawnOffsetDirection = randAngle()
          const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
          const spawnPositionY = hitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 
@@ -132,7 +132,7 @@ function onTick(entity: Entity): void {
             0, 0,
             0, 0,
             0,
-            2 * Math.PI * Math.random(),
+            randAngle(),
             0,
             0,
             0,
@@ -145,7 +145,7 @@ function onTick(entity: Entity): void {
       // Poison bubbles
       if (customTickIntervalHasPassed(poisonStatusEffect.ticksElapsed, 0.1)) {
          const spawnOffsetMagnitude = 30 * Math.random();
-         const spawnOffsetDirection = 2 * Math.PI * Math.random()
+         const spawnOffsetDirection = randAngle()
          const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
          const spawnPositionY = hitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 
@@ -174,19 +174,19 @@ function onTick(entity: Entity): void {
       // Ember particles
       if (customTickIntervalHasPassed(fireStatusEffect.ticksElapsed, 0.1)) {
          const spawnOffsetMagnitude = 30 * Math.random();
-         const spawnOffsetDirection = 2 * Math.PI * Math.random();
+         const spawnOffsetDirection = randAngle();
          const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
          const spawnPositionY = hitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 
          const lifetime = randFloat(0.6, 1.2);
 
          const velocityMagnitude = randFloat(100, 140);
-         const velocityDirection = 2 * Math.PI * Math.random();
+         const velocityDirection = randAngle();
          const velocityX = velocityMagnitude * Math.sin(velocityDirection);
          const velocityY = velocityMagnitude * Math.cos(velocityDirection);
 
          const accelerationMagnitude = randFloat(0, 80);
-         const accelerationDirection = 2 * Math.PI * Math.random();
+         const accelerationDirection = randAngle();
          const accelerationX = accelerationMagnitude * Math.sin(accelerationDirection);
          const accelerationY = accelerationDirection * Math.cos(accelerationDirection);
          
@@ -206,7 +206,7 @@ function onTick(entity: Entity): void {
             velocityX, velocityY,
             accelerationX, accelerationY,
             0,
-            2 * Math.PI * Math.random(),
+            randAngle(),
             0, 
             0,
             0,
@@ -218,11 +218,11 @@ function onTick(entity: Entity): void {
       // Smoke particles
       if (customTickIntervalHasPassed(fireStatusEffect.ticksElapsed, 3/20)) {
          const spawnOffsetMagnitude = 20 * Math.random();
-         const spawnOffsetDirection = 2 * Math.PI * Math.random();
+         const spawnOffsetDirection = randAngle();
          const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
          const spawnPositionY = hitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 
-         const accelerationDirection = 2 * Math.PI * Math.random();
+         const accelerationDirection = randAngle();
          const accelerationX = 40 * Math.sin(accelerationDirection);
          let accelerationY = 40 * Math.cos(accelerationDirection);
 
@@ -251,7 +251,7 @@ function onTick(entity: Entity): void {
             0, 50,
             accelerationX, accelerationY,
             0,
-            2 * Math.PI * Math.random(),
+            randAngle(),
             randFloat(-Math.PI, Math.PI),
             randFloat(-Math.PI, Math.PI) / 2,
             0,
@@ -268,10 +268,10 @@ function onTick(entity: Entity): void {
    const bleedingStatusEffect = getStatusEffect(statusEffectComponent, StatusEffect.bleeding);
    if (bleedingStatusEffect !== null) {
       if (Board.tickIntervalHasPassed(0.15)) {
-         const spawnOffsetDirection = 2 * Math.PI * Math.random();
+         const spawnOffsetDirection = randAngle();
          const spawnPositionX = hitbox.box.position.x + 32 * Math.sin(spawnOffsetDirection);
          const spawnPositionY = hitbox.box.position.y + 32 * Math.cos(spawnOffsetDirection);
-         createBloodParticle(Math.random() < 0.5 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(40, 60), true);
+         createBloodParticle(Math.random() < 0.5 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, randAngle(), randFloat(40, 60), true);
       }
    }
 
@@ -280,10 +280,10 @@ function onTick(entity: Entity): void {
       if (Board.tickIntervalHasPassed(0.15)) {
          const hitboxVelocity = getHitboxVelocity(hitbox);
          
-         const spawnOffsetDirection = 2 * Math.PI * Math.random();
+         const spawnOffsetDirection = randAngle();
          const spawnPositionX = hitbox.box.position.x + 32 * Math.sin(spawnOffsetDirection);
          const spawnPositionY = hitbox.box.position.y + 32 * Math.cos(spawnOffsetDirection);
-         createHeatParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), hitboxVelocity.x, hitboxVelocity.y);
+         createHeatParticle(spawnPositionX, spawnPositionY, randAngle(), hitboxVelocity.x, hitboxVelocity.y);
       }
    }
 }

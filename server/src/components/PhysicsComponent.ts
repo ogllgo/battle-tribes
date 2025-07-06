@@ -11,7 +11,7 @@ import { getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
 import { updateEntityLights } from "../light-levels";
 import { addHitboxAngularAcceleration, applyAcceleration, getHitboxAngularVelocity, getHitboxConnectedMass, getHitboxTile, getTotalMass, Hitbox, hitboxIsInRiver } from "../hitboxes";
-import { getAngleDiff, Point } from "../../../shared/src/utils";
+import { getAngleDiff, Point, polarVec2 } from "../../../shared/src/utils";
 
 // @Cleanup: Variable names (also is shit generally, shouldn't keep)
 const a = [0];
@@ -75,7 +75,7 @@ const applyHitboxKinematics = (entity: Entity, hitbox: Hitbox, transformComponen
    // The tileMoveSpeedMultiplier check is so that game objects on stepping stones aren't pushed
    if (hitboxIsInRiver(entity, hitbox) && !physicsComponent.overrideMoveSpeedMultiplier && physicsComponent.isAffectedByGroundFriction) {
       const flowDirectionIdx = layer.riverFlowDirections[tileIndex];
-      applyAcceleration(hitbox, 240 * Settings.I_TPS * a[flowDirectionIdx], 240 * Settings.I_TPS * b[flowDirectionIdx]);
+      applyAcceleration(hitbox, new Point(240 * Settings.I_TPS * a[flowDirectionIdx], 240 * Settings.I_TPS * b[flowDirectionIdx]));
    }
 
    // @Cleanup: shouldn't be used by air friction.
@@ -223,13 +223,11 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
          // const accMag = force / getHitboxConnectedMass(hitbox) * originHitbox.box.position.calculateDistanceBetween(hitbox.box.position);
          const hitboxAccMag = force / getTotalMass(hitbox) * 40;
          const hitboxAccDir = originToHitboxDirection + Math.PI/2;
-         const hitboxAcc = Point.fromVectorForm(hitboxAccMag, hitboxAccDir);
-         applyAcceleration(hitbox, hitboxAcc.x, hitboxAcc.y);
+         applyAcceleration(hitbox, polarVec2(hitboxAccMag, hitboxAccDir));
 
          const originHitboxAccMag = -force / getTotalMass(originHitbox) * 40;
          const originHitboxAccDir = originToHitboxDirection - Math.PI/2;
-         const originHitboxAcc = Point.fromVectorForm(originHitboxAccMag, originHitboxAccDir);
-         applyAcceleration(hitbox, originHitboxAcc.x, originHitboxAcc.y);
+         applyAcceleration(hitbox, polarVec2(originHitboxAccMag, originHitboxAccDir));
       }
 
       // Restrict the hitboxes' angle to match its direction

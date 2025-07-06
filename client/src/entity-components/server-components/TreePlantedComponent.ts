@@ -5,7 +5,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
 import { HitFlags } from "../../../../shared/src/client-server-types";
-import { randFloat, randItem, randInt, Point } from "../../../../shared/src/utils";
+import { randFloat, randItem, randInt, Point, randAngle } from "../../../../shared/src/utils";
 import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle, LEAF_SPECK_COLOUR_LOW, LEAF_SPECK_COLOUR_HIGH, createWoodSpeckParticle } from "../../particles";
 import { playSoundOnHitbox } from "../../sound";
 import { TREE_HIT_SOUNDS, TREE_DESTROY_SOUNDS } from "./TreeComponent";
@@ -103,7 +103,7 @@ function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point, hitFlags: num
    
    // Create leaf particles
    {
-      const moveDirection = 2 * Math.PI * Math.random();
+      const moveDirection = randAngle();
 
       const spawnPositionX = hitbox.box.position.x + radius * Math.sin(moveDirection);
       const spawnPositionY = hitbox.box.position.y + radius * Math.cos(moveDirection);

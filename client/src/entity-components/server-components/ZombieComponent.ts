@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
-import { Point, randFloat, randInt } from "battletribes-shared/utils";
+import { Point, randAngle, randFloat, randInt } from "battletribes-shared/utils";
 import { playSoundOnHitbox } from "../../sound";
 import { PacketReader } from "battletribes-shared/packets";
 import { Entity } from "../../../../shared/src/entities";
@@ -135,7 +135,7 @@ function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
       const spawnPositionX = hitbox.box.position.x + RADIUS * Math.sin(offsetDirection);
       const spawnPositionY = hitbox.box.position.y + RADIUS * Math.cos(offsetDirection);
    
-      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
+      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, randAngle(), randFloat(150, 250), true);
    }
 
    playSoundOnHitbox("zombie-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, hitbox, false);

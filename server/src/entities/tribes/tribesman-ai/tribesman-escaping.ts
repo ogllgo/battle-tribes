@@ -1,4 +1,4 @@
-import { angle } from "battletribes-shared/utils";
+import { angle, polarVec2 } from "battletribes-shared/utils";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { clearTribesmanPath, getTribesmanAcceleration } from "./tribesman-ai-utils";
 import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
@@ -88,13 +88,12 @@ export function escapeFromEnemies(tribesman: Entity, visibleEnemies: ReadonlyArr
    // Run away from that position
    // 
 
-   const runDirection = angle(averageEnemyX - tribesmanHitbox.box.position.x, averageEnemyY - tribesmanHitbox.box.position.y) + Math.PI;
+   const runDir = angle(averageEnemyX - tribesmanHitbox.box.position.x, averageEnemyY - tribesmanHitbox.box.position.y) + Math.PI;
 
-   const accelerationX = getTribesmanAcceleration(tribesman) * Math.sin(runDirection);
-   const accelerationY = getTribesmanAcceleration(tribesman) * Math.cos(runDirection);
-   applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+   const acceleration = getTribesmanAcceleration(tribesman);
+   applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, runDir));
 
-   turnHitboxToAngle(tribesmanHitbox, runDirection, TRIBESMAN_TURN_SPEED, 0.5, false);
+   turnHitboxToAngle(tribesmanHitbox, runDir, TRIBESMAN_TURN_SPEED, 0.5, false);
 
    clearTribesmanPath(tribesman);
 }

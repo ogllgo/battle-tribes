@@ -1,6 +1,6 @@
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { Point } from "battletribes-shared/utils";
+import { Point, polarVec2 } from "battletribes-shared/utils";
 import { PhysicsComponentArray } from "./components/PhysicsComponent";
 import { CollisionPushInfo, getCollisionPushInfo } from "battletribes-shared/hitbox-collision";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
@@ -67,7 +67,7 @@ const resolveSoftCollision = (affectedHitbox: Hitbox, pushingHitbox: Hitbox, pus
    const totalAffectedMass = getHitboxConnectedMass(affectedHitbox);
    if (totalAffectedMass !== 0) {
       const pushForce = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * pushInfo.amountIn * pushingHitbox.mass / totalAffectedMass;
-      addHitboxVelocity(affectedHitbox, Point.fromVectorForm(pushForce, pushInfo.direction));
+      addHitboxVelocity(affectedHitbox, polarVec2(pushForce, pushInfo.direction));
    }
 }
 

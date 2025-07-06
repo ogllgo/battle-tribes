@@ -3,7 +3,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
-import { randFloat } from "../../../../shared/src/utils";
+import { randAngle, randFloat } from "../../../../shared/src/utils";
 import Board from "../../Board";
 import { createSmokeParticle, createEmberParticle } from "../../particles";
 import { CookingComponentArray } from "./CookingComponent";
@@ -72,7 +72,7 @@ function onTick(entity: Entity): void {
       // Smoke particles
       if (Board.tickIntervalHasPassed(0.17)) {
          const spawnOffsetMagnitude = 20 * Math.random();
-         const spawnOffsetDirection = 2 * Math.PI * Math.random();
+         const spawnOffsetDirection = randAngle();
          const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
          const spawnPositionY = hitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
          createSmokeParticle(spawnPositionX, spawnPositionY, 48);
@@ -84,11 +84,11 @@ function onTick(entity: Entity): void {
          let spawnPositionY = hitbox.box.position.y;
 
          const spawnOffsetMagnitude = 11 * Math.random();
-         const spawnOffsetDirection = 2 * Math.PI * Math.random();
+         const spawnOffsetDirection = randAngle();
          spawnPositionX += spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
          spawnPositionY += spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 
-         createEmberParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(80, 120), 0, 0);
+         createEmberParticle(spawnPositionX, spawnPositionY, randAngle(), randFloat(80, 120), 0, 0);
       }
    }
 }

@@ -1,7 +1,7 @@
 import { GuardianCrystalBurstStage, ServerComponentType } from "battletribes-shared/components";
 import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { lerp, Point, randFloat, randSign, UtilVars } from "battletribes-shared/utils";
+import { lerp, Point, polarVec2, randAngle, randFloat, randSign, UtilVars } from "battletribes-shared/utils";
 import { turnToPosition } from "../ai-shared";
 import { GuardianComponent, GuardianComponentArray, GuardianVars } from "../components/GuardianComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
@@ -32,9 +32,9 @@ const createFragmentProjectile = (guardian: Entity): void => {
 
    const velocityMagnitude = randFloat(450, 700);
    const velocityDirection = offsetDirection + randFloat(-0.2, 0.2);
-   const vel = Point.fromVectorForm(velocityMagnitude, velocityDirection);
+   const vel = polarVec2(velocityMagnitude, velocityDirection);
    
-   const config = createGuardianGemFragmentProjectileConfig(new Point(originX, originY), 2 * Math.PI * Math.random(), guardian);
+   const config = createGuardianGemFragmentProjectileConfig(new Point(originX, originY), randAngle(), guardian);
 
    const snowballHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
    addHitboxVelocity(snowballHitbox, vel);

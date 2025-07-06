@@ -4,6 +4,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityIntermediateInfo, EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { randAngle } from "../../../../shared/src/utils";
 
 export interface PebblumComponentParams {}
 
@@ -32,7 +33,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    const nose = new TexturedRenderPart(
       hitbox,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       getTextureArrayIndex("entities/pebblum/pebblum-nose.png")
    )
    nose.offset.y = 12;
@@ -42,7 +43,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    const body = new TexturedRenderPart(
       hitbox,
       1,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       getTextureArrayIndex("entities/pebblum/pebblum-body.png")
    )
    body.offset.y = -8;

@@ -5,7 +5,7 @@ import { Packet } from "battletribes-shared/packets";
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { Point, randFloat, UtilVars } from "battletribes-shared/utils";
+import { Point, polarVec2, randFloat, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition, runHerdAI } from "../ai-shared";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { addLocalInvulnerabilityHash, canDamageEntity, damageEntity, healEntity, HealthComponentArray } from "./HealthComponent";
@@ -319,9 +319,7 @@ function onTick(zombie: Entity): void {
       if (herdMembers.length > 1) {
          runHerdAI(zombie, herdMembers, ZombieVars.VISION_RANGE, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
 
-         const accelerationX = Vars.ACCELERATION_SLOW * Math.sin(zombieHitbox.box.angle);
-         const accelerationY = Vars.ACCELERATION_SLOW * Math.cos(zombieHitbox.box.angle);
-         applyAccelerationFromGround(zombie, zombieHitbox, accelerationX, accelerationY);
+         applyAccelerationFromGround(zombie, zombieHitbox, polarVec2(Vars.ACCELERATION_SLOW, zombieHitbox.box.angle));
          return;
       }
    }

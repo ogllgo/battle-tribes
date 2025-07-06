@@ -88,7 +88,7 @@ function onTick(entity: Entity): void {
       const hitbox = transformComponent.children[0] as Hitbox;
       
       const offsetMagnitude = 32 * Math.random();
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const x = hitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
       const y = hitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);
       createFlyParticle(x, y);

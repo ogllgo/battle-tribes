@@ -1,4 +1,4 @@
-import { randFloat } from "battletribes-shared/utils";
+import { randAngle, randFloat } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { playSoundOnHitbox } from "../../sound";
@@ -71,7 +71,7 @@ const createLeafRenderPart = (isSmall: boolean, parentHitbox: Hitbox): VisualRen
    const renderPart = new TexturedRenderPart(
       parentHitbox,
       1 + Math.random() * 0.5,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       getTextureArrayIndex(textureSource)
    );
 
@@ -157,8 +157,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    
          // Create leaf particles
          for (let i = 0; i < 4; i++) {
-            const position = hitbox.box.position.offset(randFloat(0, 22), 2 * Math.PI * Math.random())
-            createLeafParticle(position.x, position.y, 2 * Math.PI * Math.random() + randFloat(-1, 1), Math.random() < 0.5 ? LeafParticleSize.large : LeafParticleSize.small);
+            const position = hitbox.box.position.offset(randFloat(0, 22), randAngle())
+            createLeafParticle(position.x, position.y, randAngle() + randFloat(-1, 1), Math.random() < 0.5 ? LeafParticleSize.large : LeafParticleSize.small);
          }
          
          // Create leaf specks

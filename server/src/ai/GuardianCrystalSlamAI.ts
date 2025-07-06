@@ -1,7 +1,7 @@
 import { GuardianCrystalSlamStage } from "battletribes-shared/components";
 import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { lerp, Point, UtilVars } from "battletribes-shared/utils";
+import { lerp, Point, randAngle, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition, turnToPosition } from "../ai-shared";
 import { GuardianComponent, GuardianComponentArray, GuardianVars } from "../components/GuardianComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
@@ -70,11 +70,11 @@ export default class GuardianCrystalSlamAI {
 
             // Add random offset to position
             const offsetMagnitude = 8 * Math.random();
-            const offsetDirection = 2 * Math.PI * Math.random();
+            const offsetDirection = randAngle();
             x += offsetMagnitude * Math.sin(offsetDirection);
             y += offsetMagnitude * Math.cos(offsetDirection);
             
-            const config = createGuardianGemQuakeConfig(new Point(x, y), 2 * Math.PI * Math.random());
+            const config = createGuardianGemQuakeConfig(new Point(x, y), randAngle());
             createEntity(config, layer, spawnDelayTicks);
          }
       }

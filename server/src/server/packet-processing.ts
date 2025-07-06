@@ -189,7 +189,7 @@ export function processRespawnPacket(playerClient: PlayerClient): void {
       const totemHitbox = totemTransformComponent.children[0] as Hitbox;
       
       spawnPosition = totemHitbox.box.position.copy();
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       spawnPosition.x += 100 * Math.sin(offsetDirection);
       spawnPosition.y += 100 * Math.cos(offsetDirection);
       layer = getEntityLayer(playerClient.tribe.totem);
@@ -340,7 +340,7 @@ export function processItemDropPacket(playerClient: PlayerClient, reader: Packet
       const playerTransformComponent = TransformComponentArray.getComponent(playerClient.instance);
       const playerHitbox = playerTransformComponent.children[0] as Hitbox;
       
-      const worker = createTribeWorkerConfig(playerHitbox.box.position.copy(), 2 * Math.PI * Math.random(), dwarfTribe);
+      const worker = createTribeWorkerConfig(playerHitbox.box.position.copy(), randAngle(), dwarfTribe);
       createEntity(worker, undergroundLayer, 0);
    }
 

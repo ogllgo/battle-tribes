@@ -3,7 +3,7 @@ import { Entity, EntityType } from "../../../shared/src/entities";
 import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 import { ItemType } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
-import { assert, Point } from "../../../shared/src/utils";
+import { assert, Point, randAngle } from "../../../shared/src/utils";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
 import { createEntityConfigAttachInfo, EntityConfig } from "../components";
 import { createGlurbBodySegmentConfig } from "../entities/mobs/glurb-body-segment";
@@ -203,10 +203,10 @@ function onTick(glurbHead: Entity): void {
                   let config: EntityConfig;
                   if (currentNumComponents + 1 === glurbComponent.numSegments) {
                      // Tail segment
-                     config = createGlurbTailSegmentConfig(new Point(x, y), 2 * Math.PI * Math.random(), finalSegmentHitbox, finalSegmentTransformComponent);
+                     config = createGlurbTailSegmentConfig(new Point(x, y), randAngle(), finalSegmentHitbox, finalSegmentTransformComponent);
                   } else {
                      // Body segment
-                     config = createGlurbBodySegmentConfig(new Point(x, y), 2 * Math.PI * Math.random(), finalSegmentHitbox, finalSegmentTransformComponent);
+                     config = createGlurbBodySegmentConfig(new Point(x, y), randAngle(), finalSegmentHitbox, finalSegmentTransformComponent);
                   }
                   config.attachInfo = createEntityConfigAttachInfo(glurb, null, true);
                   createEntity(config, getEntityLayer(glurb), 0);

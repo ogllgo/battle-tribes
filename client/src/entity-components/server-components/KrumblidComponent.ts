@@ -3,7 +3,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
-import { Point, randFloat, randInt } from "../../../../shared/src/utils";
+import { Point, randAngle, randFloat, randInt } from "../../../../shared/src/utils";
 import { createBloodPoolParticle, createBloodParticle, BloodParticleSize, createBloodParticleFountain, createKrumblidChitinParticle } from "../../particles";
 import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
 import { playSoundOnHitbox } from "../../sound";
@@ -86,7 +86,7 @@ function onHit(krumblid: Entity, hitbox: Hitbox, hitPosition: Point): void {
 
       const spawnPositionX = hitbox.box.position.x + 32 * Math.sin(offsetDirection);
       const spawnPositionY = hitbox.box.position.y + 32 * Math.cos(offsetDirection);
-      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
+      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, randAngle(), randFloat(150, 250), true);
    }
 
    playSoundOnHitbox("krumblid-hit-shell.mp3", 0.6, randFloat(0.9, 1.1), krumblid, hitbox, false);
@@ -109,7 +109,7 @@ function onDie(krumblid: Entity): void {
    createBloodParticleFountain(krumblid, 0.1, 0.8);
 
    for (let i = 0; i < 10; i++) {
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const spawnPositionX = hitbox.box.position.x + 20 * Math.sin(offsetDirection);
       const spawnPositionY = hitbox.box.position.y + 20 * Math.cos(offsetDirection);
       createKrumblidChitinParticle(spawnPositionX, spawnPositionY);

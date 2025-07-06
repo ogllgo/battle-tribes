@@ -4,7 +4,7 @@ import { ComponentArray } from "./ComponentArray";
 import { DamageSource, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { Biome } from "battletribes-shared/biomes";
-import { getTileIndexIncludingEdges, getTileX, getTileY, Point, randFloat, randItem, TileIndex, tileIsInWorld, UtilVars } from "battletribes-shared/utils";
+import { getTileIndexIncludingEdges, getTileX, getTileY, Point, polarVec2, randAngle, randFloat, randItem, TileIndex, tileIsInWorld, UtilVars } from "battletribes-shared/utils";
 import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { ItemType } from "battletribes-shared/items/items";
@@ -187,10 +187,10 @@ const throwSnowball = (yeti: Entity, size: number, throwAngle: number): void => 
       velocityMagnitude = randFloat(Vars.LARGE_SNOWBALL_THROW_SPEED_MIN, Vars.LARGE_SNOWBALL_THROW_SPEED_MAX);
    }
 
-   const config = createSnowballConfig(position, 2 * Math.PI * Math.random(), yeti, size);
+   const config = createSnowballConfig(position, randAngle(), yeti, size);
 
    const snowballHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
-   addHitboxVelocity(snowballHitbox, Point.fromVectorForm(velocityMagnitude, angle));
+   addHitboxVelocity(snowballHitbox, polarVec2(velocityMagnitude, angle));
 
    createEntity(config, getEntityLayer(yeti), 0);
 }

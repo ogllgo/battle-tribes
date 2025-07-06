@@ -1,7 +1,7 @@
 import { DecorationType, ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import { randInt, randFloat, TileIndex, getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorldIncludingEdges, Point } from "battletribes-shared/utils";
+import { randInt, randFloat, TileIndex, getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorldIncludingEdges, Point, randAngle } from "battletribes-shared/utils";
 import { getTilesInRange } from "../Layer";
 import { createDecorationConfig } from "../entities/decoration";
 import { createEntity } from "../Entity";
@@ -24,7 +24,7 @@ interface DecorationGenerationInfo {
 }
 
 const createDecoration = (x: number, y: number, decorationType: DecorationType): void => {
-   const config = createDecorationConfig(new Point(x, y), 2 * Math.PI * Math.random(), decorationType);
+   const config = createDecorationConfig(new Point(x, y), randAngle(), decorationType);
    createEntity(config, surfaceLayer, 0);
 
    pushJoinBuffer(false);
@@ -181,7 +181,7 @@ export function generateDecorations(): void {
          const numOthers = randInt(generationInfo.minGroupSize, generationInfo.maxGroupSize) - 1;
          for (let i = 0; i < numOthers; i++) {
             const spawnOffsetMagnitude = randFloat(0, GROUP_SPAWN_RANGE);
-            const spawnOffsetDirection = 2 * Math.PI * Math.random();
+            const spawnOffsetDirection = randAngle();
             const spawnX = x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
             const spawnY = y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 

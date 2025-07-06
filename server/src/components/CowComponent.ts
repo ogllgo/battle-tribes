@@ -1,6 +1,6 @@
 import { CowSpecies, DamageSource, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { angle, getAbsAngleDiff, Point, positionIsInWorld, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
+import { angle, getAbsAngleDiff, Point, polarVec2, positionIsInWorld, randAngle, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
 import { ServerComponentType } from "battletribes-shared/components";
 import { CowVars } from "../entities/mobs/cow";
@@ -109,8 +109,8 @@ const poop = (cow: Entity, cowComponent: CowComponent): void => {
    // Shit it out
    const transformComponent = TransformComponentArray.getComponent(cow);
    const bodyHitbox = transformComponent.children[0] as Hitbox;
-   const poopPosition = bodyHitbox.box.position.offset(randFloat(0, 16), 2 * Math.PI * Math.random());
-   const config = createItemEntityConfig(poopPosition, 2 * Math.PI * Math.random(), ItemType.poop, 1, null);
+   const poopPosition = bodyHitbox.box.position.offset(randFloat(0, 16), randAngle());
+   const config = createItemEntityConfig(poopPosition, randAngle(), ItemType.poop, 1, null);
    createEntity(config, getEntityLayer(cow), 0);
 
    // Let it out
@@ -171,7 +171,7 @@ const graze = (cow: Entity, cowComponent: CowComponent, targetGrass: Entity): vo
    
          for (let i = 0; i < 4; i++) {
             const blockAmount = randFloat(0.6, 0.9);
-            const position = grassHitbox.box.position.offset(randFloat(0, 12), 2 * Math.PI * Math.random());
+            const position = grassHitbox.box.position.offset(randFloat(0, 12), randAngle());
 
             const grassBlockerBox = new CircularBox(position, new Point(0, 0), 0, randFloat(12, 18));
             createGrassBlocker(grassBlockerBox, getEntityLayer(cow), blockAmount, blockAmount, 0);
@@ -540,9 +540,7 @@ function onTick(cow: Entity): void {
       runHerdAI(cow, herdMembers, aiHelperComponent.visionRange, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
 
       // @Incomplete: use new move func
-      const accelerationX = 200 * Math.sin(cowBodyHitbox.box.angle);
-      const accelerationY = 200 * Math.cos(cowBodyHitbox.box.angle);
-      applyAccelerationFromGround(cow, cowBodyHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(cow, cowBodyHitbox, polarVec2(200, cowBodyHitbox.box.angle));
       return;
    }
 

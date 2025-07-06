@@ -25,7 +25,7 @@ import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEnti
 import { runPatrolAI } from "../../../ai/PatrolAI";
 import { runAssignmentAI } from "../../../components/AIAssignmentComponent";
 import { replantPlanterBoxes } from "./tribesman-replanting";
-import { getAbsAngleDiff } from "../../../../../shared/src/utils";
+import { getAbsAngleDiff, polarVec2 } from "../../../../../shared/src/utils";
 import { entitiesAreColliding, CollisionVars } from "../../../collision-detection";
 import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../../hitboxes";
 
@@ -434,9 +434,8 @@ export function tickTribesman(tribesman: Entity): void {
 
          const distance = tribesmanHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
          if (!willStopAtDesiredDistance(tribesmanHitbox, 80, distance)) {
-            const accelerationX = getTribesmanAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle);
-            const accelerationY = getTribesmanAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle);
-            applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+            const accM = getTribesmanAcceleration(tribesman);
+            applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(accM, tribesmanHitbox.box.angle));
          }
 
          const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(entityHitbox.box.position);
@@ -565,7 +564,7 @@ export function tickTribesman(tribesman: Entity): void {
          const blueprintTransformComponent = TransformComponentArray.getComponent(closestBlueprint);
          const blueprintHitbox = blueprintTransformComponent.children[0] as Hitbox;
          
-         const targetDirection = tribesmanHitbox.box.position.calculateAngleBetween(blueprintHitbox.box.position);
+         const targetDir = tribesmanHitbox.box.position.calculateAngleBetween(blueprintHitbox.box.position);
 
          const desiredAttackRange = getTribesmanDesiredAttackRange(tribesman);
          
@@ -574,24 +573,22 @@ export function tickTribesman(tribesman: Entity): void {
          const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, blueprintTransformComponent) - getHumanoidRadius(transformComponent);
          if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange - 20, distance)) {
             // If the tribesman will stop too close to the target, move back a bit
-            const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle + Math.PI);
-            const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle + Math.PI);
-            applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+            const acceleration = getTribesmanSlowAcceleration(tribesman);
+            applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, tribesmanHitbox.box.angle + Math.PI));
          } else if (!willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange, distance)) {
             // Too far away, move closer
-            const accelerationX = getTribesmanAcceleration(tribesman) * Math.sin(targetDirection);
-            const accelerationY = getTribesmanAcceleration(tribesman) * Math.cos(targetDirection);
-            applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+            const acceleration = getTribesmanAcceleration(tribesman);
+            applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, targetDir));
          }
 
-         turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 0.5, false);
+         turnHitboxToAngle(tribesmanHitbox, targetDir, TRIBESMAN_TURN_SPEED, 0.5, false);
 
          // Select the hammer item slot
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
          const useInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
          useInfo.selectedItemSlot = hammerItemSlot;
 
-         if (getAbsAngleDiff(tribesmanHitbox.box.angle, targetDirection) < 0.1) {
+         if (getAbsAngleDiff(tribesmanHitbox.box.angle, targetDir) < 0.1) {
             doMeleeAttack(tribesman, hammerItemSlot);
          }
          

@@ -1,6 +1,6 @@
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collision";
 import { Entity, EntityType, FishColour } from "battletribes-shared/entities";
-import { angle, customTickIntervalHasPassed, Point, UtilVars } from "battletribes-shared/utils";
+import { angle, customTickIntervalHasPassed, Point, polarVec2, UtilVars } from "battletribes-shared/utils";
 import { HealthComponent, HealthComponentArray } from "../../components/HealthComponent";
 import { FishComponent, FishComponentArray } from "../../components/FishComponent";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -87,9 +87,7 @@ const moveFunc = (fish: Entity, pos: Point, acceleration: number): void => {
    const tileIndex = getHitboxTile(fishHitbox);
    if (layer.tileTypes[tileIndex] === TileType.water) {
       // Swim on water
-      const accelerationX = acceleration * Math.sin(direction);
-      const accelerationY = acceleration * Math.cos(direction);
-      applyAccelerationFromGround(fish, fishHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(fish, fishHitbox, polarVec2(acceleration, direction));
    } else {
       // 
       // Lunge on land
@@ -97,7 +95,7 @@ const moveFunc = (fish: Entity, pos: Point, acceleration: number): void => {
 
       const fishComponent = FishComponentArray.getComponent(fish);
       if (customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TPS, Vars.LUNGE_INTERVAL)) {
-         addHitboxVelocity(fishHitbox, Point.fromVectorForm(Vars.LUNGE_FORCE, direction));
+         addHitboxVelocity(fishHitbox, polarVec2(Vars.LUNGE_FORCE, direction));
       }
    }
 }

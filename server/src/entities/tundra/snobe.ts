@@ -73,8 +73,8 @@ const moveFunc = (snobe: Entity, pos: Point, acceleration: number): void => {
    // accelerateEntityToPosition(krumblid, pos, acceleration);
 }
 
-const turnFunc = (krumblid: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
-   turnToPosition(krumblid, pos, turnSpeed, turnDamping);
+const turnFunc = (snobe: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
+   turnToPosition(snobe, pos, turnSpeed, turnDamping);
 }
 
 export function createSnobeConfig(position: Point, angle: number): EntityConfig {

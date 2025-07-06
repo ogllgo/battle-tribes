@@ -1,9 +1,9 @@
 import { Settings } from "battletribes-shared/settings";
-import { getDistanceFromPointToEntity, moveEntityToPosition, turnToPosition, willStopAtDesiredDistance } from "../ai-shared";
+import { getDistanceFromPointToEntity, willStopAtDesiredDistance } from "../ai-shared";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { entityExists, getEntityType } from "../world";
-import { applyAccelerationFromGround, Hitbox } from "../hitboxes";
+import { Hitbox } from "../hitboxes";
 import { Point, randInt } from "../../../shared/src/utils";
 import { AIHelperComponentArray } from "../components/AIHelperComponent";
 

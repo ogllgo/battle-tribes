@@ -8,7 +8,7 @@ import { Hitbox } from "../../hitboxes";
 import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { playSoundOnHitbox } from "../../sound";
-import { Point, randFloat } from "../../../../shared/src/utils";
+import { Point, randAngle, randFloat } from "../../../../shared/src/utils";
 import { createPricklyPearParticle } from "../../particles";
 import { HealthComponentArray } from "./HealthComponent";
 
@@ -69,11 +69,11 @@ function onDie(pricklyPear: Entity): void {
       playSoundOnHitbox("prickly-pear-explode.mp3", 0.65, randFloat(0.9, 1.1), pricklyPear, hitbox, false);
 
       for (let i = 0; i < 7; i++) {
-         const offsetDirection = 2 * Math.PI * Math.random();
+         const offsetDirection = randAngle();
          const offsetMagnitude = randFloat(4, 8);
          const x = hitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
          const y = hitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);
-         createPricklyPearParticle(x, y, 2 * Math.PI * Math.random());
+         createPricklyPearParticle(x, y, randAngle());
       }
    } else {
       playSoundOnHitbox("prickly-pear-snap.mp3", 0.5, randFloat(0.9, 1.1), pricklyPear, hitbox, false);

@@ -6,7 +6,7 @@ import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import { customTickIntervalHasPassed, Point, randFloat, randSign, UtilVars } from "battletribes-shared/utils";
+import { customTickIntervalHasPassed, Point, polarVec2, randAngle, randFloat, randSign, UtilVars } from "battletribes-shared/utils";
 import { runHerdAI, moveEntityToPosition } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { runEscapeAI } from "../ai/EscapeAI";
@@ -166,10 +166,10 @@ function onTick(fish: Entity): void {
    if (tileType !== TileType.water) {
       fishComponent.flailTimer += Settings.I_TPS;
       if (fishComponent.flailTimer >= 0.75) {
-         const flailDirection = 2 * Math.PI * Math.random();
+         const flailDirection = randAngle();
          
          addHitboxAngularVelocity(fishHitbox, randFloat(1.5, 2.2) * randSign());
-         addHitboxVelocity(fishHitbox, Point.fromVectorForm(200, flailDirection));
+         addHitboxVelocity(fishHitbox, polarVec2(200, flailDirection));
    
          fishComponent.flailTimer = 0;
       }
@@ -195,9 +195,7 @@ function onTick(fish: Entity): void {
    if (herdMembers.length >= 1) {
       runHerdAI(fish, herdMembers, aiHelperComponent.visionRange, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
 
-      const accelerationX = 100 * Math.sin(fishHitbox.box.angle);
-      const accelerationY = 100 * Math.cos(fishHitbox.box.angle);
-      applyAccelerationFromGround(fish, fishHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(fish, fishHitbox, polarVec2(100, fishHitbox.box.angle));
       return;
    }
 

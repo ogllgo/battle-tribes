@@ -1,7 +1,7 @@
 import { PathfindingNodeIndex } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { getEntityCollisionGroup } from "battletribes-shared/collision-groups";
-import { assert, Point, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { assert, Point, randAngle, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import Chunk from "../Chunk";
 import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
@@ -798,7 +798,7 @@ export function removeAttachedEntity(parent: Entity, child: Entity): void {
 
 export function getRandomPositionInBox(box: Box): Point {
    if (boxIsCircular(box)) {
-      return box.position.offset(box.radius * Math.random(), 2 * Math.PI * Math.random());
+      return box.position.offset(box.radius * Math.random(), randAngle());
    } else {
       const halfWidth = box.width / 2;
       const halfHeight = box.height / 2;

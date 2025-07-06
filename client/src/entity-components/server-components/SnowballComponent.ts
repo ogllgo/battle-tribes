@@ -1,7 +1,7 @@
 import { Entity } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
-import { randFloat, randInt } from "battletribes-shared/utils";
+import { randAngle, randFloat, randInt } from "battletribes-shared/utils";
 import Board from "../../Board";
 import { createSnowParticle } from "../../particles";
 import { TransformComponentArray } from "./TransformComponent";
@@ -93,7 +93,7 @@ const createSnowSpeckParticle = (spawnPositionX: number, spawnPositionY: number)
    const pixelSize = randInt(4, 8);
 
    const velocityMagnitude = randFloat(40, 80);
-   const velocityDirection = 2 * Math.PI * Math.random();
+   const velocityDirection = randAngle();
    const velocityX = velocityMagnitude * Math.sin(velocityDirection);
    const velocityY = velocityMagnitude * Math.cos(velocityDirection);
 
@@ -112,7 +112,7 @@ const createSnowSpeckParticle = (spawnPositionX: number, spawnPositionY: number)
       velocityX, velocityY,
       0, 0,
       velocityMagnitude / lifetime / 1.2,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0,
       0,
       0,
@@ -126,7 +126,7 @@ function onHit(entity: Entity, hitbox: Hitbox): void {
    const radius = (hitbox.box as CircularBox).radius;
    const numParticles = Math.floor(radius / 3);
    for (let i = 0; i < numParticles; i++) {
-      const position = hitbox.box.position.offset(radius, 2 * Math.PI * Math.random());
+      const position = hitbox.box.position.offset(radius, randAngle());
       createSnowSpeckParticle(position.x, position.y);
    }
 }
@@ -139,7 +139,7 @@ function onDie(entity: Entity): void {
    const radius = (hitbox.box as CircularBox).radius;
    const numParticles = Math.floor(radius / 1.2);
    for (let i = 0; i < numParticles; i++) {
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const spawnPositionX = hitbox.box.position.x + radius * Math.sin(offsetDirection);
       const spawnPositionY = hitbox.box.position.y + radius * Math.cos(offsetDirection);
       createSnowSpeckParticle(spawnPositionX, spawnPositionY);

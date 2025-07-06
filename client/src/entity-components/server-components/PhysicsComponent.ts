@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { assert, customTickIntervalHasPassed, lerp, randInt, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { assert, customTickIntervalHasPassed, lerp, randAngle, randInt, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { TILE_PHYSICS_INFO_RECORD, TileType } from "battletribes-shared/tiles";
 import Board from "../../Board";
@@ -217,7 +217,7 @@ function onTick(entity: Entity): void {
          0, 0, 
          0, 0,
          0,
-         2 * Math.PI * Math.random(),
+         randAngle(),
          0,
          0,
          0,

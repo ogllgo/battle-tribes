@@ -2,7 +2,7 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { TitleGenerationInfo, TribesmanTitle } from "battletribes-shared/titles";
-import { Point, assert, lerp, randFloat, randInt, randItem, veryBadHash } from "battletribes-shared/utils";
+import { Point, assert, lerp, randAngle, randFloat, randInt, randItem, veryBadHash } from "battletribes-shared/utils";
 import { Light, attachLightToRenderPart, createLight, removeAllAttachedLights } from "../../lights";
 import Board from "../../Board";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -676,7 +676,7 @@ const updateTitles = (tribeMemberComponent: TribesmanComponent, entity: Entity, 
          const hitbox = transformComponent.children[0] as Hitbox;
          for (let i = 0; i < 25; i++) {
             const offsetMagnitude = randFloat(12, 34);
-            const offsetDirection = 2 * Math.PI * Math.random();
+            const offsetDirection = randAngle();
             const spawnPositionX = hitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
             const spawnPositionY = hitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);
 
@@ -736,12 +736,12 @@ function onTick(entity: Entity): void {
       const sprintParticleSpawnRate = Math.sqrt(velocity.length() * 0.8);
       if (Math.random() < sprintParticleSpawnRate / Settings.TPS) {
          const offsetMagnitude = 32 * Math.random();
-         const offsetDirection = 2 * Math.PI * Math.random();
+         const offsetDirection = randAngle();
          const x = entityHitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
          const y = entityHitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);
          
          const velocityMagnitude = 32 * Math.random();
-         const velocityDirection = 2 * Math.PI * Math.random();
+         const velocityDirection = randAngle();
          const vx = velocityMagnitude * Math.sin(velocityDirection);
          const vy = velocityMagnitude * Math.cos(offsetDirection);
          createSprintParticle(x, y, vx, vy);
@@ -751,7 +751,7 @@ function onTick(entity: Entity): void {
    // Winterswrath particles
    if (tribesmanHasTitle(tribesmanComponent, TribesmanTitle.winterswrath) && Math.random() < 18 * Settings.I_TPS) {
       const offsetMagnitude = randFloat(36, 50);
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const x = entityHitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
       const y = entityHitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);
       
@@ -818,7 +818,7 @@ function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
 
       const spawnPositionX = hitbox.box.position.x + 32 * Math.sin(offsetDirection);
       const spawnPositionY = hitbox.box.position.y + 32 * Math.cos(offsetDirection);
-      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
+      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, randAngle(), randFloat(150, 250), true);
    }
 
    const tribeComponent = TribeComponentArray.getComponent(entity);
@@ -847,7 +847,7 @@ function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
    const armour = armourInventory.itemSlots[1];
    if (typeof armour !== "undefined" && armour.type === ItemType.leaf_suit) {
       for (let i = 0; i < 3; i++) {
-         const moveDirection = 2 * Math.PI * Math.random();
+         const moveDirection = randAngle();
 
          const radius = getHumanoidRadius(entity);
          const spawnPositionX = hitbox.box.position.x + radius * Math.sin(moveDirection);

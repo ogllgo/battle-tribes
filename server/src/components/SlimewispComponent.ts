@@ -3,7 +3,7 @@ import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType, SlimeSize } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import { Point, UtilVars } from "battletribes-shared/utils";
+import { Point, randAngle, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition } from "../ai-shared";
 import { createSlimeConfig } from "../entities/mobs/slime";
 import { createEntity } from "../Entity";
@@ -62,7 +62,7 @@ function onTick(slimewisp: Entity): void {
                const y = (slimewispHitbox.box.position.y + mergingSlimewispHitbox.box.position.y) / 2;
                
                // Create a slime between the two wisps
-               const config = createSlimeConfig(new Point(x, y), 2 * Math.PI * Math.random(), SlimeSize.small);
+               const config = createSlimeConfig(new Point(x, y), randAngle(), SlimeSize.small);
                createEntity(config, layer, 0);
             
                destroyEntity(slimewisp);

@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
-import { Point, randFloat, randInt } from "battletribes-shared/utils";
+import { Point, randAngle, randFloat, randInt } from "battletribes-shared/utils";
 import Board from "../../Board";
 import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createBloodPoolParticle, createDirtParticle } from "../../particles";
 import { playSoundOnHitbox } from "../../sound";
@@ -121,7 +121,7 @@ function onTick(entity: Entity): void {
       const hitbox = transformComponent.children[0] as Hitbox;
       
       const spawnOffsetMagnitude = 30 * Math.random();
-      const spawnOffsetDirection = 2 * Math.PI * Math.random();
+      const spawnOffsetDirection = randAngle();
       const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
       const spawnPositionY = hitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
       createDirtParticle(spawnPositionX, spawnPositionY, ParticleRenderLayer.low);
@@ -182,7 +182,7 @@ function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
 
       const spawnPositionX = hitbox.box.position.x + 32 * Math.sin(offsetDirection);
       const spawnPositionY = hitbox.box.position.y + 32 * Math.cos(offsetDirection);
-      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
+      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, randAngle(), randFloat(150, 250), true);
    }
 
    playSoundOnHitbox("cow-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, hitbox, false);

@@ -2,7 +2,7 @@ import { Biome } from "../../../shared/src/biomes";
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
-import { angle, getTileIndexIncludingEdges, getTileX, getTileY, lerp, Point, randItem, TileIndex } from "../../../shared/src/utils";
+import { angle, getTileIndexIncludingEdges, getTileX, getTileY, lerp, Point, polarVec2, randItem, TileIndex } from "../../../shared/src/utils";
 import { entityHasReachedPosition } from "../ai-shared";
 import { Hitbox, addHitboxVelocity } from "../hitboxes";
 import { getEntityType, getEntityLayer } from "../world";
@@ -177,7 +177,7 @@ function onTick(fleshSword: Entity): void {
       // @Hack: should instead change angularvelocity
       const moveAngle = directMoveAngle + moveAngleOffset;
       hitbox.box.relativeAngle = moveAngle - Math.PI/4;
-      addHitboxVelocity(hitbox, Point.fromVectorForm(moveSpeed!, moveAngle));
+      addHitboxVelocity(hitbox, polarVec2(moveSpeed!, moveAngle));
 
       transformComponent.isDirty = true;
    }

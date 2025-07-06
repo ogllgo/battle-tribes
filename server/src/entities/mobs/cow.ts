@@ -1,7 +1,7 @@
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collision";
 import { CowSpecies, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { lerp, Point, randInt } from "battletribes-shared/utils";
+import { lerp, Point, polarVec2, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
@@ -105,7 +105,7 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
    return layer.getBiomeAtPosition(x, y) === Biome.grasslands;
 }
 
-const moveFunc = (cow: Entity, pos: Point, acceleration: number): void => {
+const moveFunc = (cow: Entity, pos: Point, accelerationMagnitude: number): void => {
    const transformComponent = TransformComponentArray.getComponent(cow);
    const cowBodyHitbox = transformComponent.rootChildren[0] as Hitbox;
 
@@ -117,9 +117,7 @@ const moveFunc = (cow: Entity, pos: Point, acceleration: number): void => {
    
    const alignmentToTarget = findAngleAlignment(cowBodyHitbox.box.angle, bodyToTargetDirection);
    const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget);
-   const accelerationX = acceleration * accelerationMultiplier * Math.sin(bodyToTargetDirection);
-   const accelerationY = acceleration * accelerationMultiplier * Math.cos(bodyToTargetDirection);
-   applyAccelerationFromGround(cow, cowBodyHitbox, accelerationX, accelerationY);
+   applyAccelerationFromGround(cow, cowBodyHitbox, polarVec2(accelerationMagnitude * accelerationMultiplier, bodyToTargetDirection));
    
    // 
    // Move head to the target
@@ -129,9 +127,8 @@ const moveFunc = (cow: Entity, pos: Point, acceleration: number): void => {
    const headToTargetDirection = headHitbox.box.position.calculateAngleBetween(pos);
 
    // @Hack?
-   const headForce = acceleration * 0.8;
-   const headAcc = Point.fromVectorForm(headForce, headToTargetDirection);
-   applyAcceleration(headHitbox, headAcc.x, headAcc.y);
+   const headForce = accelerationMagnitude * 0.8;
+   applyAcceleration(headHitbox, polarVec2(headForce, headToTargetDirection));
 }
 
 const turnFunc = (cow: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
@@ -197,7 +194,7 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
    
    // Head hitbox
    const headPosition = position.offset(idealHeadDist, angle);
-   const headHitbox = createHitbox(transformComponent, null, new CircularBox(headPosition, new Point(0, 30), 0, 30), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
+   const headHitbox = createHitbox(transformComponent, null, new CircularBox(headPosition, new Point(0, idealHeadDist), 0, 30), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
    headHitbox.box.pivot = createNormalisedPivotPoint(0, -0.5);
    addHitboxToTransformComponent(transformComponent, headHitbox);
 

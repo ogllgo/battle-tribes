@@ -14,6 +14,7 @@ import { addInventoryDataToPacket, getInventoryDataLength } from "../server/pack
 import { EntityRelationship, getEntityRelationship } from "./TribeComponent";
 import { destroyEntity, getEntityLayer } from "../world";
 import { registerDirtyEntity } from "../server/player-clients";
+import { randAngle } from "../../../shared/src/utils";
 
 export interface InventoryOptions {
    readonly acceptsPickedUpItems: boolean;
@@ -48,11 +49,11 @@ const dropInventory = (entity: Entity, inventory: Inventory, dropRange: number):
       const position = getRandomPositionInEntity(transformComponent);
 
       const spawnOffsetMagnitude = dropRange * Math.random();
-      const spawnOffsetDirection = 2 * Math.PI * Math.random();
+      const spawnOffsetDirection = randAngle();
       position.x += spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
       position.y += spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
       
-      const config = createItemEntityConfig(position, 2 * Math.PI * Math.random(), item.type, item.count, null);
+      const config = createItemEntityConfig(position, randAngle(), item.type, item.count, null);
       createEntity(config, getEntityLayer(entity), 0);
    }
 }

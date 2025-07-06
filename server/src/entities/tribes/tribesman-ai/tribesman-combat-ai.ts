@@ -1,10 +1,10 @@
 import { TribesmanAIType } from "battletribes-shared/components";
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { Settings, PathfindingSettings } from "battletribes-shared/settings";
-import { Point, angleToPoint, assert, distance } from "battletribes-shared/utils";
+import { Point, angleToPoint, assert, distance, polarVec2 } from "battletribes-shared/utils";
 import { getDistanceFromPointToEntity, entityIsInLineOfSight, willStopAtDesiredDistance } from "../../../ai-shared";
 import { InventoryComponentArray, countItemType, getInventory } from "../../../components/InventoryComponent";
-import { getCurrentLimbState, getHeldItem, getLimbConfiguration, InventoryUseComponentArray, limbHeldItemCanBeSwitched, setLimbActions } from "../../../components/InventoryUseComponent";
+import { getCurrentLimbState, getLimbConfiguration, InventoryUseComponentArray, limbHeldItemCanBeSwitched, setLimbActions } from "../../../components/InventoryUseComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { PathfindFailureDefault } from "../../../pathfinding";
 import { calculateItemDamage, useItem } from "../tribe-member";
@@ -21,7 +21,6 @@ import { TribeType } from "../../../../../shared/src/tribes";
 import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../../hitboxes";
 import { BLOCKING_LIMB_STATE, copyLimbState, LimbState, QUIVER_PULL_LIMB_STATE, RESTING_LIMB_STATES, SHIELD_BLOCKING_LIMB_STATE } from "../../../../../shared/src/attack-patterns";
 import { AIHelperComponent, AIHelperComponentArray } from "../../../components/AIHelperComponent";
-import { BlockAttackComponentArray } from "../../../components/BlockAttackComponent";
 
 const enum Vars {
    BOW_LINE_OF_SIGHT_WAIT_TIME = 0.5 * Settings.TPS,
@@ -270,21 +269,18 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
       // Throw spears if there is multiple
       if (weaponCategory === "spear" && selectedItem.count > 1) {
          // Rotate to face the target
-         const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
-         turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
+         const targetDir = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
+         turnHitboxToAngle(tribesmanHitbox, targetDir, TRIBESMAN_TURN_SPEED, 0.5, false);
 
          const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, huntedEntityTransformComponent) - getHumanoidRadius(transformComponent);
          if (distance > 250) {
             // Move closer
-            const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(targetAngle);
-            const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(targetAngle);
-            applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+            const acceleration = getTribesmanSlowAcceleration(tribesman);
+            applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, targetDir));
          } else if (distance <= 150) {
             // Backpedal away from the entity if too close
-            const backwards = targetAngle + Math.PI;
-            const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(backwards);
-            const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(backwards);
-            applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+            const acceleration = getTribesmanSlowAcceleration(tribesman);
+            applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, targetDir + Math.PI));
          }
 
          if (hotbarLimb.action !== LimbAction.chargeSpear) {
@@ -337,38 +333,34 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
                const targetUsePoint = getClosestEmbrasureUsePoint(tribesman, nearbyEmbrasureUsePoints);
                
                const usePointDirection = tribesmanHitbox.box.position.calculateAngleBetween(targetUsePoint);
-               const moveDirection = adjustMoveDirectionForFriendlyProximity(tribesman, usePointDirection);
+               const moveDir = adjustMoveDirectionForFriendlyProximity(tribesman, usePointDirection);
                
-               const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(moveDirection);
-               const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(moveDirection);
-               applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+               const acceleration = getTribesmanSlowAcceleration(tribesman);
+               applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, moveDir));
             } else if (willStopAtDesiredDistance(tribesmanHitbox, muchTooCloseDistance, distance)) {
                // much too close, stop charging bow all-together and just run back
 
                const awayDirection = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position) + Math.PI;
-               const moveDirection = adjustMoveDirectionForFriendlyProximity(tribesman, awayDirection);
+               const moveDir = adjustMoveDirectionForFriendlyProximity(tribesman, awayDirection);
                
-               const accelerationX = getTribesmanAcceleration(tribesman) * Math.sin(moveDirection);
-               const accelerationY = getTribesmanAcceleration(tribesman) * Math.cos(moveDirection);
-               applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+               const acceleration = getTribesmanAcceleration(tribesman);
+               applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, moveDir));
 
                isMuchTooClose = true;
             } else if (willStopAtDesiredDistance(tribesmanHitbox, Vars.DESIRED_RANGED_ATTACK_DISTANCE - 20, distance)) {
                const backDirection = tribesmanHitbox.box.angle + Math.PI;
-               const moveDirection = adjustMoveDirectionForFriendlyProximity(tribesman, backDirection);
+               const moveDir = adjustMoveDirectionForFriendlyProximity(tribesman, backDirection);
                
                // If the tribesman will stop too close to the target, move back a bit
-               const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(moveDirection);
-               const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(moveDirection);
-               applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+               const acceleration = getTribesmanSlowAcceleration(tribesman);
+               applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, moveDir));
             } else {
                const forwardDirection = tribesmanHitbox.box.angle;
-               const moveDirection = adjustMoveDirectionForFriendlyProximity(tribesman, forwardDirection);
+               const moveDir = adjustMoveDirectionForFriendlyProximity(tribesman, forwardDirection);
 
                // If the tribesman will be close enough, move closer
-               const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(moveDirection);
-               const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(moveDirection);
-               applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+               const acceleration = getTribesmanSlowAcceleration(tribesman);
+               applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, moveDir));
             }
 
             const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
@@ -461,22 +453,18 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
                hotbarLimb.lastBattleaxeChargeTicks = getGameTicks();
             }
 
-            const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
-            turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
+            const targetDir = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
+            turnHitboxToAngle(tribesmanHitbox, targetDir, TRIBESMAN_TURN_SPEED, 0.5, false);
 
             if (distance > Vars.BATTLEAXE_IDEAL_USE_RANGE + 10) {
                // Move closer
                const acceleration = getTribesmanSlowAcceleration(tribesman);
-               const accelerationX = acceleration * Math.sin(targetAngle);
-               const accelerationY = acceleration * Math.cos(targetAngle);
-               applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+               applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, targetDir));
             } else if (distance < Vars.BATTLEAXE_IDEAL_USE_RANGE - 10) {
                // Move futher away
                const acceleration = getTribesmanSlowAcceleration(tribesman);
-               const moveDirection = targetAngle + Math.PI;
-               const accelerationX = acceleration * Math.sin(moveDirection);
-               const accelerationY = acceleration * Math.cos(moveDirection);
-               applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+               const moveDir = targetDir + Math.PI;
+               applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, moveDir));
             }
 
             const ticksSinceLastAction = getGameTicks() - hotbarLimb.lastBattleaxeChargeTicks;
@@ -505,15 +493,14 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
             // If the tribesman will stop too close to the target, move back a bit
             if (willStopAtDesiredDistance(tribesmanHitbox, blockRange - 30, distance)) {
                const backDirection = tribesmanHitbox.box.angle + Math.PI;
-               const moveDirection = adjustMoveDirectionForFriendlyProximity(tribesman, backDirection);
+               const moveDir = adjustMoveDirectionForFriendlyProximity(tribesman, backDirection);
                
-               const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(moveDirection);
-               const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(moveDirection);
-               applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+               const acceleration = getTribesmanSlowAcceleration(tribesman);
+               applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, moveDir));
             }
 
-            const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
-            turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
+            const targetDir = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
+            turnHitboxToAngle(tribesmanHitbox, targetDir, TRIBESMAN_TURN_SPEED, 0.5, false);
          
             // If not blocking already, start blocking
             const limb = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
@@ -583,9 +570,8 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
    if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange, distance)) {
       // If the tribesman will stop too close to the target, move back a bit
       if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange - 20, distance)) {
-         const accelerationX = getTribesmanSlowAcceleration(tribesman) * Math.sin(tribesmanHitbox.box.angle + Math.PI);
-         const accelerationY = getTribesmanSlowAcceleration(tribesman) * Math.cos(tribesmanHitbox.box.angle + Math.PI);
-         applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+         const acceleration = getTribesmanSlowAcceleration(tribesman);
+         applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, tribesmanHitbox.box.angle + Math.PI));
       }
 
       const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);

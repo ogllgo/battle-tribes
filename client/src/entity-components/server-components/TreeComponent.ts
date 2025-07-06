@@ -5,7 +5,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { HitFlags } from "../../../../shared/src/client-server-types";
-import { randFloat, randItem, randInt, Point } from "../../../../shared/src/utils";
+import { randFloat, randItem, randInt, Point, randAngle } from "../../../../shared/src/utils";
 import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle, createWoodSpeckParticle, LEAF_SPECK_COLOUR_HIGH, LEAF_SPECK_COLOUR_LOW } from "../../particles";
 import { playSoundOnHitbox } from "../../sound";
 import { TransformComponentArray } from "./TransformComponent";
@@ -98,7 +98,7 @@ function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point, hitFlags: num
    
    // Create leaf particles
    {
-      const moveDirection = 2 * Math.PI * Math.random();
+      const moveDirection = randAngle();
 
       const spawnPositionX = hitbox.box.position.x + radius * Math.sin(moveDirection);
       const spawnPositionY = hitbox.box.position.y + radius * Math.cos(moveDirection);
@@ -144,7 +144,7 @@ function onDie(entity: Entity): void {
    }
    for (let i = 0; i < numLeaves; i++) {
       const spawnOffsetMagnitude = radius * Math.random();
-      const spawnOffsetDirection = 2 * Math.PI * Math.random();
+      const spawnOffsetDirection = randAngle();
       const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
       const spawnPositionY = hitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 

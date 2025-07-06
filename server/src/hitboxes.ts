@@ -4,7 +4,7 @@ import { CollisionBit } from "../../shared/src/collision";
 import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { TILE_PHYSICS_INFO_RECORD, TileType } from "../../shared/src/tiles";
-import { assert, clampAngleA, getAngleDiff, getTileIndexIncludingEdges, Point, TileIndex } from "../../shared/src/utils";
+import { assert, clampAngleA, getAngleDiff, getTileIndexIncludingEdges, Point, polarVec2, TileIndex } from "../../shared/src/utils";
 import { PhysicsComponentArray } from "./components/PhysicsComponent";
 import { EntityAttachInfo, entityChildIsEntity, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { registerPlayerKnockback } from "./server/player-clients";
@@ -190,7 +190,7 @@ export function applyKnockback(entity: Entity, hitbox: Hitbox, knockback: number
    const knockbackForce = knockback / totalMass;
 
    const rootHitbox = getRootHitbox(hitbox);
-   addHitboxVelocity(rootHitbox, Point.fromVectorForm(knockbackForce, knockbackDirection));
+   addHitboxVelocity(rootHitbox, polarVec2(knockbackForce, knockbackDirection));
 
    // @Hack?
    if (getEntityType(entity) === EntityType.player) {
@@ -210,7 +210,7 @@ export function applyAbsoluteKnockback(entity: Entity, hitbox: Hitbox, knockback
    }
    
    const rootHitbox = getRootHitbox(hitbox);
-   addHitboxVelocity(rootHitbox, Point.fromVectorForm(knockback, knockbackDirection));
+   addHitboxVelocity(rootHitbox, polarVec2(knockback, knockbackDirection));
 
    // @Hack?
    if (getEntityType(entity) === EntityType.player) {
@@ -219,9 +219,9 @@ export function applyAbsoluteKnockback(entity: Entity, hitbox: Hitbox, knockback
 }
 
 // @Cleanup: Passing in hitbox really isn't the best, ideally hitbox should self-contain all the necessary info... but is that really good? + memory efficient?
-export function applyAccelerationFromGround(entity: Entity, hitbox: Hitbox, accelerationX: number, accelerationY: number): void {
+export function applyAccelerationFromGround(entity: Entity, hitbox: Hitbox, acceleration: Point): void {
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
-   
+
    const tileIndex = getHitboxTile(hitbox);
    const tileType = getEntityLayer(entity).getTileType(tileIndex);
    const tilePhysicsInfo = TILE_PHYSICS_INFO_RECORD[tileType];
@@ -238,8 +238,8 @@ export function applyAccelerationFromGround(entity: Entity, hitbox: Hitbox, acce
 
    // Calculate the desired velocity based on acceleration
    const tileFriction = tilePhysicsInfo.friction;
-   const desiredVelocityX = accelerationX * tileFriction * moveSpeedMultiplier;
-   const desiredVelocityY = accelerationY * tileFriction * moveSpeedMultiplier;
+   const desiredVelocityX = acceleration.x * tileFriction * moveSpeedMultiplier;
+   const desiredVelocityY = acceleration.y * tileFriction * moveSpeedMultiplier;
 
    const currentVelocity = getHitboxVelocity(hitbox);
 
@@ -247,9 +247,9 @@ export function applyAccelerationFromGround(entity: Entity, hitbox: Hitbox, acce
    hitbox.acceleration.y += (desiredVelocityY - currentVelocity.y) * physicsComponent.traction;
 }
 
-export function applyAcceleration(hitbox: Hitbox, accX: number, accY: number): void {
-   hitbox.acceleration.x += accX;
-   hitbox.acceleration.y += accY;
+export function applyAcceleration(hitbox: Hitbox, acc: Point): void {
+   hitbox.acceleration.x += acc.x;
+   hitbox.acceleration.y += acc.y;
 }
 
 /** Makes the hitboxes' angle be that as specified, by only changing its relative angle */

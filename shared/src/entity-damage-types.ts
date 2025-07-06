@@ -480,7 +480,7 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       stoppedDamageTypes: []
    },
    [EntityType.wraith]: {
-      effectiveDamageTypes: [],
+      effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
    },
 };

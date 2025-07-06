@@ -14,7 +14,7 @@ import Infocards from "./infocards/Infocards";
 import SummonCrosshair from "./SummonCrosshair";
 import { AppState } from "../App";
 import { EntitySummonPacket } from "../../../../shared/src/dev-packets";
-import { Mutable } from "../../../../shared/src/utils";
+import { Mutable, randAngle } from "../../../../shared/src/utils";
 import { calculateCursorWorldPositionX, calculateCursorWorldPositionY } from "../../mouse";
 import GameInteractableLayer from "./GameInteractableLayer";
 import { sendEntitySummonPacket } from "../../networking/packet-creation";
@@ -95,7 +95,7 @@ const GameScreen = (props: GameScreenProps) => {
          const y = calculateCursorWorldPositionY(e.clientY)!;
          
          // @Hack
-         sendEntitySummonPacket(summonPacket.entityType, x, y, 2 * Math.PI * Math.random());
+         sendEntitySummonPacket(summonPacket.entityType, x, y, randAngle());
       } else if (e.button === 2) {
          // Get out of summon entity mode
          setInteractState(GameInteractState.none);

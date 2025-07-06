@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
-import { Point, randItem } from "battletribes-shared/utils";
+import { Point, randAngle, randItem } from "battletribes-shared/utils";
 import { createRockSpeckParticle } from "../../particles";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
@@ -138,7 +138,7 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
       const renderPart = new TexturedRenderPart(
          hitbox,
          getZIndex(size),
-         2 * Math.PI * Math.random(),
+         randAngle(),
          getTextureArrayIndex(getTextureSource(size))
       );
       intermediateInfo.renderInfo.attachRenderPart(renderPart);
@@ -228,7 +228,7 @@ function onTick(entity: Entity): void {
          const box = hitbox.box as CircularBox;
          const velocity = getHitboxVelocity(hitbox);
 
-         const offsetDirection = 2 * Math.PI * Math.random();
+         const offsetDirection = randAngle();
          const x = box.position.x + box.radius * Math.sin(offsetDirection);
          const y = box.position.y + box.radius * Math.cos(offsetDirection);
          createRockSpeckParticle(x, y, 0, velocity.x, velocity.y, ParticleRenderLayer.low);
@@ -246,7 +246,7 @@ function onTick(entity: Entity): void {
          const box = hitbox.box as CircularBox;
          const velocity = getHitboxVelocity(hitbox);
 
-         const offsetDirection = 2 * Math.PI * Math.random();
+         const offsetDirection = randAngle();
          const x = box.position.x + box.radius * Math.sin(offsetDirection);
          const y = box.position.y + box.radius * Math.cos(offsetDirection);
          createRockSpeckParticle(x, y, 0, velocity.x, velocity.y, ParticleRenderLayer.low);

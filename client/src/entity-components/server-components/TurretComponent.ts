@@ -1,6 +1,6 @@
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { ServerComponentType, TurretAmmoType } from "battletribes-shared/components";
-import { lerp } from "battletribes-shared/utils";
+import { lerp, randAngle } from "battletribes-shared/utils";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { ItemType } from "battletribes-shared/items/items";
@@ -228,7 +228,7 @@ const updateProjectileRenderPart = (turretComponent: TurretComponent, entity: En
          );
 
          if (projectileHasRandomRotation(entity)) {
-            turretComponent.projectileRenderPart.angle = 2 * Math.PI * Math.random();
+            turretComponent.projectileRenderPart.angle = randAngle();
          }
 
          const renderInfo = getEntityRenderInfo(entity);

@@ -3,7 +3,7 @@ import { Entity } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { getStringLengthBytes, Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
-import { Point, randInt } from "battletribes-shared/utils";
+import { Point, randAngle, randInt } from "battletribes-shared/utils";
 import { createZombieConfig } from "../entities/mobs/zombie";
 import { createEntity } from "../Entity";
 import { TransformComponentArray } from "./TransformComponent";
@@ -78,7 +78,7 @@ const spawnZombie = (tombstone: Entity, tombstoneComponent: TombstoneComponent):
    
    // Spawn zombie
    const position = new Point(tombstoneComponent.zombieSpawnPositionX, tombstoneComponent.zombieSpawnPositionY);
-   const config = createZombieConfig(position, 2 * Math.PI * Math.random(), isGolden, tombstone);
+   const config = createZombieConfig(position, randAngle(), isGolden, tombstone);
    createEntity(config, getEntityLayer(tombstone), 0);
 
    tombstoneComponent.numZombies++;
@@ -134,7 +134,7 @@ function preRemove(tombstone: Entity): void {
    const tombstoneTransformComponent = TransformComponentArray.getComponent(tombstone);
    const tombstoneHitbox = tombstoneTransformComponent.children[0] as Hitbox;
 
-   const config = createZombieConfig(tombstoneHitbox.box.position.copy(), 2 * Math.PI * Math.random(), isGolden, tombstone);
+   const config = createZombieConfig(tombstoneHitbox.box.position.copy(), randAngle(), isGolden, tombstone);
    createEntity(config, getEntityLayer(tombstone), 0);
 }
 

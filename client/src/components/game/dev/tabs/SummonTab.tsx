@@ -9,7 +9,7 @@ import DevmodeScrollableOptions from "../DevmodeScrollableOptions";
 import { Inventory, InventoryName, ItemSlots } from "battletribes-shared/items/items";
 import InventoryComponentInput, { ENTITY_INVENTORY_NAME_RECORD, NUM_INVENTORY_NAMES } from "./InventoryComponentInput";
 import { closeCurrentMenu } from "../../../../menus";
-import { Mutable } from "../../../../../../shared/src/utils";
+import { Mutable, randAngle } from "../../../../../../shared/src/utils";
 import { GameInteractState } from "../../GameScreen";
 
 type EntityTypeTuple = [EntityType, string];
@@ -131,7 +131,7 @@ const SummonTab = (props: SummonTabProps) => {
       const packet: EntitySummonPacket = {
          // The position and rotation values are overriden with the actual values when the packet is sent
          position: [0, 0],
-         rotation: 2 * Math.PI * Math.random(),
+         rotation: randAngle(),
          entityType: selectedEntityType,
          summonData: summonData
       };

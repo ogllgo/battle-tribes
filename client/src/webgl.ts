@@ -1,4 +1,4 @@
-import { Point } from "battletribes-shared/utils";
+import { Point, polarVec2 } from "battletribes-shared/utils";
 import { isDev } from "./utils";
 import { updateTechTreeCanvasSize } from "./rendering/webgl/tech-tree-rendering";
 import { TEXTURE_IMAGE_RECORD } from "./textures";
@@ -156,10 +156,10 @@ export function generateThickCircleWireframeVertices(position: Point, radius: nu
       // @Speed: Garbage collection
       
       // Trig shenanigans to get x and y coords
-      const bl = Point.fromVectorForm(radius, radians);
-      const br = Point.fromVectorForm(radius, radians + step);
-      const tl = Point.fromVectorForm(radius + thickness, radians);
-      const tr = Point.fromVectorForm(radius + thickness, radians + step);
+      const bl = polarVec2(radius, radians);
+      const br = polarVec2(radius, radians + step);
+      const tl = polarVec2(radius + thickness, radians);
+      const tr = polarVec2(radius + thickness, radians + step);
 
       bl.add(position);
       br.add(position);

@@ -1,6 +1,6 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
-import { randFloat } from "../../../../shared/src/utils";
+import { randAngle, randFloat } from "../../../../shared/src/utils";
 import { getHitboxVelocity, Hitbox } from "../../hitboxes";
 import { createArrowDestroyParticle, createRockParticle, createRockSpeckParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
@@ -70,11 +70,11 @@ function onDie(entity: Entity): void {
 
    for (let i = 0; i < 3; i++) {
       const spawnOffsetMagnitude = 16 * Math.random();
-      const spawnOffsetDirection = 2 * Math.PI * Math.random();
+      const spawnOffsetDirection = randAngle();
       const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
       const spawnPositionY = hitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 
-      createRockParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(60, 100), ParticleRenderLayer.low);
+      createRockParticle(spawnPositionX, spawnPositionY, randAngle(), randFloat(60, 100), ParticleRenderLayer.low);
    }
 
    for (let i = 0; i < 5; i++) {

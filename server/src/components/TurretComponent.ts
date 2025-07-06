@@ -15,7 +15,7 @@ import { createBallistaWoodenBoltConfig } from "../entities/projectiles/ballista
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { TransformComponentArray, TransformComponent, entityChildIsHitbox } from "./TransformComponent";
 import { getEntityRelationship, EntityRelationship, TribeComponentArray } from "./TribeComponent";
-import { Point, UtilVars } from "battletribes-shared/utils";
+import { polarVec2, randAngle, UtilVars } from "battletribes-shared/utils";
 import { boxIsCircular } from "battletribes-shared/boxes/boxes";
 import { getEntityLayer, getEntityType } from "../world";
 import { registerDirtyEntity } from "../server/player-clients";
@@ -140,7 +140,7 @@ const createProjectile = (turret: Entity, transformComponent: TransformComponent
 
    const turretHitbox = transformComponent.children[0] as Hitbox;
    const position = turretHitbox.box.position.copy();
-   const rotation = ammoType === ItemType.rock || ammoType === ItemType.slimeball ? 2 * Math.PI * Math.random() : fireDirection;
+   const rotation = ammoType === ItemType.rock || ammoType === ItemType.slimeball ? randAngle() : fireDirection;
    
    let config: EntityConfig;
    
@@ -169,7 +169,7 @@ const createProjectile = (turret: Entity, transformComponent: TransformComponent
    }
 
    const projectileHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
-   addHitboxVelocity(projectileHitbox, Point.fromVectorForm(ammoInfo.projectileSpeed, fireDirection));
+   addHitboxVelocity(projectileHitbox, polarVec2(ammoInfo.projectileSpeed, fireDirection));
 
    createEntity(config, getEntityLayer(turret), 0)
 }

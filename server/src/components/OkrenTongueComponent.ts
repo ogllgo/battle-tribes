@@ -1,7 +1,7 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
-import { assert, customTickIntervalHasPassed, Point, randInt } from "../../../shared/src/utils";
+import { assert, customTickIntervalHasPassed, Point, polarVec2, randInt } from "../../../shared/src/utils";
 import { MIN_TONGUE_COOLDOWN_TICKS, MAX_TONGUE_COOLDOWN_TICKS } from "../ai/OkrenCombatAI";
 import { createEntityConfigAttachInfo } from "../components";
 import { createOkrenTongueSegmentConfig } from "../entities/desert/okren-tongue-segment";
@@ -108,7 +108,7 @@ const addTongueSegment = (tongue: Entity, okren: Entity, okrenHitbox: Hitbox, pr
    createEntity(segmentConfig, getEntityLayer(okren), 0);
 
    // Apply some initial velocity
-   addHitboxVelocity(newSegmentHitbox, Point.fromVectorForm(200, okrenHitbox.box.angle));
+   addHitboxVelocity(newSegmentHitbox, polarVec2(200, okrenHitbox.box.angle));
 }
 
 const advanceTongue = (tongue: Entity, tongueTransformComponent: TransformComponent, okrenTongueComponent: OkrenTongueComponent, okren: Entity): void => {
@@ -131,7 +131,7 @@ const advanceTongue = (tongue: Entity, tongueTransformComponent: TransformCompon
       const partTransformComponent = TransformComponentArray.getComponent(tonguePart);
       const partHitbox = partTransformComponent.children[0] as Hitbox;
 
-      const directionToTarget = partHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+      const targetDir = partHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
       
       let acc: number;
       if (getEntityType(tonguePart) === EntityType.okrenTongueTip) {
@@ -145,11 +145,9 @@ const advanceTongue = (tongue: Entity, tongueTransformComponent: TransformCompon
          acc = 600;
       }
 
-      const accX = acc * Math.sin(directionToTarget);
-      const accY = acc * Math.cos(directionToTarget);
-      applyAcceleration(partHitbox, accX, accY);
+      applyAcceleration(partHitbox, polarVec2(acc, targetDir));
       if (getEntityType(tonguePart) === EntityType.okrenTongueTip) {
-         turnHitboxToAngle(partHitbox, directionToTarget, 1, 1, false);
+         turnHitboxToAngle(partHitbox, targetDir, 1, 1, false);
       }
    }
 
@@ -209,7 +207,7 @@ export function startRetractingTongue(tongue: Entity, okrenTongueComponent: Okre
       const partHitbox = partTransformComponent.children[0] as Hitbox;
 
       const directionToOkren = partHitbox.box.position.calculateAngleBetween(okrenHitbox.box.position);
-      addHitboxVelocity(partHitbox, Point.fromVectorForm(200, directionToOkren));
+      addHitboxVelocity(partHitbox, polarVec2(200, directionToOkren));
    }
 }
 
@@ -228,7 +226,7 @@ const regressTongue = (tongue: Entity, tongueTransformComponent: TransformCompon
       const partTransformComponent = TransformComponentArray.getComponent(tonguePart);
       const partHitbox = partTransformComponent.children[0] as Hitbox;
 
-      const directionToOkren = partHitbox.box.position.calculateAngleBetween(okrenHitbox.box.position);
+      const homeDir = partHitbox.box.position.calculateAngleBetween(okrenHitbox.box.position);
       
       // @Hack @Incomplete: should pull harder proportional to the amount of resistance the tongue is experiencing
       const MULTIPLIER = 2.3;
@@ -245,9 +243,7 @@ const regressTongue = (tongue: Entity, tongueTransformComponent: TransformCompon
          acc = 700 * MULTIPLIER;
       }
 
-      const accX = acc * Math.sin(directionToOkren);
-      const accY = acc * Math.cos(directionToOkren);
-      applyAcceleration(partHitbox, accX, accY);
+      applyAcceleration(partHitbox, polarVec2(acc, homeDir));
    }
 
    const tongueBaseEntity = getTongueBaseEntity(tongueTransformComponent);

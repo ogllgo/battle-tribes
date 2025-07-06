@@ -1,4 +1,4 @@
-import { Point, positionIsInWorld, randInt } from "battletribes-shared/utils";
+import { Point, polarVec2, positionIsInWorld, randAngle, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
@@ -67,7 +67,7 @@ const grow = (iceSpikes: Entity): void => {
 
    // Calculate the spawn position for the new ice spikes
    const position = hitbox.box.position.copy();
-   const offsetDirection = 2 * Math.PI * Math.random();
+   const offsetDirection = randAngle();
    position.x += Vars.GROWTH_OFFSET * Math.sin(offsetDirection);
    position.y += Vars.GROWTH_OFFSET * Math.cos(offsetDirection);
 
@@ -89,7 +89,7 @@ const grow = (iceSpikes: Entity): void => {
    if (minDistanceToEntity >= 40) {
       const iceSpikesComponent = IceSpikesComponentArray.getComponent(iceSpikes);
 
-      const config = createIceSpikesConfig(position.copy(), 2 * Math.PI * Math.random(), iceSpikesComponent.rootIceSpike);
+      const config = createIceSpikesConfig(position.copy(), randAngle(), iceSpikesComponent.rootIceSpike);
       createEntity(config, layer, 0);
       
       const rootIceSpikesComponent = IceSpikesComponentArray.getComponent(iceSpikesComponent.rootIceSpike);
@@ -143,7 +143,7 @@ export function forceMaxGrowAllIceSpikes(): void {
 
 export function createIceShardExplosion(layer: Layer, originX: number, originY: number, numProjectiles: number): void {
    for (let i = 0; i < numProjectiles; i++) {
-      const moveDirection = 2 * Math.PI * Math.random();
+      const moveDirection = randAngle();
       const x = originX + 10 * Math.sin(moveDirection);
       const y = originY + 10 * Math.cos(moveDirection);
       const position = new Point(x, y);
@@ -151,7 +151,7 @@ export function createIceShardExplosion(layer: Layer, originX: number, originY: 
       const config = createIceShardConfig(position, moveDirection);
 
       const iceShardHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
-      addHitboxVelocity(iceShardHitbox, Point.fromVectorForm(700, moveDirection));
+      addHitboxVelocity(iceShardHitbox, polarVec2(700, moveDirection));
 
       createEntity(config, layer, 0);
    }

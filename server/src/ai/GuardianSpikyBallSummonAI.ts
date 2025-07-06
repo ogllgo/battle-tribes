@@ -1,7 +1,7 @@
 import { GuardianSpikyBallSummonStage, ServerComponentType } from "battletribes-shared/components";
 import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { Point, UtilVars, randFloat, randInt } from "battletribes-shared/utils";
+import { Point, UtilVars, randAngle, randFloat, randInt } from "battletribes-shared/utils";
 import { turnToPosition } from "../ai-shared";
 import { GuardianComponentArray } from "../components/GuardianComponent";
 import { createGuardianSpikyBallConfig } from "../entities/projectiles/guardian-spiky-ball";
@@ -26,7 +26,7 @@ const createSpikyBall = (guardian: Entity, targetX: number, targetY: number): vo
    let y: number;
    for (let attempts = 0; attempts < 50; attempts++) {
       const offsetMagnitude = randFloat(80, 196);
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       x = targetX + offsetMagnitude * Math.sin(offsetDirection);
       y = targetY + offsetMagnitude * Math.cos(offsetDirection);
 
@@ -39,11 +39,11 @@ const createSpikyBall = (guardian: Entity, targetX: number, targetY: number): vo
    
    if (hasFound) {
       const velocityMagnitude = 150;
-      const velocityDirection = 2 * Math.PI * Math.random();
+      const velocityDirection = randAngle();
       const vx = velocityMagnitude * Math.sin(velocityDirection);
       const vy = velocityMagnitude * Math.cos(velocityDirection);
       
-      const config = createGuardianSpikyBallConfig(new Point(x!, y!), 2 * Math.PI * Math.random(), guardian);
+      const config = createGuardianSpikyBallConfig(new Point(x!, y!), randAngle(), guardian);
 
       const spikyBallHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
       setHitboxVelocity(spikyBallHitbox, vx, vy);

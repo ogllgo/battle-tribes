@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { DeathInfo, Entity, DamageSource } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { Point, randFloat, randInt, randItem } from "battletribes-shared/utils";
+import { Point, randAngle, randFloat, randInt, randItem } from "battletribes-shared/utils";
 import { createDirtParticle, createRockParticle, createRockSpeckParticle } from "../../particles";
 import { playSound, playSoundOnHitbox, ROCK_DESTROY_SOUNDS, ROCK_HIT_SOUNDS } from "../../sound";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
@@ -189,7 +189,7 @@ function onDie(entity: Entity): void {
       const spawnPositionX = hitbox.box.position.x + randFloat(-HITBOX_WIDTH/2, HITBOX_WIDTH/2);
       const spawnPositionY = hitbox.box.position.y + randFloat(-HITBOX_HEIGHT/2, HITBOX_HEIGHT/2);
 
-      createRockParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(80, 125), ParticleRenderLayer.low);
+      createRockParticle(spawnPositionX, spawnPositionY, randAngle(), randFloat(80, 125), ParticleRenderLayer.low);
    }
 
    for (let i = 0; i < 5; i++) {

@@ -1,6 +1,6 @@
 import { TribeType } from "battletribes-shared/tribes";
 import { ServerComponentType } from "battletribes-shared/components";
-import { randFloat } from "battletribes-shared/utils";
+import { randAngle, randFloat } from "battletribes-shared/utils";
 import { playSoundOnHitbox } from "../../sound";
 import { getHumanoidRadius, TribesmanComponentArray } from "./TribesmanComponent";
 import { createConversionParticle } from "../../particles";
@@ -85,7 +85,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
       const radius = getHumanoidRadius(entity);
       for (let i = 0; i < 10; i++) {
-         const offsetDirection = 2 * Math.PI * Math.random();
+         const offsetDirection = randAngle();
          const offsetMagnitude = radius + randFloat(0, 4);
          const x = hitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
          const y = hitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);

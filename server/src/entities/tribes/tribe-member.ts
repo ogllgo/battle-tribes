@@ -4,7 +4,7 @@ import { EntityType, Entity, LimbAction } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import { TribeType } from "battletribes-shared/tribes";
-import { Point, dotAngles, lerp } from "battletribes-shared/utils";
+import { Point, dotAngles, lerp, polarVec2, randAngle } from "battletribes-shared/utils";
 import { createEntity } from "../../Entity";
 import { InventoryComponentArray, consumeItemFromSlot, consumeItemType, countItemType, getInventory, inventoryIsFull } from "../../components/InventoryComponent";
 import { getEntitiesInRange } from "../../ai-shared";
@@ -309,7 +309,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          // @Speed: Garbage collectionb
          const tribeMemberHitbox = transformComponent.children[0] as Hitbox;
          const spawnPosition = tribeMemberHitbox.box.position.copy();
-         const offset = Point.fromVectorForm(35, tribeMemberHitbox.box.angle);
+         const offset = polarVec2(35, tribeMemberHitbox.box.angle);
          spawnPosition.add(offset);
 
          const angle = tribeMemberHitbox.box.angle;
@@ -337,7 +337,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          const arrowHitbox = arrowConfig.components[ServerComponentType.transform]!.children[0] as Hitbox;
 
          const arrowVel = tribeMemberVelocity.copy();
-         arrowVel.add(Point.fromVectorForm(itemInfo.projectileSpeed, angle));
+         arrowVel.add(polarVec2(itemInfo.projectileSpeed, angle));
          addHitboxVelocity(arrowHitbox, arrowVel);
          
          createEntity(arrowConfig, getEntityLayer(tribeMember), 0);
@@ -376,7 +376,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          // Offset the arrow's spawn to be just outside of the tribe member's hitbox
          // @Speed: Garbage collection
          const spawnPosition = tribeMemberHitbox.box.position.copy();
-         const offset = Point.fromVectorForm(35, tribeMemberHitbox.box.angle);
+         const offset = polarVec2(35, tribeMemberHitbox.box.angle);
          spawnPosition.add(offset);
          
          const itemInfo = ITEM_INFO_RECORD[item.type] as BowItemInfo;
@@ -387,7 +387,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          const config = createWoodenArrowConfig(spawnPosition, tribeMemberHitbox.box.angle, tribeComponent.tribe, tribeMember);
 
          const arrowHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
-         addHitboxVelocity(arrowHitbox, Point.fromVectorForm(itemInfo.projectileSpeed, tribeMemberHitbox.box.angle));
+         addHitboxVelocity(arrowHitbox, polarVec2(itemInfo.projectileSpeed, tribeMemberHitbox.box.angle));
 
          createEntity(config, getEntityLayer(tribeMember), 0);
 
@@ -422,7 +422,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          const spearProjectile = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
 
          const spearVel = tribeMemberVelocity.copy();
-         spearVel.add(Point.fromVectorForm(velocityMagnitude, tribeMemberHitbox.box.angle));
+         spearVel.add(polarVec2(velocityMagnitude, tribeMemberHitbox.box.angle));
          addHitboxVelocity(spearProjectile, spearVel);
 
          createEntity(config, getEntityLayer(tribeMember), 0);
@@ -461,7 +461,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          
          const battleaxeProjectileHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
          const vel = tribeMemberVelocity.copy();
-         vel.add(Point.fromVectorForm(velocityMagnitude, tribeMemberHitbox.box.angle));
+         vel.add(polarVec2(velocityMagnitude, tribeMemberHitbox.box.angle));
          addHitboxVelocity(battleaxeProjectileHitbox, vel);
 
          createEntity(config, getEntityLayer(tribeMember), 0);
@@ -757,14 +757,14 @@ export function throwItem(tribesman: Entity, inventoryName: InventoryName, itemS
    dropPosition.y += Vars.ITEM_THROW_OFFSET * Math.cos(throwDirection);
 
    // Create the item entity
-   const config = createItemEntityConfig(dropPosition, 2 * Math.PI * Math.random(), itemType, amountRemoved, tribesman);
+   const config = createItemEntityConfig(dropPosition, randAngle(), itemType, amountRemoved, tribesman);
 
    // Throw the dropped item away from the player
    const tribesmanVelocity = getHitboxVelocity(tribesmanHitbox);
    const itemHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
 
    const vel = tribesmanVelocity.copy();
-   vel.add(Point.fromVectorForm(Vars.ITEM_THROW_FORCE, throwDirection));
+   vel.add(polarVec2(Vars.ITEM_THROW_FORCE, throwDirection));
    addHitboxVelocity(itemHitbox, vel);
 
    createEntity(config, getEntityLayer(tribesman), 0);

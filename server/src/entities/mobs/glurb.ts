@@ -1,5 +1,5 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { Point, randInt } from "battletribes-shared/utils";
+import { Point, randAngle, randInt } from "battletribes-shared/utils";
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "../../../../shared/src/status-effects";
 import { EntityConfig } from "../../components";
@@ -68,11 +68,11 @@ export function createGlurbConfig(position: Point, angle: number): EntityConfig 
       
       let config: EntityConfig;
       if (i === 0) {
-         config = createGlurbHeadSegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random());
+         config = createGlurbHeadSegmentConfig(new Point(currentX, currentY), randAngle());
       } else if (i < numSegments - 1) {
-         config = createGlurbBodySegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random(), lastHitbox!, lastTransformComponent!);
+         config = createGlurbBodySegmentConfig(new Point(currentX, currentY), randAngle(), lastHitbox!, lastTransformComponent!);
       } else {
-         config = createGlurbTailSegmentConfig(new Point(currentX, currentY), 2 * Math.PI * Math.random(), lastHitbox!, lastTransformComponent!);
+         config = createGlurbTailSegmentConfig(new Point(currentX, currentY), randAngle(), lastHitbox!, lastTransformComponent!);
       }
       
       const segmentTransformComponent = config.components[ServerComponentType.transform]!;

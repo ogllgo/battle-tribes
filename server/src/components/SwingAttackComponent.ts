@@ -8,7 +8,7 @@ import { getItemType, HammerItemType, InventoryName, Item, ITEM_INFO_RECORD, Ite
 import { Settings } from "../../../shared/src/settings";
 import { StatusEffect } from "../../../shared/src/status-effects";
 import { TribesmanTitle } from "../../../shared/src/titles";
-import { lerp, Point } from "../../../shared/src/utils";
+import { lerp, Point, randAngle } from "../../../shared/src/utils";
 import { HitboxCollisionPair } from "../collision-detection";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { calculateItemKnockback } from "../entities/tribes/limb-use";
@@ -166,11 +166,11 @@ const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void
       assertBoxIsCircular(plantHitbox.box);
       const plantRadius = plantHitbox.box.radius;
 
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const x = plantHitbox.box.position.x + (plantRadius - 7) * Math.sin(offsetDirection);
       const y = plantHitbox.box.position.y + (plantRadius - 7) * Math.cos(offsetDirection);
    
-      const config = createItemEntityConfig(new Point(x, y), 2 * Math.PI * Math.random(), ItemType.leaf, 1, null);
+      const config = createItemEntityConfig(new Point(x, y), randAngle(), ItemType.leaf, 1, null);
       createEntity(config, getEntityLayer(plant), 0);
    }
 
