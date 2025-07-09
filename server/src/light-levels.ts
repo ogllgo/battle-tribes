@@ -31,7 +31,7 @@ export interface Light {
 
 let lightIDCounter = 0;
 
-const entityHitboxesMap: Partial<Record<Entity, Map<Hitbox, Light>>> = {};
+const entityHitboxLightsMap: Partial<Record<Entity, Map<Hitbox, Light>>> = {};
 
 export function createLight(offset: Point, intensity: number, strength: number, radius: number, r: number, g: number, b: number): Light {
    const lightID = lightIDCounter++;
@@ -116,7 +116,7 @@ const updateLight = (light: Light, nodeX: number, nodeY: number, layer: Layer) =
 }
 
 export function updateEntityLights(entity: Entity): void {
-   const hitboxToLightMap = entityHitboxesMap[entity];
+   const hitboxToLightMap = entityHitboxLightsMap[entity];
    if (typeof hitboxToLightMap === "undefined") {
       return;
    }
@@ -134,12 +134,12 @@ export function updateEntityLights(entity: Entity): void {
 }
 
 export function removeEntityLights(entity: Entity): void {
-   const hitboxToLightMap = entityHitboxesMap[entity];
+   const hitboxToLightMap = entityHitboxLightsMap[entity];
    if (typeof hitboxToLightMap === "undefined") {
       return;
    }
 
-   delete entityHitboxesMap[entity];
+   delete entityHitboxLightsMap[entity];
 
    const layer = getEntityLayer(entity);
    
@@ -152,11 +152,11 @@ export function removeEntityLights(entity: Entity): void {
 
 // @Cleanup: the 3 final parameters are all related, and ideally should just be able to be deduced from the render part? maybe?
 export function attachLightToHitbox(light: Light, hitbox: Hitbox, entity: Entity): void {
-   if (typeof entityHitboxesMap[entity] === "undefined") {
-      entityHitboxesMap[entity] = new Map(); 
+   if (typeof entityHitboxLightsMap[entity] === "undefined") {
+      entityHitboxLightsMap[entity] = new Map(); 
    }
 
-   const hitboxToLightMap = entityHitboxesMap[entity];
+   const hitboxToLightMap = entityHitboxLightsMap[entity];
    // @Hack: '!'
    hitboxToLightMap!.set(hitbox, light);
 
