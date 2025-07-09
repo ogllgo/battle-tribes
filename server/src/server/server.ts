@@ -143,7 +143,10 @@ class GameServer {
       // } else {
       //    SRandom.seed(randInt(0, 9999999999));
       // }
-      SRandom.seed(5128141131);
+      // : the one with the tundra colliding the top and bottom world borders
+      // SRandom.seed(5128141131);
+      // : pretty gud but thing at the top
+      SRandom.seed(7329485081);
 
       const builtinRandomFunc = Math.random;
       Math.random = () => SRandom.next();

@@ -111,21 +111,14 @@ const moveFunc = (cow: Entity, pos: Point, accelerationMagnitude: number): void 
 
    const bodyToTargetDirection = cowBodyHitbox.box.position.calculateAngleBetween(pos);
 
-   // 
    // Move whole cow to the target
-   // 
-   
    const alignmentToTarget = findAngleAlignment(cowBodyHitbox.box.angle, bodyToTargetDirection);
    const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget);
    applyAccelerationFromGround(cow, cowBodyHitbox, polarVec2(accelerationMagnitude * accelerationMultiplier, bodyToTargetDirection));
    
-   // 
    // Move head to the target
-   // 
-   
    const headHitbox = transformComponent.children[1] as Hitbox;
    const headToTargetDirection = headHitbox.box.position.calculateAngleBetween(pos);
-
    // @Hack?
    const headForce = accelerationMagnitude * 0.8;
    applyAcceleration(headHitbox, polarVec2(headForce, headToTargetDirection));
@@ -136,51 +129,12 @@ const turnFunc = (cow: Entity, pos: Point, turnSpeed: number, turnDamping: numbe
    const cowBodyHitbox = transformComponent.rootChildren[0] as Hitbox;
 
    const bodyToTargetDirection = cowBodyHitbox.box.position.calculateAngleBetween(pos);
-
-   // 
-   // Move whole cow to the target
-   // 
-
    turnHitboxToAngle(cowBodyHitbox, bodyToTargetDirection, turnSpeed, turnDamping, false);
    
-   // 
-   // Move head to the target
-   // 
-   
+   // Turn the head to face the target
    const headHitbox = transformComponent.children[1] as Hitbox;
    const headToTargetDirection = headHitbox.box.position.calculateAngleBetween(pos);
-
-   // Turn the head to face the target
-
    turnHitboxToAngle(headHitbox, headToTargetDirection, 1.5 * Math.PI, 0.5, false);
-
-   // // Restrict how far the neck can turn
-   // headHitbox.box.relativeAngle = clampAngleB(headHitbox.box.relativeAngle);
-   // if (headHitbox.box.relativeAngle < -0.5) {
-   //    headHitbox.box.relativeAngle = -0.5;
-   // } else if (headHitbox.box.relativeAngle > 0.5) {
-   //    headHitbox.box.relativeAngle = 0.5;
-   // }
-
-   // 
-   // Turn the body with the head
-   // 
-   // @Cleanup: A cleaner and better solution would be a spring on the rotational offset
-
-   // let headOffsetDirection = angle(headHitbox.box.position.x - cowBodyHitbox.box.position.x, headHitbox.box.position.y - cowBodyHitbox.box.position.y);
-   // headOffsetDirection = cleanAngleNEW(headOffsetDirection);
-
-   // if (Math.abs(headOffsetDirection) > Vars.HEAD_DIRECTION_LEEWAY) {
-   //    // Force is in the direction which will get head offset direction back towards 0
-   //    const rotationForce = (headOffsetDirection - Vars.HEAD_DIRECTION_LEEWAY) * Math.sign(headOffsetDirection) * Settings.I_TPS;
-
-   //    cowBodyHitbox.box.relativeAngle += rotationForce;
-
-   //    const headOffsetX = headHitbox.box.offset.x;
-   //    const headOffsetY = headHitbox.box.offset.y;
-   //    headHitbox.box.offset.x = rotateXAroundOrigin(headOffsetX, headOffsetY, -rotationForce);
-   //    headHitbox.box.offset.y = rotateYAroundOrigin(headOffsetX, headOffsetY, -rotationForce);
-   // }
 }
 
 export function createCowConfig(position: Point, angle: number, species: CowSpecies): EntityConfig {

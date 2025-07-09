@@ -450,6 +450,10 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Tundra Rock",
       internalName: "tundra-rock"
    },
+   [EntityType.tundraRockFrozen]: {
+      name: "Tundra Rock Frozen",
+      internalName: "tundra-rock-frozen"
+   },
    [EntityType.snowberryBush]: {
       name: "Snowberry Bush",
       internalName: "snowberry-bush"

@@ -138,8 +138,23 @@ export function entitiesAreColliding(entity1: Entity, entity2: Entity): number {
       }
    }
 
-   // If no hitboxes match, then they aren't colliding
    return CollisionVars.NO_COLLISION;
+}
+
+export function hitboxIsCollidingWithEntity(hitbox: Hitbox, entity: Entity): boolean {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   
+   for (const currentHitbox of transformComponent.children) {
+      if (!entityChildIsHitbox(currentHitbox)) {
+         continue;
+      }
+
+      if (collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, currentHitbox.collisionMask, currentHitbox.collisionBit) && hitbox.box.isColliding(currentHitbox.box)) {
+         return true;
+      }
+   }
+
+   return false;
 }
 
 export function resolveEntityCollisions(layer: Layer): void {

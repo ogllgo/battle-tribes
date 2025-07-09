@@ -417,6 +417,7 @@ export function sortComponentArrays(): void {
       [ServerComponentType.dustfleaEgg]: ComponentArrayPriority.medium,
       [ServerComponentType.spruceTree]: ComponentArrayPriority.medium,
       [ServerComponentType.tundraRock]: ComponentArrayPriority.medium,
+      [ServerComponentType.tundraRockFrozen]: ComponentArrayPriority.medium,
       [ServerComponentType.snowberryBush]: ComponentArrayPriority.medium,
       [ServerComponentType.snobe]: ComponentArrayPriority.medium,
       [ServerComponentType.snobeMound]: ComponentArrayPriority.medium,

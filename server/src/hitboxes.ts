@@ -126,20 +126,24 @@ export function addHitboxVelocity(hitbox: Hitbox, addVec: Point): void {
    pushedHitbox.box.position.y += addVec.y / Settings.TPS;
 }
 
-export function translateHitbox(hitbox: Hitbox, translationX: number, translationY: number): void {
+export function translateHitbox(hitbox: Hitbox, transformComponent: TransformComponent, translation: Point): void {
    const pushedHitbox = getRootHitbox(hitbox);
-   pushedHitbox.box.position.x += translationX;
-   pushedHitbox.box.position.y += translationY;
-   hitbox.previousPosition.x += translationX;
-   hitbox.previousPosition.y += translationY;
+   pushedHitbox.box.position.x += translation.x;
+   pushedHitbox.box.position.y += translation.y;
+   hitbox.previousPosition.x += translation.x;
+   hitbox.previousPosition.y += translation.y;
+
+   transformComponent.isDirty = true;
 }
 
-export function teleportHitbox(hitbox: Hitbox, pos: Point): void {
+export function teleportHitbox(hitbox: Hitbox, transformComponent: TransformComponent, pos: Point): void {
    const pushedHitbox = getRootHitbox(hitbox);
    pushedHitbox.box.position.x = pos.x;
    pushedHitbox.box.position.y = pos.y;
    hitbox.previousPosition.x = pos.x;
    hitbox.previousPosition.y = pos.y;
+
+   transformComponent.isDirty = true;
 }
 
 export function getTotalMass(node: Hitbox | Entity): number {
@@ -199,7 +203,7 @@ export function applyKnockback(entity: Entity, hitbox: Hitbox, knockback: number
 }
 
 // @Cleanup: Should be combined with previous function
-export function applyAbsoluteKnockback(entity: Entity, hitbox: Hitbox, knockback: number, knockbackDirection: number): void {
+export function applyAbsoluteKnockback(entity: Entity, hitbox: Hitbox, knockback: Point): void {
    if (!PhysicsComponentArray.hasComponent(entity)) {
       return;
    }
@@ -210,11 +214,13 @@ export function applyAbsoluteKnockback(entity: Entity, hitbox: Hitbox, knockback
    }
    
    const rootHitbox = getRootHitbox(hitbox);
-   addHitboxVelocity(rootHitbox, polarVec2(knockback, knockbackDirection));
+   addHitboxVelocity(rootHitbox, knockback);
 
    // @Hack?
    if (getEntityType(entity) === EntityType.player) {
-      registerPlayerKnockback(entity, knockback, knockbackDirection);
+      // @Hack
+      const polarKnockback = knockback.convertToVector();
+      registerPlayerKnockback(entity, polarKnockback.magnitude, polarKnockback.direction);
    }
 }
 

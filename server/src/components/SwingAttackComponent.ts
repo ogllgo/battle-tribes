@@ -229,8 +229,17 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, collidingHit
    damageEntity(victim, victimHitbox, attacker, attackDamage, DamageSource.tribeMember, attackEffectiveness, collisionPoint, hitFlags);
    applyKnockback(victim, victimHitbox, attackKnockback, hitDirection);
 
-   if (attackingItem !== null && attackingItem.type === ItemType.flesh_sword) {
-      applyStatusEffect(victim, StatusEffect.poisoned, 3 * Settings.TPS);
+   if (attackingItem !== null) {
+      switch (attackingItem.type) {
+         case ItemType.flesh_sword: {
+            applyStatusEffect(victim, StatusEffect.poisoned, 3 * Settings.TPS);
+            break;
+         }
+         case ItemType.iceWringer: {
+            applyStatusEffect(victim, StatusEffect.freezing, 3 * Settings.TPS);
+            break;
+         }
+      }
    }
 
    // Bloodaxes have a 20% chance to inflict bleeding on hit

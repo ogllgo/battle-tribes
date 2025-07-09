@@ -493,6 +493,7 @@ export function clampAngleB(angle: number): number {
    return clampAngleA(angle + Math.PI) - Math.PI;
 }
 
+/** converts the secs into the equivalent integer number of ticks */
 export function secondsToTicks(sex: number): number {
    return Math.floor(sex * Settings.TPS);
 }

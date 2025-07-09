@@ -312,6 +312,11 @@ export async function loadSoundEffects(): Promise<void> {
       "snobe-ambient-2.mp3",
       "snobe-ambient-3.mp3",
       "snobe-ambient-4.mp3",
+      "wraith-pant-1.mp3",
+      "wraith-pant-2.mp3",
+      "wraith-pant-3.mp3",
+      "wraith-pant-4.mp3",
+      "wraith-angry-leap.mp3",
    ];
 
    const tempAudioBuffers: Partial<Record<string, AudioBuffer>> = {};

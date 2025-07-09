@@ -21,5 +21,10 @@ export const CLIENT_STATUS_EFFECT_INFO_RECORD: Record<StatusEffect, ClientStatus
    [StatusEffect.poisoned]: {
       name: "poisoned",
       colour: "#16b51b"
+   },
+   [StatusEffect.heatSickness]: {
+      // @TEMPORARY
+      name: "poisoned",
+      colour: "#16b51b"
    }
 }

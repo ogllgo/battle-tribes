@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { Point, randInt } from "battletribes-shared/utils";
+import { Point, polarVec2, randInt } from "battletribes-shared/utils";
 import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import { EntityConfig } from "../../components";
 import { TransformComponent, TransformComponentArray, addHitboxToTransformComponent } from "../../components/TransformComponent";
@@ -9,7 +9,7 @@ import { applyAbsoluteKnockback, createHitbox, Hitbox } from "../../hitboxes";
 import { HealthComponent } from "../../components/HealthComponent";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { SnobeComponent } from "../../components/SnobeComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
+import { PhysicsComponent, PhysicsComponentArray } from "../../components/PhysicsComponent";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { turnToPosition } from "../../ai-shared";
 import { EscapeAI } from "../../ai/EscapeAI";
@@ -22,7 +22,7 @@ import { Biome } from "../../../../shared/src/biomes";
 import Layer from "../../Layer";
 import { FollowAI } from "../../ai/FollowAI";
 import { TamingComponent } from "../../components/TamingComponent";
-import { registerEntityLootOnDeath } from "../../components/LootComponent";
+import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
@@ -67,10 +67,10 @@ const moveFunc = (snobe: Entity, pos: Point, acceleration: number): void => {
       const hitbox = transformComponent.children[0] as Hitbox;
       
       const direction = hitbox.box.position.calculateAngleBetween(pos);
-      applyAbsoluteKnockback(snobe, hitbox, 320 / 1600 * acceleration, direction);
+      // @HACK: so that snobes get affected by freezing from wraiths. But this shouldn't have to be thought about here!!
+      const physicsComponent = PhysicsComponentArray.getComponent(snobe);
+      applyAbsoluteKnockback(snobe, hitbox, polarVec2(320 / 1600 * acceleration * physicsComponent.moveSpeedMultiplier, direction));
    }
-   
-   // accelerateEntityToPosition(krumblid, pos, acceleration);
 }
 
 const turnFunc = (snobe: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
@@ -140,6 +140,8 @@ export function createSnobeConfig(position: Point, angle: number): EntityConfig 
    
    const tamingComponent = new TamingComponent();
    
+   const lootComponent = new LootComponent();
+   
    const snobeComponent = new SnobeComponent();
    
    return {
@@ -152,6 +154,7 @@ export function createSnobeConfig(position: Point, angle: number): EntityConfig 
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
          [ServerComponentType.taming]: tamingComponent,
+         [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.snobe]: snobeComponent
       },
       lights: []

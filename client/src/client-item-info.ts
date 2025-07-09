@@ -811,6 +811,14 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       name: "Wraith Tooth",
       namePlural: "Wraith Teeth",
       description: ""
+   },
+   [ItemType.iceWringer]: {
+      entityTextureSource: "items/small/ice-wringer.png",
+      textureSource: "items/large/ice-wringer.png",
+      toolTextureSource: "items/large/ice-wringer.png",
+      name: "Ice Wringer",
+      namePlural: "Ice Wringer",
+      description: ""
    }
 };
 

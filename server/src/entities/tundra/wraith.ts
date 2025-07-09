@@ -1,3 +1,4 @@
+import { Biome } from "../../../../shared/src/biomes";
 import { createNormalisedPivotPoint } from "../../../../shared/src/boxes/BaseBox";
 import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
@@ -7,17 +8,19 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
 import { StatusEffect } from "../../../../shared/src/status-effects";
+import { TileType } from "../../../../shared/src/tiles";
 import { Point, polarVec2, randInt } from "../../../../shared/src/utils";
-import { accelerateEntityToPosition, turnToPosition } from "../../ai-shared";
+import WanderAI from "../../ai/WanderAI";
 import { EntityConfig } from "../../components";
-import { AIHelperComponent } from "../../components/AIHelperComponent";
+import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { HealthComponent } from "../../components/HealthComponent";
-import { registerEntityLootOnDeath } from "../../components/LootComponent";
+import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { WraithComponent } from "../../components/WraithComponent";
 import { applyAcceleration, applyAccelerationFromGround, createHitbox, Hitbox, turnHitboxToAngle } from "../../hitboxes";
+import Layer from "../../Layer";
 import { tetherHitboxes } from "../../tethers";
 
 export const WRAITH_EAR_IDEAL_ANGLE = Math.PI * 0.1;
@@ -52,7 +55,11 @@ const turnFunc = (wraith: Entity, pos: Point, turnSpeed: number, turnDamping: nu
 
    const headHitbox = transformComponent.children[1] as Hitbox;
    const headToTargetDirection = headHitbox.box.position.calculateAngleBetween(pos);
-   turnHitboxToAngle(headHitbox, headToTargetDirection, 2 * Math.PI, 0.5, false);
+   turnHitboxToAngle(headHitbox, headToTargetDirection, 4 * Math.PI, 0.5, false);
+}
+
+function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: number): boolean {
+   return layer.getTileTypeAtPosition(x, y) === TileType.permafrost;
 }
 
 export function createWraithConfig(position: Point, angle: number): EntityConfig {
@@ -70,20 +77,20 @@ export function createWraithConfig(position: Point, angle: number): EntityConfig
    headHitbox.box.pivot = createNormalisedPivotPoint(0, -0.5);
    addHitboxToTransformComponent(transformComponent, headHitbox);
    
-   tetherHitboxes(headHitbox, bodyHitbox, transformComponent, transformComponent, idealHeadDist, 80, 1);
+   tetherHitboxes(headHitbox, bodyHitbox, transformComponent, transformComponent, idealHeadDist, 100, 1.2);
    // @Hack: method of adding
    headHitbox.angularTethers.push({
       originHitbox: bodyHitbox,
       idealAngle: 0,
-      springConstant: 38,
+      springConstant: 122,
       damping: 0,
-      padding: Math.PI * 0.08
+      padding: Math.PI * 0.04
    });
 
    for (let i = 0; i < 2; i++) {
       const sideIsFlipped = i === 0;
 
-      const earOffset = new Point(24, -14);
+      const earOffset = new Point(24, -18);
       const earPosition = headPosition.copy();
       earPosition.add(earOffset);
       const earHitbox = createHitbox(transformComponent, headHitbox, new CircularBox(earPosition, earOffset, WRAITH_EAR_IDEAL_ANGLE, 8), 0.05, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.WRAITH_EAR]);
@@ -103,9 +110,12 @@ export function createWraithConfig(position: Point, angle: number): EntityConfig
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.freezing);
    
-   const healthComponent = new HealthComponent(35);
+   const healthComponent = new HealthComponent(25);
 
    const aiHelperComponent = new AIHelperComponent(headHitbox, 550, moveFunc, turnFunc);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(750, 14 * Math.PI, 0.7, 0.35, wanderPositionIsValid);
+
+   const lootComponent = new LootComponent();
    
    const wraithComponent = new WraithComponent();
    
@@ -117,6 +127,7 @@ export function createWraithConfig(position: Point, angle: number): EntityConfig
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
+         [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.wraith]: wraithComponent,
       },
       lights: []

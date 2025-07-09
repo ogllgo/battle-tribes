@@ -27,9 +27,9 @@ const hitboxesAreTethered = (transformComponent: TransformComponent, hitbox1: Hi
    return false;
 }
 
-const resolveHardCollision = (affectedHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
+const resolveHardCollision = (affectedHitbox: Hitbox, hitboxTransformComponent: TransformComponent, pushInfo: CollisionPushInfo): void => {
    // Transform the entity out of the hitbox
-   translateHitbox(affectedHitbox, pushInfo.amountIn * Math.sin(pushInfo.direction), pushInfo.amountIn * Math.cos(pushInfo.direction));
+   translateHitbox(affectedHitbox, hitboxTransformComponent, polarVec2(pushInfo.amountIn, pushInfo.direction));
 
    const previousVelocity = getHitboxVelocity(affectedHitbox);
 
@@ -42,11 +42,11 @@ const resolveHardCollision = (affectedHitbox: Hitbox, pushInfo: CollisionPushInf
    setHitboxVelocity(affectedHitbox, vx, vy);
 }
 
-const resolveHardCollisionAndFlip = (affectedHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
+const resolveHardCollisionAndFlip = (affectedHitbox: Hitbox, hitboxTransformComponent: TransformComponent, pushInfo: CollisionPushInfo): void => {
    const previousVelocity = getHitboxVelocity(affectedHitbox);
    
    // Transform the entity out of the hitbox
-   translateHitbox(affectedHitbox, pushInfo.amountIn * Math.sin(pushInfo.direction), pushInfo.amountIn * Math.cos(pushInfo.direction));
+   translateHitbox(affectedHitbox, hitboxTransformComponent, polarVec2(pushInfo.amountIn, pushInfo.direction));
 
    // Reverse the velocity going into the hitbox
    
@@ -116,7 +116,7 @@ export function collide(affectedEntity: Entity, collidingEntity: Entity, collidi
             const pushInfo = getCollisionPushInfo(affectedHitbox.box, collidingHitbox.box);
 
             if (collidingHitbox.collisionType === HitboxCollisionType.hard) {
-               resolveHardCollision(affectedHitbox, pushInfo);
+               resolveHardCollision(affectedHitbox, affectedEntityTransformComponent, pushInfo);
             } else {
                resolveSoftCollision(affectedHitbox, collidingHitbox, pushInfo);
             }
@@ -173,12 +173,10 @@ export function resolveWallCollision(entity: Entity, hitbox: Hitbox, subtileX: n
    
    const pushInfo = getCollisionPushInfo(hitbox.box, tileBox);
    if (getEntityType(entity) === EntityType.guardianSpikyBall) {
-      resolveHardCollisionAndFlip(hitbox, pushInfo);
+      resolveHardCollisionAndFlip(hitbox, transformComponent, pushInfo);
    } else {
-      resolveHardCollision(hitbox, pushInfo);
+      resolveHardCollision(hitbox, transformComponent, pushInfo);
    }
-
-   transformComponent.isDirty = true;
 
    const componentTypes = getEntityComponentTypes(entity);
    const componentArrayRecord = getComponentArrayRecord();

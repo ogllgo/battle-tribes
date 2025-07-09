@@ -3,7 +3,7 @@ import { Entity, EntityType, DamageSource, CactusFlowerSize } from "battletribes
 import { ComponentArray } from "./ComponentArray";
 import { Packet } from "battletribes-shared/packets";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
-import { Point, randAngle, randInt } from "../../../shared/src/utils";
+import { Point, polarVec2, randAngle, randInt } from "../../../shared/src/utils";
 import { getEntityType, destroyEntity, getEntityLayer } from "../world";
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { applyAbsoluteKnockback, Hitbox } from "../hitboxes";
@@ -125,9 +125,9 @@ function onHitboxCollision(cactus: Entity, collidingEntity: Entity, affectedHitb
       return;
    }
 
-   const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDir = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
    damageEntity(collidingEntity, collidingHitbox, cactus, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
-   applyAbsoluteKnockback(collidingEntity, collidingHitbox, 200, hitDirection);
+   applyAbsoluteKnockback(collidingEntity, collidingHitbox, polarVec2(200, hitDir));
    addLocalInvulnerabilityHash(collidingEntity, "cactus", 0.3);
 }

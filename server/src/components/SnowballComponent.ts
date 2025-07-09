@@ -1,18 +1,19 @@
 import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
-import { Point, randFloat } from "battletribes-shared/utils";
+import { Point, randFloat, secondsToTicks } from "battletribes-shared/utils";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityAgeTicks, getEntityType } from "../world";
 import { Settings } from "battletribes-shared/settings";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { applyKnockback, getHitboxVelocity, Hitbox } from "../hitboxes";
+import { EntityTickEventType } from "../../../shared/src/entity-events";
 
 export class SnowballComponent {
    public readonly yeti: Entity;
    public readonly size: number;
-   public readonly lifetimeTicks = Math.floor(randFloat(10, 15) * Settings.TPS);
+   public readonly lifetimeTicks = secondsToTicks(randFloat(10, 15));
 
    constructor(yeti: Entity, size: number) {
 
@@ -66,6 +67,11 @@ function onHitboxCollision(snowball: Entity, collidingEntity: Entity, snowballHi
 
    // @Hack so that snobes don't kill themselves when digging
    if (getEntityType(collidingEntity) === EntityType.snobe || getEntityType(collidingEntity) === EntityType.snobeMound) {
+      return;
+   }
+
+   // @Hack so that wratihs also don't get killed
+   if (getEntityType(collidingEntity) === EntityType.wraith) {
       return;
    }
    

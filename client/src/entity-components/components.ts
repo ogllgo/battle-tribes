@@ -145,6 +145,7 @@ import { SnowberryBushComponent, SnowberryBushComponentArray, SnowberryBushCompo
 import { SnobeComponent, SnobeComponentArray, SnobeComponentParams } from "./server-components/SnobeComponent";
 import { SnobeMoundComponent, SnobeMoundComponentArray, SnobeMoundComponentParams } from "./server-components/SnobeMoundComponent";
 import { WraithComponent, WraithComponentArray, WraithComponentParams } from "./server-components/WraithComponent";
+import { TundraRockFrozenComponent, TundraRockFrozenComponentArray, TundraRockFrozenComponentParams } from "./server-components/TundraRockFrozenComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -294,6 +295,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.dustfleaEgg]: DustfleaEggComponentArray,
    [ServerComponentType.spruceTree]: SpruceTreeComponentArray,
    [ServerComponentType.tundraRock]: TundraRockComponentArray,
+   [ServerComponentType.tundraRockFrozen]: TundraRockFrozenComponentArray,
    [ServerComponentType.snowberryBush]: SnowberryBushComponentArray,
    [ServerComponentType.snobe]: SnobeComponentArray,
    [ServerComponentType.snobeMound]: SnobeMoundComponentArray,
@@ -423,6 +425,7 @@ const ServerComponentRecord = {
    [ServerComponentType.dustfleaEgg]: (): DustfleaEggComponent => 0 as any,
    [ServerComponentType.spruceTree]: (): SpruceTreeComponent => 0 as any,
    [ServerComponentType.tundraRock]: (): TundraRockComponent => 0 as any,
+   [ServerComponentType.tundraRockFrozen]: (): TundraRockFrozenComponent => 0 as any,
    [ServerComponentType.snowberryBush]: (): SnowberryBushComponent => 0 as any,
    [ServerComponentType.snobe]: (): SnobeComponent => 0 as any,
    [ServerComponentType.snobeMound]: (): SnobeMoundComponent => 0 as any,
@@ -554,6 +557,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.dustfleaEgg]: (): DustfleaEggComponentParams => 0 as any,
    [ServerComponentType.spruceTree]: (): SpruceTreeComponentParams => 0 as any,
    [ServerComponentType.tundraRock]: (): TundraRockComponentParams => 0 as any,
+   [ServerComponentType.tundraRockFrozen]: (): TundraRockFrozenComponentParams => 0 as any,
    [ServerComponentType.snowberryBush]: (): SnowberryBushComponentParams => 0 as any,
    [ServerComponentType.snobe]: (): SnobeComponentParams => 0 as any,
    [ServerComponentType.snobeMound]: (): SnobeMoundComponentParams => 0 as any,

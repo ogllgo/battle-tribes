@@ -75,7 +75,6 @@ import { AttackingEntitiesComponent } from "./components/AttackingEntitiesCompon
 import { TreeRootBaseComponent } from "./components/TreeRootBaseComponent";
 import { TreeRootSegmentComponent } from "./components/TreeRootSegmentComponent";
 import { AIAssignmentComponent } from "./components/AIAssignmentComponent";
-import { PatrolAI } from "./ai/PatrolAI";
 import { PlantedComponent } from "./components/PlantedComponent";
 import { TreePlantedComponent } from "./components/TreePlantedComponent";
 import { BerryBushPlantedComponent } from "./components/BerryBushPlantedComponent";
@@ -97,7 +96,6 @@ import { GlurbBodySegmentComponent } from "./components/GlurbBodySegmentComponen
 import { GlurbSegmentComponent } from "./components/GlurbSegmentComponent";
 import { FleshSwordItemComponent } from "./components/FleshSwordItemComponent";
 import { HitboxAngularTether, Hitbox } from "./hitboxes";
-import { Point } from "../../shared/src/utils";
 import { MossComponent } from "./components/MossComponent";
 import { GlurbComponent } from "./components/GlurbComponent";
 import { FloorSignComponent } from "./components/FloorSignComponent";
@@ -130,6 +128,7 @@ import { SnowberryBushComponent } from "./components/SnowberryBushComponent";
 import { SnobeComponent } from "./components/SnobeComponent";
 import { SnobeMoundComponent } from "./components/SnobeMoundComponent";
 import { WraithComponent } from "./components/WraithComponent";
+import { TundraRockFrozenComponent } from "./components/TundraRockFrozenComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -256,6 +255,7 @@ const ComponentClassRecord = {
    [ServerComponentType.dustfleaEgg]: () => DustfleaEggComponent,
    [ServerComponentType.spruceTree]: () => SpruceTreeComponent,
    [ServerComponentType.tundraRock]: () => TundraRockComponent,
+   [ServerComponentType.tundraRockFrozen]: () => TundraRockFrozenComponent,
    [ServerComponentType.snowberryBush]: () => SnowberryBushComponent,
    [ServerComponentType.snobe]: () => SnobeComponent,
    [ServerComponentType.snobeMound]: () => SnobeMoundComponent,

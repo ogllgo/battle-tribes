@@ -130,6 +130,7 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.dustfleaEgg]: {},
    [ServerComponentType.spruceTree]: {},
    [ServerComponentType.tundraRock]: {},
+   [ServerComponentType.tundraRockFrozen]: {},
    [ServerComponentType.snowberryBush]: {},
    [ServerComponentType.snobe]: {},
    [ServerComponentType.snobeMound]: {},

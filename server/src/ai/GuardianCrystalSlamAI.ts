@@ -1,7 +1,7 @@
 import { GuardianCrystalSlamStage } from "battletribes-shared/components";
 import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { lerp, Point, randAngle, UtilVars } from "battletribes-shared/utils";
+import { lerp, Point, polarVec2, randAngle, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition, turnToPosition } from "../ai-shared";
 import { GuardianComponent, GuardianComponentArray, GuardianVars } from "../components/GuardianComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
@@ -44,7 +44,7 @@ export default class GuardianCrystalSlamAI {
       const transformComponent = TransformComponentArray.getComponent(guardian);
       const bodyHitbox = transformComponent.children[0] as Hitbox;
       
-      applyAbsoluteKnockback(guardian, bodyHitbox, 150, bodyHitbox.box.angle + UtilVars.PI);
+      applyAbsoluteKnockback(guardian, bodyHitbox, polarVec2(150, bodyHitbox.box.angle + Math.PI));
 
       const offsetMagnitude = GuardianVars.LIMB_ORBIT_RADIUS + Vars.LIMB_EXTEND_AMOUNT;
       const originX = bodyHitbox.box.position.x + offsetMagnitude * Math.sin(bodyHitbox.box.angle);

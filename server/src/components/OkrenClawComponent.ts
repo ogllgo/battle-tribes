@@ -4,7 +4,7 @@ import { DamageSource, Entity, EntityType } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
-import { Point } from "../../../shared/src/utils";
+import { Point, polarVec2 } from "../../../shared/src/utils";
 import { getOkrenClawBigArmSegmentOffset, getOkrenClawBigArmSegmentSize, getOkrenClawMediumArmSegmentOffset, getOkrenClawMediumArmSegmentSize, getOkrenClawSlashingArmSegmentOffset, getOkrenClawSlashingArmSegmentSize } from "../entities/desert/okren-claw";
 import { Hitbox, getHitboxVelocity, applyAbsoluteKnockback } from "../hitboxes";
 import { getEntityType } from "../world";
@@ -155,9 +155,9 @@ function onHitboxCollision(okrenClaw: Entity, collidingEntity: Entity, affectedH
 
    const okrenClawComponent = OkrenClawComponentArray.getComponent(okrenClaw);
    
-   const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDir = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
    damageEntity(collidingEntity, collidingHitbox, okrenClaw, ATTACK_DAMAGES[okrenClawComponent.size], DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
-   applyAbsoluteKnockback(collidingEntity, collidingHitbox, 200, hitDirection);
+   applyAbsoluteKnockback(collidingEntity, collidingHitbox, polarVec2(200, hitDir));
    addLocalInvulnerabilityHash(collidingEntity, hash, 0.3);
 }

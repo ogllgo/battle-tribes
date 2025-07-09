@@ -49,6 +49,7 @@ import { createTundraRockConfig } from "../entities/tundra/tundra-rock";
 import { createSnowberryBushConfig } from "../entities/tundra/snowberry-bush";
 import { createSnobeConfig } from "../entities/tundra/snobe";
 import { createWraithConfig } from "../entities/tundra/wraith";
+import { createTundraRockFrozenConfig } from "../entities/tundra/tundra-rock-frozen";
 
 const enum Vars {
    TRIBESMAN_SPAWN_EXCLUSION_RANGE = 1200
@@ -488,26 +489,27 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       generateCaveEntrances(surfaceLayer);
    }
 
-   registerNewSpawnInfo({
-      entityTypes: [EntityType.cow],
-      layer: surfaceLayer,
-      spawnRate: 0.01,
-      biome: Biome.grasslands,
-      tileTypes: [TileType.grass],
-      packSpawning: {
-         getPackSize: () => randInt(2, 5),
-         spawnRange: 200
-      },
-      onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      spawnDistribution: createRawSpawnDistribution(16, 0.003),
-      balanceSpawnDistribution: false,
-      doStrictTileTypeCheck: false,
-      createEntity: (pos: Point, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
-         const species = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig.components[ServerComponentType.cow]!.species;
-         return createCowConfig(pos, angle, species);
-      }
-   });
+   // @Temporary so that they stop MOOING IN MY EARS
+   // registerNewSpawnInfo({
+   //    entityTypes: [EntityType.cow],
+   //    layer: surfaceLayer,
+   //    spawnRate: 0.01,
+   //    biome: Biome.grasslands,
+   //    tileTypes: [TileType.grass],
+   //    packSpawning: {
+   //       getPackSize: () => randInt(2, 5),
+   //       spawnRange: 200
+   //    },
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 150,
+   //    spawnDistribution: createRawSpawnDistribution(16, 0.003),
+   //    balanceSpawnDistribution: false,
+   //    doStrictTileTypeCheck: false,
+   //    createEntity: (pos: Point, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
+   //       const species = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig.components[ServerComponentType.cow]!.species;
+   //       return createCowConfig(pos, angle, species);
+   //    }
+   // });
    registerNewSpawnInfo({
       entityTypes: [EntityType.berryBush],
       layer: surfaceLayer,
@@ -650,7 +652,35 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       layer: surfaceLayer,
       spawnRate: 0.002,
       biome: Biome.tundra,
-      tileTypes: [TileType.snow, TileType.permafrost],
+      tileTypes: [TileType.snow],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 30,
+      spawnDistribution: createRawSpawnDistribution(32, 0.029),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: true,
+      doStrictCollisionCheck: true,
+      packSpawning: {
+         getPackSize: () => randInt(3, 9),
+         spawnRange: 80
+      },
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         // @Hack @Copynpaste
+         const tileX = Math.floor(pos.x / Settings.TILE_SIZE);
+         const tileY = Math.floor(pos.y / Settings.TILE_SIZE);
+         const temperature = temperatureMap[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
+         if (temperature > 0.25) {
+            return null;
+         }
+         
+         return createTundraRockConfig(pos, angle);
+      }
+   });
+   registerNewSpawnInfo({
+      entityTypes: [EntityType.tundraRockFrozen],
+      layer: surfaceLayer,
+      spawnRate: 0.002,
+      biome: Biome.tundra,
+      tileTypes: [TileType.permafrost],
       onlySpawnsInNight: false,
       minSpawnDistance: 30,
       spawnDistribution: createRawSpawnDistribution(32, 0.029),
@@ -670,7 +700,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
             return null;
          }
          
-         return createTundraRockConfig(pos, angle);
+         return createTundraRockFrozenConfig(pos, angle);
       }
    });
    registerNewSpawnInfo({
@@ -694,26 +724,26 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       }
    });
    // @Temporary cuz they b crashing the game!!
-   // registerNewSpawnInfo({
-   //    entityTypes: [EntityType.snobe],
-   //    layer: surfaceLayer,
-   //    spawnRate: 0.001,
-   //    biome: Biome.tundra,
-   //    tileTypes: [TileType.snow, TileType.ice],
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 30,
-   //    spawnDistribution: createRawSpawnDistribution(32, 0.0025),
-   //    balanceSpawnDistribution: true,
-   //    doStrictTileTypeCheck: false,
-   //    doStrictCollisionCheck: true,
-   //    packSpawning: {
-   //       getPackSize: () => Math.random() < 0.5 ? 2 : 4,
-   //       spawnRange: 120
-   //    },
-   //    createEntity: (pos: Point, angle: number): EntityConfig | null => {
-   //       return createSnobeConfig(pos, angle);
-   //    }
-   // });
+   registerNewSpawnInfo({
+      entityTypes: [EntityType.snobe],
+      layer: surfaceLayer,
+      spawnRate: 0.001,
+      biome: Biome.tundra,
+      tileTypes: [TileType.snow, TileType.ice],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 30,
+      spawnDistribution: createRawSpawnDistribution(32, 0.0025),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: false,
+      doStrictCollisionCheck: true,
+      packSpawning: {
+         getPackSize: () => Math.random() < 0.5 ? 2 : 4,
+         spawnRange: 120
+      },
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createSnobeConfig(pos, angle);
+      }
+   });
    registerNewSpawnInfo({
       entityTypes: [EntityType.wraith],
       layer: surfaceLayer,
@@ -722,7 +752,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       tileTypes: [TileType.permafrost],
       onlySpawnsInNight: false,
       minSpawnDistance: 30,
-      spawnDistribution: createRawSpawnDistribution(32, 0.0025),
+      spawnDistribution: createRawSpawnDistribution(32, 0.0032),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
       doStrictCollisionCheck: true,

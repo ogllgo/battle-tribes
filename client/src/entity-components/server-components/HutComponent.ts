@@ -1,5 +1,5 @@
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { Point, lerp } from "battletribes-shared/utils";
+import { Point, lerp, secondsToTicks } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { ServerComponentType } from "battletribes-shared/components";
 import Board from "../../Board";
@@ -37,9 +37,9 @@ export interface HutComponent {
 export const WORKER_HUT_SIZE = 88;
 export const WARRIOR_HUT_SIZE = 104;
 
-const DOOR_OPEN_TICKS = Math.floor(0.15 * Settings.TPS);
-const DOOR_REMAIN_TICKS = Math.floor(0.175 * Settings.TPS);
-const DOOR_CLOSE_TICKS = Math.floor(0.175 * Settings.TPS);
+const DOOR_OPEN_TICKS = secondsToTicks(0.15);
+const DOOR_REMAIN_TICKS = secondsToTicks(0.175);
+const DOOR_CLOSE_TICKS = secondsToTicks(0.175);
 
 const calculateDoorSwingAmount = (lastDoorSwingTicks: number): number => {
    const ticksSinceLastSwing = Board.serverTicks - lastDoorSwingTicks;

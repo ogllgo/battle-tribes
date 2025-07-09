@@ -122,6 +122,7 @@ const GIFT_APPRECIATION_WEIGHTS: Record<ItemType, number> = {
    [ItemType.rawSnobeMeat]: 1,
    [ItemType.snobeStew]: 1,
    [ItemType.wraithTooth]: 1,
+   [ItemType.iceWringer]: 1,
 };
 
 export const enum TribesmanPathType {

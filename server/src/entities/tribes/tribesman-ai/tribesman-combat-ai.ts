@@ -1,7 +1,7 @@
 import { TribesmanAIType } from "battletribes-shared/components";
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { Settings, PathfindingSettings } from "battletribes-shared/settings";
-import { Point, angleToPoint, assert, distance, polarVec2 } from "battletribes-shared/utils";
+import { Point, angleToPoint, assert, distance, polarVec2, secondsToTicks } from "battletribes-shared/utils";
 import { getDistanceFromPointToEntity, entityIsInLineOfSight, willStopAtDesiredDistance } from "../../../ai-shared";
 import { InventoryComponentArray, countItemType, getInventory } from "../../../components/InventoryComponent";
 import { getCurrentLimbState, getLimbConfiguration, InventoryUseComponentArray, limbHeldItemCanBeSwitched, setLimbActions } from "../../../components/InventoryUseComponent";
@@ -33,8 +33,8 @@ const enum Vars {
 
 // @Incomplete?
 const EXTRA_BOW_COOLDOWNS: Partial<Record<EntityType, number>> = {
-   [EntityType.tribeWorker]: Math.floor(0.3 * Settings.TPS),
-   [EntityType.tribeWarrior]: Math.floor(0.1 * Settings.TPS)
+   [EntityType.tribeWorker]: secondsToTicks(0.3),
+   [EntityType.tribeWarrior]: secondsToTicks(0.1)
 };
 
 // @Copynpaste

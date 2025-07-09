@@ -23,7 +23,7 @@ import { TamingComponentArray } from "./TamingComponent";
 import { createSnowballConfig } from "../entities/snowball";
 import { createEntity } from "../Entity";
 import { Packet } from "../../../shared/src/packets";
-import { CollisionBit } from "../../../shared/src/collision";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../shared/src/collision";
 import { createSnobeMoundConfig } from "../entities/tundra/snobe-mound";
 
 const MIN_EAR_WIGGLE_COOLDOWN_TICKS = 1.5 * Settings.TPS;
@@ -137,14 +137,14 @@ function onTick(snobe: Entity): void {
             
             createEntity(snowballConfig, getEntityLayer(snobe), 0);
          }
+      // When dug in, chance to pop back up after a while
       } else if (Math.random() < 0.1 / Settings.TPS) {
-         // When done digging, chance to stop after a while
          snobeComponent.isDigging = false;
 
          // Return the collision mask back to normal
          for (const child of transformComponent.children) {
             if (entityChildIsHitbox(child)) {
-               child.collisionMask |= CollisionBit.snowball;
+               child.collisionMask |= DEFAULT_COLLISION_MASK;
             }
          }
 
@@ -154,7 +154,7 @@ function onTick(snobe: Entity): void {
       }
 
       // @HACK AAAAAAAAAAAAAAAAAA
-      teleportHitbox(hitbox, snobeComponent.diggingStartPosition);
+      teleportHitbox(hitbox, transformComponent, snobeComponent.diggingStartPosition);
 
       return;
    }
@@ -236,7 +236,7 @@ function onTick(snobe: Entity): void {
       // ideally this would just be not colliding with snowballs the snobe has created
       for (const child of transformComponent.children) {
          if (entityChildIsHitbox(child)) {
-            child.collisionMask &= ~CollisionBit.snowball;
+            child.collisionMask = 0;
          }
       }
 

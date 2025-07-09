@@ -1,5 +1,5 @@
 import { Settings } from "battletribes-shared/settings";
-import { Point, customTickIntervalHasPassed, lerp, randAngle, randFloat, randInt, randItem, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { Point, customTickIntervalHasPassed, lerp, randAngle, randFloat, randInt, randItem, rotateXAroundOrigin, rotateYAroundOrigin, secondsToTicks } from "battletribes-shared/utils";
 import { Entity, LimbAction } from "battletribes-shared/entities";
 import { InventoryUseComponentArray, LimbInfo } from "./entity-components/server-components/InventoryUseComponent";
 import { getTextureArrayIndex } from "./texture-atlases/texture-atlases";
@@ -24,10 +24,10 @@ enum CustomItemState {
 const MIN_LIMB_DIRECTION = 0.2;
 const MAX_LIMB_DIRECTION = 0.9;
 
-const MIN_LIMB_MOVE_INTERVAL = Math.floor(0.2 * Settings.TPS);
-const MAX_LIMB_MOVE_INTERVAL = Math.floor(0.4 * Settings.TPS);
+const MIN_LIMB_MOVE_INTERVAL = secondsToTicks(0.2);
+const MAX_LIMB_MOVE_INTERVAL = secondsToTicks(0.4);
 
-const BANDAGE_LIFETIME_TICKS = Math.floor(1.25 * Settings.TPS);
+const BANDAGE_LIFETIME_TICKS = secondsToTicks(1.25);
 
 // @Incomplete: Investigate using slices of the actual item images instead of hardcoded pixel colours
 const INGREDIENT_PARTICLE_COLOURS: Partial<Record<ItemType, ReadonlyArray<ParticleColour>>> = {
@@ -184,7 +184,7 @@ const getCustomItemRenderPartOpacity = (entity: Entity, state: CustomItemState):
          const useInfo = ITEM_INFO_RECORD[ItemType.herbal_medicine] as ConsumableItemInfo;
 
          const ticksSpentUsingMedicine = Board.serverTicks - lastEatTicks;
-         const useProgress = ticksSpentUsingMedicine / Math.floor(useInfo.consumeTime * Settings.TPS);
+         const useProgress = ticksSpentUsingMedicine / secondsToTicks(useInfo.consumeTime);
          return 1 - useProgress;
       }
       case CustomItemState.crafting: {

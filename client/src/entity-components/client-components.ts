@@ -169,8 +169,13 @@ export function getEntityClientComponentConfigs(entityType: EntityType): ClientS
       }
       case EntityType.snobe: {
          return {
-            [ClientComponentType.footprint]: createFootprintComponentParams(0.3, 20, 64, 5, 40, true),
+            [ClientComponentType.footprint]: createFootprintComponentParams(0.3, 20, 48, 5, 40, true),
             [ClientComponentType.randomSound]: createRandomSoundComponentParams()
+         };
+      }
+      case EntityType.snobe: {
+         return {
+            [ClientComponentType.footprint]: createFootprintComponentParams(0.3, 20, 64, 5, 40, false),
          };
       }
    }

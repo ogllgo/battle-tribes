@@ -73,9 +73,9 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
       
       const light = createLight(
          new Point(12 * mult, 2),
-         0.35,
-         0.2,
-         1,
+         0.55,
+         0.1,
+         2,
          33/255,
          225/255,
          255/255

@@ -467,6 +467,10 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       effectiveDamageTypes: [DamageType.pickaxe],
       stoppedDamageTypes: []
    },
+   [EntityType.tundraRockFrozen]: {
+      effectiveDamageTypes: [DamageType.pickaxe],
+      stoppedDamageTypes: []
+   },
    [EntityType.snowberryBush]: {
       effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []

@@ -96,6 +96,14 @@ const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
          playSoundOnHitbox("food-burp.mp3", 0.5, randFloat(0.9, 1.1), entity, hitbox, true);
          break;
       }
+      case EntityTickEventType.wraithPant: {
+         playSoundOnHitbox("wraith-pant-" + randInt(1, 4) + ".mp3", 0.5, randFloat(0.95, 1.05) * 1.3, entity, hitbox, true);
+         break;
+      }
+      case EntityTickEventType.wraithAngryLeap: {
+         playSoundOnHitbox("wraith-angry-leap.mp3", 0.5, randFloat(0.95, 1.05) * 1.3, entity, hitbox, true);
+         break;
+      }
    }
 }
 

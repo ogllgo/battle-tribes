@@ -438,7 +438,7 @@ TransformComponentArray.onRemove = onRemove;
 const collideWithVerticalWorldBorder = (transformComponent: TransformComponent, tx: number): void => {
    for (const rootHitbox of transformComponent.children) {
       if (entityChildIsHitbox(rootHitbox)) {
-         translateHitbox(rootHitbox, tx, 0);
+         translateHitbox(rootHitbox, transformComponent, new Point(tx, 0));
          setHitboxVelocityX(rootHitbox, 0);
       }
    }
@@ -449,7 +449,7 @@ const collideWithVerticalWorldBorder = (transformComponent: TransformComponent, 
 const collideWithHorizontalWorldBorder = (transformComponent: TransformComponent, ty: number): void => {
    for (const rootHitbox of transformComponent.children) {
       if (entityChildIsHitbox(rootHitbox)) {
-         translateHitbox(rootHitbox, 0, ty);
+         translateHitbox(rootHitbox, transformComponent, new Point(0, ty));
          setHitboxVelocityY(rootHitbox, 0);
       }
    }
@@ -480,7 +480,7 @@ export function resolveEntityBorderCollisions(transformComponent: TransformCompo
       if (entityChildIsHitbox(hitbox)) {
          if (hitbox.box.position.x < 0 || hitbox.box.position.x >= Settings.BOARD_UNITS || hitbox.box.position.y < 0 || hitbox.box.position.y >= Settings.BOARD_UNITS) {
             const entity = TransformComponentArray.getEntityFromComponent(transformComponent);
-            throw new Error("Unable to properly resolve border collisions for " + EntityTypeString[getEntityType(entity)] + ".");
+            // throw new Error("Unable to properly resolve border collisions for " + EntityTypeString[getEntityType(entity)] + ".");
          }
       }
    }

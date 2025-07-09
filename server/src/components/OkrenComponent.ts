@@ -8,7 +8,7 @@ import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity
 import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
-import { assert, clampToSubtileBoardDimensions, distance, getAbsAngleDiff, Point, positionIsInWorld, randAngle, randFloat, randInt } from "../../../shared/src/utils";
+import { assert, clampToSubtileBoardDimensions, distance, getAbsAngleDiff, Point, positionIsInWorld, randAngle, randFloat, randInt, secondsToTicks } from "../../../shared/src/utils";
 import { getDistanceFromPointToHitbox, willStopAtDesiredDistance } from "../ai-shared";
 import { getOkrenPreyTarget, getOkrenThreatTarget, runOkrenCombatAI } from "../ai/OkrenCombatAI";
 import { runSandBallingAI, updateSandBallingAI } from "../ai/SandBallingAI";
@@ -630,7 +630,7 @@ function onTakeDamage(okren: Entity, hitHitbox: Hitbox): void {
       const isLeftSide = hitHitbox.box.flipX;
       const i = isLeftSide ? OkrenSide.left : OkrenSide.right;
       const okrenComponent = OkrenComponentArray.getComponent(okren);
-      const hardenTimeTicks = Math.floor(0.62 * Settings.TPS);
+      const hardenTimeTicks = secondsToTicks(0.62);
       if (hardenTimeTicks > okrenComponent.eyeHardenTimers[i]) {
          okrenComponent.eyeHardenTimers[i] = hardenTimeTicks;
       }

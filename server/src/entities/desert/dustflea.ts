@@ -5,7 +5,7 @@ import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/col
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { Settings } from "../../../../shared/src/settings";
-import { angle, getAbsAngleDiff, Point } from "../../../../shared/src/utils";
+import { angle, getAbsAngleDiff, Point, polarVec2 } from "../../../../shared/src/utils";
 import { turnToPosition } from "../../ai-shared";
 import { DustfleaHibernateAI } from "../../ai/DustfleaHibernateAI";
 import { EscapeAI } from "../../ai/EscapeAI";
@@ -37,7 +37,7 @@ const moveFunc = (dustflea: Entity, pos: Point, acceleration: number): void => {
       const hitbox = transformComponent.children[0] as Hitbox;
       
       const direction = hitbox.box.position.calculateAngleBetween(pos);
-      applyAbsoluteKnockback(dustflea, hitbox, 125, direction);
+      applyAbsoluteKnockback(dustflea, hitbox, polarVec2(125, direction));
    }
 }
 

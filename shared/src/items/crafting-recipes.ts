@@ -536,6 +536,16 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
       craftingStation: CraftingStation.workbench
    },
+   {
+      product: ItemType.iceWringer,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.wraithTooth]: 10,
+         [ItemType.frostcicle]: 20
+      }),
+      aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
+      craftingStation: CraftingStation.frostshaper
+   },
 ];
 
 export function getItemRecipe(itemType: ItemType): CraftingRecipe | null {

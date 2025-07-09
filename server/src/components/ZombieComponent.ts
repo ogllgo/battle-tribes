@@ -178,8 +178,8 @@ const doBiteAttack = (zombie: Entity, target: Entity): void => {
    const targetHitbox = targetTransformComponent.children[0] as Hitbox;
    
    // Lunge at the target
-   const lungeDirection = zombieHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-   applyAbsoluteKnockback(zombie, zombieHitbox, 130, lungeDirection);
+   const lungeDir = zombieHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+   applyAbsoluteKnockback(zombie, zombieHitbox, polarVec2(130, lungeDir));
 
    // Reset attack cooldown
    const zombieComponent = ZombieComponentArray.getComponent(zombie);
@@ -366,7 +366,7 @@ function onHitboxCollision(zombie: Entity, collidingEntity: Entity, affectedHitb
 
    // Push the zombie away from the entity
    const flinchDirection = hitDirection + Math.PI;
-   applyAbsoluteKnockback(zombie, affectedHitbox, 100, flinchDirection);
+   applyAbsoluteKnockback(zombie, affectedHitbox, polarVec2(100, flinchDirection));
 }
 
 function preRemove(zombie: Entity): void {

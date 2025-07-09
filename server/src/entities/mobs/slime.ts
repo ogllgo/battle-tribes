@@ -2,7 +2,7 @@ import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collis
 import { SlimeSize, EntityType, Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { Point, randInt } from "battletribes-shared/utils";
+import { Point, randInt, secondsToTicks } from "battletribes-shared/utils";
 import { HealthComponent } from "../../components/HealthComponent";
 import { SlimeComponent, SlimeComponentArray } from "../../components/SlimeComponent";
 import Layer from "../../Layer";
@@ -21,7 +21,7 @@ import { CraftingStationComponent } from "../../components/CraftingStationCompon
 import { registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
 import { createHitbox } from "../../hitboxes";
-import { accelerateEntityToPosition, moveEntityToPosition, turnToPosition } from "../../ai-shared";
+import { accelerateEntityToPosition, turnToPosition } from "../../ai-shared";
 
 export interface SlimeEntityAnger {
    angerAmount: number;
@@ -35,7 +35,7 @@ export const SLIME_MAX_MERGE_WANT: ReadonlyArray<number> = [15 * Settings.TPS, 4
 export const SLIME_MERGE_TIME = 7.5;
 
 export const SPIT_COOLDOWN_TICKS = 4 * Settings.TPS;
-export const SPIT_CHARGE_TIME_TICKS = SPIT_COOLDOWN_TICKS + Math.floor(0.8 * Settings.TPS);
+export const SPIT_CHARGE_TIME_TICKS = SPIT_COOLDOWN_TICKS + secondsToTicks(0.8);
 
 const MAX_HEALTH: ReadonlyArray<number> = [10, 20, 35];
 export const SLIME_SPEED_MULTIPLIERS: ReadonlyArray<number> = [2.5, 1.75, 1];

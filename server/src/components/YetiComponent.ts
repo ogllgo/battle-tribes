@@ -212,14 +212,14 @@ const throwSnow = (yeti: Entity): void => {
    }
 
    // Kickback
-   applyAbsoluteKnockback(yeti, yetiHitbox, 110, throwAngle + Math.PI);
+   applyAbsoluteKnockback(yeti, yetiHitbox, polarVec2(110, throwAngle + Math.PI));
 }
 
 const entityIsTargetted = (yeti: Entity, entity: Entity, attackingEntitiesComponent: AttackingEntitiesComponent, yetiComponent: YetiComponent): boolean => {
    const entityType = getEntityType(entity);
    
    // Don't chase entities without health or natural tundra resources or snowballs
-   if (!HealthComponentArray.hasComponent(entity) || entityType === EntityType.iceSpikes || entityType === EntityType.spruceTree || entityType === EntityType.tundraRock || entityType === EntityType.snobe || entityType === EntityType.snowberryBush || entityType === EntityType.snowball) {
+   if (!HealthComponentArray.hasComponent(entity) || entityType === EntityType.iceSpikes || entityType === EntityType.spruceTree || entityType === EntityType.tundraRock || entityType === EntityType.tundraRockFrozen || entityType === EntityType.snobe || entityType === EntityType.snowberryBush || entityType === EntityType.wraith || entityType === EntityType.snowball) {
       return false;
    }
    
@@ -242,7 +242,7 @@ const entityIsTargetted = (yeti: Entity, entity: Entity, attackingEntitiesCompon
    }
 
    // @Hack: Don't attack structures place by frostlings. Ideally instead frostlings would just
-   //    tame the yetis which have territory on tile they are going to place structures on.
+   //        tame the yetis which have territory on tile they are going to place structures on.
    if (StructureComponentArray.hasComponent(entity)) {
       const tribeComponent = TribeComponentArray.getComponent(entity);
       if (tribeComponent.tribe.tribeType === TribeType.frostlings) {
@@ -449,7 +449,7 @@ function onHitboxCollision(yeti: Entity, collidingEntity: Entity, affectedHitbox
    const collidingEntityType = getEntityType(collidingEntity);
    
    // Don't damage native tundra plants
-   if (collidingEntityType === EntityType.iceSpikes || collidingEntityType === EntityType.spruceTree || collidingEntityType === EntityType.tundraRock) return;
+   if (collidingEntityType === EntityType.iceSpikes || collidingEntityType === EntityType.spruceTree || collidingEntityType === EntityType.tundraRock || collidingEntityType === EntityType.tundraRockFrozen) return;
 
    // Don't damage snowballs thrown by the yeti
    if (collidingEntityType === EntityType.snowball) {
