@@ -5,7 +5,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
-import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityParams, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { playBuildingHitSound, playSoundOnHitbox } from "../../sound";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
@@ -108,12 +108,12 @@ const createBannerRenderPart = (tribeType: TribeType, renderInfo: EntityRenderIn
    return renderPart;
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
 
    // Main render part
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          1,
@@ -128,7 +128,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    const renderParts = new Array<TexturedRenderPart>();
    
    for (const banner of Object.values(bannerComponentParams.banners)) {
-      const renderPart = createBannerRenderPart(tribeComponentParams.tribeType, entityIntermediateInfo.renderInfo, hitbox, banner);
+      const renderPart = createBannerRenderPart(tribeComponentParams.tribeType, renderInfo, hitbox, banner);
       renderParts.push(renderPart);
    }
 

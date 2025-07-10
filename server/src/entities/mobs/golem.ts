@@ -8,13 +8,14 @@ import { GolemComponent } from "../../components/GolemComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../../components";
+import { EntityConfig, LightCreationInfo } from "../../components";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
 import { createHitbox, Hitbox } from "../../hitboxes";
+import { createLight, Light } from "../../lights";
 
 export const enum GolemVars {
    PEBBLUM_SUMMON_COOLDOWN_TICKS = 10 * Settings.TPS
@@ -67,6 +68,8 @@ const getMinSeparationFromOtherHitboxes = (hitboxes: ReadonlyArray<Hitbox>, hitb
 }
 
 export function createGolemConfig(position: Point, rotation: number): EntityConfig {
+   const lights = new Array<LightCreationInfo>();
+   
    const transformComponent = new TransformComponent();
    
    // Create core hitbox
@@ -74,7 +77,23 @@ export function createGolemConfig(position: Point, rotation: number): EntityConf
    addHitboxToTransformComponent(transformComponent, coreHitbox);
 
    // Create head hitbox
-   addHitboxToTransformComponent(transformComponent, createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(0, 45), 0, 32), ROCK_LARGE_MASS, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []));
+   const headHitbox = createHitbox(transformComponent, coreHitbox, new CircularBox(new Point(0, 0), new Point(0, 45), 0, 32), ROCK_LARGE_MASS, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   addHitboxToTransformComponent(transformComponent, headHitbox);
+   
+   // Lights on the head hitboxes' eyes
+   for (let i = 0; i < 2; i++) {
+      // @HACK: i've copy pasted the offsets from the eye render parts in the client
+      const offsetX = 20 * (i === 0 ? -1 : 1);
+      const offsetY = 17;
+
+      // Create eye light
+      const light = createLight(new Point(offsetX, offsetY), 0, 0.5, 0.15, 0.75, 0, 0);
+      const lightCreationInfo: LightCreationInfo = {
+         light: light,
+         attachedHitbox: headHitbox
+      };
+      lights.push(lightCreationInfo);
+   }
    
    // Create body hitboxes
    let i = 0;
@@ -125,7 +144,7 @@ export function createGolemConfig(position: Point, rotation: number): EntityConf
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.burning | StatusEffect.poisoned);
    
    const golemComponent = new GolemComponent(transformComponent.children, GolemVars.PEBBLUM_SUMMON_COOLDOWN_TICKS);
-   
+
    return {
       entityType: EntityType.golem,
       components: {
@@ -135,6 +154,6 @@ export function createGolemConfig(position: Point, rotation: number): EntityConf
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.golem]: golemComponent
       },
-      lights: []
+      lights: lights
    };
 }

@@ -2,10 +2,11 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { randFloat } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 
 export interface MossComponentParams {
@@ -35,7 +36,7 @@ function createParamsFromData(reader: PacketReader): MossComponentParams {
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
    
@@ -69,7 +70,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    renderPart.tintR = randFloat(-0.04, 0.04);
    renderPart.tintG = randFloat(-0.04, 0.04);
    renderPart.tintB = randFloat(-0.04, 0.04);
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {};
 }

@@ -2,7 +2,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityParams, getEntityRenderInfo } from "../../world";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
@@ -11,6 +11,7 @@ import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle } from ".
 import { playSoundOnHitbox } from "../../sound";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface BerryBushComponentParams {
    readonly numBerries: number;
@@ -57,7 +58,7 @@ function createParamsFromData(reader: PacketReader): BerryBushComponentParams {
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
    
@@ -68,7 +69,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       getTextureArrayIndex(BERRY_BUSH_TEXTURE_SOURCES[entityParams.serverComponentParams[ServerComponentType.berryBush]!.numBerries])
    );
    renderPart.addTag("berryBushComponent:renderPart");
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart)
+   renderInfo.attachRenderPart(renderPart)
 
    return {
       renderPart: renderPart

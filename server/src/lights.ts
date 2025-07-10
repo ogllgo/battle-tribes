@@ -33,6 +33,10 @@ let lightIDCounter = 0;
 
 const entityHitboxLightsMap: Partial<Record<Entity, Map<Hitbox, Light>>> = {};
 
+export function getEntityHitboxLights(entity: Entity): Map<Hitbox, Light> | null {
+   return entityHitboxLightsMap[entity] || null;
+}
+
 export function createLight(offset: Point, intensity: number, strength: number, radius: number, r: number, g: number, b: number): Light {
    const lightID = lightIDCounter++;
 
@@ -251,4 +255,24 @@ export function addPlayerLightLevelsData(packet: Packet, playerClient: PlayerCli
          packet.addNumber(lightLevel);
       }
    }
+}
+
+// @Speed: useless function
+export function getLightDataLength(): number {
+   return 11 * Float32Array.BYTES_PER_ELEMENT;
+}
+
+export function addLightData(packet: Packet, entity: Entity, hitbox: Hitbox, light: Light): void {
+   packet.addNumber(entity);
+   packet.addNumber(hitbox.localID);
+   
+   // Light data
+   packet.addNumber(light.id);
+   packet.addPoint(light.offset);
+   packet.addNumber(light.intensity);
+   packet.addNumber(light.strength);
+   packet.addNumber(light.radius);
+   packet.addNumber(light.r);
+   packet.addNumber(light.g);
+   packet.addNumber(light.b);
 }

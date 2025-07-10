@@ -4,11 +4,12 @@ import { Colour, getTileIndexIncludingEdges, hueShift, lerp, multiColourLerp } f
 import { Settings } from "battletribes-shared/settings";
 import { PacketReader } from "battletribes-shared/packets";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo, getEntityType, surfaceLayer } from "../../world";
+import { EntityParams, getEntityRenderInfo, getEntityType, surfaceLayer } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { Hitbox } from "../../hitboxes";
 import { TileType } from "../../../../shared/src/tiles";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 const enum Vars {
    NATURAL_DRIFT = 20 / Settings.TPS
@@ -165,7 +166,7 @@ function createParamsFromData(reader: PacketReader): LayeredRodComponentParams {
    };
 }
 
-function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
 
@@ -189,7 +190,7 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
       renderPart.offset.x = naturalBendX * layer;
       renderPart.offset.y = naturalBendY * layer;
 
-      intermediateInfo.renderInfo.attachRenderPart(renderPart);
+      renderInfo.attachRenderPart(renderPart);
    }
 
    return {};

@@ -6,12 +6,13 @@ import { createDirtParticle, createRockParticle, createRockSpeckParticle } from 
 import { playSound, playSoundOnHitbox, ROCK_DESTROY_SOUNDS, ROCK_HIT_SOUNDS } from "../../sound";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { PacketReader } from "battletribes-shared/packets";
-import { EntityIntermediateInfo, EntityParams, getEntityAgeTicks, getEntityLayer } from "../../world";
+import { EntityParams, getEntityAgeTicks, getEntityLayer } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { TransformComponentArray } from "./TransformComponent";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface TombstoneComponentParams {
    readonly tombstoneType: number;
@@ -76,13 +77,13 @@ function createParamsFromData(reader: PacketReader): TombstoneComponentParams {
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
    
    const tombstoneComponentParams = entityParams.serverComponentParams[ServerComponentType.tombstone]!;
    
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,

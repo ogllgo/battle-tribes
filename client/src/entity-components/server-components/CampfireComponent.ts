@@ -8,8 +8,9 @@ import Board from "../../Board";
 import { createSmokeParticle, createEmberParticle } from "../../particles";
 import { CookingComponentArray } from "./CookingComponent";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface CampfireComponentParams {}
 
@@ -39,11 +40,11 @@ function createParamsFromData(): CampfireComponentParams {
    return fillParams();
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
    
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,

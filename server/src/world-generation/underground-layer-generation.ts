@@ -12,7 +12,7 @@ import { getEntityType, pushJoinBuffer } from "../world";
 import { generateSpikyBastards } from "./spiky-bastard-generation";
 import { getEntitiesInRange } from "../ai-shared";
 import { EntityType } from "../../../shared/src/entities";
-import { getLightLevelNode } from "../light-levels";
+import { getLightLevelNode } from "../lights";
 import { LightLevelVars } from "../../../shared/src/light-levels";
 import { generateMithrilOre } from "./mithril-ore-generation";
 import { createRawSpawnDistribution, registerNewSpawnInfo, SpawnDistribution } from "../entity-spawn-info";

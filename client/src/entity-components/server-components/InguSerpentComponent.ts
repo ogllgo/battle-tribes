@@ -1,10 +1,9 @@
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { ServerComponentType } from "../../../../shared/src/components";
-import { Point } from "../../../../shared/src/utils";
-import { createLight } from "../../lights";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { entityChildIsHitbox } from "./TransformComponent";
 
@@ -27,7 +26,7 @@ function createParamsFromData(): InguSerpentComponentParams {
    return {};
 }
 
-function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
 
    let headRenderPart!: TexturedRenderPart;
@@ -37,7 +36,7 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
       }
 
       if (hitbox.flags.includes(HitboxFlag.INGU_SERPENT_HEAD)) {
-         intermediateInfo.renderInfo.attachRenderPart(
+         renderInfo.attachRenderPart(
             new TexturedRenderPart(
                hitbox,
                0,
@@ -53,11 +52,11 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
             getTextureArrayIndex("entities/ingu-serpent/body-1.png")
          );
          renderPart.addTag("tamingComponent:head")
-         intermediateInfo.renderInfo.attachRenderPart(renderPart);
+         renderInfo.attachRenderPart(renderPart);
 
          headRenderPart = renderPart;
       } else if (hitbox.flags.includes(HitboxFlag.INGU_SERPENT_BODY_2)) {
-         intermediateInfo.renderInfo.attachRenderPart(
+         renderInfo.attachRenderPart(
             new TexturedRenderPart(
                hitbox,
                2,
@@ -66,7 +65,7 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
             )
          );
       } else if (hitbox.flags.includes(HitboxFlag.INGU_SERPENT_TAIL)) {
-         intermediateInfo.renderInfo.attachRenderPart(
+         renderInfo.attachRenderPart(
             new TexturedRenderPart(
                hitbox,
                3,

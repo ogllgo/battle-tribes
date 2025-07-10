@@ -22,7 +22,8 @@ import { addDevPacketData, getDevPacketDataLength } from "./dev-packet-creation"
 import { addGrassBlockerToData, getGrassBlockerLengthBytes, GrassBlocker } from "../grass-blockers";
 import { addTamingSpecToData, getTamingSpecDataLength, getTamingSpecsMap } from "../taming-specs";
 import { Point } from "../../../shared/src/utils";
-import { getHitboxVelocity, Hitbox } from "../hitboxes";
+import { Hitbox } from "../hitboxes";
+import { addLightData, getEntityHitboxLights, getLightDataLength } from "../lights";
 
 export function getInventoryDataLength(inventory: Inventory): number {
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
@@ -194,6 +195,19 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    // Removed entity IDs
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT * removedEntities.length;
 
+   // Lights
+   let numVisibleLights = 0;
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   for (const entity of playerClient.visibleEntities) {
+      const hitboxLights = getEntityHitboxLights(entity);
+      if (hitboxLights !== null) {
+         for (const _pair of hitboxLights) {
+            lengthBytes += getLightDataLength();
+            numVisibleLights++;
+         }
+      }
+   }
+
    // Visible hits
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + 8 * Float32Array.BYTES_PER_ELEMENT * playerClient.visibleHits.length;
    // Player knockback
@@ -294,6 +308,19 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    // for (const entity of playerClient.visibleEntityDeathIDs) {
    //    packet.addNumber(entity);
    // }
+
+   // Lights
+   packet.addNumber(numVisibleLights);
+   for (const entity of playerClient.visibleEntities) {
+      const hitboxLights = getEntityHitboxLights(entity);
+      if (hitboxLights !== null) {
+         for (const pair of hitboxLights) {
+            const hitbox = pair[0];
+            const light = pair[1];
+            addLightData(packet, entity, hitbox, light);
+         }
+      }
+   }
    
    // Add visible hits
    packet.addNumber(playerClient.visibleHits.length);

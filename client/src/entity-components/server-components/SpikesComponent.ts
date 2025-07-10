@@ -9,8 +9,9 @@ import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { Entity } from "../../../../shared/src/entities";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface SpikesComponentParams {
    readonly isCovered: boolean;
@@ -83,7 +84,7 @@ const createLeafRenderPart = (isSmall: boolean, parentHitbox: Hitbox): VisualRen
    return renderPart;
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
    
@@ -92,14 +93,14 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       const renderPart = createLeafRenderPart(true, hitbox);
       // @TEMPORARY
       renderPart.opacity = 0;
-      entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+      renderInfo.attachRenderPart(renderPart);
       leafRenderParts.push(renderPart);
    }
    for (let i = 0; i < NUM_LARGE_COVER_LEAVES; i++) {
       const renderPart = createLeafRenderPart(false, hitbox);
       // @TEMPORARY
       renderPart.opacity = 0;
-      entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+      renderInfo.attachRenderPart(renderPart);
       leafRenderParts.push(renderPart);
    }
 

@@ -8,12 +8,13 @@ import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { playSoundOnHitbox } from "../../sound";
 import { getHitboxTile, TransformComponentArray } from "./TransformComponent";
-import { EntityIntermediateInfo, EntityParams, getEntityLayer, getEntityRenderInfo } from "../../world";
+import { EntityParams, getEntityLayer, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { PhysicsComponentArray, resetIgnoredTileSpeedMultipliers } from "./PhysicsComponent";
 import { TileType } from "../../../../shared/src/tiles";
 import { createSlimePoolParticle, createSlimeSpeckParticle } from "../../particles";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface SlimeComponentParams {
    readonly size: SlimeSize;
@@ -95,7 +96,7 @@ function createParamsFromData(reader: PacketReader): SlimeComponentParams {
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
 
@@ -109,10 +110,10 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0,
       getTextureArrayIndex(`entities/slime/slime-${sizeString}-body.png`)
    );
-   entityIntermediateInfo.renderInfo.attachRenderPart(bodyRenderPart);
+   renderInfo.attachRenderPart(bodyRenderPart);
 
    // Shading
-   entityIntermediateInfo.renderInfo.attachRenderPart(new TexturedRenderPart(
+   renderInfo.attachRenderPart(new TexturedRenderPart(
       hitbox,
       0,
       0,
@@ -127,7 +128,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       getTextureArrayIndex(`entities/slime/slime-${sizeString}-eye.png`)
    );
    eyeRenderPart.inheritParentRotation = false;
-   entityIntermediateInfo.renderInfo.attachRenderPart(eyeRenderPart);
+   renderInfo.attachRenderPart(eyeRenderPart);
 
    return {
       bodyRenderPart: bodyRenderPart,

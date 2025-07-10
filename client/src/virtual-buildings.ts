@@ -193,7 +193,7 @@ const readVirtualBuildingFromData = (reader: PacketReader, virtualBuildingID: nu
    // Create the entity
    const creationInfo = createEntity(0, entityParams);
 
-   const renderInfo = creationInfo.entityIntermediateInfo.renderInfo;
+   const renderInfo = creationInfo.renderInfo;
 
    // Modify all the render part's opacity
    for (let i = 0; i < renderInfo.renderPartsByZIndex.length; i++) {

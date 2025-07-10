@@ -10,8 +10,9 @@ import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle, LEAF_SPE
 import { playSoundOnHitbox } from "../../sound";
 import { TREE_HIT_SOUNDS, TREE_DESTROY_SOUNDS } from "./TreeComponent";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface TreePlantedComponentParams {
    readonly growthProgress: number;
@@ -51,7 +52,7 @@ function createParamsFromData(reader: PacketReader): TreePlantedComponentParams 
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponent.children[0] as Hitbox;
 
@@ -63,7 +64,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0,
       getTextureArrayIndex(getTextureSource(growthProgress))
    );
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {
       renderPart: renderPart

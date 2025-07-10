@@ -7,7 +7,6 @@ import { ComponentArray, getClientComponentArray, getComponentArrays, getServerC
 import { ServerComponentParams } from "./entity-components/components";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import Layer from "./Layer";
-import { attachLightToRenderPart, LightIntermediateInfo, removeAllAttachedLights } from "./lights";
 import { registerDirtyRenderInfo, undirtyRenderInfo } from "./rendering/render-part-matrices";
 import { calculateRenderDepthFromLayer, getEntityRenderLayer } from "./render-layers";
 import { ClientComponentType } from "./entity-components/client-component-types";
@@ -97,17 +96,12 @@ export interface EntityParams {
    }>;
 }
 
-export interface EntityIntermediateInfo {
-   readonly renderInfo: EntityRenderInfo;
-   readonly lights: Array<LightIntermediateInfo>;
-}
-
 // @Location
 /** Entity creation info, populated with all the data which comprises a full entity. */
 export interface EntityCreationInfo {
    readonly entityParams: EntityParams;
    componentIntermediateInfoRecord: Partial<Record<number, object>>;
-   readonly entityIntermediateInfo: EntityIntermediateInfo;
+   readonly renderInfo: EntityRenderInfo;
 }
 
 const getEntityServerComponentTypes = (entityParams: EntityParams): ReadonlyArray<ServerComponentType> => {
@@ -158,19 +152,16 @@ export function createEntity(entity: Entity, entityParams: EntityParams): Entity
    const maxNumRenderParts = getMaxNumRenderParts(entityParams);
    const renderLayer = getEntityRenderLayer(entityParams.entityType, entityParams);
    const renderHeight = calculateRenderDepthFromLayer(renderLayer, entityParams);
+
    const renderInfo = new EntityRenderInfo(entity, renderLayer, renderHeight, maxNumRenderParts);
 
    const componentArrays = getEntityComponentArrays(entityParams);
    
-   // Populate intermediate info
-   const entityIntermediateInfo: EntityIntermediateInfo = {
-      renderInfo: renderInfo,
-      lights: []
-   };
+   // Populate render info
    const componentIntermediateInfoRecord: Partial<Record<number, object>> = {};
    for (const componentArray of componentArrays) {
       if (typeof componentArray.populateIntermediateInfo !== "undefined") {
-         const componentIntermediateInfo = componentArray.populateIntermediateInfo(entityIntermediateInfo, entityParams);
+         const componentIntermediateInfo = componentArray.populateIntermediateInfo(renderInfo, entityParams);
          componentIntermediateInfoRecord[componentArray.id] = componentIntermediateInfo;
       }
    }
@@ -180,7 +171,7 @@ export function createEntity(entity: Entity, entityParams: EntityParams): Entity
    return {
       entityParams: entityParams,
       componentIntermediateInfoRecord: componentIntermediateInfoRecord,
-      entityIntermediateInfo: entityIntermediateInfo
+      renderInfo: renderInfo
    };
 }
 
@@ -189,12 +180,12 @@ export function addEntityToWorld(entity: Entity, spawnTicks: number, layer: Laye
 
    for (const componentArray of componentArrays) {
       const componentIntermediateInfo = creationInfo.componentIntermediateInfoRecord[componentArray.id]!;
-      const component = componentArray.createComponent(creationInfo.entityParams, componentIntermediateInfo, creationInfo.entityIntermediateInfo);
+      const component = componentArray.createComponent(creationInfo.entityParams, componentIntermediateInfo, creationInfo.renderInfo);
       
       componentArray.addComponent(entity, component);
    }
 
-   registerBasicEntityInfo(entity, creationInfo.entityParams.entityType, spawnTicks, layer, creationInfo.entityIntermediateInfo.renderInfo);
+   registerBasicEntityInfo(entity, creationInfo.entityParams.entityType, spawnTicks, layer, creationInfo.renderInfo);
       
    // @Incomplete: is this really the right place to do this? is onLoad even what i want?
    // Call onLoad functions
@@ -208,7 +199,7 @@ export function addEntityToWorld(entity: Entity, spawnTicks: number, layer: Laye
       }
    }
 
-   const renderInfo = creationInfo.entityIntermediateInfo.renderInfo;
+   const renderInfo = creationInfo.renderInfo;
    layer.addEntityToRendering(entity, renderInfo.renderLayer, renderInfo.renderHeight);
    
    // If the entity has first spawned in, call any spawn functions
@@ -221,11 +212,6 @@ export function addEntityToWorld(entity: Entity, spawnTicks: number, layer: Laye
             componentArray.onSpawn(entity);
          }
       }
-   }
-
-   // Create lights
-   for (const lightIntermediateInfo of creationInfo.entityIntermediateInfo.lights) {
-      attachLightToRenderPart(lightIntermediateInfo.light, lightIntermediateInfo.attachedRenderPart, entity);
    }
 }
 
@@ -249,7 +235,10 @@ export function removeEntity(entity: Entity, isDeath: boolean): void {
    
    removeEntitySounds(entity);
    
-   removeAllAttachedLights(renderInfo);
+   // @Incomplete: commenting this out because removed entities should have their lights automatically
+   // removed by the light data update immediately after the entity data update, but i'm wondering if there
+   // are any cases where entities are removed not in the entity data update?? or could be in the future? cuz this is exported everywhence
+   // removeAllAttachedLights(renderInfo);
    undirtyRenderInfo(renderInfo);
 
    const componentArrays = getComponentArrays();

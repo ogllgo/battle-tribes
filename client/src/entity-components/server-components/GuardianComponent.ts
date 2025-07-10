@@ -2,15 +2,16 @@ import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { GuardianAttackType, GuardianCrystalBurstStage, GuardianCrystalSlamStage, GuardianSpikyBallSummonStage, ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
-import { lerp, Point } from "../../../../shared/src/utils";
+import { lerp } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
-import { Light, createLight } from "../../lights";
+import { Light } from "../../lights";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityParams, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
 
@@ -104,7 +105,7 @@ function createParamsFromData(reader: PacketReader): GuardianComponentParams {
    };
 }
 
-function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponent.children[0] as Hitbox;
    
@@ -124,7 +125,7 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
       0,
       getTextureArrayIndex("entities/guardian/guardian-body.png")
    );
-   intermediateInfo.renderInfo.attachRenderPart(bodyRenderPart);
+   renderInfo.attachRenderPart(bodyRenderPart);
 
    const bodyAmethystsRenderPart = new TexturedRenderPart(
       bodyRenderPart,
@@ -132,7 +133,7 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
       0,
       getTextureArrayIndex("entities/guardian/guardian-body-amethysts.png")
    );
-   intermediateInfo.renderInfo.attachRenderPart(bodyAmethystsRenderPart);
+   renderInfo.attachRenderPart(bodyAmethystsRenderPart);
    amethystRenderParts.push(bodyAmethystsRenderPart);
 
    const bodyEmeraldsRenderPart = new TexturedRenderPart(
@@ -141,7 +142,7 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
       0,
       getTextureArrayIndex("entities/guardian/guardian-body-emeralds.png")
    );
-   intermediateInfo.renderInfo.attachRenderPart(bodyEmeraldsRenderPart);
+   renderInfo.attachRenderPart(bodyEmeraldsRenderPart);
    emeraldRenderParts.push(bodyEmeraldsRenderPart);
 
    // Head
@@ -153,7 +154,7 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
       getTextureArrayIndex("entities/guardian/guardian-head.png")
    );
    headRenderPart.offset.y = 28;
-   intermediateInfo.renderInfo.attachRenderPart(headRenderPart);
+   renderInfo.attachRenderPart(headRenderPart);
    
    const headRubies = new TexturedRenderPart(
       headRenderPart,
@@ -161,225 +162,8 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
       0,
       getTextureArrayIndex("entities/guardian/guardian-head-rubies.png")
    );
-   intermediateInfo.renderInfo.attachRenderPart(headRubies);
+   renderInfo.attachRenderPart(headRubies);
    rubyRenderParts.push(headRubies);
-
-   // Red lights
-
-   let light = createLight(
-      new Point(0, 4.5 * 4),
-      0.5,
-      0.3,
-      6,
-      1,
-      0,
-      0.1
-   );
-   rubyLights.push([light.intensity, light]);
-   intermediateInfo.lights.push({
-      light: light,
-      attachedRenderPart: headRenderPart
-   });
-
-   for (let i = 0; i < 2; i++) {
-      const light = createLight(
-         new Point(4.25 * 4 * (i === 0 ? 1 : -1), 3.25 * 4),
-         0.4,
-         0.2,
-         4,
-         1,
-         0,
-         0.1
-      );
-      rubyLights.push([light.intensity, light]);
-      intermediateInfo.lights.push({
-         light: light,
-         attachedRenderPart: headRenderPart
-      });
-   }
-
-   // Green lights
-
-   light = createLight(
-      new Point(0, -3 * 4),
-      0.5,
-      0.3,
-      6,
-      0,
-      1,
-      0
-   );
-   emeraldLights.push([light.intensity, light]);
-   intermediateInfo.lights.push({
-      light: light,
-      attachedRenderPart: bodyRenderPart
-   });
-
-   // Amethyst lights
-   // @Hack @Robustness: Make pixels able to glow!
-
-   // @Temporary
-   // light = {
-   //    offset: new Point(0, 4 * 4),
-   //    intensity: 0.35,
-   //    strength: 0.2,
-   //    radius: 4,
-   //    r: 0.6,
-   //    g: 0,
-   //    b: 1
-   // };
-   // lightID = addLight(light);
-   // attachLightToRenderPart(lightID, bodyRenderPart.id);
-
-   light = createLight(
-      new Point(5 * 4, 6.5 * 4),
-      0.35,
-      0.2,
-      4,
-      0.6,
-      0,
-      1
-   );
-   amethystLights.push([light.intensity, light]);
-   intermediateInfo.lights.push({
-      light: light,
-      attachedRenderPart: bodyRenderPart
-   });
-
-   light = createLight(
-      new Point(6.5 * 4, 3 * 4),
-      0.35,
-      0.2,
-      4,
-      0.6,
-      0,
-      1
-   );
-   amethystLights.push([light.intensity, light]);
-   intermediateInfo.lights.push({
-      light: light,
-      attachedRenderPart: bodyRenderPart
-   });
-
-   light = createLight(
-      new Point(10 * 4, 0),
-      0.35,
-      0.2,
-      4,
-      0.6,
-      0,
-      1
-   );
-   amethystLights.push([light.intensity, light]);
-   intermediateInfo.lights.push({
-      light: light,
-      attachedRenderPart: bodyRenderPart
-   });
-
-   light = createLight(
-      new Point(7 * 4, -5 * 4),
-      0.35,
-      0.2,
-      4,
-      0.6,
-      0,
-      1
-   );
-   amethystLights.push([light.intensity, light]);
-   intermediateInfo.lights.push({
-      light: light,
-      attachedRenderPart: bodyRenderPart
-   });
-
-   light = createLight(
-      new Point(3.5 * 4, -8 * 4),
-      0.35,
-      0.2,
-      4,
-      0.6,
-      0,
-      1
-   );
-   amethystLights.push([light.intensity, light]);
-   intermediateInfo.lights.push({
-      light: light,
-      attachedRenderPart: bodyRenderPart
-   });
-
-   light = createLight(
-      new Point(-2 * 4, -9 * 4),
-      0.35,
-      0.2,
-      4,
-      0.6,
-      0,
-      1
-   );
-   amethystLights.push([light.intensity, light]);
-   intermediateInfo.lights.push({
-      light: light,
-      attachedRenderPart: bodyRenderPart
-   });
-
-   light = createLight(
-      new Point(-5 * 4, -5 * 4),
-      0.35,
-      0.2,
-      4,
-      0.6,
-      0,
-      1
-   );
-   amethystLights.push([light.intensity, light]);
-   intermediateInfo.lights.push({
-      light: light,
-      attachedRenderPart: bodyRenderPart
-   });
-
-   light = createLight(
-      new Point(-8 * 4, -3 * 4),
-      0.35,
-      0.2,
-      4,
-      0.6,
-      0,
-      1
-   );
-   amethystLights.push([light.intensity, light]);
-   intermediateInfo.lights.push({
-      light: light,
-      attachedRenderPart: bodyRenderPart
-   });
-
-   light = createLight(
-      new Point(-7 * 4, 2.5 * 4),
-      0.35,
-      0.2,
-      4,
-      0.6,
-      0,
-      1
-   );
-   amethystLights.push([light.intensity, light]);
-   intermediateInfo.lights.push({
-      light: light,
-      attachedRenderPart: bodyRenderPart
-   });
-
-   light = createLight(
-      new Point(-8 * 4, 6 * 4),
-      0.35,
-      0.2,
-      4,
-      0.6,
-      0,
-      1
-   );
-   amethystLights.push([light.intensity, light]);
-   intermediateInfo.lights.push({
-      light: light,
-      attachedRenderPart: bodyRenderPart
-   });
 
    const limbRenderParts = new Array<VisualRenderPart>();
    const limbCrackRenderParts = new Array<VisualRenderPart>();
@@ -400,7 +184,7 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
             0,
             getTextureArrayIndex("entities/guardian/guardian-limb.png")
          );
-         intermediateInfo.renderInfo.attachRenderPart(limbRenderPart);
+         renderInfo.attachRenderPart(limbRenderPart);
          limbRenderParts.push(limbRenderPart);
 
          const cracksRenderPart = new TexturedRenderPart(
@@ -409,23 +193,24 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
             0,
             getTextureArrayIndex("entities/guardian/guardian-limb-gem-cracks.png")
          );
-         intermediateInfo.renderInfo.attachRenderPart(cracksRenderPart);
+         renderInfo.attachRenderPart(cracksRenderPart);
          limbCrackRenderParts.push(cracksRenderPart);
 
-         const light = createLight(
-            new Point(0, 0),
-            0.5,
-            0.3,
-            12,
-            0,
-            0,
-            0
-         );
-         limbCrackLights.push(light);
-         intermediateInfo.lights.push({
-            light: light,
-            attachedRenderPart: cracksRenderPart
-         });
+         // @INCOMPLETE
+         // const light = createLight(
+         //    new Point(0, 0),
+         //    0.5,
+         //    0.3,
+         //    12,
+         //    0,
+         //    0,
+         //    0
+         // );
+         // limbCrackLights.push(light);
+         // intermediateInfo.lights.push({
+         //    light: light,
+         //    attachedRenderPart: cracksRenderPart
+         // });
       }
    }
 

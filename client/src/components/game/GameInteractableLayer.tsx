@@ -1579,7 +1579,7 @@ const tickItem = (itemType: ItemType): void => {
          assert(entityParams.serverComponentParams[ServerComponentType.transform]!.children.length > 0);
          const creationInfo = createEntity(0, entityParams);
 
-         const renderInfo = creationInfo.entityIntermediateInfo.renderInfo;
+         const renderInfo = creationInfo.renderInfo;
 
          // @Hack: Could potentially get overridden in the future
          renderInfo.tintR = placeInfo.isValid ? 0 : 0.5;

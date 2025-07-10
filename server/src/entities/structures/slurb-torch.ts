@@ -10,7 +10,7 @@ import { TribeComponent } from "../../components/TribeComponent";
 import Tribe from "../../Tribe";
 import { SlurbTorchComponent } from "../../components/SlurbTorchComponent";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
-import { createLight } from "../../light-levels";
+import { createLight } from "../../lights";
 import { Point } from "../../../../shared/src/utils";
 import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";

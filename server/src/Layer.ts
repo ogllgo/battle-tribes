@@ -13,7 +13,7 @@ import { MinedSubtileInfo } from "./collapses";
 import { getPathfindingNode, PathfindingServerVars } from "./pathfinding-utils";
 import { LocalBiome } from "./world-generation/terrain-generation-utils";
 import { LightLevelNode } from "../../shared/src/light-levels";
-import { LightID } from "./light-levels";
+import { LightID } from "./lights";
 
 interface WallSubtileUpdate {
    readonly subtileIndex: number;

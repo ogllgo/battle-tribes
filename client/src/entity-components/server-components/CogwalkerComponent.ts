@@ -5,8 +5,9 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { LimbConfiguration } from "../../../../shared/src/attack-patterns";
 import { updateLimb_TEMP } from "./InventoryUseComponent";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface CogwalkerComponentParams {}
 
@@ -27,11 +28,11 @@ function createParamsFromData(): CogwalkerComponentParams {
    return {};
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
    
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          // @Copynpaste @Hack
@@ -53,7 +54,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
          attachPoint.setFlipX(true);
       }
       attachPoint.addTag("inventoryUseComponent:attachPoint");
-      entityIntermediateInfo.renderInfo.attachRenderPart(attachPoint);
+      renderInfo.attachRenderPart(attachPoint);
       
       const handRenderPart = new TexturedRenderPart(
          attachPoint,
@@ -62,7 +63,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
          getTextureArrayIndex("entities/cogwalker/hand.png")
       );
       handRenderPart.addTag("inventoryUseComponent:hand");
-      entityIntermediateInfo.renderInfo.attachRenderPart(handRenderPart);
+      renderInfo.attachRenderPart(handRenderPart);
 
       // @Temporary: so that the hand shows correctly when the player is placing a cogwalker
       updateLimb_TEMP(handRenderPart, attachPoint, 28, LimbConfiguration.twoHanded);

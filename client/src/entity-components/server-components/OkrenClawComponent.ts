@@ -2,9 +2,10 @@ import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { OkrenAgeStage } from "./OkrenComponent";
 import { entityChildIsHitbox } from "./TransformComponent";
@@ -77,7 +78,7 @@ const getSlashingArmSegmentTextureSource = (sizeString: string, growthStageStrin
    return "entities/okren/" + sizeString + "/arm-segment-of-slashing-and-destruction-" + growthStageString + ".png";
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const okrenClawComponentParams = entityParams.serverComponentParams[ServerComponentType.okrenClaw]!;
 
    const sizeString = getSizeString(okrenClawComponentParams.size);
@@ -100,7 +101,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
             0,
             getTextureArrayIndex(getBigArmSegmentTextureSource(sizeString, growthStageString))
          );
-         entityIntermediateInfo.renderInfo.attachRenderPart(bigArmSegment);
+         renderInfo.attachRenderPart(bigArmSegment);
       } else if (hitbox.flags.includes(HitboxFlag.OKREN_MEDIUM_ARM_SEGMENT)) {
          mediumArmSegment = new TexturedRenderPart(
             hitbox,
@@ -108,7 +109,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
             0,
             getTextureArrayIndex(getMediumArmSegmentTextureSource(sizeString, growthStageString))
          )
-         entityIntermediateInfo.renderInfo.attachRenderPart(mediumArmSegment);
+         renderInfo.attachRenderPart(mediumArmSegment);
       } else if (hitbox.flags.includes(HitboxFlag.OKREN_ARM_SEGMENT_OF_SLASHING_AND_DESTRUCTION)) {
          slashingArmSegment = new TexturedRenderPart(
             hitbox,
@@ -116,7 +117,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
             0,
             getTextureArrayIndex(getSlashingArmSegmentTextureSource(sizeString, growthStageString))
          )
-         entityIntermediateInfo.renderInfo.attachRenderPart(slashingArmSegment);
+         renderInfo.attachRenderPart(slashingArmSegment);
       }
    }
 

@@ -3,7 +3,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { PacketReader } from "../../../../shared/src/packets";
 import { TransformComponentArray } from "./TransformComponent";
@@ -12,6 +12,7 @@ import { Settings } from "../../../../shared/src/settings";
 import { randAngle, randFloat } from "../../../../shared/src/utils";
 import { createCocoonAmbientParticle, createCocoonFragmentParticle } from "../../particles";
 import { playSoundOnHitbox } from "../../sound";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface KrumblidMorphCocoonComponentParams {
    readonly stage: number;
@@ -42,7 +43,7 @@ const getTextureSource = (stage: number): string => {
    return "entities/krumblid-morph-cocoon/stage-" + stage + ".png";
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
 
@@ -54,7 +55,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0,
       getTextureArrayIndex(getTextureSource(krumblidMorphCocoonComponentParams.stage))
    );
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {
       renderPart: renderPart

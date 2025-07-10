@@ -338,21 +338,6 @@ export interface ItemInfoRecord {
    tamingAlmanac: TamingAlmanacItemInfo;
 }
 
-interface TorchItemTrait {
-   readonly lightIntensity: number;
-   readonly lightStrength: number;
-   readonly lightRadius: number;
-   readonly lightR: number;
-   readonly lightG: number;
-   readonly lightB: number;
-}
-
-interface ItemTraitRecord {
-   torch: TorchItemTrait;
-}
-
-type ItemTraits = Partial<{ [T in keyof ItemTraitRecord]: ItemTraitRecord[T] }>;
-
 export interface AttackInfo {
    readonly attackPatterns: Record<LimbConfiguration, AttackPatternInfo> | null;
    readonly attackTimings: AttackTimingsInfo;

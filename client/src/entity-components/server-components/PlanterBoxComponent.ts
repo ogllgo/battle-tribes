@@ -2,13 +2,14 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType, PlantedEntityType } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { randInt, customTickIntervalHasPassed } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
 import { createGrowthParticle } from "../../particles";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { getEntityRenderInfo, getEntityAgeTicks, EntityIntermediateInfo, EntityParams } from "../../world";
+import { getEntityRenderInfo, getEntityAgeTicks, EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponent, TransformComponentArray, getRandomPositionInEntity } from "./TransformComponent";
 
@@ -67,11 +68,11 @@ function createParamsFromData(reader: PacketReader): PlanterBoxComponentParams {
    return fillParams(plantedEntityType, isFertilised);
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
    
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,
@@ -85,7 +86,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    let renderPart: TexturedRenderPart | null;
    if (planterBoxComponentParams.plantedEntityType !== -1) {
       renderPart = createMoundRenderPart(planterBoxComponentParams.plantedEntityType, hitbox);
-      entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+      renderInfo.attachRenderPart(renderPart);
    } else {
       renderPart = null;
    }

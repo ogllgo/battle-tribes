@@ -2,15 +2,16 @@ import { HealingTotemTargetData, ServerComponentType } from "battletribes-shared
 import { Settings } from "battletribes-shared/settings";
 import { Point, angle, distance, lerp, randInt } from "battletribes-shared/utils";
 import { createHealingParticle } from "../../particles";
-import { Light, attachLightToRenderPart, createLight, removeLight } from "../../lights";
+import { Light, removeLight } from "../../lights";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface HealingTotemComponentParams {
    readonly healingTargetsData: ReadonlyArray<HealingTotemTargetData>;
@@ -69,11 +70,11 @@ function createParamsFromData(reader: PacketReader): HealingTotemComponentParams
    return fillParams(healTargets);
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
    
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,
@@ -108,21 +109,23 @@ function onTick(entity: Entity): void {
             const offsetX = -12 * (i === 0 ? 1 : -1);
             const offsetY = 8;
 
-            const light = createLight(
-               new Point(offsetX, offsetY),
-               0,
-               0.6,
-               0.1,
-               0.15,
-               1,
-               0
-            );
+            // @INCOMPLETE
+            
+            // const light = createLight(
+            //    new Point(offsetX, offsetY),
+            //    0,
+            //    0.6,
+            //    0.1,
+            //    0.15,
+            //    1,
+            //    0
+            // );
 
-            // @Hack
-            const renderInfo = getEntityRenderInfo(entity);
-            attachLightToRenderPart(light, renderInfo.renderPartsByZIndex[0], entity);
+            // // @Hack
+            // const renderInfo = getEntityRenderInfo(entity);
+            // attachLightToRenderPart(light, renderInfo.renderPartsByZIndex[0], entity);
 
-            healingTotemComponent.eyeLights.push(light);
+            // healingTotemComponent.eyeLights.push(light);
          }
       }
       

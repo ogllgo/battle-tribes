@@ -5,7 +5,7 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
 import { Settings } from "../../../../shared/src/settings";
-import { angle, lerp, Point, polarVec2, randInt } from "../../../../shared/src/utils";
+import { lerp, Point, polarVec2 } from "../../../../shared/src/utils";
 import WanderAI from "../../ai/WanderAI";
 import { EntityConfig, LightCreationInfo } from "../../components";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
@@ -18,7 +18,7 @@ import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { addHitboxToTransformComponent, entityChildIsEntity, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { applyAccelerationFromGround, createHitbox, Hitbox, turnHitboxToAngle } from "../../hitboxes";
 import Layer from "../../Layer";
-import { createLight } from "../../light-levels";
+import { createLight } from "../../lights";
 import { getEntityAgeTicks } from "../../world";
 
 const enum Vars {

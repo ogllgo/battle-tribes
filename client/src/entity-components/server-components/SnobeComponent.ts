@@ -2,7 +2,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityParams, getEntityRenderInfo } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
@@ -14,6 +14,7 @@ import { HealthComponentArray } from "./HealthComponent";
 import { RandomSoundComponentArray, updateRandomSoundComponentSounds } from "../client-components/RandomSoundComponent";
 import { Settings } from "../../../../shared/src/settings";
 import { PacketReader } from "../../../../shared/src/packets";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 const AMBIENT_SOUNDS: ReadonlyArray<string> = ["snobe-ambient-1.mp3", "snobe-ambient-2.mp3", "snobe-ambient-3.mp3", "snobe-ambient-4.mp3"];
 
@@ -53,7 +54,7 @@ function createParamsFromData(reader: PacketReader): SnobeComponentParams {
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    for (const hitbox of transformComponentParams.children) {
       if (!entityChildIsHitbox(hitbox)) {
@@ -68,9 +69,9 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
             getTextureArrayIndex("entities/snobe/body.png")
          );
          renderPart.addTag("tamingComponent:head")
-         entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+         renderInfo.attachRenderPart(renderPart);
       } else if (hitbox.flags.includes(HitboxFlag.SNOBE_BUTT)) {
-         entityIntermediateInfo.renderInfo.attachRenderPart(
+         renderInfo.attachRenderPart(
             new TexturedRenderPart(
                hitbox,
                1,
@@ -79,7 +80,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
             )
          );
       } else if (hitbox.flags.includes(HitboxFlag.SNOBE_EAR)) {
-         entityIntermediateInfo.renderInfo.attachRenderPart(
+         renderInfo.attachRenderPart(
             new TexturedRenderPart(
                hitbox,
                3,

@@ -9,8 +9,9 @@ import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { createSlurbParticle } from "../../particles";
 import { Settings } from "../../../../shared/src/settings";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 const enum Vars {
    MIN_PARTICLE_CREATION_INTERVAL_SECONDS = 0.45,
@@ -19,13 +20,10 @@ const enum Vars {
 
 export interface SlurbTorchComponentParams {}
 
-interface IntermediateInfo {
-   readonly light: Light;
-}
+interface IntermediateInfo {}
 
 export interface SlurbTorchComponent {
    particleCreationTimer: number;
-   readonly light: Light;
 }
 
 export const SlurbTorchComponentArray = new ServerComponentArray<SlurbTorchComponent, SlurbTorchComponentParams, IntermediateInfo>(ServerComponentType.slurbTorch, true, {
@@ -50,7 +48,7 @@ function createParamsFromData(): SlurbTorchComponentParams {
    return fillParams();
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
    
@@ -60,23 +58,14 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0,
       getTextureArrayIndex("entities/slurb-torch/slurb-torch.png")
    );
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
-   const light = createLight(new Point(0, 0), 0.8, 2, 10, 1, 0.4, 1);
-   entityIntermediateInfo.lights.push({
-      light: light,
-      attachedRenderPart: renderPart
-   });
-
-   return {
-      light: light
-   };
+   return {};
 }
 
-function createComponent(_entityParams: EntityParams, intermediateInfo: IntermediateInfo): SlurbTorchComponent {
+function createComponent(): SlurbTorchComponent {
    return {
-      particleCreationTimer: randFloat(Vars.MIN_PARTICLE_CREATION_INTERVAL_SECONDS, Vars.MAX_PARTICLE_CREATION_INTERVAL_SECONDS),
-      light: intermediateInfo.light
+      particleCreationTimer: randFloat(Vars.MIN_PARTICLE_CREATION_INTERVAL_SECONDS, Vars.MAX_PARTICLE_CREATION_INTERVAL_SECONDS)
    };
 }
 

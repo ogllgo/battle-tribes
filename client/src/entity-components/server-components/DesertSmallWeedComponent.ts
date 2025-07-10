@@ -1,11 +1,12 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { randFloat } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
@@ -30,7 +31,7 @@ function createParamsFromData(): DesertSmallWeedComponentParams {
    return {};
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
    
@@ -43,7 +44,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    renderPart.tintR = randFloat(-0.03, 0.03);
    renderPart.tintG = randFloat(-0.03, 0.03);
    renderPart.tintB = randFloat(-0.03, 0.03);
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart)
+   renderInfo.attachRenderPart(renderPart)
 
    return {
       renderPart: renderPart

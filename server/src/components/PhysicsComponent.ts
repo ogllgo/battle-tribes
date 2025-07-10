@@ -9,7 +9,7 @@ import { cleanTransform, resolveEntityBorderCollisions, entityChildIsEntity, ent
 import { Packet } from "battletribes-shared/packets";
 import { getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
-import { updateEntityLights } from "../light-levels";
+import { updateEntityLights } from "../lights";
 import { addHitboxAngularAcceleration, applyAcceleration, getHitboxAngularVelocity, getHitboxConnectedMass, getHitboxTile, getTotalMass, Hitbox, hitboxIsInRiver } from "../hitboxes";
 import { getAngleDiff, Point, polarVec2 } from "../../../shared/src/utils";
 

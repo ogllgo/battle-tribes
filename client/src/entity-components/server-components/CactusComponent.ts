@@ -8,8 +8,9 @@ import { entityChildIsHitbox, getHitboxByLocalID, TransformComponentArray } from
 import ServerComponentArray from "../ServerComponentArray";
 import { assert, randAngle, randInt } from "../../../../shared/src/utils";
 import { playSoundOnHitbox } from "../../sound";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface CactusFlower {
    readonly parentHitboxLocalID: number;
@@ -79,7 +80,7 @@ function createParamsFromData(reader: PacketReader): CactusComponentParams {
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    for (let i = 0; i < transformComponentParams.children.length; i++) {
       const hitbox = transformComponentParams.children[i];
@@ -93,7 +94,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
          0,
          getTextureArrayIndex(i === 0 ? "entities/cactus/cactus.png" : "entities/cactus/cactus-limb.png")
       );
-      entityIntermediateInfo.renderInfo.attachRenderPart(baseRenderPart);
+      renderInfo.attachRenderPart(baseRenderPart);
    }
 
    // Flowers
@@ -110,7 +111,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       );
       renderPart.offset.x = flower.offsetX;
       renderPart.offset.y = flower.offsetY;
-      entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+      renderInfo.attachRenderPart(renderPart);
    }
 
    return {};

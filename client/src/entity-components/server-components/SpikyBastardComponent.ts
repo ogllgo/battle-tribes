@@ -3,8 +3,9 @@ import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { randInt } from "../../../../shared/src/utils";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface SpikyBastardComponentParams {}
 
@@ -29,7 +30,7 @@ function createParamsFromData(): SpikyBastardComponentParams {
    return createSpikyBastardComponentParams();
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponent.children[0] as Hitbox;
    
@@ -42,7 +43,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    if (Math.random() < 0.5) {
       renderPart.setFlipX(true);
    }
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {};
 }

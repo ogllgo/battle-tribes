@@ -8,9 +8,10 @@ import { playSoundOnHitbox } from "../../sound";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityParams, getEntityRenderInfo } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface SlimeSpitComponentParams {}
 
@@ -36,7 +37,7 @@ function createParamsFromData(reader: PacketReader): SlimeSpitComponentParams {
    return {};
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    // @Incomplete: SIZE DOESN'T ACTUALLY AFFECT ANYTHING
 
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
@@ -49,7 +50,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       getTextureArrayIndex("projectiles/slime-spit-medium.png")
    );
    renderPart1.opacity = 0.75;
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart1);
+   renderInfo.attachRenderPart(renderPart1);
 
    const renderPart2 = new TexturedRenderPart(
       hitbox,
@@ -58,7 +59,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       getTextureArrayIndex("projectiles/slime-spit-medium.png")
    );
    renderPart2.opacity = 0.75;
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart2);
+   renderInfo.attachRenderPart(renderPart2);
 
    return {};
 }

@@ -13,7 +13,7 @@ import { LootComponent, registerEntityLootOnDeath } from "../../components/LootC
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { createHitbox, Hitbox } from "../../hitboxes";
-import { createLight } from "../../light-levels";
+import { createLight } from "../../lights";
 import { tetherHitboxes } from "../../tethers";
 
 registerEntityLootOnDeath(EntityType.glurbBodySegment, [
@@ -24,16 +24,9 @@ registerEntityLootOnDeath(EntityType.glurbBodySegment, [
 ]);
 
 export function createGlurbBodySegmentConfig(position: Point, rotation: number, lastHitbox: Hitbox, lastTransformComponent: TransformComponent): EntityConfig {
-   // Middle segment
-   const radius = 28;
-   const flags = new Array<HitboxFlag>();
-   const mass = 0.8;
-   const lightIntensity = 0.4;
-   const lightRadius = 8;
-   
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, radius), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, flags);
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 28), 0.8, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const tetherIdealDistance = (hitbox.box as CircularBox).radius + (lastHitbox.box as CircularBox).radius - 18;
@@ -49,7 +42,7 @@ export function createGlurbBodySegmentConfig(position: Point, rotation: number, 
 
    const glurbBodySegmentComponent = new GlurbBodySegmentComponent();
 
-   const light = createLight(new Point(0, 0), lightIntensity, 0.8, lightRadius, 1, 0.2, 0.9);
+   const light = createLight(new Point(0, 0), 0.4, 0.8, 8, 1, 0.2, 0.9);
    const lights: Array<LightCreationInfo> = [{
       light: light,
       attachedHitbox: hitbox

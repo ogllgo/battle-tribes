@@ -7,7 +7,7 @@ import Board from "../../Board";
 import Particle from "../../Particle";
 import { createPoisonBubble, createBloodParticle, BloodParticleSize, createHeatParticle } from "../../particles";
 import { addTexturedParticleToBufferContainer, ParticleRenderLayer, addMonocolourParticleToBufferContainer, ParticleColour } from "../../rendering/webgl/particle-rendering";
-import { Light, attachLightToRenderPart, createLight, removeLight } from "../../lights";
+import { Light, createLight, removeLight } from "../../lights";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
@@ -156,19 +156,21 @@ function onTick(entity: Entity): void {
    const fireStatusEffect = getStatusEffect(statusEffectComponent, StatusEffect.burning);
    if (fireStatusEffect !== null) {
       if (statusEffectComponent.burningLight === null) {
-         statusEffectComponent.burningLight = createLight(
-            new Point(0, 0),
-            1,
-            2.5,
-            0.3,
-            0,
-            0,
-            0
-         );
+         // @INCOMPLETE
+         
+         // statusEffectComponent.burningLight = createLight(
+         //    new Point(0, 0),
+         //    1,
+         //    2.5,
+         //    0.3,
+         //    0,
+         //    0,
+         //    0
+         // );
 
-         // @Hack
-         const renderInfo = getEntityRenderInfo(entity);
-         attachLightToRenderPart(statusEffectComponent.burningLight, renderInfo.renderPartsByZIndex[0], entity);
+         // // @Hack
+         // const renderInfo = getEntityRenderInfo(entity);
+         // attachLightToRenderPart(statusEffectComponent.burningLight, renderInfo.renderPartsByZIndex[0], entity);
       }
       
       // Ember particles

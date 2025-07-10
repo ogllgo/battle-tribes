@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
-import { randFloat } from "battletribes-shared/utils";
+import { randAngle, randFloat } from "battletribes-shared/utils";
 import { createFlyParticle } from "../../particles";
 import { playSoundOnHitbox } from "../../sound";
 import { Entity, EntityType } from "../../../../shared/src/entities";
@@ -8,8 +8,9 @@ import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface PunjiSticksComponentParams {}
 
@@ -44,7 +45,7 @@ function createParamsFromData(): PunjiSticksComponentParams {
    return fillParams();
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const isAttachedToWall = entityParams.entityType === EntityType.wallPunjiSticks;
    let textureArrayIndex: number;
    if (isAttachedToWall) {
@@ -62,7 +63,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0,
       textureArrayIndex
    );
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {};
 }

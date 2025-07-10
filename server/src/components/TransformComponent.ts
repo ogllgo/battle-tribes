@@ -16,7 +16,7 @@ import { Box, boxIsCircular, getBoxArea, HitboxFlag, updateBox } from "battletri
 import { destroyEntity, entityExists, getEntityLayer, getEntityType, setEntityLayer } from "../world";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
-import { removeEntityLights, updateEntityLights } from "../light-levels";
+import { removeEntityLights, updateEntityLights } from "../lights";
 import { registerDirtyEntity } from "../server/player-clients";
 import { surfaceLayer } from "../layers";
 import { addHitboxDataToPacket, getHitboxDataLength } from "../server/packet-hitboxes";

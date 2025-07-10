@@ -7,7 +7,7 @@ import { playSoundOnHitbox } from "../../sound";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { CowSpecies, Entity } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
-import { EntityIntermediateInfo, EntityParams, getEntityLayer } from "../../world";
+import { EntityParams, getEntityLayer } from "../../world";
 import { entityChildIsHitbox, getHitboxTile, TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
@@ -15,6 +15,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { RenderPart } from "../../render-parts/render-parts";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface CowComponentParams {
    readonly species: CowSpecies;
@@ -60,7 +61,7 @@ function createParamsFromData(reader: PacketReader): CowComponentParams {
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    
    const cowComponentParams = entityParams.serverComponentParams[ServerComponentType.cow]!;
@@ -79,7 +80,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
             0,
             getTextureArrayIndex(`entities/cow/cow-body-${cowNum}.png`)
          );
-         entityIntermediateInfo.renderInfo.attachRenderPart(bodyRenderPart);
+         renderInfo.attachRenderPart(bodyRenderPart);
       } else if (hitbox.flags.includes(HitboxFlag.COW_HEAD)) {
          // Head
          headRenderPart = new TexturedRenderPart(
@@ -89,7 +90,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
             getTextureArrayIndex(`entities/cow/cow-head-${cowNum}.png`)
          );
          headRenderPart.addTag("tamingComponent:head");
-         entityIntermediateInfo.renderInfo.attachRenderPart(headRenderPart);
+         renderInfo.attachRenderPart(headRenderPart);
       }
    }
 

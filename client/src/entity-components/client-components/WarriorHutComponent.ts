@@ -1,11 +1,12 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playBuildingHitSound, playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 import { TransformComponentArray } from "../server-components/TransformComponent";
@@ -28,7 +29,7 @@ export function createWarriorHutComponentParams(): WarriorHutComponentParams {
    return {};
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
    
@@ -39,7 +40,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0,
       getTextureArrayIndex("entities/warrior-hut/warrior-hut.png")
    );
-   entityIntermediateInfo.renderInfo.attachRenderPart(hutRenderPart);
+   renderInfo.attachRenderPart(hutRenderPart);
 
    // Doors
    const doorRenderParts = new Array<VisualRenderPart>();
@@ -51,7 +52,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
          getTextureArrayIndex("entities/warrior-hut/warrior-hut-door.png")
       );
       doorRenderPart.addTag("hutComponent:door");
-      entityIntermediateInfo.renderInfo.attachRenderPart(doorRenderPart);
+      renderInfo.attachRenderPart(doorRenderPart);
       doorRenderParts.push(doorRenderPart);
    }
 

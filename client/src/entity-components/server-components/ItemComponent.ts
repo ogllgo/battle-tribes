@@ -8,10 +8,9 @@ import ServerComponentArray from "../ServerComponentArray";
 import CLIENT_ITEM_INFO_RECORD from "../../client-item-info";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { createLight } from "../../lights";
-import { Point } from "../../../../shared/src/utils";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface ItemComponentParams {
    readonly itemType: ItemType;
@@ -40,7 +39,7 @@ function createParamsFromData(reader: PacketReader): ItemComponentParams {
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
    
@@ -52,15 +51,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0,
       getTextureArrayIndex(CLIENT_ITEM_INFO_RECORD[itemComponentParams.itemType].entityTextureSource)
    )
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
-
-   if (itemComponentParams.itemType === ItemType.slurb) {
-      const light = createLight(new Point(0, 0), 0.6, 0.5, 4, 1, 0.1, 1);
-      entityIntermediateInfo.lights.push({
-         light: light,
-         attachedRenderPart: renderPart
-      });
-   }
+   renderInfo.attachRenderPart(renderPart);
 
    return {};
 }

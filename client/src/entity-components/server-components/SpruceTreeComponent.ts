@@ -9,8 +9,9 @@ import { randFloat, randItem, randInt, Point, randAngle } from "../../../../shar
 import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle, createWoodSpeckParticle, LEAF_SPECK_COLOUR_HIGH, LEAF_SPECK_COLOUR_LOW } from "../../particles";
 import { playSoundOnHitbox } from "../../sound";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface SpruceTreeComponentParams {
    readonly treeSize: TreeSize;
@@ -55,7 +56,7 @@ function createParamsFromData(reader: PacketReader): SpruceTreeComponentParams {
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
 
@@ -70,13 +71,13 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    renderPart.tintR = randFloat(-0.05, 0.05);
    renderPart.tintG = randFloat(-0.05, 0.05);
    renderPart.tintB = randFloat(-0.05, 0.05);
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    // Snow overlay
    const snowVariant = spruceTreeComponentParams.snowVariant;
    if (snowVariant !== 0) {
       const sizeStr = spruceTreeComponentParams.treeSize === TreeSize.large ? "large" : "small";
-      entityIntermediateInfo.renderInfo.attachRenderPart(
+      renderInfo.attachRenderPart(
          new TexturedRenderPart(
             hitbox,
             1,

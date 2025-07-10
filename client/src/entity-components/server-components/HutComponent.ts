@@ -8,10 +8,11 @@ import { playSoundOnHitbox } from "../../sound";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
-import { EntityIntermediateInfo, EntityParams, getEntityAgeTicks, getEntityRenderInfo, getEntityType } from "../../world";
+import { EntityParams, getEntityAgeTicks, getEntityRenderInfo, getEntityType } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface HutComponentParams {
    readonly doorSwingAmount: number;
@@ -117,12 +118,12 @@ const createRecallMarker = (parentHitbox: Hitbox): TexturedRenderPart => {
    return recallMarker;
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
    
    return {
-      doorRenderParts: entityIntermediateInfo.renderInfo.getRenderThings("hutComponent:door") as Array<VisualRenderPart>,
+      doorRenderParts: renderInfo.getRenderThings("hutComponent:door") as Array<VisualRenderPart>,
       recallMarker: entityParams.serverComponentParams[ServerComponentType.hut]!.isRecalling ? createRecallMarker(hitbox) : null
    };
 }

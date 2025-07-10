@@ -8,7 +8,7 @@ import { AIPlanType, assert } from "../../../shared/src/utils";
 import { AIAssignmentComponentArray, clearAssignment } from "../components/AIAssignmentComponent";
 import { getInventory, InventoryComponentArray, inventoryHasItemType } from "../components/InventoryComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
-import { getLightIntensityAtPos } from "../light-levels";
+import { getLightIntensityAtPos } from "../lights";
 import Tribe from "../Tribe";
 import { getEntityType } from "../world";
 import { updateBuildingLayer } from "./ai-building";

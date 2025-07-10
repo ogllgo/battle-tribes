@@ -79,7 +79,7 @@ import { PlantedComponent } from "./components/PlantedComponent";
 import { TreePlantedComponent } from "./components/TreePlantedComponent";
 import { BerryBushPlantedComponent } from "./components/BerryBushPlantedComponent";
 import { IceSpikesPlantedComponent } from "./components/IceSpikesPlantedComponent";
-import { Light } from "./light-levels";
+import { Light } from "./lights";
 import { MithrilOreNodeComponent } from "./components/MithrilOreNodeComponent";
 import { ScrappyComponent } from "./components/ScrappyComponent";
 import { CogwalkerComponent } from "./components/CogwalkerComponent";

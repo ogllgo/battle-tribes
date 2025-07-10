@@ -12,7 +12,7 @@ import { LootComponent, registerEntityLootOnDeath } from "../../components/LootC
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { createHitbox, Hitbox } from "../../hitboxes";
-import { createLight } from "../../light-levels";
+import { createLight } from "../../lights";
 import { tetherHitboxes } from "../../tethers";
 
 registerEntityLootOnDeath(EntityType.glurbTailSegment, [
@@ -23,15 +23,9 @@ registerEntityLootOnDeath(EntityType.glurbTailSegment, [
 ]);
 
 export function createGlurbTailSegmentConfig(position: Point, rotation: number, lastHitbox: Hitbox, lastTransformComponent: TransformComponent): EntityConfig {
-   const radius = 20;
-   const flags = [HitboxFlag.GLURB_TAIL_SEGMENT];
-   const mass = 0.4;
-   const lightIntensity = 0.3;
-   const lightRadius = 4;
-   
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, radius), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, flags);
+   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 20), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.GLURB_TAIL_SEGMENT]);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const tetherIdealDistance = (hitbox.box as CircularBox).radius + (lastHitbox.box as CircularBox).radius - 18;
@@ -45,7 +39,7 @@ export function createGlurbTailSegmentConfig(position: Point, rotation: number, 
    
    const glurbSegmentComponent = new GlurbSegmentComponent();
 
-   const light = createLight(new Point(0, 0), lightIntensity, 0.8, lightRadius, 1, 0.2, 0.9);
+   const light = createLight(new Point(0, 0), 0.3, 0.8, 4, 1, 0.2, 0.9);
    const lights: Array<LightCreationInfo> = [{
       light: light,
       attachedHitbox: hitbox

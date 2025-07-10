@@ -5,7 +5,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
-import { EntityConfig } from "../../components";
+import { EntityConfig, LightCreationInfo } from "../../components";
 import { GuardianSpikyBallComponent } from "../../components/GuardianSpikyBallComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
@@ -13,6 +13,7 @@ import { ProjectileComponent } from "../../components/ProjectileComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { createHitbox } from "../../hitboxes";
+import { createLight } from "../../lights";
 
 export function createGuardianSpikyBallConfig(position: Point, rotation: number,creator: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
@@ -32,6 +33,13 @@ export function createGuardianSpikyBallConfig(position: Point, rotation: number,
    
    const guardianSpikyBallComponent = new GuardianSpikyBallComponent();
    
+   const lights = new Array<LightCreationInfo>();
+   const light = createLight(new Point(0, 0), 0.4, 0.3, 20, 0.9, 0.2, 0.9);
+   lights.push({
+      light: light,
+      attachedHitbox: hitbox
+   });
+   
    return {
       entityType: EntityType.guardianSpikyBall,
       components: {
@@ -42,6 +50,6 @@ export function createGuardianSpikyBallConfig(position: Point, rotation: number,
          [ServerComponentType.projectile]: projectileComponent,
          [ServerComponentType.guardianSpikyBall]: guardianSpikyBallComponent
       },
-      lights: []
+      lights: lights
    };
 }

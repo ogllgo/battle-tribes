@@ -12,8 +12,9 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import ServerComponentArray from "../ServerComponentArray";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 const enum Vars {
    SNOW_THROW_OFFSET = 64
@@ -67,7 +68,7 @@ function createParamsFromData(reader: PacketReader): YetiComponentParams {
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
 
    const pawRenderParts = new Array<VisualRenderPart>();
@@ -83,7 +84,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
             0,
             getTextureArrayIndex("entities/yeti/yeti.png")
          );
-         entityIntermediateInfo.renderInfo.attachRenderPart(bodyRenderPart);
+         renderInfo.attachRenderPart(bodyRenderPart);
 
          for (let i = 0; i < 2; i++) {
             const paw = new TexturedRenderPart(
@@ -93,7 +94,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
                getTextureArrayIndex("entities/yeti/yeti-paw.png")
             );
             pawRenderParts.push(paw);
-            entityIntermediateInfo.renderInfo.attachRenderPart(paw);
+            renderInfo.attachRenderPart(paw);
          }
       } else if (hitbox.flags.includes(HitboxFlag.YETI_HEAD)) {
          const headRenderPart = new TexturedRenderPart(
@@ -103,7 +104,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
             getTextureArrayIndex("entities/yeti/yeti-head.png")
          );
          headRenderPart.addTag("tamingComponent:head");
-         entityIntermediateInfo.renderInfo.attachRenderPart(headRenderPart);
+         renderInfo.attachRenderPart(headRenderPart);
       }
    }
 

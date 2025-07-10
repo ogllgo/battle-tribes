@@ -14,7 +14,7 @@ import { RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { playerTribe } from "../../tribes";
-import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo, getEntityType } from "../../world";
+import { EntityParams, getEntityRenderInfo, getEntityType } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityAttachInfo, entityTreeHasComponent, TransformComponentArray } from "./TransformComponent";
 
@@ -163,7 +163,7 @@ const createTamingTierRenderPart = (tamingTier: number, parentHitbox: Hitbox): T
    return renderPart;
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
 
@@ -176,7 +176,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       const tamingTierRenderPart = tamingTier > 0 ? createTamingTierRenderPart(tamingTier, hitbox) : null;
       // @Speed: 2nd comparison
       if (tamingTierRenderPart !== null) {
-         entityIntermediateInfo.renderInfo.attachRenderPart(tamingTierRenderPart);
+         renderInfo.attachRenderPart(tamingTierRenderPart);
       }
    }
    
@@ -184,9 +184,9 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    let attackHalo: RenderPart | null;
    if (tamingComponentParams.isAttacking) {
       // @Copynpaste
-      const headRenderPart = entityIntermediateInfo.renderInfo.getRenderThing("tamingComponent:head");
+      const headRenderPart = renderInfo.getRenderThing("tamingComponent:head");
       attackHalo = createAttackHalo(headRenderPart);
-      entityIntermediateInfo.renderInfo.attachRenderPart(attackHalo);
+      renderInfo.attachRenderPart(attackHalo);
    } else {
       attackHalo = null;
    }
@@ -194,9 +194,9 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    // Follow halo
    let followHalo: RenderPart | null;
    if (tamingComponentParams.isFollowing) {
-      const headRenderPart = entityIntermediateInfo.renderInfo.getRenderThing("tamingComponent:head");
+      const headRenderPart = renderInfo.getRenderThing("tamingComponent:head");
       followHalo = createFollowHalo(headRenderPart);
-      entityIntermediateInfo.renderInfo.attachRenderPart(followHalo);
+      renderInfo.attachRenderPart(followHalo);
    } else {
       followHalo = null;
    }

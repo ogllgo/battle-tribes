@@ -8,9 +8,10 @@ import { randAngle, randFloat, randInt } from "../../../../shared/src/utils";
 import Board from "../../Board";
 import Particle from "../../Particle";
 import { playSoundOnHitbox } from "../../sound";
-import { TransformComponent, TransformComponentArray } from "./TransformComponent";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { TransformComponentArray } from "./TransformComponent";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface IceSpikesComponentParams {}
 
@@ -37,11 +38,11 @@ function createParamsFromData(): IceSpikesComponentParams {
    return {};
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
    
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,

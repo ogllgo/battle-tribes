@@ -38,6 +38,7 @@ import { registerTamingSpecsFromData } from "../taming-specs";
 import { getEntityClientComponentConfigs } from "../entity-components/client-components"
 import { Hitbox } from "../hitboxes";
 import { createSparkParticle, createSlimePoolParticle } from "../particles";
+import { updateLightsFromData } from "../lights";
 
 const getBuildingBlockingTiles = (): ReadonlySet<TileIndex> => {
    // Initially find all tiles below a dropdown tile
@@ -577,6 +578,9 @@ export function processGameDataPacket(reader: PacketReader): void {
          entitiesToRemove.add(entityID);
       }
    }
+
+   // Lights
+   updateLightsFromData(reader);
 
    // @Cleanup: move to own function
    

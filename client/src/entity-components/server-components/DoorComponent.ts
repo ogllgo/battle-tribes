@@ -8,8 +8,10 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { DOOR_TEXTURE_SOURCES } from "./BuildingMaterialComponent";
 import { createLightWoodSpeckParticle, createWoodShardParticle } from "../../particles";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { randAngle } from "../../../../shared/src/utils";
 
 export interface DoorComponentParams {
    readonly toggleType: DoorToggleType;
@@ -51,7 +53,7 @@ function createParamsFromData(reader: PacketReader): DoorComponentParams {
    return fillParams(toggleType, openProgress);
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
    
@@ -65,7 +67,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    );
    renderPart.addTag("buildingMaterialComponent:material");
 
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {};
 }

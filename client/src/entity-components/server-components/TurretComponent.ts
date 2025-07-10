@@ -7,11 +7,12 @@ import { ItemType } from "battletribes-shared/items/items";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
-import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo, getEntityType } from "../../world";
+import { EntityParams, getEntityRenderInfo, getEntityType } from "../../world";
 import { AmmoBoxComponentArray } from "./AmmoBoxComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 // @Cleanup: can make this a whole lot better by having the projectile not be a render part, but the actual projectile pre-created, and then just un-carried from the turret once fired.
 
@@ -166,12 +167,12 @@ function createParamsFromData(reader: PacketReader): TurretComponentParams {
    return fillParams(aimDirection, chargeProgress, reloadProgress);
 }
 
-function createComponent(entityParams: EntityParams, _: never, entityIntermediateInfo: EntityIntermediateInfo): TurretComponent {
+function createComponent(entityParams: EntityParams, _: never, renderInfo: EntityRenderInfo): TurretComponent {
    return {
       chargeProgress: entityParams.serverComponentParams[ServerComponentType.turret]!.chargeProgress,
-      aimingRenderPart: entityIntermediateInfo.renderInfo.getRenderThing("turretComponent:aiming") as TexturedRenderPart,
-      pivotingRenderPart: entityIntermediateInfo.renderInfo.getRenderThing("turretComponent:pivoting") as VisualRenderPart,
-      gearRenderParts: entityIntermediateInfo.renderInfo.getRenderThings("turretComponent:gear") as Array<VisualRenderPart>,
+      aimingRenderPart: renderInfo.getRenderThing("turretComponent:aiming") as TexturedRenderPart,
+      pivotingRenderPart: renderInfo.getRenderThing("turretComponent:pivoting") as VisualRenderPart,
+      gearRenderParts: renderInfo.getRenderThings("turretComponent:gear") as Array<VisualRenderPart>,
       projectileRenderPart:  null
    };
 }

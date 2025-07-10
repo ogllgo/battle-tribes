@@ -15,7 +15,7 @@ import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { getEntityLayer } from "../world";
 import { createEntity } from "../Entity";
 import { createHitbox } from "../hitboxes";
-import { createLight } from "../light-levels";
+import { createLight } from "../lights";
 
 export function createItemEntityConfig(position: Point, rotation: number, itemType: ItemType, amount: number, throwingEntity: Entity | null): EntityConfig {
    const transformComponent = new TransformComponent();

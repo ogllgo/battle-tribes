@@ -20,7 +20,7 @@ import { playSound } from "../../sound";
 import { EntityParams, getEntityRenderInfo } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
-import { attachLightToRenderPart, createLight, Light, removeLight } from "../../lights";
+import { Light, removeLight } from "../../lights";
 import { getRenderPartRenderPosition } from "../../rendering/render-part-matrices";
 import { getHumanoidRadius } from "./TribesmanComponent";
 import { playerInstance } from "../../player";
@@ -920,8 +920,9 @@ const updateLimbTorch = (limb: LimbInfo, heldItemRenderPart: RenderPart, entity:
       
       if (hasLight) {
          if (limb.torchLight === null) {
-            limb.torchLight = createLight(new Point(0, 0), lightIntensity, lightStrength, lightRadius, lightR, lightG, lightB);
-            attachLightToRenderPart(limb.torchLight, heldItemRenderPart, entity);
+            // @INCOMPLETE
+            // limb.torchLight = createLight(new Point(0, 0), lightIntensity, lightStrength, lightRadius, lightR, lightG, lightB);
+            // attachLightToRenderPart(limb.torchLight, heldItemRenderPart, entity);
          } else {
             limb.torchLight.intensity = lightIntensity;
             limb.torchLight.strength = lightStrength;
@@ -932,7 +933,7 @@ const updateLimbTorch = (limb: LimbInfo, heldItemRenderPart: RenderPart, entity:
          }
 
          if (Board.tickIntervalHasPassed(0.15) && heldItemType === ItemType.fireTorch) {
-            limb.torchLight.radius = lightRadius + randFloat(-7, 7);
+            // limb.torchLight.radius = lightRadius + randFloat(-7, 7);
          }
          
          return;

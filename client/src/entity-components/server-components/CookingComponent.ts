@@ -1,6 +1,6 @@
 import { Point, randFloat } from "battletribes-shared/utils";
 import Board from "../../Board";
-import { Light, attachLightToRenderPart, createLight, removeLight } from "../../lights";
+import { Light, removeLight } from "../../lights";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity } from "../../../../shared/src/entities";
@@ -66,23 +66,25 @@ function getMaxRenderParts(): number {
 const updateLight = (cookingComponent: CookingComponent, entity: Entity): void => {
    if (cookingComponent.isCooking) {
       if (cookingComponent.light === null) {
-         cookingComponent.light = createLight(
-            new Point(0, 0),
-            1,
-            1.5,
-            40,
-            1,
-            0.6,
-            0.35
-         );
+         // @INCOMPLETE
+         
+         // cookingComponent.light = createLight(
+         //    new Point(0, 0),
+         //    1,
+         //    1.5,
+         //    40,
+         //    1,
+         //    0.6,
+         //    0.35
+         // );
 
-         // @Hack
-         const renderInfo = getEntityRenderInfo(entity);
-         attachLightToRenderPart(cookingComponent.light, renderInfo.renderPartsByZIndex[0], entity);
+         // // @Hack
+         // const renderInfo = getEntityRenderInfo(entity);
+         // attachLightToRenderPart(cookingComponent.light, renderInfo.renderPartsByZIndex[0], entity);
       }
 
       if (Board.tickIntervalHasPassed(0.15)) {
-         cookingComponent.light.radius = 40 + randFloat(-7, 7);
+         // cookingComponent.light.radius = 40 + randFloat(-7, 7);
       }
    } else if (cookingComponent.light !== null) {
       removeLight(cookingComponent.light);

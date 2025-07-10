@@ -4,7 +4,7 @@ import { Settings } from "../../../../shared/src/settings";
 import { assert, distance, Point } from "../../../../shared/src/utils";
 import { createSlurbTorchConfig } from "../../entities/structures/slurb-torch";
 import Layer from "../../Layer";
-import { calculateLightRangeNodes, getLightIntensityAtNode, getLightLevelNode } from "../../light-levels";
+import { calculateLightRangeNodes, getLightIntensityAtNode, getLightLevelNode } from "../../lights";
 import Tribe from "../../Tribe";
 import { BuildingCandidate, buildingCandidateIsValid, createBuildingCandidate } from "./ai-building-utils";
 import { createVirtualStructure, VirtualStructure } from "./TribeBuildingLayer";

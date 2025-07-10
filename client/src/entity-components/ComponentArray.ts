@@ -4,8 +4,9 @@ import ServerComponentArray from "./ServerComponentArray";
 import ClientComponentArray from "./ClientComponentArray";
 import { ClientComponentType } from "./client-component-types";
 import { assert, Point } from "../../../shared/src/utils";
-import { EntityIntermediateInfo, EntityParams } from "../world";
+import { EntityParams } from "../world";
 import { Hitbox } from "../hitboxes";
+import { EntityRenderInfo } from "../EntityRenderInfo";
 
 export const enum ComponentArrayType {
    server,
@@ -16,9 +17,9 @@ let componentArrayIDCounter = 0;
 
 export interface ComponentArrayFunctions<T extends object, ComponentIntermediateInfo extends object | never> {
    /** SHOULD NOT MUTATE THE GLOBAL STATE */
-   populateIntermediateInfo?(intermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): ComponentIntermediateInfo;
+   populateIntermediateInfo?(renderInfo: EntityRenderInfo, entityParams: EntityParams): ComponentIntermediateInfo;
    /** SHOULD NOT MUTATE THE GLOBAL STATE */
-   createComponent(entityParams: Readonly<EntityParams>, intermediateInfo: Readonly<ComponentIntermediateInfo>, entityIntermediateInfo: EntityIntermediateInfo): T;
+   createComponent(entityParams: Readonly<EntityParams>, intermediateInfo: Readonly<ComponentIntermediateInfo>, renderInfo: EntityRenderInfo): T;
    getMaxRenderParts(entityParams: EntityParams): number;
    /** Called once when the entity is being created, just after all the components are created from their params */
    onLoad?(entity: Entity): void;
@@ -75,8 +76,8 @@ export abstract class ComponentArray<
 
    // In reality this is just all information beyond its config which the component wishes to expose to other components
    // This is a separate layer so that, for example, components can immediately get render parts without having to wait for onLoad (introducing polymorphism)
-   public populateIntermediateInfo?(intermediateInfo: EntityIntermediateInfo, entityParams: Readonly<EntityParams>): ComponentIntermediateInfo;
-   public readonly createComponent: (entityParams: Readonly<EntityParams>, intermediateInfo: Readonly<ComponentIntermediateInfo>, entityIntermediateInfo: Readonly<EntityIntermediateInfo>) => T;
+   public populateIntermediateInfo?(renderInfo: EntityRenderInfo, entityParams: Readonly<EntityParams>): ComponentIntermediateInfo;
+   public readonly createComponent: (entityParams: Readonly<EntityParams>, intermediateInfo: Readonly<ComponentIntermediateInfo>, renderInfo: EntityRenderInfo) => T;
    public readonly getMaxRenderParts: (entityParams: EntityParams) => number;
    public onLoad?(entity: Entity): void;
    public onJoin?(entity: Entity): void;

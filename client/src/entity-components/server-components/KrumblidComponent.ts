@@ -7,10 +7,11 @@ import { Point, randAngle, randFloat, randInt } from "../../../../shared/src/uti
 import { createBloodPoolParticle, createBloodParticle, BloodParticleSize, createBloodParticleFountain, createKrumblidChitinParticle } from "../../particles";
 import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
 import { playSoundOnHitbox } from "../../sound";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { HealthComponentArray } from "./HealthComponent";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface KrumblidComponentParams {}
 
@@ -33,7 +34,7 @@ function createParamsFromData(): KrumblidComponentParams {
    return {};
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    for (const hitbox of transformComponentParams.children) {
       if (!entityChildIsHitbox(hitbox)) {
@@ -41,7 +42,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       }
 
       if (hitbox.flags.includes(HitboxFlag.KRUMBLID_BODY)) {
-         entityIntermediateInfo.renderInfo.attachRenderPart(
+         renderInfo.attachRenderPart(
             new TexturedRenderPart(
                hitbox,
                1,
@@ -50,7 +51,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
             )
          );
       } else {
-         entityIntermediateInfo.renderInfo.attachRenderPart(
+         renderInfo.attachRenderPart(
             new TexturedRenderPart(
                hitbox,
                0,

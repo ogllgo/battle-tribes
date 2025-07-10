@@ -3,13 +3,14 @@ import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { Settings } from "../../../../shared/src/settings";
 import { randFloat, Point, randAngle } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
 import { createSlurbParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { coatSlimeTrails } from "../../rendering/webgl/slime-trail-rendering";
 import { playSound, playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams, getEntityLayer, getEntityRenderInfo } from "../../world";
+import { EntityParams, getEntityLayer, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { entityIsVisibleToCamera, TransformComponentArray, getRandomPositionInBox, entityChildIsHitbox } from "./TransformComponent";
 
@@ -67,7 +68,7 @@ const createMossBallRenderPart = (mossBallCompleteness: number, parentHitbox: Hi
    return renderPart;
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const glurbSegmentComponentParams = entityParams.serverComponentParams[ServerComponentType.glurbSegment]!;
 
    let renderPart: TexturedRenderPart | null;
@@ -76,7 +77,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       const hitbox = transformComponentParams.children[0] as Hitbox;
    
       renderPart = createMossBallRenderPart(glurbSegmentComponentParams.mossBallCompleteness, hitbox);
-      entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+      renderInfo.attachRenderPart(renderPart);
    } else {
       renderPart = null;
    }

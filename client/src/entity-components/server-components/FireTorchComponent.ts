@@ -2,25 +2,20 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { createLight, Light } from "../../lights";
-import { ItemType } from "../../../../shared/src/items/items";
-import { Point, randAngle, randFloat } from "../../../../shared/src/utils";
+import { randAngle, randFloat } from "../../../../shared/src/utils";
 import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import Board from "../../Board";
 import { createEmberParticle, createSmokeParticle } from "../../particles";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface FireTorchComponentParams {}
 
-interface IntermediateInfo {
-   readonly light: Light;
-}
+interface IntermediateInfo {}
 
-export interface FireTorchComponent {
-   readonly light: Light;
-}
+export interface FireTorchComponent {}
 
 export const FireTorchComponentArray = new ServerComponentArray<FireTorchComponent, FireTorchComponentParams, IntermediateInfo>(ServerComponentType.fireTorch, true, {
    createParamsFromData: createParamsFromData,
@@ -44,7 +39,7 @@ function createParamsFromData(): FireTorchComponentParams {
    return fillParams();
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponentParams.children[0] as Hitbox;
    
@@ -54,22 +49,13 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0,
       getTextureArrayIndex("entities/fire-torch/fire-torch.png")
    );
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
-   const light = createLight(new Point(0, 0), 1, 2, 10, 1, 0.6, 0.35);
-   entityIntermediateInfo.lights.push({
-      light: light,
-      attachedRenderPart: renderPart
-   });
-   return {
-      light: light
-   };
+   return {};
 }
 
-function createComponent(_entityParams: EntityParams, intermediateInfo: IntermediateInfo): FireTorchComponent {
-   return {
-      light: intermediateInfo.light
-   };
+function createComponent(): FireTorchComponent {
+   return {};
 }
 
 function getMaxRenderParts(): number {
@@ -85,13 +71,6 @@ function onTick(entity: Entity): void {
    
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
-
-   if (Board.tickIntervalHasPassed(0.15)) {
-      // @Incomplete: not done in the server!
-      // const fireTorchComponent = FireTorchComponentArray.getComponent(entity);
-      // const torchTrait = ITEM_TRAITS_RECORD[ItemType.fireTorch].torch!;
-      // fireTorchComponent.light.radius = torchTrait.lightRadius + randFloat(-7, 7);
-   }
    
    // Ember particles
    if (Board.tickIntervalHasPassed(0.08)) {

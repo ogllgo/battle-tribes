@@ -1,3 +1,5 @@
+import { Point } from "./utils";
+
 // @Cleanup: maybe extract into client-to-server and server-to-client ?
 export const enum PacketType {
    // -----------------
@@ -139,6 +141,11 @@ export class Packet extends BasePacketObject {
       this.uint8View[this.currentByteOffset] = boolean ? 1 : 0;
       this.currentByteOffset++;
    }
+
+   public addPoint(point: Point): void {
+      this.addNumber(point.x);
+      this.addNumber(point.y);
+   }
 }
 
 export function getStringLengthBytes(str: string): number {
@@ -212,5 +219,11 @@ export class PacketReader extends BasePacketObject {
       } else {
          throw new Error("Buffer data is not in boolean form.");
       }
+   }
+
+   readPoint(): Point {
+      const x = this.readNumber();
+      const y = this.readNumber();
+      return new Point(x, y);
    }
 }

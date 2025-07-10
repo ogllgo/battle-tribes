@@ -6,8 +6,9 @@ import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { RenderPart } from "../../render-parts/render-parts";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface FenceGateComponentParams {
    readonly openProgress: number;
@@ -77,11 +78,11 @@ function createParamsFromData(reader: PacketReader): FenceGateComponentParams {
    return fillParams(openProgress);
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponent.children[0] as Hitbox;
    
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          1,
@@ -96,7 +97,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0,
       getTextureArrayIndex("entities/fence-gate/fence-gate-door.png")
    );
-   entityIntermediateInfo.renderInfo.attachRenderPart(doorRenderPart);
+   renderInfo.attachRenderPart(doorRenderPart);
 
    return {
       doorRenderPart: doorRenderPart

@@ -3,7 +3,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityParams, getEntityRenderInfo } from "../../world";
 import { entityChildIsHitbox } from "./TransformComponent";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { Entity } from "../../../../shared/src/entities";
@@ -11,6 +11,7 @@ import { Hitbox } from "../../hitboxes";
 import { Point, randAngle, randFloat } from "../../../../shared/src/utils";
 import { createOkrenEyeParticle } from "../../particles";
 import { renderParentIsHitbox } from "../../rendering/render-part-matrices";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 // @Copynpaste from server
 export const enum OkrenAgeStage {
@@ -74,7 +75,7 @@ const getEyeTextureSource = (okrenSize: number, eyeHardenTimer: number): string 
    }
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const okrenComponentParams = entityParams.serverComponentParams[ServerComponentType.okren]!;
    
    let sizeString: string;
@@ -101,10 +102,10 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
             getTextureArrayIndex("entities/okren/" + sizeString + "/body.png")
          );
          bodyRenderPart.addTag("tamingComponent:head");
-         entityIntermediateInfo.renderInfo.attachRenderPart(bodyRenderPart);
+         renderInfo.attachRenderPart(bodyRenderPart);
       } else if (hitbox.flags.includes(HitboxFlag.OKREN_EYE)) {
          const hardenTimer = hitbox.box.flipX ? okrenComponentParams.leftEyeHardenTimer : okrenComponentParams.rightEyeHardenTimer;
-         entityIntermediateInfo.renderInfo.attachRenderPart(
+         renderInfo.attachRenderPart(
             new TexturedRenderPart(
                hitbox,
                5,
@@ -113,7 +114,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
             )
          );
       } else if (hitbox.flags.includes(HitboxFlag.OKREN_MANDIBLE)) {
-         entityIntermediateInfo.renderInfo.attachRenderPart(
+         renderInfo.attachRenderPart(
             new TexturedRenderPart(
                hitbox,
                2,

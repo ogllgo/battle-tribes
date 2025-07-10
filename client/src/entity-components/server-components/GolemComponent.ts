@@ -1,10 +1,10 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
-import { Point, randAngle, randItem } from "battletribes-shared/utils";
+import { randAngle, randItem } from "battletribes-shared/utils";
 import { createRockSpeckParticle } from "../../particles";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
-import { Light, createLight } from "../../lights";
+import { Light } from "../../lights";
 import { playSoundOnHitbox, ROCK_HIT_SOUNDS } from "../../sound";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
@@ -13,8 +13,9 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { getHitboxVelocity, Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 enum GolemRockSize {
    massive,
@@ -118,7 +119,7 @@ function createParamsFromData(reader: PacketReader): GolemComponentParams {
    };
 }
 
-function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    
    const rockRenderParts = new Array<VisualRenderPart>();
@@ -141,7 +142,7 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
          randAngle(),
          getTextureArrayIndex(getTextureSource(size))
       );
-      intermediateInfo.renderInfo.attachRenderPart(renderPart);
+      renderInfo.attachRenderPart(renderPart);
       rockRenderParts.push(renderPart);
 
       if (size === GolemRockSize.large) {
@@ -156,24 +157,8 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
             eyeRenderPart.offset.x = 20 * (i === 0 ? -1 : 1);
             eyeRenderPart.offset.y = 17;
             eyeRenderPart.inheritParentRotation = false;
-            intermediateInfo.renderInfo.attachRenderPart(eyeRenderPart);
+            renderInfo.attachRenderPart(eyeRenderPart);
             eyeRenderParts.push(eyeRenderPart);
-
-            // Create eye light
-            const light = createLight(
-               new Point(0, 0),
-               0,
-               0.5,
-               0.15,
-               0.75,
-               0,
-               0
-            );
-            eyeLights.push(light);
-            intermediateInfo.lights.push({
-               light: light,
-               attachedRenderPart: eyeRenderPart
-            });
          }
       }
    }

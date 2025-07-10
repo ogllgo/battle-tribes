@@ -2,8 +2,9 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface IceShardComponentParams {}
 
@@ -24,11 +25,11 @@ function createParamsFromData(): IceShardComponentParams {
    return {};
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IceShardComponent {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IceShardComponent {
    const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
    const hitbox = transformComponent.children[0] as Hitbox;
    
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,

@@ -14,7 +14,7 @@ import { markWallTileInPathfinding } from "./pathfinding";
 import { generateSurfaceTerrain } from "./world-generation/surface-layer-generation";
 import { generateUndergroundTerrain } from "./world-generation/underground-layer-generation";
 import { EntityConfig, entityConfigAttachInfoIsTethered } from "./components";
-import { attachLightToHitbox } from "./light-levels";
+import { attachLightToHitbox } from "./lights";
 import { attachEntity, attachEntityWithTether } from "./components/TransformComponent";
 
 const enum Vars {
