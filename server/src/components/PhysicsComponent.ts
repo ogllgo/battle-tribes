@@ -231,7 +231,7 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
       }
 
       // Restrict the hitboxes' angle to match its direction
-      const angleDiff = getAngleDiff(hitbox.box.angle, originToHitboxDirection);
+      const angleDiff = getAngleDiff(hitbox.box.angle, originToHitboxDirection + angularTether.idealHitboxAngleOffset);
       // @Hack @Cleanup: hardcoded for cow head
       const anglePadding = 0.3;
       const angleSpringConstant = 15;

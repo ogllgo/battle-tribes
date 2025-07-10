@@ -25,9 +25,10 @@ export const enum HitboxFlag {
    SNOBE_BODY,
    SNOBE_BUTT,
    SNOBE_EAR,
-   WRAITH_HEAD,
-   WRAITH_BODY,
-   WRAITH_EAR
+   INGU_SERPENT_HEAD,
+   INGU_SERPENT_BODY_1,
+   INGU_SERPENT_BODY_2,
+   INGU_SERPENT_TAIL
 }
 
 export const enum HitboxCollisionType {

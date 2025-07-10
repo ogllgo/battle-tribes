@@ -18,6 +18,9 @@ export interface HitboxAngularTether {
    readonly damping: number;
    /** Radians either side of the ideal angle for which the link is allowed to be in without being pulled */
    readonly padding: number;
+
+   // @HACK: haven't fully thought this through; it's extremely unclear what this is
+   readonly idealHitboxAngleOffset: number;
 }
 
 /** Puts an angular spring on the hitbox's relative angle. */

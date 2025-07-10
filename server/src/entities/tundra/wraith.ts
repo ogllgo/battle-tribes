@@ -18,118 +18,117 @@ import { LootComponent, registerEntityLootOnDeath } from "../../components/LootC
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
-import { WraithComponent } from "../../components/WraithComponent";
 import { applyAcceleration, applyAccelerationFromGround, createHitbox, Hitbox, turnHitboxToAngle } from "../../hitboxes";
 import Layer from "../../Layer";
 import { tetherHitboxes } from "../../tethers";
 
-export const WRAITH_EAR_IDEAL_ANGLE = Math.PI * 0.1;
+// export const WRAITH_EAR_IDEAL_ANGLE = Math.PI * 0.1;
 
-registerEntityLootOnDeath(EntityType.wraith, [
-   {
-      itemType: ItemType.wraithTooth,
-      getAmount: () => randInt(2, 3)
-   }
-]);
+// registerEntityLootOnDeath(EntityType.wraith, [
+//    {
+//       itemType: ItemType.wraithTooth,
+//       getAmount: () => randInt(2, 3)
+//    }
+// ]);
 
-const moveFunc = (wraith: Entity, pos: Point, accelerationMagnitude: number): void => {
-   const transformComponent = TransformComponentArray.getComponent(wraith);
+// const moveFunc = (wraith: Entity, pos: Point, accelerationMagnitude: number): void => {
+//    const transformComponent = TransformComponentArray.getComponent(wraith);
    
-   const bodyHitbox = transformComponent.rootChildren[0] as Hitbox;
-   const bodyToTargetDirection = bodyHitbox.box.position.calculateAngleBetween(pos);
-   applyAccelerationFromGround(wraith, bodyHitbox, polarVec2(accelerationMagnitude, bodyToTargetDirection));
+//    const bodyHitbox = transformComponent.rootChildren[0] as Hitbox;
+//    const bodyToTargetDirection = bodyHitbox.box.position.calculateAngleBetween(pos);
+//    applyAccelerationFromGround(wraith, bodyHitbox, polarVec2(accelerationMagnitude, bodyToTargetDirection));
    
-   const headHitbox = transformComponent.children[1] as Hitbox;
-   const headToTargetDirection = headHitbox.box.position.calculateAngleBetween(pos);
-   // @Hack?
-   const headAcceleration = accelerationMagnitude;
-   applyAcceleration(headHitbox, polarVec2(headAcceleration, headToTargetDirection));
-}
+//    const headHitbox = transformComponent.children[1] as Hitbox;
+//    const headToTargetDirection = headHitbox.box.position.calculateAngleBetween(pos);
+//    // @Hack?
+//    const headAcceleration = accelerationMagnitude;
+//    applyAcceleration(headHitbox, polarVec2(headAcceleration, headToTargetDirection));
+// }
 
-const turnFunc = (wraith: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
-   const transformComponent = TransformComponentArray.getComponent(wraith);
+// const turnFunc = (wraith: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
+//    const transformComponent = TransformComponentArray.getComponent(wraith);
    
-   const bodyHitbox = transformComponent.rootChildren[0] as Hitbox;
-   const bodyToTargetDirection = bodyHitbox.box.position.calculateAngleBetween(pos);
-   turnHitboxToAngle(bodyHitbox, bodyToTargetDirection, turnSpeed, turnDamping, false);
+//    const bodyHitbox = transformComponent.rootChildren[0] as Hitbox;
+//    const bodyToTargetDirection = bodyHitbox.box.position.calculateAngleBetween(pos);
+//    turnHitboxToAngle(bodyHitbox, bodyToTargetDirection, turnSpeed, turnDamping, false);
 
-   const headHitbox = transformComponent.children[1] as Hitbox;
-   const headToTargetDirection = headHitbox.box.position.calculateAngleBetween(pos);
-   turnHitboxToAngle(headHitbox, headToTargetDirection, 4 * Math.PI, 0.5, false);
-}
+//    const headHitbox = transformComponent.children[1] as Hitbox;
+//    const headToTargetDirection = headHitbox.box.position.calculateAngleBetween(pos);
+//    turnHitboxToAngle(headHitbox, headToTargetDirection, 4 * Math.PI, 0.5, false);
+// }
 
-function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: number): boolean {
-   return layer.getTileTypeAtPosition(x, y) === TileType.permafrost;
-}
+// function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: number): boolean {
+//    return layer.getTileTypeAtPosition(x, y) === TileType.permafrost;
+// }
 
-export function createWraithConfig(position: Point, angle: number): EntityConfig {
-   const transformComponent = new TransformComponent();
+// export function createWraithConfig(position: Point, angle: number): EntityConfig {
+//    const transformComponent = new TransformComponent();
 
-   const bodyHitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), angle, 48, 76), 2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.WRAITH_BODY]);
-   addHitboxToTransformComponent(transformComponent, bodyHitbox);
+//    const bodyHitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), angle, 48, 76), 2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.WRAITH_BODY]);
+//    addHitboxToTransformComponent(transformComponent, bodyHitbox);
 
-   const idealHeadDist = 56;
+//    const idealHeadDist = 56;
 
-   const headOffset = new Point(0, idealHeadDist);
-   const headPosition = position.copy();
-   headPosition.add(headOffset);
-   const headHitbox = createHitbox(transformComponent, null, new CircularBox(headPosition, headOffset, 0, 28), 0.75, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.WRAITH_HEAD]);
-   headHitbox.box.pivot = createNormalisedPivotPoint(0, -0.5);
-   addHitboxToTransformComponent(transformComponent, headHitbox);
+//    const headOffset = new Point(0, idealHeadDist);
+//    const headPosition = position.copy();
+//    headPosition.add(headOffset);
+//    const headHitbox = createHitbox(transformComponent, null, new CircularBox(headPosition, headOffset, 0, 28), 0.75, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.WRAITH_HEAD]);
+//    headHitbox.box.pivot = createNormalisedPivotPoint(0, -0.5);
+//    addHitboxToTransformComponent(transformComponent, headHitbox);
    
-   tetherHitboxes(headHitbox, bodyHitbox, transformComponent, transformComponent, idealHeadDist, 100, 1.2);
-   // @Hack: method of adding
-   headHitbox.angularTethers.push({
-      originHitbox: bodyHitbox,
-      idealAngle: 0,
-      springConstant: 122,
-      damping: 0,
-      padding: Math.PI * 0.04
-   });
+//    tetherHitboxes(headHitbox, bodyHitbox, transformComponent, transformComponent, idealHeadDist, 100, 1.2);
+//    // @Hack: method of adding
+//    headHitbox.angularTethers.push({
+//       originHitbox: bodyHitbox,
+//       idealAngle: 0,
+//       springConstant: 122,
+//       damping: 0,
+//       padding: Math.PI * 0.04
+//    });
 
-   for (let i = 0; i < 2; i++) {
-      const sideIsFlipped = i === 0;
+//    for (let i = 0; i < 2; i++) {
+//       const sideIsFlipped = i === 0;
 
-      const earOffset = new Point(24, -18);
-      const earPosition = headPosition.copy();
-      earPosition.add(earOffset);
-      const earHitbox = createHitbox(transformComponent, headHitbox, new CircularBox(earPosition, earOffset, WRAITH_EAR_IDEAL_ANGLE, 8), 0.05, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.WRAITH_EAR]);
-      earHitbox.box.flipX = sideIsFlipped;
-      // @Hack
-      earHitbox.box.totalFlipXMultiplier = sideIsFlipped ? -1 : 1;
-      earHitbox.relativeAngleConstraints.push({ 
-         idealAngle: earHitbox.box.relativeAngle,
-         springConstant: 30,
-         damping: 0.15
-      });
+//       const earOffset = new Point(24, -18);
+//       const earPosition = headPosition.copy();
+//       earPosition.add(earOffset);
+//       const earHitbox = createHitbox(transformComponent, headHitbox, new CircularBox(earPosition, earOffset, WRAITH_EAR_IDEAL_ANGLE, 8), 0.05, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.WRAITH_EAR]);
+//       earHitbox.box.flipX = sideIsFlipped;
+//       // @Hack
+//       earHitbox.box.totalFlipXMultiplier = sideIsFlipped ? -1 : 1;
+//       earHitbox.relativeAngleConstraints.push({ 
+//          idealAngle: earHitbox.box.relativeAngle,
+//          springConstant: 30,
+//          damping: 0.15
+//       });
 
-      addHitboxToTransformComponent(transformComponent, earHitbox);
-   }
+//       addHitboxToTransformComponent(transformComponent, earHitbox);
+//    }
 
-   const physicsComponent = new PhysicsComponent();
+//    const physicsComponent = new PhysicsComponent();
 
-   const statusEffectComponent = new StatusEffectComponent(StatusEffect.freezing);
+//    const statusEffectComponent = new StatusEffectComponent(StatusEffect.freezing);
    
-   const healthComponent = new HealthComponent(25);
+//    const healthComponent = new HealthComponent(25);
 
-   const aiHelperComponent = new AIHelperComponent(headHitbox, 550, moveFunc, turnFunc);
-   aiHelperComponent.ais[AIType.wander] = new WanderAI(750, 14 * Math.PI, 0.7, 0.35, wanderPositionIsValid);
+//    const aiHelperComponent = new AIHelperComponent(headHitbox, 550, moveFunc, turnFunc);
+//    aiHelperComponent.ais[AIType.wander] = new WanderAI(750, 14 * Math.PI, 0.7, 0.35, wanderPositionIsValid);
 
-   const lootComponent = new LootComponent();
+//    const lootComponent = new LootComponent();
    
-   const wraithComponent = new WraithComponent();
+//    const wraithComponent = new WraithComponent();
    
-   return {
-      entityType: EntityType.wraith,
-      components: {
-         [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
-         [ServerComponentType.statusEffect]: statusEffectComponent,
-         [ServerComponentType.health]: healthComponent,
-         [ServerComponentType.aiHelper]: aiHelperComponent,
-         [ServerComponentType.loot]: lootComponent,
-         [ServerComponentType.wraith]: wraithComponent,
-      },
-      lights: []
-   }
-}
+//    return {
+//       entityType: EntityType.wraith,
+//       components: {
+//          [ServerComponentType.transform]: transformComponent,
+//          [ServerComponentType.physics]: physicsComponent,
+//          [ServerComponentType.statusEffect]: statusEffectComponent,
+//          [ServerComponentType.health]: healthComponent,
+//          [ServerComponentType.aiHelper]: aiHelperComponent,
+//          [ServerComponentType.loot]: lootComponent,
+//          [ServerComponentType.wraith]: wraithComponent,
+//       },
+//       lights: []
+//    }
+// }

@@ -165,7 +165,7 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.snowberryBush]: CollisionGroup.boring,
    [EntityType.snobe]: CollisionGroup.default,
    [EntityType.snobeMound]: CollisionGroup.boring,
-   [EntityType.wraith]: CollisionGroup.default,
+   [EntityType.inguSerpent]: CollisionGroup.default,
 };
 
 export function getEntityCollisionGroup(entityType: EntityType): CollisionGroup {

@@ -160,7 +160,7 @@ export function createIceShardExplosion(layer: Layer, originX: number, originY: 
 function onHitboxCollision(iceSpikes: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    const collidingEntityType = getEntityType(collidingEntity);
    // @Hack
-   if (collidingEntityType === EntityType.yeti || collidingEntityType === EntityType.snowball || collidingEntityType === EntityType.wraith) {
+   if (collidingEntityType === EntityType.yeti || collidingEntityType === EntityType.snowball || collidingEntityType === EntityType.inguSerpent) {
       return;
    }
 

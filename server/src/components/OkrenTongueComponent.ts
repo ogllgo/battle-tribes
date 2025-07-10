@@ -90,7 +90,8 @@ const addTongueSegment = (tongue: Entity, okren: Entity, okrenHitbox: Hitbox, pr
       idealAngle: 0,
       springConstant: 2.5/60,
       damping: 0.5,
-      padding: 0
+      padding: 0,
+      idealHitboxAngleOffset: 0
    };
    newSegmentHitbox.angularTethers.push(angularTether);
 
@@ -102,7 +103,8 @@ const addTongueSegment = (tongue: Entity, okren: Entity, okrenHitbox: Hitbox, pr
       idealAngle: 0,
       springConstant: 1,
       damping: 0.1,
-      padding: 0.03
+      padding: 0.03,
+      idealHitboxAngleOffset: 0
    });
    
    createEntity(segmentConfig, getEntityLayer(okren), 0);
@@ -190,7 +192,8 @@ export function startRetractingTongue(tongue: Entity, okrenTongueComponent: Okre
       idealAngle: 0,
       springConstant: 2.5/60,
       damping: 0.5,
-      padding: 0
+      padding: 0,
+      idealHitboxAngleOffset: 0
    };
    tongueBaseHitbox.angularTethers.push(angularTether);
    // tongueBaseHitbox.tethers.push(createHitboxTether(tongueBaseHitbox, okrenHitbox, 0, 400/60, 0.5, false));
@@ -300,7 +303,8 @@ const regressTongue = (tongue: Entity, tongueTransformComponent: TransformCompon
             idealAngle: 0,
             springConstant: 2.5/60,
             damping: 0.5,
-            padding: 0
+            padding: 0,
+            idealHitboxAngleOffset: 0
          };
          nextBaseSegmentHitbox.angularTethers.push(angularTether);
          // nextBaseSegmentHitbox.tethers.push(createHitboxTether(nextBaseSegmentHitbox, okrenHitbox, 0, 400/60, 0.5, false));

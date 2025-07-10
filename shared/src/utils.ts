@@ -92,7 +92,7 @@ export function multiColourLerp(colours: ReadonlyArray<Colour>, u: number): Colo
    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-export function randFloat (min: number, max: number): number {
+export function randFloat(min: number, max: number): number {
    return Math.random() * (max - min) + min;
 }
 
@@ -261,9 +261,15 @@ export function rotateYAroundOrigin(x: number, y: number, rotation: number): num
    return -Math.sin(rotation) * x + Math.cos(rotation) * y;
 }
 
-export function rotatePoint(point: Point, pivotPoint: Point, rotation: number): Point {
+export function rotatePointAroundPivot(point: Point, pivotPoint: Point, rotation: number): Point {
    const x = Math.cos(rotation) * (point.x - pivotPoint.x) + Math.sin(rotation) * (point.y - pivotPoint.y) + pivotPoint.x;
    const y = -Math.sin(rotation) * (point.x - pivotPoint.x) + Math.cos(rotation) * (point.y - pivotPoint.y) + pivotPoint.y;
+   return new Point(x, y);
+}
+
+export function rotatePoint(point: Point, rotation: number): Point {
+   const x = Math.cos(rotation) * point.x + Math.sin(rotation) * point.y;
+   const y = -Math.sin(rotation) * point.x + Math.cos(rotation) * point.y;
    return new Point(x, y);
 }
 

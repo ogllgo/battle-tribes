@@ -70,8 +70,8 @@ function onHitboxCollision(snowball: Entity, collidingEntity: Entity, snowballHi
       return;
    }
 
-   // @Hack so that wratihs also don't get killed
-   if (getEntityType(collidingEntity) === EntityType.wraith) {
+   // @Hack so that ingu serpen'ts also don't get killed
+   if (getEntityType(collidingEntity) === EntityType.inguSerpent) {
       return;
    }
    

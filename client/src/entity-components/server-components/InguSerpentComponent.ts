@@ -8,13 +8,13 @@ import { EntityIntermediateInfo, EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { entityChildIsHitbox } from "./TransformComponent";
 
-export interface WraithComponentParams {}
+export interface InguSerpentComponentParams {}
 
 interface IntermediateInfo {}
 
-export interface WraithComponent {}
+export interface InguSerpentComponent {}
 
-export const WraithComponentArray = new ServerComponentArray<WraithComponent, WraithComponentParams, IntermediateInfo>(ServerComponentType.wraith, true, {
+export const InguSerpentComponentArray = new ServerComponentArray<InguSerpentComponent, InguSerpentComponentParams, IntermediateInfo>(ServerComponentType.inguSerpent, true, {
    createParamsFromData: createParamsFromData,
    populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
@@ -23,7 +23,7 @@ export const WraithComponentArray = new ServerComponentArray<WraithComponent, Wr
    updateFromData: updateFromData,
 });
 
-function createParamsFromData(): WraithComponentParams {
+function createParamsFromData(): InguSerpentComponentParams {
    return {};
 }
 
@@ -36,60 +36,70 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
          continue;
       }
 
-      if (hitbox.flags.includes(HitboxFlag.WRAITH_BODY)) {
+      if (hitbox.flags.includes(HitboxFlag.INGU_SERPENT_HEAD)) {
          intermediateInfo.renderInfo.attachRenderPart(
             new TexturedRenderPart(
                hitbox,
                0,
                0,
-               getTextureArrayIndex("entities/wraith/body.png")
+               getTextureArrayIndex("entities/ingu-serpent/head.png")
             )
          );
-      } else if (hitbox.flags.includes(HitboxFlag.WRAITH_HEAD)) {
+      } else if (hitbox.flags.includes(HitboxFlag.INGU_SERPENT_BODY_1)) {
          const renderPart = new TexturedRenderPart(
             hitbox,
             1,
             0,
-            getTextureArrayIndex("entities/wraith/head.png")
+            getTextureArrayIndex("entities/ingu-serpent/body-1.png")
          );
          renderPart.addTag("tamingComponent:head")
          intermediateInfo.renderInfo.attachRenderPart(renderPart);
 
          headRenderPart = renderPart;
-      } else if (hitbox.flags.includes(HitboxFlag.WRAITH_EAR)) {
+      } else if (hitbox.flags.includes(HitboxFlag.INGU_SERPENT_BODY_2)) {
          intermediateInfo.renderInfo.attachRenderPart(
             new TexturedRenderPart(
                hitbox,
                2,
                0,
-               getTextureArrayIndex("entities/wraith/ear.png")
+               getTextureArrayIndex("entities/ingu-serpent/body-2.png")
+            )
+         );
+      } else if (hitbox.flags.includes(HitboxFlag.INGU_SERPENT_TAIL)) {
+         intermediateInfo.renderInfo.attachRenderPart(
+            new TexturedRenderPart(
+               hitbox,
+               3,
+               0,
+               getTextureArrayIndex("entities/ingu-serpent/tail.png")
             )
          );
       }
    }
 
-   for (let i = 0; i < 2; i++) {
-      const mult = (i === 0 ? 1 : -1);
+   // @Incomplete
+   // for (let i = 0; i < 2; i++) {
+   //    const mult = (i === 0 ? 1 : -1);
       
-      const light = createLight(
-         new Point(12 * mult, 2),
-         0.55,
-         0.1,
-         2,
-         33/255,
-         225/255,
-         255/255
-      );
-      intermediateInfo.lights.push({
-         light: light,
-         attachedRenderPart: headRenderPart
-      });
-   }
+   //    const light = createLight(
+   //       new Point(12 * mult, 2),
+   //       0.55,
+   //       0.1,
+   //       2,
+   //       33/255,
+   //       225/255,
+   //       255/255
+   //    );
+   //    intermediateInfo.lights.push({
+   //       light: light,
+   //       attachedRenderPart: headRenderPart
+   //    });
+   // }
 
    return {};
 }
 
-function createComponent(): WraithComponent {
+function createComponent(): InguSerpentComponent {
    return {};
 }
 

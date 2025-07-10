@@ -134,7 +134,7 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.snowberryBush]: {},
    [ServerComponentType.snobe]: {},
    [ServerComponentType.snobeMound]: {},
-   [ServerComponentType.wraith]: {},
+   [ServerComponentType.inguSerpent]: {},
 } satisfies Record<ServerComponentType, object>;
 
 export type ComponentSummonData<T extends ServerComponentType> = typeof SUMMON_DATA_RECORD[T];

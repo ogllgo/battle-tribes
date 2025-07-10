@@ -28,7 +28,8 @@ export function createOkrenTongueConfig(position: Point, angle: number, okrenHit
       idealAngle: 0,
       springConstant: 1/60,
       damping: 0.5,
-      padding: 0
+      padding: 0,
+      idealHitboxAngleOffset: 0
    };
    tongueTipHitbox.angularTethers.push(angularTether);
    

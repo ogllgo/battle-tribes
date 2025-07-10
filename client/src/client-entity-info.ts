@@ -466,9 +466,9 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Snobe Mound",
       internalName: "snobe-mound"
    },
-   [EntityType.wraith]: {
-      name: "Wraith",
-      internalName: "wraith"
+   [EntityType.inguSerpent]: {
+      name: "Ingu Serpent",
+      internalName: "InguSerpent"
    },
 };
 

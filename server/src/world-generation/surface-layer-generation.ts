@@ -48,8 +48,8 @@ import { createSpruceTreeConfig } from "../entities/tundra/spruce-tree";
 import { createTundraRockConfig } from "../entities/tundra/tundra-rock";
 import { createSnowberryBushConfig } from "../entities/tundra/snowberry-bush";
 import { createSnobeConfig } from "../entities/tundra/snobe";
-import { createWraithConfig } from "../entities/tundra/wraith";
 import { createTundraRockFrozenConfig } from "../entities/tundra/tundra-rock-frozen";
+import { createInguSerpentConfig } from "../entities/tundra/ingu-serpent";
 
 const enum Vars {
    TRIBESMAN_SPAWN_EXCLUSION_RANGE = 1200
@@ -745,7 +745,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       }
    });
    registerNewSpawnInfo({
-      entityTypes: [EntityType.wraith],
+      entityTypes: [EntityType.inguSerpent],
       layer: surfaceLayer,
       spawnRate: 0.001,
       biome: Biome.tundra,
@@ -757,7 +757,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       doStrictTileTypeCheck: false,
       doStrictCollisionCheck: true,
       createEntity: (pos: Point, angle: number): EntityConfig | null => {
-         return createWraithConfig(pos, angle);
+         return createInguSerpentConfig(pos, angle);
       }
    });
 

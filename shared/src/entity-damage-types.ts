@@ -483,7 +483,7 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       effectiveDamageTypes: [],
       stoppedDamageTypes: []
    },
-   [EntityType.wraith]: {
+   [EntityType.inguSerpent]: {
       effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
    },

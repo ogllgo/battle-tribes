@@ -117,7 +117,7 @@ export const enum EntityType {
    snowberryBush,
    snobe,
    snobeMound,
-   wraith
+   inguSerpent,
 }
 
 export const EntityTypeString: Record<EntityType, string> = {
@@ -236,7 +236,7 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.snowberryBush]: "Snowberry Bush",
    [EntityType.snobe]: "Snobe",
    [EntityType.snobeMound]: "Snobe Mound",
-   [EntityType.wraith]: "Wraith",
+   [EntityType.inguSerpent]: "Ingu Serpent",
 };
 
 export const NUM_ENTITY_TYPES = Object.keys(EntityTypeString).length;

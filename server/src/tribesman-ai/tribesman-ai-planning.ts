@@ -195,7 +195,7 @@ const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
    [ItemType.snowberry]: "sword",
    [ItemType.rawSnobeMeat]: "sword",
    [ItemType.snobeStew]: null,
-   [ItemType.wraithTooth]: "sword",
+   [ItemType.inguSerpentTooth]: "sword",
    [ItemType.iceWringer]: null,
 };
 

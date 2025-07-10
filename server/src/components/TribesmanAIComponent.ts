@@ -121,7 +121,7 @@ const GIFT_APPRECIATION_WEIGHTS: Record<ItemType, number> = {
    [ItemType.snowberry]: 1,
    [ItemType.rawSnobeMeat]: 1,
    [ItemType.snobeStew]: 1,
-   [ItemType.wraithTooth]: 1,
+   [ItemType.inguSerpentTooth]: 1,
    [ItemType.iceWringer]: 1,
 };
 

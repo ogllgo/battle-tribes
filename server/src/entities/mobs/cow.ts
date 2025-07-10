@@ -159,7 +159,8 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
       idealAngle: 0,
       springConstant: 18,
       damping: 0,
-      padding: Math.PI * 0.08
+      padding: Math.PI * 0.08,
+      idealHitboxAngleOffset: 0
    });
 
    const physicsComponent = new PhysicsComponent();

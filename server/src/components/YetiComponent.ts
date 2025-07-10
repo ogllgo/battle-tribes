@@ -219,7 +219,7 @@ const entityIsTargetted = (yeti: Entity, entity: Entity, attackingEntitiesCompon
    const entityType = getEntityType(entity);
    
    // Don't chase entities without health or natural tundra resources or snowballs
-   if (!HealthComponentArray.hasComponent(entity) || entityType === EntityType.iceSpikes || entityType === EntityType.spruceTree || entityType === EntityType.tundraRock || entityType === EntityType.tundraRockFrozen || entityType === EntityType.snobe || entityType === EntityType.snowberryBush || entityType === EntityType.wraith || entityType === EntityType.snowball) {
+   if (!HealthComponentArray.hasComponent(entity) || entityType === EntityType.iceSpikes || entityType === EntityType.spruceTree || entityType === EntityType.tundraRock || entityType === EntityType.tundraRockFrozen || entityType === EntityType.snobe || entityType === EntityType.snowberryBush || entityType === EntityType.inguSerpent || entityType === EntityType.snowball) {
       return false;
    }
    

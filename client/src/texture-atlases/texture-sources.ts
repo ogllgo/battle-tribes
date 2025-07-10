@@ -522,9 +522,10 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/snobe/butt.png",
    "entities/snobe/ear.png",
    "entities/snobe-mound/snobe-mound.png",
-   "entities/wraith/body.png",
-   "entities/wraith/head.png",
-   "entities/wraith/ear.png",
+   "entities/ingu-serpent/head.png",
+   "entities/ingu-serpent/body-1.png",
+   "entities/ingu-serpent/body-2.png",
+   "entities/ingu-serpent/tail.png",
 ];
 
 export function registerTextureSource(textureSource: string): void {

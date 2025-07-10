@@ -102,7 +102,7 @@ export const enum ItemType {
    snowberry,
    rawSnobeMeat,
    snobeStew,
-   wraithTooth,
+   inguSerpentTooth,
    iceWringer
 }
 
@@ -206,7 +206,7 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.snowberry]: "Snowberry",
    [ItemType.rawSnobeMeat]: "Snobe Meat",
    [ItemType.snobeStew]: "Snobe Stew",
-   [ItemType.wraithTooth]: "Wraith Tooth",
+   [ItemType.inguSerpentTooth]: "Ingu Serpent Tooth",
    [ItemType.iceWringer]: "Ice Wringer",
 };
 
@@ -565,7 +565,7 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.snowberry]: "healing",
    [ItemType.rawSnobeMeat]: "healing",
    [ItemType.snobeStew]: "healing",
-   [ItemType.wraithTooth]: "material",
+   [ItemType.inguSerpentTooth]: "material",
    [ItemType.iceWringer]: "sword",
 } satisfies Record<ItemType, keyof ItemInfoRecord>;
 
@@ -1029,7 +1029,7 @@ export const ITEM_INFO_RECORD = {
       healAmount: 3,
       consumableItemCategory: ConsumableItemCategory.food
    },
-   [ItemType.wraithTooth]: {
+   [ItemType.inguSerpentTooth]: {
       stackSize: 99
    },
    [ItemType.iceWringer]: {

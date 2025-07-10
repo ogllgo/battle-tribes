@@ -540,7 +540,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
       product: ItemType.iceWringer,
       yield: 1,
       ingredients: createTallyFromRecord({
-         [ItemType.wraithTooth]: 10,
+         [ItemType.inguSerpentTooth]: 10,
          [ItemType.frostcicle]: 20
       }),
       aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,

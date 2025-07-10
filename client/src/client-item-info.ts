@@ -804,12 +804,12 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       namePlural: "Snobe Stews",
       description: ""
    },
-   [ItemType.wraithTooth]: {
-      entityTextureSource: "items/small/wraith-tooth.png",
-      textureSource: "items/large/wraith-tooth.png",
+   [ItemType.inguSerpentTooth]: {
+      entityTextureSource: "items/small/ingu-serpent-tooth.png",
+      textureSource: "items/large/ingu-serpent-tooth.png",
       toolTextureSource: "",
-      name: "Wraith Tooth",
-      namePlural: "Wraith Teeth",
+      name: "Ingu Serpent Tooth",
+      namePlural: "Ingu Serpent Teeth",
       description: ""
    },
    [ItemType.iceWringer]: {
