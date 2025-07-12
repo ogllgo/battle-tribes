@@ -3,10 +3,9 @@ import { Entity, EntityType } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
 import { Point, randFloat, randInt, randSign } from "../../../shared/src/utils";
 import { createDustfleaConfig } from "../entities/desert/dustflea";
-import { createEntity } from "../Entity";
 import { addHitboxAngularVelocity, Hitbox } from "../hitboxes";
 import { tetherHitboxes } from "../tethers";
-import { destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType, ticksToGameHours } from "../world";
+import { createEntity, destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType, ticksToGameHours } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 

@@ -1,45 +1,93 @@
-import { createNormalisedPivotPoint } from "../../../../shared/src/boxes/BaseBox";
 import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
-import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
+import { Settings } from "../../../../shared/src/settings";
 import { StatusEffect } from "../../../../shared/src/status-effects";
 import { TileType } from "../../../../shared/src/tiles";
-import { Point, polarVec2, randInt, rotatePoint } from "../../../../shared/src/utils";
-import { turnToPosition } from "../../ai-shared";
+import { getAbsAngleDiff, getAngleDiff, Point, polarVec2, rotatePoint } from "../../../../shared/src/utils";
+import { predictHitboxPos } from "../../ai-shared";
 import WanderAI from "../../ai/WanderAI";
-import { EntityConfig } from "../../components";
+import { EntityConfig, LightCreationInfo } from "../../components";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { InguSerpentComponent } from "../../components/InguSerpentComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
+import { PlayerComponentArray } from "../../components/PlayerComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
-import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
-import { applyAccelerationFromGround, createHitbox, Hitbox } from "../../hitboxes";
+import { addHitboxToTransformComponent, entityChildIsHitbox, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
+import { applyAccelerationFromGround, createHitbox, Hitbox, turnHitboxToAngle } from "../../hitboxes";
 import Layer from "../../Layer";
+import { createLight } from "../../lights";
 import { tetherHitboxes } from "../../tethers";
+import { getEntityAgeTicks } from "../../world";
 
 registerEntityLootOnDeath(EntityType.inguSerpent, [
    {
       itemType: ItemType.inguSerpentTooth,
-      getAmount: () => randInt(2, 3)
+      getAmount: () => 2,
+      hitboxIdx: 0
    }
 ]);
 
-const moveFunc = (serpentHead: Entity, pos: Point, accelerationMagnitude: number): void => {
-   const transformComponent = TransformComponentArray.getComponent(serpentHead);
-   const headHitbox = transformComponent.rootChildren[0] as Hitbox;
+const moveFunc = (serpent: Entity, pos: Point, accelerationMagnitude: number): void => {
+   // @HACKKK!!!!
+   // const targetEntity = PlayerComponentArray.activeEntities[0];
+   // const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);
+   // const targetHitbox = targetTransformComponent.children[0] as Hitbox;
    
-   const bodyToTargetDirection = headHitbox.box.position.calculateAngleBetween(pos);
-   applyAccelerationFromGround(serpentHead, headHitbox, polarVec2(accelerationMagnitude, bodyToTargetDirection));
+   const transformComponent = TransformComponentArray.getComponent(serpent);
+   for (let i = 0; i < transformComponent.children.length; i++) {
+      const hitbox = transformComponent.children[i];
+      if (!entityChildIsHitbox(hitbox)) {
+         continue;
+      }
+
+      let moveDir: number;
+      if (i === 0) {
+         moveDir = hitbox.box.angle;
+                                                                  // Here was the devil
+      } else {
+         const previousHitbox = transformComponent.children[i - 1] as Hitbox;
+         moveDir = hitbox.box.position.calculateAngleBetween(previousHitbox.box.position);
+      }
+      
+      const isHeadHitbox = hitbox.flags.includes(HitboxFlag.INGU_SERPENT_HEAD);
+      const acc = accelerationMagnitude * (isHeadHitbox ? 1.4 : 0.7) * 0.5;
+      const connectingVel = polarVec2(acc, moveDir);
+
+      // const dirToTarget = hitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+      const dirToTarget = hitbox.box.position.calculateAngleBetween(pos);
+      const velToTarget = polarVec2(accelerationMagnitude * (isHeadHitbox ? 1.4 : 0.7) * 0.5, dirToTarget);
+
+      applyAccelerationFromGround(serpent, hitbox, new Point(connectingVel.x + velToTarget.x, connectingVel.y + velToTarget.y));
+   }
 }
 
-const turnFunc = (serpentHead: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
-   turnToPosition(serpentHead, pos, turnSpeed, turnDamping);
+const turnFunc = (serpent: Entity, _pos: Point, turnSpeed: number, turnDamping: number): void => {
+   // @HACKKK!!!!
+   // const targetEntity = PlayerComponentArray.activeEntities[0];
+   // const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);
+   // const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+
+   // const pos = predictHitboxPos(targetHitbox, 0.3);
+   const pos = _pos;
+
+   const transformComponent = TransformComponentArray.getComponent(serpent);
+   const headHitbox = transformComponent.rootChildren[0] as Hitbox;
+
+   const targetDirection = headHitbox.box.position.calculateAngleBetween(pos);
+
+   const absDiff = getAbsAngleDiff(headHitbox.box.angle, targetDirection);
+   const angleDiffStopWiggle = 0.85;
+   const wiggleMultiplier = 1 - Math.pow(Math.min(absDiff, angleDiffStopWiggle) / angleDiffStopWiggle, 2);
+   
+   // const idealAngle = targetDirection + Math.PI * 0.45 * Math.sin(getEntityAgeTicks(serpent) / Settings.TPS * 7) * wiggleMultiplier;
+   const idealAngle = targetDirection + Math.PI * 0.45 * Math.sin(getEntityAgeTicks(serpent) / Settings.TPS * 7);
+   turnHitboxToAngle(headHitbox, idealAngle, turnSpeed, turnDamping, false);
 }
 
 function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: number): boolean {
@@ -49,17 +97,16 @@ function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: numb
 export function createInguSerpentConfig(position: Point, angle: number): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const headHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 28), 2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.INGU_SERPENT_HEAD]);
+   const headHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 28), 0.9, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.INGU_SERPENT_HEAD]);
    addHitboxToTransformComponent(transformComponent, headHitbox);
 
-   const idealBody1Dist = 56;
+   const idealBody1Dist = 48;
 
    const body1Offset = new Point(0, -idealBody1Dist);
    const body1Position = position.copy();
    // @Hack: this rotation operation
    body1Position.add(rotatePoint(body1Offset, angle));
-   const body1Hitbox = createHitbox(transformComponent, null, new CircularBox(body1Position, body1Offset, 0, 28), 0.75, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.INGU_SERPENT_BODY_1]);
-   body1Hitbox.box.pivot = createNormalisedPivotPoint(0, -0.5);
+   const body1Hitbox = createHitbox(transformComponent, null, new CircularBox(body1Position, body1Offset, angle, 28), 1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.INGU_SERPENT_BODY_1]);
    addHitboxToTransformComponent(transformComponent, body1Hitbox);
    
    tetherHitboxes(body1Hitbox, headHitbox, transformComponent, transformComponent, idealBody1Dist, 100, 1.2);
@@ -68,19 +115,18 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
       originHitbox: headHitbox,
       idealAngle: Math.PI,
       springConstant: 122,
-      damping: 0,
-      padding: Math.PI * 0.04,
+      damping: 0.85,
+      padding: Math.PI * 0.1,
       idealHitboxAngleOffset: Math.PI
    });
 
-   const idealBody2Dist = 56;
+   const idealBody2Dist = 46;
 
    const body2Offset = new Point(0, -idealBody2Dist);
    const body2Position = body1Position.copy();
    // @Hack: this rotation operation
    body2Position.add(rotatePoint(body2Offset, angle));
-   const body2Hitbox = createHitbox(transformComponent, null, new CircularBox(body2Position, body2Offset, 0, 28), 0.75, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.INGU_SERPENT_BODY_2]);
-   body2Hitbox.box.pivot = createNormalisedPivotPoint(0, -0.5);
+   const body2Hitbox = createHitbox(transformComponent, null, new CircularBox(body2Position, body2Offset, angle, 28), 0.65, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.INGU_SERPENT_BODY_2]);
    addHitboxToTransformComponent(transformComponent, body2Hitbox);
    
    tetherHitboxes(body2Hitbox, body1Hitbox, transformComponent, transformComponent, idealBody2Dist, 100, 1.2);
@@ -89,18 +135,17 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
       originHitbox: body1Hitbox,
       idealAngle: Math.PI,
       springConstant: 122,
-      damping: 0,
-      padding: Math.PI * 0.04,
+      damping: 0.85,
+      padding: Math.PI * 0.1,
       idealHitboxAngleOffset: Math.PI
    });
 
-   const idealTailDist = 56;
+   const idealTailDist = 44;
 
    const tailOffset = new Point(0, -idealTailDist);
    const tailPosition = body2Position.copy();
    tailPosition.add(tailOffset);
-   const tailHitbox = createHitbox(transformComponent, null, new CircularBox(tailPosition, tailOffset, 0, 28), 0.75, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.INGU_SERPENT_TAIL]);
-   tailHitbox.box.pivot = createNormalisedPivotPoint(0, -0.5);
+   const tailHitbox = createHitbox(transformComponent, null, new CircularBox(tailPosition, tailOffset, angle, 28), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.INGU_SERPENT_TAIL]);
    addHitboxToTransformComponent(transformComponent, tailHitbox);
    
    tetherHitboxes(tailHitbox, body2Hitbox, transformComponent, transformComponent, idealTailDist, 100, 1.2);
@@ -109,8 +154,8 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
       originHitbox: body2Hitbox,
       idealAngle: Math.PI,
       springConstant: 122,
-      damping: 0,
-      padding: Math.PI * 0.04,
+      damping: 0.85,
+      padding: Math.PI * 0.1,
       idealHitboxAngleOffset: Math.PI
    });
 
@@ -121,11 +166,33 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
    const healthComponent = new HealthComponent(25);
 
    const aiHelperComponent = new AIHelperComponent(headHitbox, 550, moveFunc, turnFunc);
-   aiHelperComponent.ais[AIType.wander] = new WanderAI(750, 14 * Math.PI, 0.7, 0.35, wanderPositionIsValid);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(750, 4.5 * Math.PI, 1.8, 0.35, wanderPositionIsValid);
 
    const lootComponent = new LootComponent();
    
    const inguSerpentComponent = new InguSerpentComponent();
+
+   // @Speed
+   const lights = new Array<LightCreationInfo>();
+   const hitboxes = [headHitbox, body1Hitbox, body2Hitbox, tailHitbox];
+   for (const hitbox of hitboxes) {
+      const light = createLight(
+         new Point(0, 0),
+         0.55,
+         0.45,
+         2,
+         // 83/255,
+         // 116/255,
+         // 166/255
+         51/255,
+         82/255,
+         128/255
+      );
+      lights.push({
+         light: light,
+         attachedHitbox: hitbox
+      });
+   }
    
    return {
       entityType: EntityType.inguSerpent,
@@ -138,6 +205,6 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.inguSerpent]: inguSerpentComponent,
       },
-      lights: []
+      lights: lights
    }
 }

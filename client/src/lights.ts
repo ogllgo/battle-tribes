@@ -1,14 +1,11 @@
 import { assert, Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
-import Board from "./Board";
-import { getEntityLayer } from "./world";
-import { createTranslationMatrix, Matrix3x2, matrixMultiplyInPlace } from "./rendering/matrices";
-import Layer from "./Layer";
+import { getEntityLayer, layers } from "./world";
+import { createTranslationMatrix, Matrix3x2 } from "./rendering/matrices";
 import { Entity } from "../../shared/src/entities";
-import { RenderPart } from "./render-parts/render-parts";
-import { EntityRenderInfo } from "./EntityRenderInfo";
 import { PacketReader } from "../../shared/src/packets";
 import { Hitbox } from "./hitboxes";
 import { getHitboxByLocalID, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import Board from "./Board";
 
 export type LightID = number;
 
@@ -22,6 +19,7 @@ export interface Light {
    r: number;
    g: number;
    b: number;
+   lastUpdateTicks: number;
 }
 
 interface LightHitboxInfo {
@@ -35,22 +33,14 @@ export interface LightIntermediateInfo {
    readonly attachedHitbox: Hitbox;
 }
 
-const lightRecord: Partial<Record<LightID, Light>> = {};
+
+const lightMap = new Map<LightID, Light>();
 
 const lightToHitboxRecord: Partial<Record<LightID, LightHitboxInfo>> = {};
 const hitboxToLightsMap = new Map<Hitbox, Array<LightID>>();
 
 export function getNumLights(): number {
-   return Object.keys(lightRecord).length;
-}
-
-const getLightLayer = (light: Light): Layer => {
-   const attachedRenderPartInfo = lightToHitboxRecord[light.id];
-   if (typeof attachedRenderPartInfo !== "undefined") {
-      return getEntityLayer(attachedRenderPartInfo.entity);
-   }
-
-   throw new Error();
+   return lightMap.size;
 }
 
 export function createLight(id: LightID, offset: Point, intensity: number, strength: number, radius: number, r: number, g: number, b: number): Light {
@@ -62,19 +52,20 @@ export function createLight(id: LightID, offset: Point, intensity: number, stren
       radius: radius,
       r: r,
       g: g,
-      b: b
+      b: b,
+      lastUpdateTicks: Board.serverTicks
    };
 }
 
 // @Cleanup: the 2 final parameters are all related, and ideally should just be able to be deduced from the render part? maybe?
 export function attachLightToHitbox(light: Light, entity: Entity, hitbox: Hitbox): void {
    // Make sure the light doesn't already exist
-   assert(typeof lightRecord[light.id] === "undefined")
+   assert(!lightMap.has(light.id))
 
    const layer = getEntityLayer(entity);
    
    layer.lights.push(light);
-   lightRecord[light.id] = light;
+   lightMap.set(light.id, light);
    
    lightToHitboxRecord[light.id] = {
       entity: entity,
@@ -90,34 +81,31 @@ export function attachLightToHitbox(light: Light, entity: Entity, hitbox: Hitbox
 }
 
 export function removeLight(light: Light): void {
-   const layer = getLightLayer(light);
-   
-   const idx = layer.lights.indexOf(light);
-   if (idx === -1) {
-      return;
-   }
-   
-   layer.lights.splice(idx, 1);
-   delete lightRecord[light.id];
-
-   const renderPartInfo = lightToHitboxRecord[light.id];
-   delete lightToHitboxRecord[light.id];
-
-   // If the light was attached to a render light, register the light's removal from that render part
-   if (typeof renderPartInfo !== "undefined") {
-      const hitbox = renderPartInfo.hitbox;
-      
-      const lightIDs = hitboxToLightsMap.get(hitbox)!;
-      const idx = lightIDs.indexOf(light.id);
-      lightIDs.splice(idx, 1);
-      if (lightIDs.length === 0) {
-         hitboxToLightsMap.delete(hitbox);
+   for (const layer of layers) {
+      // @SPEED
+      const idx = layer.lights.indexOf(light);
+      if (idx === -1) {
+         continue;
       }
+      
+      layer.lights.splice(idx, 1);
+      lightMap.delete(light.id);
 
-      return;
+      const renderPartInfo = lightToHitboxRecord[light.id];
+      delete lightToHitboxRecord[light.id];
+
+      // If the light was attached to a hitbox, register the light's removal from that hitbox
+      if (typeof renderPartInfo !== "undefined") {
+         const hitbox = renderPartInfo.hitbox;
+         
+         const lightIDs = hitboxToLightsMap.get(hitbox)!;
+         const idx = lightIDs.indexOf(light.id);
+         lightIDs.splice(idx, 1);
+         if (lightIDs.length === 0) {
+            hitboxToLightsMap.delete(hitbox);
+         }
+      }
    }
-
-   throw new Error();
 }
 
 export function removeLightsAttachedToHitbox(hitbox: Hitbox): void {
@@ -128,7 +116,7 @@ export function removeLightsAttachedToHitbox(hitbox: Hitbox): void {
 
    for (let i = lightIDs.length - 1; i >= 0; i--) {
       const lightID = lightIDs[i];
-      const light = lightRecord[lightID];
+      const light = lightMap.get(lightID);
       if (typeof light !== "undefined") {
          removeLight(light);
       }
@@ -163,9 +151,17 @@ export function updateLightsFromData(reader: PacketReader): void {
       
       const lightID = reader.readNumber();
 
-      const existingLight = lightRecord[lightID];
+      const existingLight = lightMap.get(lightID);
       if (typeof existingLight !== "undefined") {
-         reader.padOffset(8 * Float32Array.BYTES_PER_ELEMENT);
+         reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
+         existingLight.intensity = reader.readNumber();
+         existingLight.strength = reader.readNumber();
+         existingLight.radius = reader.readNumber();
+         existingLight.r = reader.readNumber();
+         existingLight.g = reader.readNumber();
+         existingLight.b = reader.readNumber();
+
+         existingLight.lastUpdateTicks = Board.serverTicks;
       } else {
          // New light
 
@@ -179,6 +175,15 @@ export function updateLightsFromData(reader: PacketReader): void {
 
          const light = createLight(lightID, offset, intensity, strength, radius, r, g, b);
          attachLightToHitbox(light, entity, hitbox);
+      }
+   }
+
+   // Remove lights which are no longer visible
+   for (const pair of lightMap) {
+      const light = pair[1];
+
+      if (light.lastUpdateTicks !== Board.serverTicks) {
+         removeLight(light);
       }
    }
 }

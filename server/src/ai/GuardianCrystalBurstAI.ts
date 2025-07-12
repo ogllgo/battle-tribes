@@ -6,8 +6,7 @@ import { turnToPosition } from "../ai-shared";
 import { GuardianComponent, GuardianComponentArray, GuardianVars } from "../components/GuardianComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { createGuardianGemFragmentProjectileConfig } from "../entities/projectiles/guardian-gem-fragment-projectile";
-import { createEntity } from "../Entity";
-import { getEntityLayer } from "../world";
+import { createEntity, getEntityLayer } from "../world";
 import { Hitbox, addHitboxAngularVelocity, addHitboxVelocity } from "../hitboxes";
 
 const enum Vars {

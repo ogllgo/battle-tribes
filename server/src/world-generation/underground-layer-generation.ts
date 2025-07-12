@@ -7,8 +7,7 @@ import { groupLocalBiomes, setWallInSubtiles } from "./terrain-generation-utils"
 import { Biome } from "../../../shared/src/biomes";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { createTreeRootBaseConfig } from "../entities/resources/tree-root-base";
-import { createEntity } from "../Entity";
-import { getEntityType, pushJoinBuffer } from "../world";
+import { getEntityType, createEntityImmediate } from "../world";
 import { generateSpikyBastards } from "./spiky-bastard-generation";
 import { getEntitiesInRange } from "../ai-shared";
 import { EntityType } from "../../../shared/src/entities";
@@ -405,9 +404,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       }
       
       const treeRoot = createTreeRootBaseConfig(new Point(x, y), 2 * Math.PI * Math.random());
-      createEntity(treeRoot, undergroundLayer, 0);
-
-      pushJoinBuffer(false);
+      createEntityImmediate(treeRoot, undergroundLayer);
    }
 
    registerNewSpawnInfo({

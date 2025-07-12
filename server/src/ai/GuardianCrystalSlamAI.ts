@@ -6,8 +6,7 @@ import { moveEntityToPosition, turnToPosition } from "../ai-shared";
 import { GuardianComponent, GuardianComponentArray, GuardianVars } from "../components/GuardianComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { createGuardianGemQuakeConfig } from "../entities/guardian-gem-quake";
-import { createEntity } from "../Entity";
-import { getEntityLayer } from "../world";
+import { createEntity, getEntityLayer } from "../world";
 import { applyAbsoluteKnockback, Hitbox } from "../hitboxes";
 
 const enum Vars {

@@ -5,8 +5,7 @@ import { Point, UtilVars, randAngle, randFloat, randInt } from "battletribes-sha
 import { turnToPosition } from "../ai-shared";
 import { GuardianComponentArray } from "../components/GuardianComponent";
 import { createGuardianSpikyBallConfig } from "../entities/projectiles/guardian-spiky-ball";
-import { createEntity } from "../Entity";
-import { getEntityLayer, getGameTicks } from "../world";
+import { createEntity, getEntityLayer, getGameTicks } from "../world";
 import { addHitboxAngularVelocity, Hitbox, setHitboxVelocity } from "../hitboxes";
 
 const enum Vars {

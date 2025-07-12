@@ -300,7 +300,7 @@ export function addHitboxAngularAcceleration(hitbox: Hitbox, acceleration: numbe
    hitbox.angularAcceleration += acceleration;
 }
 
-export function turnHitboxToAngle(hitbox: Hitbox, idealAngle: number, acceleration: number, damping: number, idealAngleIsRelative: boolean): void {
+export function turnHitboxToAngle(hitbox: Hitbox, idealAngle: number, turnSpeed: number, damping: number, idealAngleIsRelative: boolean): void {
    cleanAngle(hitbox);
    cleanRelativeAngle(hitbox);
 
@@ -312,14 +312,11 @@ export function turnHitboxToAngle(hitbox: Hitbox, idealAngle: number, accelerati
       idealRelativeAngle = idealAngle - parentAngle;
    }
       
-   const clockwiseDist = clampAngleA(idealRelativeAngle - hitbox.box.relativeAngle);
-   
-   const shortestAngleDiff = clockwiseDist <= Math.PI ? clockwiseDist : clockwiseDist - 2 * Math.PI;
-   const springForce = shortestAngleDiff * acceleration; // 'acceleration' is really a spring constant now
+   const angleDiff = getAngleDiff(hitbox.box.relativeAngle, idealRelativeAngle);
+   const springForce = angleDiff * turnSpeed; // 'turn speed' is really a spring constant now
    
    const angularVelocity = getHitboxAngularVelocity(hitbox);
-   const adjustedDamping = damping * acceleration; // The damping parameter is a proportion of the acceleration
-   const dampingForce = -angularVelocity * adjustedDamping;
+   const dampingForce = -angularVelocity * damping;
 
    hitbox.angularAcceleration += springForce + dampingForce;
 }

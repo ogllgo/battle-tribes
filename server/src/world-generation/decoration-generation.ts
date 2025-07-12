@@ -1,12 +1,11 @@
-import { DecorationType, ServerComponentType } from "battletribes-shared/components";
+import { DecorationType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
 import { randInt, randFloat, TileIndex, getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorldIncludingEdges, Point, randAngle } from "battletribes-shared/utils";
 import { getTilesInRange } from "../Layer";
 import { createDecorationConfig } from "../entities/decoration";
-import { createEntity } from "../Entity";
-import { pushJoinBuffer } from "../world";
 import { surfaceLayer } from "../layers";
+import { createEntityImmediate } from "../world";
 
 const enum Vars {
    RIVERSIDE_DECORATION_SPAWN_ATTEMPT_DENSITY_PER_TILE = 0.5,
@@ -25,9 +24,7 @@ interface DecorationGenerationInfo {
 
 const createDecoration = (x: number, y: number, decorationType: DecorationType): void => {
    const config = createDecorationConfig(new Point(x, y), randAngle(), decorationType);
-   createEntity(config, surfaceLayer, 0);
-
-   pushJoinBuffer(false);
+   createEntityImmediate(config, surfaceLayer);
 }
 
 const generateRiversideDecorations = (): void => {

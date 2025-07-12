@@ -13,7 +13,6 @@ import { createGameDataPacket, createSyncDataPacket, createSyncPacket } from "./
 import PlayerClient, { PlayerClientVars } from "./PlayerClient";
 import { addPlayerClient, generatePlayerSpawnPosition, getPlayerClients, handlePlayerDisconnect, resetDirtyEntities } from "./player-clients";
 import { createPlayerConfig } from "../entities/tribes/player";
-import { createEntity } from "../Entity";
 import { generateGrassStrands } from "../world-generation/grass-generation";
 import { processAcquireTamingSkillPacket, processAnimalStaffFollowCommandPacket, processAscendPacket, processCompleteTamingTierPacket, processDevGiveItemPacket, processDevSetViewedSpawnDistribution, processDismountCarrySlotPacket, processEntitySummonPacket, processForceAcquireTamingSkillPacket, processForceCompleteTamingTierPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processModifyBuildingPacket, processMountCarrySlotPacket, processPickUpEntityPacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processSelectTechPacket, processSetAttackTargetPacket, processSetAutogiveBaseResourcesPacket, processSetCarryTargetPacket, processSetMoveTargetPositionPacket, processSetSignMessagePacket, processSetSpectatingPositionPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processTechStudyPacket, processTechUnlockPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
 import { Entity, EntityType } from "battletribes-shared/entities";
@@ -23,7 +22,7 @@ import { entityChildIsEntity, TransformComponentArray } from "../components/Tran
 import { generateDecorations } from "../world-generation/decoration-generation";
 import { forceMaxGrowAllIceSpikes } from "../components/IceSpikesComponent";
 import { sortComponentArrays } from "../components/ComponentArray";
-import { destroyFlaggedEntities, entityExists, getEntityLayer, pushJoinBuffer, tickGameTime, tickEntities, generateLayers, getEntityType, preDestroyFlaggedEntities, getGameTicks } from "../world";
+import { destroyFlaggedEntities, entityExists, getEntityLayer, pushEntityJoinBuffer, tickGameTime, tickEntities, generateLayers, getEntityType, preDestroyFlaggedEntities, getGameTicks, createEntity } from "../world";
 import { resolveEntityCollisions } from "../collision-detection";
 import { runCollapses } from "../collapses";
 import { updateTribes } from "../tribes";
@@ -214,9 +213,6 @@ class GameServer {
                reader.padOffset(3);
 
                const spawnPosition = generatePlayerSpawnPosition(tribeType);
-               // @Temporary
-               spawnPosition.x += 1500;
-               spawnPosition.y += 1500;
                // @Incomplete? Unused?
                const visibleChunkBounds = estimateVisibleChunkBounds(spawnPosition, screenWidth, screenHeight);
    
@@ -465,7 +461,7 @@ class GameServer {
 
    private async tick(): Promise<void> {
       // These are done before each tick to account for player packets causing entities to be removed/added between ticks.
-      pushJoinBuffer(false);
+      pushEntityJoinBuffer(false);
       preDestroyFlaggedEntities();
       destroyFlaggedEntities();
 
@@ -494,7 +490,7 @@ class GameServer {
          // @Bug @Incomplete: Called twice!!!!
          updateTribes();
          
-         pushJoinBuffer(true);
+         pushEntityJoinBuffer(true);
       }
       preDestroyFlaggedEntities();
 

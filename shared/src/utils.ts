@@ -418,9 +418,15 @@ export function assertUnreachable(x: never): never {
    throw new Error("Why must I exist?");
 }
 
-export function assert(condition: unknown, errorMessage?: string): asserts condition {
+export function assert(condition: unknown, errorMessage?: string | (() => string)): asserts condition {
    if (!condition) {
-      throw new Error(errorMessage);
+      if (typeof errorMessage === "string") {
+         throw new Error(errorMessage);
+      } else if (typeof errorMessage === "function") {
+         throw new Error(errorMessage());
+      } else {
+         throw new Error();
+      }
    }
 }
 

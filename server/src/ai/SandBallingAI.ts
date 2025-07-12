@@ -11,9 +11,8 @@ import { getOkrenMandibleHitbox, OKREN_SIDES } from "../components/OkrenComponen
 import { SandBallComponentArray } from "../components/SandBallComponent";
 import { entityChildIsEntity, removeAttachedEntity, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { createSandBallConfig } from "../entities/desert/sand-ball";
-import { createEntity } from "../Entity";
 import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle, HitboxAngularTether, addHitboxAngularAcceleration } from "../hitboxes";
-import { getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { createEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 
 const MIN_BALLING_COOLDOWN_TICKS = 30 * Settings.TPS;
 const MAX_BALLING_COOLDOWN_TICKS = 40 * Settings.TPS;

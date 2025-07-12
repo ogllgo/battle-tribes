@@ -5,11 +5,10 @@ import { assert, customTickIntervalHasPassed, Point, polarVec2, randInt } from "
 import { MIN_TONGUE_COOLDOWN_TICKS, MAX_TONGUE_COOLDOWN_TICKS } from "../ai/OkrenCombatAI";
 import { createEntityConfigAttachInfo } from "../components";
 import { createOkrenTongueSegmentConfig } from "../entities/desert/okren-tongue-segment";
-import { createEntity } from "../Entity";
 import { addHitboxVelocity, applyAcceleration, Hitbox, HitboxAngularTether, turnHitboxToAngle } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
 import { destroyTether, tetherHitboxes } from "../tethers";
-import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { createEntity, destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { EntityAttachInfo, entityChildIsEntity, TransformComponent, TransformComponentArray } from "./TransformComponent";

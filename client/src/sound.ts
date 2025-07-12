@@ -317,6 +317,8 @@ export async function loadSoundEffects(): Promise<void> {
       "wraith-pant-3.mp3",
       "wraith-pant-4.mp3",
       "wraith-angry-leap.mp3",
+      "ingu-serpent-hit.mp3",
+      "ingu-serpent-death.mp3",
    ];
 
    const tempAudioBuffers: Partial<Record<string, AudioBuffer>> = {};

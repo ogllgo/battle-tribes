@@ -4,7 +4,7 @@ import { ITEM_TYPE_RECORD, ItemType } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
 import { assert } from "../../../shared/src/utils";
 import { createItemsOverEntity } from "../entities/item-entity";
-import { getHitboxTile, Hitbox } from "../hitboxes";
+import { getHitboxTile } from "../hitboxes";
 import { getEntityLayer, getEntityType } from "../world";
 import { LocalBiome } from "../world-generation/terrain-generation-utils";
 import { ComponentArray } from "./ComponentArray";
@@ -15,6 +15,8 @@ export interface LootEntry {
    readonly getAmount: (entity: Entity) => number;
    /** Called every time an item is dropped. */
    readonly onItemDrop?: (entity: Entity) => void;
+   /** If present then the items will be created only on the hitbox at the specified index */
+   readonly hitboxIdx?: number;
 }
 
 const lootOnHitRecord: Partial<Record<EntityType, ReadonlyArray<LootEntry>>> = {};
@@ -121,7 +123,7 @@ function onHit(entity: Entity): void {
    if (typeof entries !== "undefined") {
       for (const entry of entries) {
          const amount = entry.getAmount(entity);
-         createItemsOverEntity(entity, entry.itemType, amount);
+         createItemsOverEntity(entity, entry.itemType, amount, entry.hitboxIdx);
 
          if (typeof entry.onItemDrop !== "undefined") {
             entry.onItemDrop(entity);
@@ -137,7 +139,7 @@ function onDeath(entity: Entity): void {
    if (typeof entries !== "undefined") {
       for (const entry of entries) {
          const amount = entry.getAmount(entity);
-         createItemsOverEntity(entity, entry.itemType, amount);
+         createItemsOverEntity(entity, entry.itemType, amount, entry.hitboxIdx);
       }
    }
 }

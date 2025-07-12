@@ -752,7 +752,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       tileTypes: [TileType.permafrost],
       onlySpawnsInNight: false,
       minSpawnDistance: 30,
-      spawnDistribution: createRawSpawnDistribution(32, 0.0032),
+      spawnDistribution: createRawSpawnDistribution(32, 0.005),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
       doStrictCollisionCheck: true,

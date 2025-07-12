@@ -9,9 +9,8 @@ import { getEntitiesInRange } from "../ai-shared";
 import { AIHelperComponent } from "../components/AIHelperComponent";
 import { removeAttachedEntity, TransformComponentArray } from "../components/TransformComponent";
 import { createDustfleaMorphCocoonConfig } from "../entities/desert/dustflea-morph-cocoon";
-import { createEntity } from "../Entity";
 import { Hitbox } from "../hitboxes";
-import { destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { createEntity, destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 
 export class DustfleaHibernateAI {
    public readonly acceleration: number;

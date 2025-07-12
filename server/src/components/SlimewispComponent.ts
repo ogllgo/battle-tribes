@@ -6,11 +6,10 @@ import { TileType } from "battletribes-shared/tiles";
 import { Point, randAngle, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition } from "../ai-shared";
 import { createSlimeConfig } from "../entities/mobs/slime";
-import { createEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray } from "./TransformComponent";
-import { destroyEntity, entityIsFlaggedForDestruction, getEntityLayer, getEntityType } from "../world";
+import { createEntity, destroyEntity, entityIsFlaggedForDestruction, getEntityLayer, getEntityType } from "../world";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
 import { getHitboxTile, Hitbox } from "../hitboxes";
 

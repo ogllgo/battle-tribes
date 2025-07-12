@@ -11,9 +11,8 @@ import { AIHelperComponent } from "../components/AIHelperComponent";
 import { hasTamingSkill, TamingComponentArray } from "../components/TamingComponent";
 import { removeAttachedEntity, TransformComponentArray } from "../components/TransformComponent";
 import { createKrumblidMorphCocoonConfig } from "../entities/desert/krumblid-morph-cocoon";
-import { createEntity } from "../Entity";
 import { Hitbox } from "../hitboxes";
-import { destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { createEntity, destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 
 export class KrumblidHibernateAI {
    public readonly acceleration: number;

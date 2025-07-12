@@ -14,8 +14,7 @@ import { getPlayerClients, registerResearchOrbComplete } from "./server/player-c
 import { HutComponentArray } from "./components/HutComponent";
 import { ItemType, InventoryName } from "battletribes-shared/items/items";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
-import { createEntity } from "./Entity";
-import { addTribe, destroyEntity, entityExists, getEntityLayer, getEntityType, getGameTicks, removeTribe } from "./world";
+import { addTribe, createEntity, destroyEntity, entityExists, getEntityLayer, getEntityType, getGameTicks, removeTribe } from "./world";
 import Layer from "./Layer";
 import { EntityConfig } from "./components";
 import { createTribeWorkerConfig } from "./entities/tribes/tribe-worker";

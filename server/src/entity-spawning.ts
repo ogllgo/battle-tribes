@@ -4,22 +4,21 @@ import { randFloat, getTileIndexIncludingEdges, distance, assert, randAngle, Poi
 import Layer from "./Layer";
 import { addEntityToCensus, getEntityCount } from "./census";
 import OPTIONS from "./options";
-import { createEntity } from "./Entity";
-import { SERVER } from "./server/server";
 import { entityChildIsEntity, entityChildIsHitbox, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { getEntityType, isNight, pushJoinBuffer } from "./world";
+import { createEntity, createEntityImmediate, getEntityType, isNight } from "./world";
 import { EntityConfig } from "./components";
 import { EntitySpawnEvent, SPAWN_INFOS } from "./entity-spawn-info";
 import { HitboxFlag } from "../../shared/src/boxes/boxes";
 import { getSubtileIndex } from "../../shared/src/subtiles";
-import { undergroundLayer } from "./layers";
+import { surfaceLayer, undergroundLayer } from "./layers";
 import { generateMithrilOre } from "./world-generation/mithril-ore-generation";
 import { boxIsCollidingWithSubtile, boxIsCollidingWithTile } from "../../shared/src/collision";
 import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collision-groups";
 import { Hitbox } from "./hitboxes";
 import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
 import { getHitboxesCollidingEntities } from "./collision-detection";
+import { createInguSerpentConfig } from "./entities/tundra/ingu-serpent";
 
 const spawnConditionsAreMet = (spawnInfo: EntitySpawnEvent): boolean => {
    // Make sure there is a block which lacks density
@@ -191,11 +190,8 @@ const attemptToSpawnEntity = (spawnInfo: EntitySpawnEvent, pos: Point, firstEnti
    }
 
    // Create the entity
-   const entity = createEntity(config, spawnInfo.layer, 0);
+   const entity = createEntityImmediate(config, spawnInfo.layer);
    addEntityToCensus(entity, config.entityType);
-   if (!SERVER.isRunning) {
-      pushJoinBuffer(false);
-   }
 
    return config;
 }

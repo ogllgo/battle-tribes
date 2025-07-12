@@ -50,7 +50,11 @@ export function getEntityAgeTicks(entity: Entity): number {
 }
 
 export function getEntityLayer(entity: Entity): Layer {
-   return entityLayers[entity]!;
+   const layer = entityLayers[entity];
+   if (typeof layer === "undefined") {
+      throw new Error();
+   }
+   return layer;
 }
 
 export function getEntityType(entity: Entity): EntityType {

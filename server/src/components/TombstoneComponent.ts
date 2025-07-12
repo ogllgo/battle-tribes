@@ -5,9 +5,8 @@ import { getStringLengthBytes, Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
 import { Point, randAngle, randInt } from "battletribes-shared/utils";
 import { createZombieConfig } from "../entities/mobs/zombie";
-import { createEntity } from "../Entity";
 import { TransformComponentArray } from "./TransformComponent";
-import { destroyEntity, getEntityLayer, getGameTime, isNight } from "../world";
+import { createEntity, destroyEntity, getEntityLayer, getGameTime, isNight } from "../world";
 import TombstoneDeathManager from "../tombstone-deaths";
 import { Hitbox } from "../hitboxes";
 

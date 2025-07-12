@@ -14,9 +14,8 @@ import { createItemEntityConfig } from "../entities/item-entity";
 import { calculateItemKnockback } from "../entities/tribes/limb-use";
 import { calculateItemDamage } from "../entities/tribes/tribe-member";
 import { getHumanoidRadius } from "../entities/tribes/tribesman-ai/tribesman-ai-utils";
-import { createEntity } from "../Entity";
 import { applyKnockback, Hitbox } from "../hitboxes";
-import { destroyEntity, entityExists, entityIsFlaggedForDestruction, getEntityLayer, getEntityType } from "../world";
+import { createEntity, destroyEntity, entityExists, entityIsFlaggedForDestruction, getEntityLayer, getEntityType } from "../world";
 import { BerryBushComponentArray } from "./BerryBushComponent";
 import { BerryBushPlantedComponentArray } from "./BerryBushPlantedComponent";
 import { doBlueprintWork } from "./BlueprintComponent";
@@ -230,11 +229,13 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, collidingHit
    applyKnockback(victim, victimHitbox, attackKnockback, hitDirection);
 
    if (attackingItem !== null) {
+      // @HACK: shouldn't be hard-coded here!!
       switch (attackingItem.type) {
          case ItemType.flesh_sword: {
             applyStatusEffect(victim, StatusEffect.poisoned, 3 * Settings.TPS);
             break;
          }
+         case ItemType.inguSerpentTooth:
          case ItemType.iceWringer: {
             applyStatusEffect(victim, StatusEffect.freezing, 3 * Settings.TPS);
             break;

@@ -785,3 +785,48 @@ export function findAngleAlignment(a1: number, a2: number): number {
    const dot = x1 * x2 + y1 * y2;
    return dot * 0.5 + 0.5;
 }
+
+// @Incomplete: this is ripped from chatgpt and i dont think it works lmao
+export function computeInterceptAngle(monsterPos: Point, monsterSpeed: number, targetPos: Point, targetVelocity: Point): number | null {
+  const dx = targetPos.x - monsterPos.x;
+  const dy = targetPos.y - monsterPos.y;
+  const dvx = targetVelocity.x;
+  const dvy = targetVelocity.y;
+
+  const a = dvx * dvx + dvy * dvy - monsterSpeed * monsterSpeed;
+  const b = 2 * (dx * dvx + dy * dvy);
+  const c = dx * dx + dy * dy;
+
+  // Quadratic equation: at² + bt + c = 0
+  const discriminant = b * b - 4 * a * c;
+
+  if (discriminant < 0 || Math.abs(a) < 1e-5) {
+    // No valid solution: monster too slow or almost same direction
+    return null;
+  }
+
+  const sqrtDisc = Math.sqrt(discriminant);
+  const t1 = (-b + sqrtDisc) / (2 * a);
+  const t2 = (-b - sqrtDisc) / (2 * a);
+
+  // Choose the smallest positive time
+  const t = Math.min(t1, t2) > 0 ? Math.min(t1, t2) : Math.max(t1, t2);
+  if (t < 0) return null;
+
+  // Interception point
+  const interceptX = targetPos.x + targetVelocity.x * t;
+  const interceptY = targetPos.y + targetVelocity.y * t;
+
+  return monsterPos.calculateAngleBetween(new Point(interceptX, interceptY));
+}
+
+/**
+ * @param predictionTime Prediction time in seconds
+ */
+export function predictHitboxPos(hitbox: Hitbox, predictionTime: number): Point {
+   const vel = getHitboxVelocity(hitbox);
+   
+   const x = hitbox.box.position.x + vel.x * predictionTime;
+   const y = hitbox.box.position.y + vel.y * predictionTime;
+   return new Point(x, y);
+}

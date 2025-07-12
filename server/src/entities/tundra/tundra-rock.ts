@@ -9,6 +9,7 @@ import { EntityConfig } from "../../components";
 import { TransformComponent, addHitboxToTransformComponent } from "../../components/TransformComponent";
 import { createHitbox } from "../../hitboxes";
 import { HealthComponent } from "../../components/HealthComponent";
+import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 
 const HEALTHS = [15, 35, 55];
 const MASSES = [1, 2, 3];
@@ -39,6 +40,8 @@ export function createTundraRockConfig(position: Point, angle: number): EntityCo
    
    const healthComponent = new HealthComponent(HEALTHS[variant]);
    
+   const statusEffectComponent = new StatusEffectComponent(0);
+   
    const tundraRockComponent = new TundraRockComponent(variant);
    
    return {
@@ -46,6 +49,7 @@ export function createTundraRockConfig(position: Point, angle: number): EntityCo
       components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
+         [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.tundraRock]: tundraRockComponent
       },
       lights: []

@@ -2,7 +2,7 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import Layer from "./Layer";
 import { removeEntityFromCensus, runTileCensuses } from "./census";
-import { ComponentArrays, getComponentArrayRecord } from "./components/ComponentArray";
+import { ComponentArray, ComponentArrays, getComponentArrayRecord } from "./components/ComponentArray";
 import { registerEntityDestruction } from "./server/player-clients";
 import Tribe from "./Tribe";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -16,9 +16,11 @@ import { generateUndergroundTerrain } from "./world-generation/underground-layer
 import { EntityConfig, entityConfigAttachInfoIsTethered } from "./components";
 import { attachLightToHitbox } from "./lights";
 import { attachEntity, attachEntityWithTether } from "./components/TransformComponent";
+import { SERVER } from "./server/server";
 
 const enum Vars {
-   START_TIME = 12
+   // START_TIME = 12
+   START_TIME = 22
 }
 
 interface EntityJoinInfo {
@@ -44,6 +46,14 @@ const tribes = new Array<Tribe>();
 // Array of join infos, sorted by the ticks remaining until they join.
 const entityJoinBuffer = new Array<EntityJoinInfo>();
 const entityRemoveBuffer = new Array<Entity>();
+
+// We skip 0 as that is reserved as a no-entity marker
+let entityIDCounter: Entity = 1;
+
+// @Hack @Cleanup ?@Speed
+const getComponentTypes = (componentConfig: EntityConfig): ReadonlyArray<ServerComponentType> => {
+   return Object.keys(componentConfig.components).map(Number) as Array<ServerComponentType>;
+}
 
 // @Cleanup: this should probs be in the layers file
 export function generateLayers(): void {
@@ -178,7 +188,9 @@ export function setEntityLayer(entity: Entity, layer: Layer): void {
    entityLayers[entity] = layer;
 }
 
-export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
+export function pushEntityJoinBuffer(shouldTickJoinInfos: boolean): void {
+   // NOTE: The logic in here should be mirrored with the addEntityImmediate function. Changes should be made to both functions at once
+   
    // Push entities
    let finalPushedIdx: number | undefined;
    for (let i = 0; i < entityJoinBuffer.length; i++) {
@@ -259,7 +271,7 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
    for (let i = 0; i < ComponentArrays.length; i++) {
       const componentArray = ComponentArrays[i];
 
-      // NOTE: For this to function correctly, a component should never be inserted at
+      // NOTE: For this to work correctly, a component should never be inserted at
       // or before the final joining idx by an onJoin function.
 
       const finalJoiningIdx = componentArrayFinalJoiningIndexes[componentArray.componentType];
@@ -276,6 +288,119 @@ export function pushJoinBuffer(shouldTickJoinInfos: boolean): void {
 
       componentArray.clearJoinedComponents(finalJoiningIdx);
    }
+}
+
+export function createEntity<ComponentTypes extends ServerComponentType>(entityConfig: EntityConfig, layer: Layer, joinDelayTicks: number): Entity {
+   const entity = entityIDCounter++;
+   
+   // @Hack
+   const componentTypes = getComponentTypes(entityConfig);
+   const componentArrayRecord = getComponentArrayRecord();
+
+   // Run initialise functions
+   for (let i = 0; i < componentTypes.length; i++) {
+      const componentType = componentTypes[i];
+      const componentArray = componentArrayRecord[componentType] as ComponentArray<object, ComponentTypes>;
+
+      if (typeof componentArray.onInitialise !== "undefined") {
+         // @Cleanup: remove need for cast
+         // @Cleanup: first 2 parameters can be combined
+         componentArray.onInitialise(entityConfig, entity, layer);
+      }
+   }
+   
+   for (let i = 0; i < componentTypes.length; i++) {
+      const componentType = componentTypes[i];
+      
+      const component = entityConfig.components[componentType]!;
+
+      const componentArray = componentArrayRecord[componentType] as ComponentArray<object, ComponentTypes>;
+      componentArray.addComponentToBuffer(entity, component, joinDelayTicks);
+   }
+
+   addEntityToJoinBuffer(entity, entityConfig, layer, componentTypes, joinDelayTicks);
+
+   // @Hack? Should the child configs just be handled on the entity config when adding it to the world?
+   if (typeof entityConfig.childConfigs !== "undefined") {
+      for (const childEntityConfig of entityConfig.childConfigs) {
+         createEntity(childEntityConfig, layer, joinDelayTicks);
+      }
+   }
+
+   return entity;
+}
+
+/**
+ * Creates the entity and immediately adds it to the board, forgoeing the entity join queue system.
+ * THIS FUNCTION IS TO BE USED IN VERY SPECIFIC PLACES, NOT TO BE MEDDLED WITH!! DO NOT YOU THIKN ABOUT IT!! createEntity IS FINE N DANDY!!!!!!!!
+ */
+export function createEntityImmediate<ComponentTypes extends ServerComponentType>(entityConfig: EntityConfig, layer: Layer): Entity {
+   // NOTE: The logic in here should be mirrored with the pushEntityJoinBuffer function. Changes should be made to both functions at once
+
+   const entity = entityIDCounter++;
+
+   // @Hack
+   const componentTypes = getComponentTypes(entityConfig);
+   const componentArrayRecord = getComponentArrayRecord();
+
+   // Run initialise functions
+   for (let i = 0; i < componentTypes.length; i++) {
+      const componentType = componentTypes[i];
+      const componentArray = componentArrayRecord[componentType] as ComponentArray<object, ComponentTypes>;
+
+      if (typeof componentArray.onInitialise !== "undefined") {
+         // @Cleanup: remove need for cast
+         // @Cleanup: first 2 parameters can be combined
+         componentArray.onInitialise(entityConfig, entity, layer);
+      }
+   }
+
+   entityTypes[entity] = entityConfig.entityType;
+   entityLayers[entity] = layer;
+   entityComponentTypes[entity] = componentTypes;
+   entitySpawnTicks[entity] = ticks;
+
+   // Add lights
+   for (const lightCreationInfo of entityConfig.lights) {
+      attachLightToHitbox(lightCreationInfo.light, lightCreationInfo.attachedHitbox, entity);
+   }
+
+   for (const componentType of componentTypes) {
+      const component = entityConfig.components[componentType]!;
+
+      const componentArray = componentArrayRecord[componentType] as ComponentArray<object, ComponentTypes>;
+      componentArray.addComponent(entity, component);
+   }
+
+   const attachInfo = entityConfig.attachInfo;
+   if (typeof attachInfo !== "undefined") {
+      if (entityConfigAttachInfoIsTethered(attachInfo)) {
+         attachEntityWithTether(entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.idealDistance, attachInfo.springConstant, attachInfo.damping, attachInfo.destroyWhenParentIsDestroyed);
+      } else {
+         attachEntity(entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.destroyWhenParentIsDestroyed);
+      }
+   }
+
+   // @Hack? Should the child configs just be handled on the entity config when adding it to the world?
+   const childConfigs = entityConfig.childConfigs;
+   if (typeof childConfigs !== "undefined") {
+      for (const childConfig of childConfigs) {
+         const child = createEntityImmediate(childConfig, layer);
+
+         attachEntity(child, entity, null, true);
+      }
+   }
+
+   for (const componentType of componentTypes) {
+      const componentArray = componentArrayRecord[componentType] as ComponentArray<object, ComponentTypes>;
+
+      const onJoin = componentArray.onJoin;
+      if (typeof onJoin !== "undefined") {
+         onJoin(entity);
+      }
+   }
+
+   return entity;
 }
 
 export function preDestroyFlaggedEntities(): void {
@@ -367,9 +492,9 @@ export function addEntityToJoinBuffer(entity: Entity, entityConfig: EntityConfig
       ticksRemaining: joinDelayTicks
    };
 
-   // @Speed
    // Find a spot for the entity
    let insertIdx = entityJoinBuffer.length;
+   // @Speed: use binary sort if it matters
    for (let i = 0; i < entityJoinBuffer.length; i++) {
       if (entityJoinBuffer[i].ticksRemaining > joinDelayTicks) {
          insertIdx = i;

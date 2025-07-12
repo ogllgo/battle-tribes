@@ -1,13 +1,11 @@
-import { ServerComponentType } from "../../../shared/src/components";
 import { Settings } from "../../../shared/src/settings";
 import { getSubtileIndex, subtileIsInWorld } from "../../../shared/src/subtiles";
 import { SubtileType } from "../../../shared/src/tiles";
 import { angle, Point, randSign } from "../../../shared/src/utils";
 import { createSpikyBastardConfig } from "../entities/spiky-bastard";
-import { createEntity } from "../Entity";
 import Layer from "../Layer";
 import { generatePerlinNoise } from "../perlin-noise";
-import { pushJoinBuffer } from "../world";
+import { createEntityImmediate } from "../world";
 
 const enum Vars {
    /** Number of spiky bastards attempted to be generated per tile */
@@ -72,9 +70,7 @@ export function generateSpikyBastards(undergroundLayer: Layer): void {
          const y = (attachedSubtileY + 0.5 + moveDirY * 1.5) * Settings.SUBTILE_SIZE;
 
          const config = createSpikyBastardConfig(new Point(x, y), angle(moveDirX, moveDirY));
-         createEntity(config, undergroundLayer, 0);
-         
-         pushJoinBuffer(false);
+         createEntityImmediate(config, undergroundLayer);
       }
    }
 }

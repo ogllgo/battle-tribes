@@ -19,14 +19,13 @@ import { doMeleeAttack, goKillEntity } from "./tribesman-combat-ai";
 import { AIHelperComponentArray } from "../../../components/AIHelperComponent";
 import { Inventory, InventoryName, ITEM_INFO_RECORD, itemInfoIsPlaceable, ItemType } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
-import { getEntityLayer, getEntityType, getGameTicks } from "../../../world";
+import { createEntity, getEntityLayer, getEntityType, getGameTicks } from "../../../world";
 import { AIPlaceBuildingPlan, AIUpgradeBuildingPlan, planToGetItem } from "../../../tribesman-ai/tribesman-ai-planning";
 import { addAssignmentPart, AIAssignmentComponentArray } from "../../../components/AIAssignmentComponent";
 import { awardTitle } from "../../../components/TribesmanComponent";
 import { getBoxesCollidingEntities } from "../../../collision-detection";
 import { calculateEntityPlaceInfo, createStructureConfig } from "../../../structure-placement";
 import { StructureType } from "../../../../../shared/src/structures";
-import { createEntity } from "../../../Entity";
 import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../../hitboxes";
 
 const enum Vars {

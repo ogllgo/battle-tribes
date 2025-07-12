@@ -39,7 +39,6 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
 
    const tundraRockFrozenComponentParams = entityParams.serverComponentParams[ServerComponentType.tundraRockFrozen]!;
    
-   console.log("A");
    const renderPart = new TexturedRenderPart(
       hitbox,
       0,

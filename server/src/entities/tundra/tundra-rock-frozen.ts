@@ -9,6 +9,7 @@ import { TransformComponent, addHitboxToTransformComponent } from "../../compone
 import { createHitbox } from "../../hitboxes";
 import { HealthComponent } from "../../components/HealthComponent";
 import { TundraRockFrozenComponent } from "../../components/TundraRockFrozenComponent";
+import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 
 const HEALTHS = [15, 35, 55];
 const MASSES = [1, 2, 3];
@@ -38,6 +39,8 @@ export function createTundraRockFrozenConfig(position: Point, angle: number): En
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(HEALTHS[variant]);
+
+   const statusEffectComponent = new StatusEffectComponent(0);
    
    const tundraRockFrozenComponent = new TundraRockFrozenComponent(variant);
    
@@ -46,6 +49,7 @@ export function createTundraRockFrozenConfig(position: Point, angle: number): En
       components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.health]: healthComponent,
+         [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.tundraRockFrozen]: tundraRockFrozenComponent
       },
       lights: []

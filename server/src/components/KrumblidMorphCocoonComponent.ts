@@ -3,10 +3,9 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
 import { createOkrenConfig } from "../entities/desert/okren";
-import { createEntity } from "../Entity";
 import { Hitbox } from "../hitboxes";
 import Tribe from "../Tribe";
-import { destroyEntity, getEntityAgeTicks, getEntityLayer, ticksToGameHours } from "../world";
+import { createEntity, destroyEntity, getEntityAgeTicks, getEntityLayer, ticksToGameHours } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 

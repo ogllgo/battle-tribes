@@ -1,12 +1,10 @@
-import { ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { SubtileType, TileType } from "battletribes-shared/tiles";
 import { getTileIndexIncludingEdges, getTileX, getTileY, lerp, Point, randAngle, randItem, TileIndex } from "battletribes-shared/utils";
 import { getEntitiesInRange } from "../ai-shared";
 import { createGuardianConfig } from "../entities/mobs/guardian";
-import { createEntity } from "../Entity";
-import { getEntityType } from "../world";
+import { createEntity, getEntityType } from "../world";
 import { getTileDist } from "./surface-layer-generation";
 import { tileHasWallSubtile, setWallInSubtiles } from "./terrain-generation-utils";
 import { Biome } from "../../../shared/src/biomes";

@@ -17,9 +17,8 @@ import { TransformComponentArray, TransformComponent, entityChildIsHitbox } from
 import { getEntityRelationship, EntityRelationship, TribeComponentArray } from "./TribeComponent";
 import { polarVec2, randAngle, UtilVars } from "battletribes-shared/utils";
 import { boxIsCircular } from "battletribes-shared/boxes/boxes";
-import { getEntityLayer, getEntityType } from "../world";
+import { createEntity, getEntityLayer, getEntityType } from "../world";
 import { registerDirtyEntity } from "../server/player-clients";
-import { createEntity } from "../Entity";
 import { createSlingTurretRockConfig } from "../entities/projectiles/sling-turret-rock";
 import { HealthComponentArray } from "./HealthComponent";
 import { Hitbox, addHitboxVelocity } from "../hitboxes";

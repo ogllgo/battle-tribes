@@ -111,7 +111,7 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
       ComponentArrayRecord[componentType] = this as any;
    }
    
-   public addComponent(entity: Entity, component: T, joinDelayTicks: number): void {
+   public addComponentToBuffer(entity: Entity, component: T, joinDelayTicks: number): void {
       if (typeof this.entityToIndexMap[entity] !== "undefined") {
          throw new Error("Component added to same entity twice.");
       }
@@ -119,9 +119,9 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
       // Note: when a component is inserted, it should be inserted after all the existing entities with the same join delay ticks,
       // otherwise it will break onJoin functions which create entities.
 
-      // @Speed
       // Find a spot for the component
       let insertIdx = this.bufferedComponentJoinTicksRemaining.length;
+      // @Speed
       for (let i = 0; i < this.bufferedComponentJoinTicksRemaining.length; i++) {
          if (this.bufferedComponentJoinTicksRemaining[i] > joinDelayTicks) {
             insertIdx = i;
@@ -134,6 +134,21 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
       this.bufferedComponentJoinTicksRemaining.splice(insertIdx, 0, joinDelayTicks);
    }
 
+   public addComponent(entity: Entity, component: T): void {
+      // Put new entry at end and update the maps
+      const newIndex = this.components.length;
+      this.entityToIndexMap[entity] = newIndex;
+      this.indexToEntityMap[newIndex] = entity;
+      this.components.push(component);
+      
+      if (this.isActiveByDefault) {
+         // @HACK @HACK @HACK: so that grass doesn't bring the server to 1tps by updating transforms for grass every tick
+         if (this.componentType !== ServerComponentType.transform || getEntityType(entity) !== EntityType.grassStrand) {
+            this.activateComponent(entity);
+         }
+      }
+   }
+
    public pushComponentsFromBuffer(): void {
       for (let i = 0; i < this.componentBuffer.length; i++) {
          const ticksRemaining = this.bufferedComponentJoinTicksRemaining[i];
@@ -141,21 +156,18 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
             break;
          }
          
-         const component = this.componentBuffer[i];
          const entity = this.componentBufferIDs[i];
-      
-         // Put new entry at end and update the maps
-         const newIndex = this.components.length;
-         this.entityToIndexMap[entity] = newIndex;
-         this.indexToEntityMap[newIndex] = entity;
-         this.components.push(component);
-         
-         if (this.isActiveByDefault) {
-            // @HACK: so that grass doesn't bring the server to 1tps by updating transforms for grass every tick
-            if (this.componentType !== ServerComponentType.transform || getEntityType(entity) !== EntityType.grassStrand) {
-               this.activateComponent(entity);
-            }
-         }
+         const component = this.componentBuffer[i];
+
+         this.addComponent(entity, component);
+      }
+   }
+
+   public tickJoinInfos(finalJoiningIdx: number | null): void {
+      const startIdx = finalJoiningIdx !== null ? finalJoiningIdx + 1 : 0;
+      for (let i = startIdx; i < this.componentBufferIDs.length; i++) {
+         const ticksRemaining = this.bufferedComponentJoinTicksRemaining[i];
+         this.bufferedComponentJoinTicksRemaining[i] = ticksRemaining - 1;
       }
    }
 
@@ -186,14 +198,6 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
          this.componentBuffer.splice(0, numPushedEntities);
          this.componentBufferIDs.splice(0, numPushedEntities);
          this.bufferedComponentJoinTicksRemaining.splice(0, numPushedEntities);
-      }
-   }
-
-   public tickJoinInfos(finalJoiningIdx: number | null): void {
-      const startIdx = finalJoiningIdx !== null ? finalJoiningIdx + 1 : 0;
-      for (let i = startIdx; i < this.componentBufferIDs.length; i++) {
-         const ticksRemaining = this.bufferedComponentJoinTicksRemaining[i];
-         this.bufferedComponentJoinTicksRemaining[i] = ticksRemaining - 1;
       }
    }
 

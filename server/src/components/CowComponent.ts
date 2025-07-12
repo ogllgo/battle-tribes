@@ -1,6 +1,6 @@
 import { CowSpecies, DamageSource, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { angle, getAbsAngleDiff, Point, polarVec2, positionIsInWorld, randAngle, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
+import { getAbsAngleDiff, Point, polarVec2, positionIsInWorld, randAngle, randFloat, randInt, UtilVars } from "battletribes-shared/utils";
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
 import { ServerComponentType } from "battletribes-shared/components";
 import { CowVars } from "../entities/mobs/cow";
@@ -9,7 +9,6 @@ import { ItemType } from "battletribes-shared/items/items";
 import { registerEntityTickEvent } from "../server/player-clients";
 import { TransformComponentArray } from "./TransformComponent";
 import { createItemEntityConfig } from "../entities/item-entity";
-import { createEntity } from "../Entity";
 import { Packet } from "battletribes-shared/packets";
 import { getDistanceFromPointToEntity, runHerdAI, willStopAtDesiredDistance } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
@@ -18,7 +17,7 @@ import { damageEntity, healEntity, HealthComponentArray, hitEntityWithoutDamage 
 import { ItemComponentArray } from "./ItemComponent";
 import { createGrassBlocker, positionHasGrassBlocker } from "../grass-blockers";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
-import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks } from "../world";
+import { createEntity, destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks } from "../world";
 import { getEntitiesAtPosition } from "../layer-utils";
 import { getAvailableCarrySlot, mountCarrySlot, RideableComponentArray } from "./RideableComponent";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";

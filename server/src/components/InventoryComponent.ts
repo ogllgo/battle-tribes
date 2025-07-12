@@ -8,11 +8,10 @@ import { ItemTally2, tallyInventoryItems } from "battletribes-shared/items/ItemT
 import { InventoryName, Inventory, ItemType, Item, itemIsStackable, ITEM_INFO_RECORD, StackableItemInfo, getItemStackSize } from "battletribes-shared/items/items";
 import { Entity } from "battletribes-shared/entities";
 import { getRandomPositionInEntity, TransformComponentArray } from "./TransformComponent";
-import { createEntity } from "../Entity";
 import { Packet } from "battletribes-shared/packets";
 import { addInventoryDataToPacket, getInventoryDataLength } from "../server/packet-creation";
 import { EntityRelationship, getEntityRelationship } from "./TribeComponent";
-import { destroyEntity, getEntityLayer } from "../world";
+import { createEntity, destroyEntity, getEntityLayer } from "../world";
 import { registerDirtyEntity } from "../server/player-clients";
 import { randAngle } from "../../../shared/src/utils";
 

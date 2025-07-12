@@ -340,7 +340,7 @@ export function cleanTransform(node: Hitbox | Entity): void {
       const entity = node;
       const transformComponent = TransformComponentArray.getComponent(entity);
       
-      assert(transformComponent.children.length > 0);
+      assert(transformComponent.children.length > 0, () => EntityTypeString[getEntityType(TransformComponentArray.getEntityFromComponent(transformComponent))]);
    
       for (const child of transformComponent.children) {
          if (entityChildIsHitbox(child)) {
@@ -884,12 +884,17 @@ const getWeightedHitbox = (transformComponent: TransformComponent, currentArea: 
    return area;
 }
 
-export function getRandomPositionInEntity(transformComponent: TransformComponent): Point {
+export function getRandomWeightedHitbox(transformComponent: TransformComponent): Hitbox {
    const targetWeight = Math.random() * getTotalEntityHitboxArea(transformComponent);
    const hitbox = getWeightedHitbox(transformComponent, 0, targetWeight);
    if (typeof hitbox === "number") {
       throw new Error();
    }
+   return hitbox;
+}
+
+export function getRandomPositionInEntity(transformComponent: TransformComponent): Point {
+   const hitbox = getRandomWeightedHitbox(transformComponent);
    return getRandomPositionInBox(hitbox.box);
 }
 

@@ -5,10 +5,9 @@ import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { getAbsAngleDiff, Point, randAngle, randFloat, randInt } from "../../../shared/src/utils";
 import { createTreeRootBaseConfig } from "../entities/resources/tree-root-base";
 import { createTreeRootSegmentConfig } from "../entities/resources/tree-root-segment";
-import { createEntity } from "../Entity";
 import { Hitbox } from "../hitboxes";
 import Layer from "../Layer";
-import { destroyEntity, getEntityLayer } from "../world";
+import { createEntity, destroyEntity, getEntityLayer } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 

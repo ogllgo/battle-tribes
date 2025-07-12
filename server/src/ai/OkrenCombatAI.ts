@@ -12,10 +12,9 @@ import { entityChildIsEntity, TransformComponent, TransformComponentArray } from
 import { TribeComponentArray } from "../components/TribeComponent";
 import { TribeMemberComponentArray } from "../components/TribeMemberComponent"
 import { createOkrenTongueConfig } from "../entities/desert/okren-tongue";
-import { createEntity } from "../Entity";
 import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
-import { entityExists, getEntityLayer, getEntityType } from "../world";
+import { createEntity, entityExists, getEntityLayer, getEntityType } from "../world";
 
 export class OkrenCombatAI {
    public readonly acceleration: number;

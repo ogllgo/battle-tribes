@@ -192,48 +192,30 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
       if (Math.abs(directionDiff) > angularTether.padding) {
          const rotationForce = (directionDiff - angularTether.padding * Math.sign(directionDiff)) * angularTether.springConstant;
 
-         // const hitboxAngularVelocity = getHitboxAngularVelocity(hitbox);
-         // const originHitboxAngularVelocity = getHitboxAngularVelocity(originHitbox);
-   
-         // const relVel = hitboxAngularVelocity - originHitboxAngularVelocity;
-   
-         // const dampingForce = -relVel * angularTether.damping;
-   
-         // const force = rotationForce + dampingForce;
+         // @Bug: I don't think using the angular velocity is right - shouldn't it be the actual velocity of the hitbox? but like projected in the torque direction
+         const hitboxAngularVelocity = getHitboxAngularVelocity(hitbox);
+         const originHitboxAngularVelocity = getHitboxAngularVelocity(originHitbox);
+         
+         const relVel = hitboxAngularVelocity - originHitboxAngularVelocity;
+         
+         const dampingForce = -relVel * angularTether.damping;
+         const force = rotationForce + dampingForce;
 
-         const force = rotationForce;
-
-         // @Temporary
-         // addHitboxAngularAcceleration(hitbox, force / getHitboxConnectedMass(hitbox));
-         // @HACK
-         // addHitboxAngularAcceleration(originHitbox, -force / getHitboxConnectedMass(originHitbox));
-
-
-         // @HACKKKK
-         // const newRelativeAngle = hitbox.box.angle - hitbox.box.relativeAngle + idealDirection;
-         // hitbox.previousRelativeAngle = newRelativeAngle;
-         // hitbox.box.relativeAngle = newRelativeAngle;
-
-         // const rotation = force / getHitboxConnectedMass(hitbox) / Settings.TPS;
-         // const rotatedX = rotateXAroundPoint(hitbox.box.position.x, hitbox.box.position.y, originHitbox.box.position.x, originHitbox.box.position.y, rotation);
-         // const rotatedY = rotateYAroundPoint(hitbox.box.position.x, hitbox.box.position.y, originHitbox.box.position.x, originHitbox.box.position.y, rotation);
-         // const diffX = rotatedX - hitbox.box.position.x;
-         // const diffY = rotatedY - hitbox.box.position.y;
-
-         // const accMag = force / getHitboxConnectedMass(hitbox) * originHitbox.box.position.calculateDistanceBetween(hitbox.box.position);
-         const hitboxAccMag = force / getTotalMass(hitbox) * 40;
+         const hitboxAccMag = force / getTotalMass(hitbox) * 4;
          const hitboxAccDir = originToHitboxDirection + Math.PI/2;
          applyAcceleration(hitbox, polarVec2(hitboxAccMag, hitboxAccDir));
 
-         const originHitboxAccMag = -force / getTotalMass(originHitbox) * 40;
+         // @Speed: don't need to call 2nd polarVec2 cuz this is in the exact reverse direction
+         const originHitboxAccMag = force / getTotalMass(originHitbox) * 4;
          const originHitboxAccDir = originToHitboxDirection - Math.PI/2;
-         applyAcceleration(hitbox, polarVec2(originHitboxAccMag, originHitboxAccDir));
+         applyAcceleration(originHitbox, polarVec2(originHitboxAccMag, originHitboxAccDir));
       }
 
       // Restrict the hitboxes' angle to match its direction
       const angleDiff = getAngleDiff(hitbox.box.angle, originToHitboxDirection + angularTether.idealHitboxAngleOffset);
       // @Hack @Cleanup: hardcoded for cow head
-      const anglePadding = 0.3;
+      // const anglePadding = 0.3;
+      const anglePadding = 0.05;
       const angleSpringConstant = 15;
       const angleDamping = 0.8;
       if (Math.abs(angleDiff) > anglePadding) {
