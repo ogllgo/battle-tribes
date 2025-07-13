@@ -41,23 +41,21 @@ const MAX_HEALTH: ReadonlyArray<number> = [10, 20, 35];
 export const SLIME_SPEED_MULTIPLIERS: ReadonlyArray<number> = [2.5, 1.75, 1];
 const VISION_RANGES = [200, 250, 300];
 
-registerEntityLootOnDeath(EntityType.slime, [
-   {
-      itemType: ItemType.slimeball,
-      getAmount: (entity: Entity) => {
-         const slimeComponent = SlimeComponentArray.getComponent(entity);
-         switch (slimeComponent.size) {
-            case SlimeSize.small: return randInt(1, 2);
-            case SlimeSize.medium: return randInt(3, 5);
-            case SlimeSize.large: return randInt(6, 9);
-         }
+registerEntityLootOnDeath(EntityType.slime, {
+   itemType: ItemType.slimeball,
+   getAmount: (entity: Entity) => {
+      const slimeComponent = SlimeComponentArray.getComponent(entity);
+      switch (slimeComponent.size) {
+         case SlimeSize.small: return randInt(1, 2);
+         case SlimeSize.medium: return randInt(3, 5);
+         case SlimeSize.large: return randInt(6, 9);
       }
-   },
-   {
-      itemType: ItemType.leather,
-      getAmount: () => randInt(1, 2)
    }
-]);
+});
+registerEntityLootOnDeath(EntityType.slime, {
+   itemType: ItemType.leather,
+   getAmount: () => randInt(1, 2)
+});
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return layer.getBiomeAtPosition(x, y) === Biome.swamp;

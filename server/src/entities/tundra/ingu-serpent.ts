@@ -6,6 +6,7 @@ import { Entity, EntityType } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
 import { Settings } from "../../../../shared/src/settings";
 import { StatusEffect } from "../../../../shared/src/status-effects";
+import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { TileType } from "../../../../shared/src/tiles";
 import { getAbsAngleDiff, getAngleDiff, Point, polarVec2, rotatePoint } from "../../../../shared/src/utils";
 import { predictHitboxPos } from "../../ai-shared";
@@ -18,20 +19,54 @@ import { LootComponent, registerEntityLootOnDeath } from "../../components/LootC
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { PlayerComponentArray } from "../../components/PlayerComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
+import { TamingComponent } from "../../components/TamingComponent";
 import { addHitboxToTransformComponent, entityChildIsHitbox, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { applyAccelerationFromGround, createHitbox, Hitbox, turnHitboxToAngle } from "../../hitboxes";
 import Layer from "../../Layer";
 import { createLight } from "../../lights";
+import { registerEntityTamingSpec } from "../../taming-specs";
 import { tetherHitboxes } from "../../tethers";
 import { getEntityAgeTicks } from "../../world";
 
-registerEntityLootOnDeath(EntityType.inguSerpent, [
-   {
-      itemType: ItemType.inguSerpentTooth,
-      getAmount: () => 2,
-      hitboxIdx: 0
+registerEntityLootOnDeath(EntityType.inguSerpent, {
+   itemType: ItemType.inguSerpentTooth,
+   getAmount: () => 2,
+   hitboxIdx: 0
+});
+
+registerEntityTamingSpec(EntityType.inguSerpent, {
+   maxTamingTier: 3,
+   skillNodes: [
+      {
+         skill: getTamingSkill(TamingSkillID.follow),
+         x: 0,
+         y: 10,
+         parent: null,
+         requiredTamingTier: 1
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.move),
+         x: 0,
+         y: 30,
+         parent: TamingSkillID.follow,
+         requiredTamingTier: 2
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.attack),
+         x: 0,
+         y: 50,
+         parent: TamingSkillID.move,
+         requiredTamingTier: 3
+      }
+   ],
+   foodItemType: ItemType.rawSnobeMeat,
+   tierFoodRequirements: {
+      0: 0,
+      1: 5,
+      2: 15,
+      3: 40
    }
-]);
+});
 
 const moveFunc = (serpent: Entity, pos: Point, accelerationMagnitude: number): void => {
    // @HACKKK!!!!
@@ -114,7 +149,7 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
    body1Hitbox.angularTethers.push({
       originHitbox: headHitbox,
       idealAngle: Math.PI,
-      springConstant: 122,
+      springConstant: 61,
       damping: 0.85,
       padding: Math.PI * 0.1,
       idealHitboxAngleOffset: Math.PI
@@ -128,13 +163,13 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
    body2Position.add(rotatePoint(body2Offset, angle));
    const body2Hitbox = createHitbox(transformComponent, null, new CircularBox(body2Position, body2Offset, angle, 28), 0.65, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.INGU_SERPENT_BODY_2]);
    addHitboxToTransformComponent(transformComponent, body2Hitbox);
-   
+
    tetherHitboxes(body2Hitbox, body1Hitbox, transformComponent, transformComponent, idealBody2Dist, 100, 1.2);
    // @Hack: method of adding
    body2Hitbox.angularTethers.push({
       originHitbox: body1Hitbox,
       idealAngle: Math.PI,
-      springConstant: 122,
+      springConstant: 61,
       damping: 0.85,
       padding: Math.PI * 0.1,
       idealHitboxAngleOffset: Math.PI
@@ -153,7 +188,7 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
    tailHitbox.angularTethers.push({
       originHitbox: body2Hitbox,
       idealAngle: Math.PI,
-      springConstant: 122,
+      springConstant: 61,
       damping: 0.85,
       padding: Math.PI * 0.1,
       idealHitboxAngleOffset: Math.PI
@@ -168,6 +203,8 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
    const aiHelperComponent = new AIHelperComponent(headHitbox, 550, moveFunc, turnFunc);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(750, 4.5 * Math.PI, 1.8, 0.35, wanderPositionIsValid);
 
+   const tamingComponent = new TamingComponent();
+   
    const lootComponent = new LootComponent();
    
    const inguSerpentComponent = new InguSerpentComponent();
@@ -202,6 +239,7 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
+         [ServerComponentType.taming]: tamingComponent,
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.inguSerpent]: inguSerpentComponent,
       },

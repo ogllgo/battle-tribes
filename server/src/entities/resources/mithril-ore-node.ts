@@ -13,12 +13,10 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { createHitbox } from "../../hitboxes";
 
-registerEntityLootOnDeath(EntityType.mithrilOreNode, [
-   {
-      itemType: ItemType.mithrilOre,
-      getAmount: () => 1
-   }
-]);
+registerEntityLootOnDeath(EntityType.mithrilOreNode, {
+   itemType: ItemType.mithrilOre,
+   getAmount: () => 1
+});
 
 export function createMithrilOreNodeConfig(position: Point, rotation: number, size: number, variant: number, children: ReadonlyArray<Entity>, renderHeight: number): EntityConfig {
    const transformComponent = new TransformComponent();

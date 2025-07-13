@@ -55,11 +55,16 @@ export interface TamingComponent {
    attackHalo: RenderPart | null;
    followHalo: RenderPart | null;
 }
+
 const TAMING_TIER_TEXTURE_SOURCES: Record<number, string> = {
    1: "entities/miscellaneous/taming-tier-1.png",
    2: "entities/miscellaneous/taming-tier-2.png",
    3: "entities/miscellaneous/taming-tier-3.png"
 };
+
+// @HACK!! could potentially collide with others. and is just generally shit. ALso might mess with z-indexes!!! if its large enough
+const TAMING_TIER_RENDER_PART_Z_INDEX = 19;
+const HALO_RENDER_PART_Z_INDEX = 20;
 
 export const TamingComponentArray = new ServerComponentArray<TamingComponent, TamingComponentParams, IntermediateInfo>(ServerComponentType.taming, true, {
    createParamsFromData: createParamsFromData,
@@ -124,7 +129,7 @@ function createParamsFromData(reader: PacketReader): TamingComponentParams {
 const createFollowHalo = (headRenderPart: RenderPart): RenderPart => {
    const followHalo = new TexturedRenderPart(
       headRenderPart,
-      2,
+      HALO_RENDER_PART_Z_INDEX,
       0,
       getTextureArrayIndex("entities/miscellaneous/follow-halo.png")
    );
@@ -135,7 +140,7 @@ const createFollowHalo = (headRenderPart: RenderPart): RenderPart => {
 const createAttackHalo = (headRenderPart: RenderPart): RenderPart => {
    const attackHalo = new TexturedRenderPart(
       headRenderPart,
-      2,
+      HALO_RENDER_PART_Z_INDEX,
       0,
       getTextureArrayIndex("entities/miscellaneous/attack-halo.png")
    );
@@ -154,7 +159,7 @@ const getTamingTierRenderPartOpacity = (): number => {
 const createTamingTierRenderPart = (tamingTier: number, parentHitbox: Hitbox): TexturedRenderPart => {
    const renderPart = new TexturedRenderPart(
       parentHitbox,
-      1,
+      TAMING_TIER_RENDER_PART_Z_INDEX,
       0,
       getTextureArrayIndex(TAMING_TIER_TEXTURE_SOURCES[tamingTier])
    );

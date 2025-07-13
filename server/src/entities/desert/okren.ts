@@ -84,36 +84,34 @@ registerEntityTamingSpec(EntityType.okren, {
    }
 });
 
-registerEntityLootOnDeath(EntityType.okren, [
-   {
-      itemType: ItemType.rawCrabMeat,
-      getAmount: (okren: Entity) => {
-         const okrenComponent = OkrenComponentArray.getComponent(okren);
-         
-         switch (okrenComponent.size) {
-            case OkrenAgeStage.juvenile: return randInt(5, 7);
-            case OkrenAgeStage.youth: return randInt(7, 10);
-            case OkrenAgeStage.adult: return randInt(11, 15);
-            case OkrenAgeStage.elder: return randInt(16, 21);
-            case OkrenAgeStage.ancient: return randInt(22, 30);
-         }
-      }
-   },
-   {
-      itemType: ItemType.chitin,
-      getAmount: (okren: Entity) => {
-         const okrenComponent = OkrenComponentArray.getComponent(okren);
-         
-         switch (okrenComponent.size) {
-            case OkrenAgeStage.juvenile: return randInt(1, 2);
-            case OkrenAgeStage.youth: return randInt(2, 3);
-            case OkrenAgeStage.adult: return randInt(4, 6);
-            case OkrenAgeStage.elder: return randInt(7, 10);
-            case OkrenAgeStage.ancient: return randInt(11, 15);
-         }
+registerEntityLootOnDeath(EntityType.okren, {
+   itemType: ItemType.rawCrabMeat,
+   getAmount: (okren: Entity) => {
+      const okrenComponent = OkrenComponentArray.getComponent(okren);
+      
+      switch (okrenComponent.size) {
+         case OkrenAgeStage.juvenile: return randInt(5, 7);
+         case OkrenAgeStage.youth: return randInt(7, 10);
+         case OkrenAgeStage.adult: return randInt(11, 15);
+         case OkrenAgeStage.elder: return randInt(16, 21);
+         case OkrenAgeStage.ancient: return randInt(22, 30);
       }
    }
-]);
+});
+registerEntityLootOnDeath(EntityType.okren, {
+   itemType: ItemType.chitin,
+   getAmount: (okren: Entity) => {
+      const okrenComponent = OkrenComponentArray.getComponent(okren);
+      
+      switch (okrenComponent.size) {
+         case OkrenAgeStage.juvenile: return randInt(1, 2);
+         case OkrenAgeStage.youth: return randInt(2, 3);
+         case OkrenAgeStage.adult: return randInt(4, 6);
+         case OkrenAgeStage.elder: return randInt(7, 10);
+         case OkrenAgeStage.ancient: return randInt(11, 15);
+      }
+   }
+});
 
 function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    const biome = layer.getBiomeAtPosition(x, y);

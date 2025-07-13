@@ -19,8 +19,8 @@ export interface LootEntry {
    readonly hitboxIdx?: number;
 }
 
-const lootOnHitRecord: Partial<Record<EntityType, ReadonlyArray<LootEntry>>> = {};
-const lootOnDeathRecord: Partial<Record<EntityType, ReadonlyArray<LootEntry>>> = {};
+const lootOnHitRecord: Partial<Record<EntityType, Array<LootEntry>>> = {};
+const lootOnDeathRecord: Partial<Record<EntityType, Array<LootEntry>>> = {};
 
 const itemToEntityTypesRecord: Partial<Record<ItemType, Array<EntityType>>> = {};
 
@@ -38,27 +38,35 @@ LootComponentArray.onRemove = onRemove;
 LootComponentArray.onTakeDamage = onHit;
 LootComponentArray.onDeath = onDeath;
 
-const registerEntries = (entityType: EntityType, lootEntries: ReadonlyArray<LootEntry>): void => {
-   for (const entry of lootEntries) {
-      const entityTypes = itemToEntityTypesRecord[entry.itemType];
-      if (typeof entityTypes === "undefined") {
-         itemToEntityTypesRecord[entry.itemType] = [entityType];
-      } else {
-         entityTypes.push(entityType);
-      }
+const registerLootEntry = (entityType: EntityType, entry: LootEntry): void => {
+   const entityTypes = itemToEntityTypesRecord[entry.itemType];
+   if (typeof entityTypes === "undefined") {
+      itemToEntityTypesRecord[entry.itemType] = [entityType];
+   } else {
+      entityTypes.push(entityType);
    }
 }
 
-export function registerEntityLootOnHit(entityType: EntityType, lootEntries: ReadonlyArray<LootEntry>): void {
-   assert(typeof lootOnHitRecord[entityType] === "undefined");
-   lootOnHitRecord[entityType] = lootEntries;
-   registerEntries(entityType, lootEntries);
+export function registerEntityLootOnHit(entityType: EntityType, entry: LootEntry): void {
+   const existingLootEntries = lootOnHitRecord[entityType];
+   if (typeof existingLootEntries === "undefined") {
+      lootOnHitRecord[entityType] = [entry];
+   } else {
+      existingLootEntries.push(entry);
+   }
+
+   registerLootEntry(entityType, entry);
 }
 
-export function registerEntityLootOnDeath(entityType: EntityType, lootEntries: ReadonlyArray<LootEntry>): void {
-   assert(typeof lootOnDeathRecord[entityType] === "undefined");
-   lootOnDeathRecord[entityType] = lootEntries;
-   registerEntries(entityType, lootEntries);
+export function registerEntityLootOnDeath(entityType: EntityType, entry: LootEntry): void {
+   const existingLootEntries = lootOnDeathRecord[entityType];
+   if (typeof existingLootEntries === "undefined") {
+      lootOnDeathRecord[entityType] = [entry];
+   } else {
+      existingLootEntries.push(entry);
+   }
+
+   registerLootEntry(entityType, entry);
 }
 
 const removeFromPreviousLocalBiome = (entity: Entity, lootComponent: LootComponent): void => {

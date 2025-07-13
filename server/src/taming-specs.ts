@@ -10,7 +10,17 @@ export function getTamingSpecsMap(): ReadonlyMap<EntityType, EntityTamingSpec> {
    return tamingSpecsMap;
 }
 
+const validateTamingSpec = (spec: EntityTamingSpec): void => {
+   for (const skillNode of spec.skillNodes) {
+      if (skillNode.parent === skillNode.skill.id) {
+         throw new Error("Nodes can't parent themselves!");
+      }
+   }
+}
+
 export function registerEntityTamingSpec(entityType: EntityType, spec: EntityTamingSpec): void {
+   validateTamingSpec(spec);
+   
    tamingSpecsMap.set(entityType, spec);
 }
 

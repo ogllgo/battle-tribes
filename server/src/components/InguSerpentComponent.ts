@@ -11,17 +11,24 @@ import { TileType } from "../../../shared/src/tiles";
 import { customTickIntervalHasPassed, getAbsAngleDiff, Point, polarVec2, secondsToTicks } from "../../../shared/src/utils";
 import { getDistanceFromPointToHitbox } from "../ai-shared";
 import { hitboxIsCollidingWithEntity } from "../collision-detection";
-import { addHitboxVelocity, applyAbsoluteKnockback, applyAcceleration, getHitboxTile, Hitbox } from "../hitboxes";
+import { addHitboxVelocity, applyAbsoluteKnockback, getHitboxTile, Hitbox } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
-import { destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import Tribe from "../Tribe";
+import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 import { LocalBiome } from "../world-generation/terrain-generation-utils";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
-import { addLocalInvulnerabilityHash, canDamageEntity, damageEntity, healEntity, HealthComponentArray } from "./HealthComponent";
+import { addLocalInvulnerabilityHash, canDamageEntity, damageEntity, getEntityHealth, healEntity, HealthComponentArray } from "./HealthComponent";
 import { ItemComponentArray } from "./ItemComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "./StatusEffectComponent";
 import { TamingComponentArray } from "./TamingComponent";
 import { TransformComponentArray } from "./TransformComponent";
+import { TribeComponentArray } from "./TribeComponent";
+
+interface TribesmanTruce {
+   readonly tribe: Tribe;
+   ticksRemaining: number;
+}
 
 const LEAP_START_DISTANCE = 75;
 
@@ -32,10 +39,12 @@ const LEAP_CHARGE_TICKS = secondsToTicks(0.25);
 
 // Whenever the wraith leaps or eats a meat item, they go on cooldown before they can eat another meat item
 const EAT_CHOMP_COOLDOWN_TICKS = secondsToTicks(0.45);
-const LEAP_CHOMP_COOLDOWN_TICKS = secondsToTicks(0.65);
+const LEAP_CHOMP_COOLDOWN_TICKS = secondsToTicks(0.85);
 
 // @Cleanup: shouldn't be exported everywhere!
 export const INGU_SERPENT_DIRECTION_CHANGE_COOLDOWN_TICKS = secondsToTicks(0.3);
+
+const TRUCE_TIME_TICKS = secondsToTicks(20);
 
 const SLOW_ACCELERATION = 850;
 
@@ -53,6 +62,8 @@ export class InguSerpentComponent {
    public leapChargeTicks = 0;
 
    public chompersCooldownTicks = EAT_CHOMP_COOLDOWN_TICKS;
+
+   public tribesmanTruces = new Array<TribesmanTruce>();
 }
 
 export const InguSerpentComponentArray = new ComponentArray<InguSerpentComponent>(ServerComponentType.inguSerpent, true, getDataLength, addDataToPacket);
@@ -75,9 +86,15 @@ function onJoin(serpent: Entity): void {
    inguSerpentComponent.homeBiome = localBiome;
 }
 
-const isTarget = (entity: Entity): boolean => {
+const isTarget = (serpent: Entity, entity: Entity): boolean => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.children[0] as Hitbox;
+
+   // @HACK so that it can attack trees n shit
+   const tamingComponent = TamingComponentArray.getComponent(serpent);
+   if (tamingComponent.attackTarget === entity) {
+      return true;
+   }
 
    // @HACK @TEMPORARY cuz im doing the hack where i set snobe collision mask to 0 when they are dug in
    if (getEntityType(entity) === EntityType.snobe) {
@@ -92,20 +109,37 @@ const isTarget = (entity: Entity): boolean => {
    if (layer.getTileBiome(tile) !== Biome.tundra) {
       return false;
    }
+
+   if (TribeComponentArray.hasComponent(entity)) {
+      const entityTribeComponent = TribeComponentArray.getComponent(entity);
+      
+      // Don't attack its tamers
+      if (entityTribeComponent.tribe === tamingComponent.tameTribe) {
+         return false;
+      }
+
+      // Don't attack tribesmen it is in a truce with
+      const inguSerpentComponent = InguSerpentComponentArray.getComponent(serpent);
+      for (const truce of inguSerpentComponent.tribesmanTruces) {
+         if (entityTribeComponent.tribe === truce.tribe) {
+            return false;
+         }
+      }
+   }
    
    const entityType = getEntityType(entity);
    // @HACK @INCOMPLETE
    return entityType === EntityType.player || entityType === EntityType.snobe;
 }
 
-const getTarget = (wraith: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
-   const transformComponent = TransformComponentArray.getComponent(wraith);
+const getTarget = (serpent: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
+   const transformComponent = TransformComponentArray.getComponent(serpent);
    const hitbox = transformComponent.children[0] as Hitbox;
    
    let target: Entity | null = null;
    let minDist = Number.MAX_SAFE_INTEGER;
    for (const entity of aiHelperComponent.visibleEntities) {
-      if (!isTarget(entity)) {
+      if (!isTarget(serpent, entity)) {
          continue;
       }
 
@@ -121,6 +155,80 @@ const getTarget = (wraith: Entity, aiHelperComponent: AIHelperComponent): Entity
    return target;
 }
 
+const attackEntity = (serpent: Entity, target: Entity): void => {
+   const inguSerpentComponent = InguSerpentComponentArray.getComponent(serpent);
+   const transformComponent = TransformComponentArray.getComponent(serpent);
+   const aiHelperComponent = AIHelperComponentArray.getComponent(serpent);
+
+   const headHitbox = transformComponent.children[0] as Hitbox;
+
+   const targetTransformComponent = TransformComponentArray.getComponent(target);
+   const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+
+   const headToTarget = headHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+   const distFromTarget = getDistanceFromPointToHitbox(headHitbox.box.position, targetHitbox);
+
+   if (!inguSerpentComponent.isLeaping && inguSerpentComponent.leapCooldownTicks === 0 && distFromTarget <= LEAP_START_DISTANCE && getAbsAngleDiff(headHitbox.box.angle, headToTarget) < 0.36) {
+      inguSerpentComponent.isChargingLeap = true;
+   }
+
+   if (inguSerpentComponent.isChargingLeap && inguSerpentComponent.leapChargeTicks < LEAP_CHARGE_TICKS) {
+      inguSerpentComponent.leapChargeTicks++;
+   }
+
+   if (!inguSerpentComponent.isLeaping && inguSerpentComponent.leapChargeTicks >= LEAP_CHARGE_TICKS) {
+      // Stop charging leap and leap!
+
+      inguSerpentComponent.isChargingLeap = false;
+      inguSerpentComponent.leapChargeTicks = 0;
+      inguSerpentComponent.isLeaping = true;
+      inguSerpentComponent.leapElapsedTicks = 0;
+
+      inguSerpentComponent.chompersCooldownTicks = LEAP_CHOMP_COOLDOWN_TICKS;
+
+      const tickEvent: EntityTickEvent = {
+         entityID: serpent,
+         type: EntityTickEventType.inguSerpentLeap,
+         data: 0
+      };
+      registerEntityTickEvent(serpent, tickEvent);
+
+      // Initial jump
+      const bodyHitbox = transformComponent.children[0] as Hitbox;
+      const bodyToTargetDir = bodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+      addHitboxVelocity(bodyHitbox, polarVec2(300, bodyToTargetDir));
+
+      const headToTargetDir = headHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+      addHitboxVelocity(headHitbox, polarVec2(300, headToTargetDir));
+   }
+
+   if (inguSerpentComponent.isChargingLeap) {
+      aiHelperComponent.turnFunc(serpent, targetHitbox.box.position, 3.5 * Math.PI, 1.8);
+   } else if (inguSerpentComponent.isLeaping) {
+      aiHelperComponent.turnFunc(serpent, targetHitbox.box.position, 3.5 * Math.PI, 1.8);
+      
+      inguSerpentComponent.leapElapsedTicks++;
+      if (inguSerpentComponent.leapElapsedTicks >= LEAP_DURATION_TICKS) {
+         inguSerpentComponent.isLeaping = false;
+         inguSerpentComponent.leapCooldownTicks = LEAP_COOLDOWN_TICKS;
+      }
+   } else {
+      if (distFromTarget > LEAP_START_DISTANCE - 15) {
+         aiHelperComponent.moveFunc(serpent, targetHitbox.box.position, 1550);
+      }
+      aiHelperComponent.turnFunc(serpent, targetHitbox.box.position, 3.5 * Math.PI, 1.8);
+
+      if (customTickIntervalHasPassed(getEntityAgeTicks(serpent), 1.6)) {
+         const tickEvent: EntityTickEvent = {
+            entityID: serpent,
+            type: EntityTickEventType.inguSerpentAngry,
+            data: 0
+         };
+         registerEntityTickEvent(serpent, tickEvent);
+      }
+   }
+}
+
 function onTick(serpent: Entity): void {
    const inguSerpentComponent = InguSerpentComponentArray.getComponent(serpent);
    if (inguSerpentComponent.directionChangeCooldownTicks > 0) {
@@ -133,6 +241,23 @@ function onTick(serpent: Entity): void {
       inguSerpentComponent.chompersCooldownTicks--;
    }
    inguSerpentComponent.currentDirectionTicks++;
+
+   for (let i = 0; i < inguSerpentComponent.tribesmanTruces.length; i++) {
+      const truce = inguSerpentComponent.tribesmanTruces[i];
+      if (truce.ticksRemaining > 0) {
+         truce.ticksRemaining--;
+      } else {
+         inguSerpentComponent.tribesmanTruces.splice(i, 1);
+         i--;
+      }
+   }
+
+   const tamingComponent = TamingComponentArray.getComponent(serpent);
+
+   if (entityExists(tamingComponent.attackTarget)) {
+      attackEntity(serpent, tamingComponent.attackTarget);
+      return;
+   }
    
    const transformComponent = TransformComponentArray.getComponent(serpent);
    const aiHelperComponent = AIHelperComponentArray.getComponent(serpent);
@@ -174,7 +299,8 @@ function onTick(serpent: Entity): void {
          aiHelperComponent.turnFunc(serpent, foodHitbox.box.position, 3.5 * Math.PI, 1.8);
          aiHelperComponent.moveFunc(serpent, foodHitbox.box.position, SLOW_ACCELERATION);
 
-         if (hitboxIsCollidingWithEntity(headHitbox, closestFoodItem)) {
+         const directionToFood = headHitbox.box.position.calculateAngleBetween(foodHitbox.box.position);
+         if (hitboxIsCollidingWithEntity(headHitbox, closestFoodItem) && getAbsAngleDiff(headHitbox.box.angle, directionToFood) < 0.15) {
             healEntity(serpent, 3, serpent);
             destroyEntity(closestFoodItem);
 
@@ -200,72 +326,7 @@ function onTick(serpent: Entity): void {
 
    const target = getTarget(serpent, aiHelperComponent);
    if (target !== null) {
-      const targetTransformComponent = TransformComponentArray.getComponent(target);
-      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
-
-      const headToTarget = headHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-      const distFromTarget = getDistanceFromPointToHitbox(headHitbox.box.position, targetHitbox);
-
-      if (!inguSerpentComponent.isLeaping && inguSerpentComponent.leapCooldownTicks === 0 && distFromTarget <= LEAP_START_DISTANCE && getAbsAngleDiff(headHitbox.box.angle, headToTarget) < 0.36) {
-         inguSerpentComponent.isChargingLeap = true;
-      }
-
-      if (inguSerpentComponent.isChargingLeap && inguSerpentComponent.leapChargeTicks < LEAP_CHARGE_TICKS) {
-         inguSerpentComponent.leapChargeTicks++;
-      }
-
-      if (!inguSerpentComponent.isLeaping && inguSerpentComponent.leapChargeTicks >= LEAP_CHARGE_TICKS) {
-         // Stop charging leap and leap!
-
-         inguSerpentComponent.isChargingLeap = false;
-         inguSerpentComponent.leapChargeTicks = 0;
-         inguSerpentComponent.isLeaping = true;
-         inguSerpentComponent.leapElapsedTicks = 0;
-
-         inguSerpentComponent.chompersCooldownTicks = LEAP_CHOMP_COOLDOWN_TICKS;
-
-         const tickEvent: EntityTickEvent = {
-            entityID: serpent,
-            type: EntityTickEventType.wraithAngryLeap,
-            data: 0
-         };
-         registerEntityTickEvent(serpent, tickEvent);
-
-         // Initial jump
-         const bodyHitbox = transformComponent.children[0] as Hitbox;
-         const bodyToTargetDir = bodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-         addHitboxVelocity(bodyHitbox, polarVec2(300, bodyToTargetDir));
-
-         const headToTargetDir = headHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-         addHitboxVelocity(headHitbox, polarVec2(300, headToTargetDir));
-      }
-
-      if (inguSerpentComponent.isChargingLeap) {
-         aiHelperComponent.turnFunc(serpent, targetHitbox.box.position, 3.5 * Math.PI, 1.8);
-      } else if (inguSerpentComponent.isLeaping) {
-         aiHelperComponent.turnFunc(serpent, targetHitbox.box.position, 3.5 * Math.PI, 1.8);
-         
-         inguSerpentComponent.leapElapsedTicks++;
-         if (inguSerpentComponent.leapElapsedTicks >= LEAP_DURATION_TICKS) {
-            inguSerpentComponent.isLeaping = false;
-            inguSerpentComponent.leapCooldownTicks = LEAP_COOLDOWN_TICKS;
-         }
-      } else {
-         if (distFromTarget > LEAP_START_DISTANCE - 15) {
-            aiHelperComponent.moveFunc(serpent, targetHitbox.box.position, 1550);
-         }
-         aiHelperComponent.turnFunc(serpent, targetHitbox.box.position, 3.5 * Math.PI, 1.8);
-
-         if (customTickIntervalHasPassed(getEntityAgeTicks(serpent), 0.5)) {
-            const tickEvent: EntityTickEvent = {
-               entityID: serpent,
-               type: EntityTickEventType.wraithPant,
-               data: 0
-            };
-            registerEntityTickEvent(serpent, tickEvent);
-         }
-      }
-
+      attackEntity(serpent, target);
       return;
    }
 
@@ -299,6 +360,27 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
+const addTruce = (serpent: Entity, tribe: Tribe): void => {
+   const inguSerpentComponent = InguSerpentComponentArray.getComponent(serpent);
+
+   let existingTruce: TribesmanTruce | null = null;
+   for (const truce of inguSerpentComponent.tribesmanTruces) {
+      if (truce.tribe === tribe) {
+         existingTruce = truce;
+         break;
+      }
+   }
+
+   if (existingTruce !== null) {
+      existingTruce.ticksRemaining = TRUCE_TIME_TICKS;
+   } else {
+      inguSerpentComponent.tribesmanTruces.push({
+         tribe: tribe,
+         ticksRemaining: TRUCE_TIME_TICKS
+      });
+   }
+}
+
 function onHitboxCollision(serpent: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    if (!affectedHitbox.flags.includes(HitboxFlag.INGU_SERPENT_HEAD)) {
       return;
@@ -309,7 +391,7 @@ function onHitboxCollision(serpent: Entity, collidingEntity: Entity, affectedHit
    //    return;
    // }
    
-   if (!isTarget(collidingEntity)) {
+   if (!isTarget(serpent, collidingEntity)) {
       return;
    }
    
@@ -332,5 +414,14 @@ function onHitboxCollision(serpent: Entity, collidingEntity: Entity, affectedHit
 
    if (StatusEffectComponentArray.hasComponent(collidingEntity)) {
       applyStatusEffect(collidingEntity, StatusEffect.freezing, 3 * Settings.TPS);
+   }
+
+   // @HACK: should only work if the snobe is being led!!
+   // If it kills a tamed snobe, the tribesman who tamed it gets a truce
+   if (getEntityHealth(collidingEntity) <= 0 && getEntityType(collidingEntity) === EntityType.snobe) {
+      const tamingComponent = TamingComponentArray.getComponent(collidingEntity);
+      if (tamingComponent.tameTribe !== null) {
+         addTruce(serpent, tamingComponent.tameTribe);
+      }
    }
 }

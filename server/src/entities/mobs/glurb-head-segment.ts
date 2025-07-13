@@ -26,12 +26,10 @@ const enum Vars {
    MAX_FOLLOW_COOLDOWN = 20 * Settings.TPS
 }
 
-registerEntityLootOnDeath(EntityType.glurbHeadSegment, [
-   {
-      itemType: ItemType.slurb,
-      getAmount: () => 1
-   }
-]);
+registerEntityLootOnDeath(EntityType.glurbHeadSegment, {
+   itemType: ItemType.slurb,
+   getAmount: () => 1
+});
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return true;

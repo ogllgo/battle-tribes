@@ -14,12 +14,10 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { createHitbox } from "../../hitboxes";
 
-registerEntityLootOnDeath(EntityType.palmTree, [
-   {
-      itemType: ItemType.wood,
-      getAmount: () => randInt(3, 5)
-   }
-]);
+registerEntityLootOnDeath(EntityType.palmTree, {
+   itemType: ItemType.wood,
+   getAmount: () => randInt(3, 5)
+});
 
 export function createPalmTreeConfig(position: Point, angle: number): EntityConfig {
    const transformComponent = new TransformComponent();

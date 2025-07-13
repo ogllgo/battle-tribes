@@ -14,12 +14,10 @@ import { LootComponent, registerEntityLootOnDeath } from "../../components/LootC
 import { ItemType } from "../../../../shared/src/items/items";
 import { createHitbox } from "../../hitboxes";
 
-registerEntityLootOnDeath(EntityType.boulder, [
-   {
-      itemType: ItemType.rock,
-      getAmount: () => randInt(5, 7)
-   }
-]);
+registerEntityLootOnDeath(EntityType.boulder, {
+   itemType: ItemType.rock,
+   getAmount: () => randInt(5, 7)
+});
 
 export function createBoulderConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();

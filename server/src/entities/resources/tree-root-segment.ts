@@ -13,12 +13,10 @@ import { addHitboxToTransformComponent, TransformComponent } from "../../compone
 import { TreeRootSegmentComponent } from "../../components/TreeRootSegmentComponent";
 import { createHitbox } from "../../hitboxes";
 
-registerEntityLootOnDeath(EntityType.treeRootSegment, [
-   {
-      itemType: ItemType.wood,
-      getAmount: () => randInt(1, 2)
-   }
-]);
+registerEntityLootOnDeath(EntityType.treeRootSegment, {
+   itemType: ItemType.wood,
+   getAmount: () => randInt(1, 2)
+});
    
 export function createTreeRootSegmentConfig(position: Point, rotation: number, root: Entity): EntityConfig {
    const transformComponent = new TransformComponent();

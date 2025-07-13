@@ -81,23 +81,23 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
       }
 
       if (hitbox.flags.includes(HitboxFlag.INGU_SERPENT_HEAD)) {
+         const renderPart = new TexturedRenderPart(
+            hitbox,
+            3,
+            0,
+            getTextureArrayIndex("entities/ingu-serpent/head.png")
+         );
+         renderPart.addTag("tamingComponent:head");
+         renderInfo.attachRenderPart(renderPart);
+      } else if (hitbox.flags.includes(HitboxFlag.INGU_SERPENT_BODY_1)) {
          renderInfo.attachRenderPart(
             new TexturedRenderPart(
                hitbox,
-               3,
+               2,
                0,
-               getTextureArrayIndex("entities/ingu-serpent/head.png")
+               getTextureArrayIndex("entities/ingu-serpent/body-1.png")
             )
          );
-      } else if (hitbox.flags.includes(HitboxFlag.INGU_SERPENT_BODY_1)) {
-         const renderPart = new TexturedRenderPart(
-            hitbox,
-            2,
-            0,
-            getTextureArrayIndex("entities/ingu-serpent/body-1.png")
-         );
-         renderPart.addTag("tamingComponent:head")
-         renderInfo.attachRenderPart(renderPart);
       } else if (hitbox.flags.includes(HitboxFlag.INGU_SERPENT_BODY_2)) {
          renderInfo.attachRenderPart(
             new TexturedRenderPart(

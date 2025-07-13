@@ -15,23 +15,21 @@ import { ItemType } from "../../../../shared/src/items/items";
 import { registerDirtyEntity } from "../../server/player-clients";
 import { createHitbox } from "../../hitboxes";
 
-registerEntityLootOnHit(EntityType.berryBush, [
-   {
-      itemType: ItemType.berry,
-      getAmount: (berryBush: Entity) => {
-         const berryBushComponent = BerryBushComponentArray.getComponent(berryBush);
-         return berryBushComponent.numBerries > 0 ? 1 : 0;
-      },
-      onItemDrop: (berryBush: Entity) => {
-         // @Hack: this type of logic feels like it should be done in a component
-         const berryBushComponent = BerryBushComponentArray.getComponent(berryBush);
-         if (berryBushComponent.numBerries > 0) {
-            berryBushComponent.numBerries--;
-            registerDirtyEntity(berryBush);
-         }
+registerEntityLootOnHit(EntityType.berryBush, {
+   itemType: ItemType.berry,
+   getAmount: (berryBush: Entity) => {
+      const berryBushComponent = BerryBushComponentArray.getComponent(berryBush);
+      return berryBushComponent.numBerries > 0 ? 1 : 0;
+   },
+   onItemDrop: (berryBush: Entity) => {
+      // @Hack: this type of logic feels like it should be done in a component
+      const berryBushComponent = BerryBushComponentArray.getComponent(berryBush);
+      if (berryBushComponent.numBerries > 0) {
+         berryBushComponent.numBerries--;
+         registerDirtyEntity(berryBush);
       }
    }
-]);
+});
 
 export function createBerryBushConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();

@@ -19,12 +19,10 @@ const RADIUS = 40;
 /** Amount the hitbox is brought in. */
 const HITBOX_PADDING = 3;
 
-registerEntityLootOnDeath(EntityType.cactus, [
-   {
-      itemType: ItemType.cactus_spine,
-      getAmount: () => randInt(2, 5)
-   }
-]);
+registerEntityLootOnDeath(EntityType.cactus, {
+   itemType: ItemType.cactus_spine,
+   getAmount: () => randInt(2, 5)
+});
 
 export function createCactusConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();

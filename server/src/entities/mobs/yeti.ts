@@ -29,20 +29,18 @@ export enum SnowThrowStage {
    return
 }
 
-registerEntityLootOnDeath(EntityType.yeti, [
-   {
-      itemType: ItemType.rawYetiFlesh,
-      getAmount: () => randInt(4, 7)
-   },
-   {
-      itemType: ItemType.yeti_hide,
-      getAmount: () => randInt(2, 3)
-   },
-   {
-      itemType: ItemType.deepfrost_heart,
-      getAmount: () => Math.random() < 0.5 ? 1 : 0
-   }
-]);
+registerEntityLootOnDeath(EntityType.yeti, {
+   itemType: ItemType.rawYetiFlesh,
+   getAmount: () => randInt(4, 7)
+});
+registerEntityLootOnDeath(EntityType.yeti, {
+   itemType: ItemType.yeti_hide,
+   getAmount: () => randInt(2, 3)
+});
+registerEntityLootOnDeath(EntityType.yeti, {
+   itemType: ItemType.deepfrost_heart,
+   getAmount: () => Math.random() < 0.5 ? 1 : 0
+});
 
 function wanderPositionIsValid(entity: Entity, layer: Layer, x: number, y: number): boolean {
    const tileX = Math.floor(x / Settings.TILE_SIZE);

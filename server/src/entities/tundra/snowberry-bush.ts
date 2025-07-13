@@ -14,22 +14,20 @@ import { SnowberryBushComponent, SnowberryBushComponentArray } from "../../compo
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerDirtyEntity } from "../../server/player-clients";
 
-registerEntityLootOnHit(EntityType.snowberryBush, [
-   {
-      itemType: ItemType.snowberry,
-      getAmount: (snowberryBush: Entity) => {
-         const snowberryBushComponent = SnowberryBushComponentArray.getComponent(snowberryBush);
-         return snowberryBushComponent.numBerries > 0 ? 1 : 0;
-      },
-      onItemDrop: (snowberryBush: Entity) => {
-         const snowberryBushComponent = SnowberryBushComponentArray.getComponent(snowberryBush);
-         if (snowberryBushComponent.numBerries > 0) {
-            snowberryBushComponent.numBerries--;
-            registerDirtyEntity(snowberryBush);
-         }
+registerEntityLootOnHit(EntityType.snowberryBush, {
+   itemType: ItemType.snowberry,
+   getAmount: (snowberryBush: Entity) => {
+      const snowberryBushComponent = SnowberryBushComponentArray.getComponent(snowberryBush);
+      return snowberryBushComponent.numBerries > 0 ? 1 : 0;
+   },
+   onItemDrop: (snowberryBush: Entity) => {
+      const snowberryBushComponent = SnowberryBushComponentArray.getComponent(snowberryBush);
+      if (snowberryBushComponent.numBerries > 0) {
+         snowberryBushComponent.numBerries--;
+         registerDirtyEntity(snowberryBush);
       }
    }
-]);
+});
 
 export function createSnowberryBushConfig(position: Point, angle: number): EntityConfig {
    const transformComponent = new TransformComponent();

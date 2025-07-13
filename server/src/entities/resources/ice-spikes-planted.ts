@@ -15,14 +15,12 @@ import { LootComponent, registerEntityLootOnDeath } from "../../components/LootC
 import { ItemType } from "../../../../shared/src/items/items";
 import { createHitbox } from "../../hitboxes";
 
-registerEntityLootOnDeath(EntityType.iceSpikesPlanted, [
-   {
-      itemType: ItemType.frostcicle,
-      getAmount: (entity: Entity) => {
-         return plantedIceSpikesIsFullyGrown(entity) ? randInt(1, 2) : 0;
-      }
+registerEntityLootOnDeath(EntityType.iceSpikesPlanted, {
+   itemType: ItemType.frostcicle,
+   getAmount: (entity: Entity) => {
+      return plantedIceSpikesIsFullyGrown(entity) ? randInt(1, 2) : 0;
    }
-]);
+});
 
 export function createIceSpikesPlantedConfig(position: Point, rotation: number, planterBox: Entity): EntityConfig {
    const transformComponent = new TransformComponent();

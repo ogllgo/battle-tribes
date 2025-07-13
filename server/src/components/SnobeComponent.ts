@@ -22,15 +22,14 @@ import { healEntity } from "./HealthComponent";
 import { TamingComponentArray } from "./TamingComponent";
 import { createSnowballConfig } from "../entities/snowball";
 import { Packet } from "../../../shared/src/packets";
-import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../shared/src/collision";
+import { DEFAULT_COLLISION_MASK } from "../../../shared/src/collision";
 import { createSnobeMoundConfig } from "../entities/tundra/snobe-mound";
 
 const MIN_EAR_WIGGLE_COOLDOWN_TICKS = 1.5 * Settings.TPS;
 const MAX_EAR_WIGGLE_COOLDOWN_TICKS = 5.5 * Settings.TPS;
 
 /** Chance to want to dig per second */
-// const SNOW_DIG_CHANCE = 0.02;
-const SNOW_DIG_CHANCE = 0.1;
+const SNOW_DIG_CHANCE = 0.02;
 const DIG_TIME_TICKS = secondsToTicks(2.5);
 
 export class SnobeComponent {
@@ -82,6 +81,35 @@ function onTick(snobe: Entity): void {
 
    const aiHelperComponent = AIHelperComponentArray.getComponent(snobe);
 
+   // Go to follow target if possible
+   // @Copynpaste
+   const tamingComponent = TamingComponentArray.getComponent(snobe);
+   if (entityExists(tamingComponent.followTarget)) {
+      // @COPYNPASTE cuz we want to wiggle ears here as well
+      // @ASS
+      // When not in immediate danger, wiggle ears on occasion
+      const snobeComponent = SnobeComponentArray.getComponent(snobe);
+      for (let i = 0; i < 2; i++) {
+         const earHitbox = getEarHitbox(transformComponent, i);
+
+         const earWiggleCooldown = snobeComponent.earWiggleCooldowns[i];
+         if (earWiggleCooldown <= 0) {
+            addHitboxAngularVelocity(earHitbox, randFloat(1.35 * Math.PI, 1.75 * Math.PI) * randSign());
+            
+            snobeComponent.earWiggleCooldowns[i] = randInt(MIN_EAR_WIGGLE_COOLDOWN_TICKS, MAX_EAR_WIGGLE_COOLDOWN_TICKS);
+         } else if (getAbsAngleDiff(earHitbox.box.relativeAngle, SNOBE_EAR_IDEAL_ANGLE) < 0.08) {
+            snobeComponent.earWiggleCooldowns[i]--;
+         }
+      }
+      
+      const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.followTarget);
+      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+      
+      aiHelperComponent.turnFunc(snobe, targetHitbox.box.position, 8 * Math.PI, 0.5);
+      aiHelperComponent.moveFunc(snobe, targetHitbox.box.position, 800);
+      return;
+   }
+
    const escapeAI = aiHelperComponent.getEscapeAI();
    if (runEscapeAI(snobe, aiHelperComponent, escapeAI)) {
       return;
@@ -100,18 +128,6 @@ function onTick(snobe: Entity): void {
       } else if (getAbsAngleDiff(earHitbox.box.relativeAngle, SNOBE_EAR_IDEAL_ANGLE) < 0.08) {
          snobeComponent.earWiggleCooldowns[i]--;
       }
-   }
-
-   // Go to follow target if possible
-   // @Copynpaste
-   const tamingComponent = TamingComponentArray.getComponent(snobe);
-   if (entityExists(tamingComponent.followTarget)) {
-      const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.followTarget);
-      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
-      
-      aiHelperComponent.turnFunc(snobe, targetHitbox.box.position, 8 * Math.PI, 0.5);
-      aiHelperComponent.moveFunc(snobe, targetHitbox.box.position, 800);
-      return;
    }
 
    if (snobeComponent.isDigging) {

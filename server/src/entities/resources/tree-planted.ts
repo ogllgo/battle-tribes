@@ -15,20 +15,18 @@ import { LootComponent, registerEntityLootOnDeath } from "../../components/LootC
 import { ItemType } from "../../../../shared/src/items/items";
 import { createHitbox } from "../../hitboxes";
 
-registerEntityLootOnDeath(EntityType.treePlanted, [
-   {
-      itemType: ItemType.wood,
-      getAmount: (entity: Entity) => {
-         return plantedTreeIsFullyGrown(entity) ? randInt(2, 4) : 0;
-      }
-   },
-   {
-      itemType: ItemType.seed,
-      getAmount: (entity: Entity) => {
-         return plantedTreeIsFullyGrown(entity) ? 1 : 0;
-      }
+registerEntityLootOnDeath(EntityType.treePlanted, {
+   itemType: ItemType.wood,
+   getAmount: (entity: Entity) => {
+      return plantedTreeIsFullyGrown(entity) ? randInt(2, 4) : 0;
    }
-]);
+});
+registerEntityLootOnDeath(EntityType.treePlanted, {
+   itemType: ItemType.seed,
+   getAmount: (entity: Entity) => {
+      return plantedTreeIsFullyGrown(entity) ? 1 : 0;
+   }
+});
 
 export function createTreePlantedConfig(position: Point, rotation: number, planterBox: Entity): EntityConfig {
    const transformComponent = new TransformComponent();

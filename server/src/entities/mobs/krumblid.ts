@@ -69,12 +69,10 @@ registerEntityTamingSpec(EntityType.krumblid, {
    }
 });
 
-registerEntityLootOnDeath(EntityType.krumblid, [
-   {
-      itemType: ItemType.rawCrabMeat,
-      getAmount: () => randInt(2, 3)
-   }
-]);
+registerEntityLootOnDeath(EntityType.krumblid, {
+   itemType: ItemType.rawCrabMeat,
+   getAmount: () => randInt(2, 3)
+});
 
 function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    const biome = layer.getBiomeAtPosition(x, y);

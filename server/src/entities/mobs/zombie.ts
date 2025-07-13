@@ -26,12 +26,10 @@ export const enum ZombieVars {
    VISION_RANGE = 375
 }
 
-registerEntityLootOnDeath(EntityType.zombie, [
-   {
-      itemType: ItemType.eyeball,
-      getAmount: () => Math.random() < 0.1 ? 1 : 0
-   }
-]);
+registerEntityLootOnDeath(EntityType.zombie, {
+   itemType: ItemType.eyeball,
+   getAmount: () => Math.random() < 0.1 ? 1 : 0
+});
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return layer.getBiomeAtPosition(x, y) === Biome.grasslands;

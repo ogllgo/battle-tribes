@@ -15,32 +15,30 @@ import { createHitbox } from "../../hitboxes";
 
 const TREE_MAX_HEALTHS = [10, 15];
 
-registerEntityLootOnDeath(EntityType.tree, [
-   {
-      itemType: ItemType.wood,
-      getAmount: (tree: Entity) => {
-         const treeComponent = TreeComponentArray.getComponent(tree);
-         switch (treeComponent.treeSize) {
-            case TreeSize.small: return randInt(2, 4);
-            case TreeSize.large: return randInt(5, 7);
-         }
-      }
-   },
-   {
-      itemType: ItemType.seed,
-      getAmount: (tree: Entity) => {
-         const treeComponent = TreeComponentArray.getComponent(tree);
-
-         let dropChance: number;
-         switch (treeComponent.treeSize) {
-            case TreeSize.small: dropChance = 0.25; break;
-            case TreeSize.large: dropChance = 0.5; break;
-         }
-
-         return Math.random() < dropChance ? 1 : 0;
+registerEntityLootOnDeath(EntityType.tree, {
+   itemType: ItemType.wood,
+   getAmount: (tree: Entity) => {
+      const treeComponent = TreeComponentArray.getComponent(tree);
+      switch (treeComponent.treeSize) {
+         case TreeSize.small: return randInt(2, 4);
+         case TreeSize.large: return randInt(5, 7);
       }
    }
-]);
+});
+registerEntityLootOnDeath(EntityType.tree, {
+   itemType: ItemType.seed,
+   getAmount: (tree: Entity) => {
+      const treeComponent = TreeComponentArray.getComponent(tree);
+
+      let dropChance: number;
+      switch (treeComponent.treeSize) {
+         case TreeSize.small: dropChance = 0.25; break;
+         case TreeSize.large: dropChance = 0.5; break;
+      }
+
+      return Math.random() < dropChance ? 1 : 0;
+   }
+});
 
 const TREE_RADII: ReadonlyArray<number> = [40, 50];
 

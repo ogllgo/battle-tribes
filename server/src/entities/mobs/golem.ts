@@ -32,12 +32,10 @@ const ROCK_MASSIVE_MASS = 2.25;
 
 export const GOLEM_WAKE_TIME_TICKS = Math.floor(2.5 * Settings.TPS);
 
-registerEntityLootOnDeath(EntityType.golem, [
-   {
-      itemType: ItemType.living_rock,
-      getAmount: () => randInt(10, 20)
-   }
-]);
+registerEntityLootOnDeath(EntityType.golem, {
+   itemType: ItemType.living_rock,
+   getAmount: () => randInt(10, 20)
+});
 
 const hitboxIsTooClose = (existingHitboxes: ReadonlyArray<Hitbox>, hitboxX: number, hitboxY: number): boolean => {
    for (let j = 0; j < existingHitboxes.length; j++) {

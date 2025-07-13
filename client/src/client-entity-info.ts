@@ -468,7 +468,7 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
    },
    [EntityType.inguSerpent]: {
       name: "Ingu Serpent",
-      internalName: "InguSerpent"
+      internalName: "ingu-serpent"
    },
 };
 

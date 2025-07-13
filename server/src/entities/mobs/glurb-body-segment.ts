@@ -16,12 +16,10 @@ import { createHitbox, Hitbox } from "../../hitboxes";
 import { createLight } from "../../lights";
 import { tetherHitboxes } from "../../tethers";
 
-registerEntityLootOnDeath(EntityType.glurbBodySegment, [
-   {
-      itemType: ItemType.slurb,
-      getAmount: () => 1
-   }
-]);
+registerEntityLootOnDeath(EntityType.glurbBodySegment, {
+   itemType: ItemType.slurb,
+   getAmount: () => 1
+});
 
 export function createGlurbBodySegmentConfig(position: Point, rotation: number, lastHitbox: Hitbox, lastTransformComponent: TransformComponent): EntityConfig {
    const transformComponent = new TransformComponent();

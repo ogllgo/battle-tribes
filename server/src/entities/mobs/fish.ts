@@ -33,12 +33,10 @@ const enum Vars {
    TILE_VALIDATION_PADDING = 20
 }
 
-registerEntityLootOnDeath(EntityType.fish, [
-   {
-      itemType: ItemType.raw_fish,
-      getAmount: () => 1
-   }
-]);
+registerEntityLootOnDeath(EntityType.fish, {
+   itemType: ItemType.raw_fish,
+   getAmount: () => 1
+});
 
 const positionIsOnlyNearWater = (layer: Layer, x: number, y: number): boolean => {
    const minTileX = Math.max(Math.floor((x - Vars.TILE_VALIDATION_PADDING) / Settings.TILE_SIZE), 0);

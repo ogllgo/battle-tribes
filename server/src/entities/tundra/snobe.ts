@@ -30,12 +30,14 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 
 export const SNOBE_EAR_IDEAL_ANGLE = -Math.PI * 0.2;
 
-registerEntityLootOnDeath(EntityType.snobe, [
-   {
-      itemType: ItemType.rawSnobeMeat,
-      getAmount: () => randInt(2, 3)
-   }
-]);
+registerEntityLootOnDeath(EntityType.snobe, {
+   itemType: ItemType.rawSnobeMeat,
+   getAmount: () => randInt(2, 3)
+});
+registerEntityLootOnDeath(EntityType.snobe, {
+   itemType: ItemType.snobeHide,
+   getAmount: () => randInt(1, 2)
+});
 
 registerEntityTamingSpec(EntityType.snobe, {
    maxTamingTier: 1,
@@ -101,12 +103,6 @@ export function createSnobeConfig(position: Point, angle: number): EntityConfig 
       idealHitboxAngleOffset: 0
    });
 
-   // const buttButtOffset = new Point(0, -10);
-   // const buttButtPosition = buttPosition.copy();
-   // buttButtPosition.add(buttButtOffset);
-   // const buttButtHitbox = createHitbox(transformComponent, buttHitbox, new CircularBox(buttButtPosition, buttButtOffset, 0, 8), 0.1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.SNOBE_BUTT_BUTT]);
-   // addHitboxToTransformComponent(transformComponent, buttButtHitbox);
-
    for (let i = 0; i < 2; i++) {
       const sideIsFlipped = i === 0;
 
@@ -132,9 +128,9 @@ export function createSnobeConfig(position: Point, angle: number): EntityConfig 
 
    const statusEffectComponent = new StatusEffectComponent(0);
    
-   const aiHelperComponent = new AIHelperComponent(bodyHitbox, 280, moveFunc, turnFunc);
-   aiHelperComponent.ais[AIType.wander] = new WanderAI(1000, 8 * Math.PI, 0.4, 0.35, wanderPositionIsValid);
-   aiHelperComponent.ais[AIType.escape] = new EscapeAI(1600, 8 * Math.PI, 0.6, 5);
+   const aiHelperComponent = new AIHelperComponent(bodyHitbox, 360, moveFunc, turnFunc);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(1000, 6 * Math.PI, 1, 0.5, wanderPositionIsValid);
+   aiHelperComponent.ais[AIType.escape] = new EscapeAI(1600, 6 * Math.PI, 1, 5);
    aiHelperComponent.ais[AIType.follow] = new FollowAI(8 * Settings.TPS, 16 * Settings.TPS, 0.1, 34);
 
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);

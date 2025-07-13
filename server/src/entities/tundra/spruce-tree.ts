@@ -15,18 +15,16 @@ import { SpruceTreeComponent, SpruceTreeComponentArray } from "../../components/
 
 const TREE_MAX_HEALTHS = [15, 20];
 
-registerEntityLootOnDeath(EntityType.spruceTree, [
-   {
-      itemType: ItemType.wood,
-      getAmount: (tree: Entity) => {
-         const spruceTreeComponent = SpruceTreeComponentArray.getComponent(tree);
-         switch (spruceTreeComponent.treeSize) {
-            case TreeSize.small: return randInt(2, 4);
-            case TreeSize.large: return randInt(5, 7);
-         }
+registerEntityLootOnDeath(EntityType.spruceTree, {
+   itemType: ItemType.wood,
+   getAmount: (tree: Entity) => {
+      const spruceTreeComponent = SpruceTreeComponentArray.getComponent(tree);
+      switch (spruceTreeComponent.treeSize) {
+         case TreeSize.small: return randInt(2, 4);
+         case TreeSize.large: return randInt(5, 7);
       }
    }
-]);
+});
 
 const TREE_RADII: ReadonlyArray<number> = [46, 64];
 

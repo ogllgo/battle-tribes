@@ -804,6 +804,14 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       namePlural: "Snobe Stews",
       description: ""
    },
+   [ItemType.snobeHide]: {
+      entityTextureSource: "items/small/snobe-hide.png",
+      textureSource: "items/large/snobe-hide.png",
+      toolTextureSource: "",
+      name: "Snobe Hide",
+      namePlural: "Snobe Hides",
+      description: ""
+   },
    [ItemType.inguSerpentTooth]: {
       entityTextureSource: "items/small/ingu-serpent-tooth.png",
       textureSource: "items/large/ingu-serpent-tooth.png",
