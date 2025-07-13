@@ -168,8 +168,8 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
       product: ItemType.frostArmour,
       yield: 1,
       ingredients: createTallyFromRecord({
-         [ItemType.frostcicle]: 20,
-         [ItemType.yeti_hide]: 10
+         [ItemType.snobeHide]: 15,
+         [ItemType.inguSerpentTooth]: 10
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
       craftingStation: CraftingStation.frostshaper

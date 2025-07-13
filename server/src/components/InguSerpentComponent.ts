@@ -263,6 +263,17 @@ function onTick(serpent: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(serpent);
 
    const headHitbox = transformComponent.children[0] as Hitbox;
+   
+   // Go to follow target if possible
+   // @Copynpaste
+   if (entityExists(tamingComponent.followTarget)) {
+      const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.followTarget);
+      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+      
+      aiHelperComponent.moveFunc(serpent, targetHitbox.box.position, SLOW_ACCELERATION);
+      aiHelperComponent.turnFunc(serpent, targetHitbox.box.position, 3.5 * Math.PI, 1.8);
+      return;
+   }
 
    // Eat snobe meat
    // @Copynpaste from yeti component and snobe component!

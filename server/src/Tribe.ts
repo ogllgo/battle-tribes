@@ -139,7 +139,8 @@ export default class Tribe {
    public tribesmanCap: number;
 
    public selectedTechID: TechID | null = null;
-   public readonly unlockedTechs = new Array<Tech>();
+   // public readonly unlockedTechs = new Array<Tech>();
+   public readonly unlockedTechs = [getTechByID(TechID.frostshaping)];
    public readonly techTreeUnlockProgress: TechTreeUnlockProgress = {};
 
    private readonly respawnTimesRemaining = new Array<number>();

@@ -16,11 +16,9 @@ import { generateUndergroundTerrain } from "./world-generation/underground-layer
 import { EntityConfig, entityConfigAttachInfoIsTethered } from "./components";
 import { attachLightToHitbox } from "./lights";
 import { attachEntity, attachEntityWithTether } from "./components/TransformComponent";
-import { SERVER } from "./server/server";
 
 const enum Vars {
-   // START_TIME = 12
-   START_TIME = 22
+   START_TIME = 12
 }
 
 interface EntityJoinInfo {

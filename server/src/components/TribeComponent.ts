@@ -64,9 +64,6 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
       return EntityRelationship.enemyBuilding;
    }
 
-   // @Temporary
-   const tempEntityType = getEntityType(entity);
-   
    const entityType = getEntityType(comparingEntity);
    switch (entityType) {
       case EntityType.treePlanted:
