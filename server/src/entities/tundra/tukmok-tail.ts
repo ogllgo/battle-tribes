@@ -1,4 +1,4 @@
-import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
+import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { ServerComponentType } from "../../../../shared/src/components";
@@ -13,38 +13,69 @@ import { TukmokTailComponent } from "../../components/TukmokTailComponent";
 import { createHitbox, Hitbox } from "../../hitboxes";
 import { tetherHitboxes } from "../../tethers";
 
-const NUM_SEGMENTS = 25;
+const NUM_SEGMENTS = 12;
 
-export function createTukmokTailConfig(position: Point, angle: number): EntityConfig {
+const IDEAL_DIST = 5;
+
+export function createTukmokTailConfig(position: Point, angle: number, tailBaseOffset: Point, tukmokBodyHitbox: Hitbox): EntityConfig {
    const transformComponent = new TransformComponent();
 
    let lastHitbox: Hitbox | null = null;
    for (let i = 0; i < NUM_SEGMENTS; i++) {
       let hitboxPosition: Point;
+      let parent: Hitbox | null;
+      let offset: Point;
       if (lastHitbox === null) {
          hitboxPosition = position;
+         parent = tukmokBodyHitbox;
+         offset = tailBaseOffset;
       } else {
          hitboxPosition = lastHitbox.box.position.copy();
-         hitboxPosition.add(polarVec2(8, angle));
+         hitboxPosition.add(polarVec2(IDEAL_DIST, angle));
+         parent = null;
+         offset = new Point(0, 0);
+      }
+
+      let radius: number;
+      let mass: number;
+      let flags: Array<HitboxFlag>;
+      if (i < NUM_SEGMENTS - 1) {
+         radius = 8;
+         mass = 0.05;
+
+         if (i <= (NUM_SEGMENTS - 1) / 2) {
+            flags = [HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_BIG];
+         } else {
+            flags = [HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_SMALL];
+         }
+      } else {
+         radius = 16;
+         flags = [HitboxFlag.TUKMOK_TAIL_CLUB];
+         mass = 0.25;
       }
       
-      const hitbox = createHitbox(transformComponent, null, new CircularBox(hitboxPosition, new Point(0, 0), angle, 8), 0.05, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+      const hitbox = createHitbox(transformComponent, parent, new CircularBox(hitboxPosition, offset, 0, radius), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, flags);
       addHitboxToTransformComponent(transformComponent, hitbox);
 
-      if (lastHitbox === null) {
-
-      } else {
-         tetherHitboxes(hitbox, lastHitbox, transformComponent, transformComponent, 12, 50, 1);
+      if (lastHitbox !== null) {
+         tetherHitboxes(hitbox, lastHitbox, transformComponent, transformComponent, IDEAL_DIST, 25, 0.5);
+         // @Hack: method of adding
+         hitbox.angularTethers.push({
+            originHitbox: lastHitbox,
+            idealAngle: Math.PI,
+            springConstant: 25,
+            damping: 0.5,
+            padding: Math.PI * 0.1,
+            idealHitboxAngleOffset: Math.PI
+         });
       }
 
       lastHitbox = hitbox;
-
-      if(1+1===2)break;
    }
 
    const physicsComponent = new PhysicsComponent();
 
-   const healthComponent = new HealthComponent(250);
+   const healthComponent = new HealthComponent(75);
    
    const statusEffectComponent = new StatusEffectComponent(0);
 

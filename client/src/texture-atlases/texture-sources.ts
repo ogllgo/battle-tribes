@@ -528,7 +528,11 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/ingu-serpent/tail.png",
    "entities/tukmok/body.png",
    "entities/tukmok/head.png",
-   "entities/tukmok-tail/middle-segment.png"
+   "entities/tukmok-tail/middle-segment-small.png",
+   "entities/tukmok-tail/middle-segment-big.png",
+   "entities/tukmok-tail/club-segment.png",
+   "entities/tukmok-trunk/middle-segment.png",
+   "entities/tukmok-trunk/head-segment.png",
 ];
 
 export function registerTextureSource(textureSource: string): void {

@@ -1,12 +1,21 @@
+import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { ServerComponentType } from "../../../../shared/src/components";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
+import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
+import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
+import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
+import { entityChildIsHitbox } from "./TransformComponent";
 
 export interface TukmokTrunkComponentParams {}
 
+interface IntermediateInfo {}
+
 export interface TukmokTrunkComponent {}
 
-export const TukmokTrunkComponentArray = new ServerComponentArray<TukmokTrunkComponent, TukmokTrunkComponentParams, never>(ServerComponentType.tukmokTrunk, true, {
+export const TukmokTrunkComponentArray = new ServerComponentArray<TukmokTrunkComponent, TukmokTrunkComponentParams, IntermediateInfo>(ServerComponentType.tukmokTrunk, true, {
    createParamsFromData: createParamsFromData,
+   populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
@@ -17,12 +26,37 @@ function createParamsFromData(): TukmokTrunkComponentParams {
    return {};
 }
 
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
+   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+
+   for (let i = 0; i < transformComponentParams.children.length; i++) {
+      const hitbox = transformComponentParams.children[i];
+      if (!entityChildIsHitbox(hitbox)) {
+         continue;
+      }
+
+      const textureSource = hitbox.flags.includes(HitboxFlag.TUKMOK_TRUNK_HEAD) ? "entities/tukmok-trunk/head-segment.png" : "entities/tukmok-trunk/middle-segment.png";
+      
+      renderInfo.attachRenderPart(
+         new TexturedRenderPart(
+            hitbox,
+            i * 0.02,
+            0,
+            getTextureArrayIndex(textureSource)
+         )
+      );
+   }
+
+   return {};
+}
+
 function createComponent(): TukmokTrunkComponent {
    return {};
 }
 
 function getMaxRenderParts(): number {
-   return 0;
+   // @HACK cuz we can't access the num segments constant defined in the server
+   return 9;
 }
 
 function padData(): void {}

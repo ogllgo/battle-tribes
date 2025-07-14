@@ -26,6 +26,10 @@ export enum RenderLayer {
    okrenTongue,
    // so that the limbs are rendered below okrens
    okrenClaw,
+   // so that the tail is rendered below tukmoks
+   tukmokTail,
+   // so that the trunk is rendered below tukmoks
+   tukmokTrunk,
    defaultEntities,
    // @Hack So that these will be shown above the default entities which they are carried on
    ridingEntities,
@@ -186,6 +190,12 @@ export function getEntityRenderLayer(entityType: EntityType, entityParams: Entit
       }
       case EntityType.okrenClaw: {
          return RenderLayer.okrenClaw;
+      }
+      case EntityType.tukmokTail: {
+         return RenderLayer.tukmokTail;
+      }
+      case EntityType.tukmokTrunk: {
+         return RenderLayer.tukmokTrunk;
       }
       // (default)
       default: {

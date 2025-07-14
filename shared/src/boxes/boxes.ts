@@ -31,6 +31,10 @@ export const enum HitboxFlag {
    INGU_SERPENT_TAIL,
    TUKMOK_BODY,
    TUKMOK_HEAD,
+   TUKMOK_TAIL_MIDDLE_SEGMENT_SMALL,
+   TUKMOK_TAIL_MIDDLE_SEGMENT_BIG,
+   TUKMOK_TAIL_CLUB,
+   TUKMOK_TRUNK_HEAD
 }
 
 export const enum HitboxCollisionType {
