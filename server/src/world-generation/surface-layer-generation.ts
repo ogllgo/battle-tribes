@@ -50,6 +50,7 @@ import { createSnowberryBushConfig } from "../entities/tundra/snowberry-bush";
 import { createSnobeConfig } from "../entities/tundra/snobe";
 import { createTundraRockFrozenConfig } from "../entities/tundra/tundra-rock-frozen";
 import { createInguSerpentConfig } from "../entities/tundra/ingu-serpent";
+import { createTukmokConfig } from "../entities/tundra/tukmok";
 
 const enum Vars {
    TRIBESMAN_SPAWN_EXCLUSION_RANGE = 1200
@@ -723,7 +724,6 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          return createSnowberryBushConfig(pos, angle);
       }
    });
-   // @Temporary cuz they b crashing the game!!
    registerNewSpawnInfo({
       entityTypes: [EntityType.snobe],
       layer: surfaceLayer,
@@ -758,6 +758,22 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       doStrictCollisionCheck: true,
       createEntity: (pos: Point, angle: number): EntityConfig | null => {
          return createInguSerpentConfig(pos, angle);
+      }
+   });
+   registerNewSpawnInfo({
+      entityTypes: [EntityType.tukmok],
+      layer: surfaceLayer,
+      spawnRate: 0.01,
+      biome: Biome.tundra,
+      tileTypes: [TileType.snow],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 30,
+      spawnDistribution: createRawSpawnDistribution(32, 0.002),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: false,
+      doStrictCollisionCheck: true,
+      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+         return createTukmokConfig(pos, angle);
       }
    });
 

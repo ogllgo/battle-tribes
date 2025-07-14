@@ -146,6 +146,9 @@ import { SnobeComponent, SnobeComponentArray, SnobeComponentParams } from "./ser
 import { SnobeMoundComponent, SnobeMoundComponentArray, SnobeMoundComponentParams } from "./server-components/SnobeMoundComponent";
 import { TundraRockFrozenComponent, TundraRockFrozenComponentArray, TundraRockFrozenComponentParams } from "./server-components/TundraRockFrozenComponent";
 import { InguSerpentComponent, InguSerpentComponentArray, InguSerpentComponentParams } from "./server-components/InguSerpentComponent";
+import { TukmokComponent, TukmokComponentArray } from "./server-components/TukmokComponent";
+import { TukmokTrunkComponent, TukmokTrunkComponentArray } from "./server-components/TukmokTrunkComponent";
+import { TukmokTailComponent, TukmokTailComponentArray } from "./server-components/TukmokTailComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -300,6 +303,9 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.snobe]: SnobeComponentArray,
    [ServerComponentType.snobeMound]: SnobeMoundComponentArray,
    [ServerComponentType.inguSerpent]: InguSerpentComponentArray,
+   [ServerComponentType.tukmok]: TukmokComponentArray,
+   [ServerComponentType.tukmokTrunk]: TukmokTrunkComponentArray,
+   [ServerComponentType.tukmokTail]: TukmokTailComponentArray,
 };
 
 const ServerComponentRecord = {
@@ -430,6 +436,9 @@ const ServerComponentRecord = {
    [ServerComponentType.snobe]: (): SnobeComponent => 0 as any,
    [ServerComponentType.snobeMound]: (): SnobeMoundComponent => 0 as any,
    [ServerComponentType.inguSerpent]: (): InguSerpentComponent => 0 as any,
+   [ServerComponentType.tukmok]: (): TukmokComponent => 0 as any,
+   [ServerComponentType.tukmokTrunk]: (): TukmokTrunkComponent => 0 as any,
+   [ServerComponentType.tukmokTail]: (): TukmokTailComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
 
 export type ServerComponent<T extends ServerComponentType> = ReturnType<typeof ServerComponentRecord[T]>;
@@ -562,6 +571,9 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.snobe]: (): SnobeComponentParams => 0 as any,
    [ServerComponentType.snobeMound]: (): SnobeMoundComponentParams => 0 as any,
    [ServerComponentType.inguSerpent]: (): InguSerpentComponentParams => 0 as any,
+   [ServerComponentType.tukmok]: (): InguSerpentComponentParams => 0 as any,
+   [ServerComponentType.tukmokTrunk]: (): InguSerpentComponentParams => 0 as any,
+   [ServerComponentType.tukmokTail]: (): InguSerpentComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

@@ -28,7 +28,9 @@ export const enum HitboxFlag {
    INGU_SERPENT_HEAD,
    INGU_SERPENT_BODY_1,
    INGU_SERPENT_BODY_2,
-   INGU_SERPENT_TAIL
+   INGU_SERPENT_TAIL,
+   TUKMOK_BODY,
+   TUKMOK_HEAD,
 }
 
 export const enum HitboxCollisionType {

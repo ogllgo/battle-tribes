@@ -166,6 +166,9 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.snobe]: CollisionGroup.default,
    [EntityType.snobeMound]: CollisionGroup.boring,
    [EntityType.inguSerpent]: CollisionGroup.default,
+   [EntityType.tukmok]: CollisionGroup.default,
+   [EntityType.tukmokTrunk]: CollisionGroup.default,
+   [EntityType.tukmokTail]: CollisionGroup.default,
 };
 
 export function getEntityCollisionGroup(entityType: EntityType): CollisionGroup {

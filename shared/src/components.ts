@@ -144,6 +144,9 @@ export enum ServerComponentType {
    snobe,
    snobeMound,
    inguSerpent,
+   tukmok,
+   tukmokTail,
+   tukmokTrunk
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -280,6 +283,9 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.snobe]: "Snobe Component",
    [ServerComponentType.snobeMound]: "Snobe Mound Component",
    [ServerComponentType.inguSerpent]: "Ingu Serpent Component",
+   [ServerComponentType.tukmok]: "Tukmok Component",
+   [ServerComponentType.tukmokTail]: "Tukmok Tail Component",
+   [ServerComponentType.tukmokTrunk]: "Tukmok Trunk Component",
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;
@@ -402,6 +408,9 @@ export const EntityComponents = {
    [EntityType.snobe]: [],
    [EntityType.snobeMound]: [],
    [EntityType.inguSerpent]: [],
+   [EntityType.tukmok]: [],
+   [EntityType.tukmokTail]: [],
+   [EntityType.tukmokTrunk]: [],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;
 
 export type EntityComponentTypes<T extends EntityType> = typeof EntityComponents[T];

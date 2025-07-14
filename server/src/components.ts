@@ -129,6 +129,9 @@ import { SnobeComponent } from "./components/SnobeComponent";
 import { SnobeMoundComponent } from "./components/SnobeMoundComponent";
 import { TundraRockFrozenComponent } from "./components/TundraRockFrozenComponent";
 import { InguSerpentComponent } from "./components/InguSerpentComponent";
+import { TukmokComponent } from "./components/TukmokComponent";
+import { TukmokTailComponent } from "./components/TukmokTailComponent";
+import { TukmokTrunkComponent } from "./components/TukmokTrunkComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -260,6 +263,9 @@ const ComponentClassRecord = {
    [ServerComponentType.snobe]: () => SnobeComponent,
    [ServerComponentType.snobeMound]: () => SnobeMoundComponent,
    [ServerComponentType.inguSerpent]: () => InguSerpentComponent,
+   [ServerComponentType.tukmok]: () => TukmokComponent,
+   [ServerComponentType.tukmokTrunk]: () => TukmokTrunkComponent,
+   [ServerComponentType.tukmokTail]: () => TukmokTailComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

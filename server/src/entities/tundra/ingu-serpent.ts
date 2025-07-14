@@ -218,9 +218,6 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
          0.55,
          0.45,
          2,
-         // 83/255,
-         // 116/255,
-         // 166/255
          51/255,
          82/255,
          128/255

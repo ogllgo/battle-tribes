@@ -75,6 +75,7 @@ const applyHitboxKinematics = (entity: Entity, hitbox: Hitbox, transformComponen
    // The tileMoveSpeedMultiplier check is so that game objects on stepping stones aren't pushed
    if (hitboxIsInRiver(entity, hitbox) && !physicsComponent.overrideMoveSpeedMultiplier && physicsComponent.isAffectedByGroundFriction) {
       const flowDirectionIdx = layer.riverFlowDirections[tileIndex];
+      // @HACK
       applyAcceleration(hitbox, new Point(240 * Settings.I_TPS * a[flowDirectionIdx], 240 * Settings.I_TPS * b[flowDirectionIdx]));
    }
 
