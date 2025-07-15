@@ -40,6 +40,8 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
          textureSource = "entities/tukmok-tail/club-segment.png";
       } else if (hitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_SMALL)) {
          textureSource = "entities/tukmok-tail/middle-segment-small.png";
+      } else if (hitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_MEDIUM)) {
+         textureSource = "entities/tukmok-tail/middle-segment-medium.png";
       } else {
          textureSource = "entities/tukmok-tail/middle-segment-big.png";
       }

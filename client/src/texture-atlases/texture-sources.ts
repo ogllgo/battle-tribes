@@ -529,10 +529,16 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/tukmok/body.png",
    "entities/tukmok/head.png",
    "entities/tukmok-tail/middle-segment-small.png",
+   "entities/tukmok-tail/middle-segment-medium.png",
    "entities/tukmok-tail/middle-segment-big.png",
    "entities/tukmok-tail/club-segment.png",
    "entities/tukmok-trunk/middle-segment.png",
    "entities/tukmok-trunk/head-segment.png",
+   "entities/tukmok-spur/spur-head.png",
+   "entities/tukmok-spur/spur-shoulder-left-front.png",
+   "entities/tukmok-spur/spur-shoulder-left-back.png",
+   "entities/tukmok-spur/spur-shoulder-right-front.png",
+   "entities/tukmok-spur/spur-shoulder-right-back.png",
 ];
 
 export function registerTextureSource(textureSource: string): void {

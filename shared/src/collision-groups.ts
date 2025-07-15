@@ -169,6 +169,7 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.tukmok]: CollisionGroup.default,
    [EntityType.tukmokTrunk]: CollisionGroup.default,
    [EntityType.tukmokTail]: CollisionGroup.default,
+   [EntityType.tukmokSpur]: CollisionGroup.default,
 };
 
 export function getEntityCollisionGroup(entityType: EntityType): CollisionGroup {

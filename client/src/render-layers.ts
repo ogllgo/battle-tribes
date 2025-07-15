@@ -31,6 +31,9 @@ export enum RenderLayer {
    // so that the trunk is rendered below tukmoks
    tukmokTrunk,
    defaultEntities,
+   // so that the spurs are rendered above tukmoks
+   tukmokSpur,
+   // so that the trunk is rendered below tukmoks
    // @Hack So that these will be shown above the default entities which they are carried on
    ridingEntities,
    // so they are rendered above players
@@ -196,6 +199,9 @@ export function getEntityRenderLayer(entityType: EntityType, entityParams: Entit
       }
       case EntityType.tukmokTrunk: {
          return RenderLayer.tukmokTrunk;
+      }
+      case EntityType.tukmokSpur: {
+         return RenderLayer.tukmokSpur;
       }
       // (default)
       default: {

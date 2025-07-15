@@ -499,6 +499,10 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
    },
+   [EntityType.tukmokSpur]: {
+      effectiveDamageTypes: [DamageType.weapon],
+      stoppedDamageTypes: []
+   },
 };
 
 const getItemDamageTypes = (item: Item | null): ReadonlyArray<DamageType> => {

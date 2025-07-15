@@ -39,19 +39,22 @@ export function createTukmokTailConfig(position: Point, angle: number, tailBaseO
       let radius: number;
       let mass: number;
       let flags: Array<HitboxFlag>;
-      if (i < NUM_SEGMENTS - 1) {
+      if (i <= (NUM_SEGMENTS - 1) / 3) {
+         radius = 12;
+         mass = 0.1;
+         flags = [HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_BIG];
+      } else if (i <= (NUM_SEGMENTS - 1) / 3 * 2) {
+         radius = 10;
+         mass = 0.075;
+         flags = [HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_MEDIUM];
+      } else if (i < NUM_SEGMENTS - 1) {
          radius = 8;
          mass = 0.05;
-
-         if (i <= (NUM_SEGMENTS - 1) / 2) {
-            flags = [HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_BIG];
-         } else {
-            flags = [HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_SMALL];
-         }
+         flags = [HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_SMALL];
       } else {
          radius = 18;
-         flags = [HitboxFlag.TUKMOK_TAIL_CLUB];
          mass = 0.28;
+         flags = [HitboxFlag.TUKMOK_TAIL_CLUB];
       }
       
       const hitbox = createHitbox(transformComponent, parent, new CircularBox(hitboxPosition, offset, 0, radius), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, flags);

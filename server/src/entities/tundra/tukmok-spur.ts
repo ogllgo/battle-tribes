@@ -1,0 +1,44 @@
+import { createNormalisedPivotPoint } from "../../../../shared/src/boxes/BaseBox";
+import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/boxes";
+import CircularBox from "../../../../shared/src/boxes/CircularBox";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
+import { ServerComponentType } from "../../../../shared/src/components";
+import { EntityType } from "../../../../shared/src/entities";
+import { Point } from "../../../../shared/src/utils";
+import { EntityConfig } from "../../components";
+import { HealthComponent } from "../../components/HealthComponent";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
+import { StatusEffectComponent } from "../../components/StatusEffectComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
+import { TukmokSpurComponent } from "../../components/TukmokSpurComponent";
+import { createHitbox, Hitbox } from "../../hitboxes";
+
+export function createTukmokSpurConfig(position: Point, angle: number, parentHitbox: Hitbox, offset: Point, hitboxFlag: HitboxFlag, isFlipped: boolean): EntityConfig {
+   const transformComponent = new TransformComponent();
+
+   const hitbox = createHitbox(transformComponent, parentHitbox, new CircularBox(position, offset, angle, 12), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [hitboxFlag]);
+   hitbox.box.flipX = isFlipped;
+   // @Hack
+   hitbox.box.totalFlipXMultiplier = isFlipped ? -1 : 1;
+   addHitboxToTransformComponent(transformComponent, hitbox);
+
+   const physicsComponent = new PhysicsComponent();
+
+   const healthComponent = new HealthComponent(25);
+   
+   const statusEffectComponent = new StatusEffectComponent(0);
+
+   const tukmokSpurComponent = new TukmokSpurComponent();
+   
+   return {
+      entityType: EntityType.tukmokSpur,
+      components: {
+         [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
+         [ServerComponentType.health]: healthComponent,
+         [ServerComponentType.statusEffect]: statusEffectComponent,
+         [ServerComponentType.tukmokSpur]: tukmokSpurComponent
+      },
+      lights: []
+   };
+}

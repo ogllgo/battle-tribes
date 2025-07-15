@@ -482,6 +482,10 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Tukmok Tail",
       internalName: "tukmok-tail"
    },
+   [EntityType.tukmokSpur]: {
+      name: "Tukmok Spur",
+      internalName: "tukmok-spur"
+   },
 };
 
 export default CLIENT_ENTITY_INFO_RECORD;
