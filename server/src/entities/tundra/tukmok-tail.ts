@@ -49,9 +49,9 @@ export function createTukmokTailConfig(position: Point, angle: number, tailBaseO
             flags = [HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_SMALL];
          }
       } else {
-         radius = 16;
+         radius = 18;
          flags = [HitboxFlag.TUKMOK_TAIL_CLUB];
-         mass = 0.25;
+         mass = 0.28;
       }
       
       const hitbox = createHitbox(transformComponent, parent, new CircularBox(hitboxPosition, offset, 0, radius), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, flags);
