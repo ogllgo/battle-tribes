@@ -57,25 +57,25 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
       childConfigs.push(trunkConfig);
    }
 
-   const shoulderSpurLeftFrontOffset = new Point(-58 + 12 - 4 - 4, 92 - 12 - 4 + 4);
+   const shoulderSpurLeftFrontOffset = new Point(-58 + 12 - 4 - 4 - 4, 92 - 12 - 4 + 4);
    const shoulderSpurLeftFrontPosition = position.copy();
    shoulderSpurLeftFrontPosition.add(rotatePoint(shoulderSpurLeftFrontOffset, angle));
    const shoulderSpurLeftFrontConfig = createTukmokSpurConfig(shoulderSpurLeftFrontPosition, -Math.PI * 0.05, bodyHitbox, shoulderSpurLeftFrontOffset, HitboxFlag.TUKMOK_SPUR_SHOULDER_LEFT_FRONT, false);
    childConfigs.push(shoulderSpurLeftFrontConfig);
 
-   const shoulderSpurLeftBackOffset = new Point(-66 + 8 - 4 - 4, 72 - 8 - 4 + 4);
+   const shoulderSpurLeftBackOffset = new Point(-66 + 8 - 4 - 4 - 4, 72 - 8 - 4 + 4);
    const shoulderSpurLeftBackPosition = position.copy();
    shoulderSpurLeftBackPosition.add(rotatePoint(shoulderSpurLeftBackOffset, angle));
    const shoulderSpurLeftBackConfig = createTukmokSpurConfig(shoulderSpurLeftBackPosition, 0, bodyHitbox, shoulderSpurLeftBackOffset, HitboxFlag.TUKMOK_SPUR_SHOULDER_LEFT_BACK, false);
    childConfigs.push(shoulderSpurLeftBackConfig);
 
-   const shoulderSpurRightFrontOffset = new Point(48 + 4, 80 + 4);
+   const shoulderSpurRightFrontOffset = new Point(48 + 4 + 4, 80);
    const shoulderSpurRightFrontPosition = position.copy();
    shoulderSpurLeftFrontPosition.add(rotatePoint(shoulderSpurRightFrontOffset, angle));
    const shoulderSpurRightFrontConfig = createTukmokSpurConfig(shoulderSpurRightFrontPosition, -Math.PI * 0.04, bodyHitbox, shoulderSpurRightFrontOffset, HitboxFlag.TUKMOK_SPUR_SHOULDER_RIGHT_FRONT, false);
    childConfigs.push(shoulderSpurRightFrontConfig);
 
-   const shoulderSpurRightBackOffset = new Point(60 + 4, 66 + 4);
+   const shoulderSpurRightBackOffset = new Point(60 + 4 + 4, 62);
    const shoulderSpurRightBackPosition = position.copy();
    shoulderSpurRightBackPosition.add(rotatePoint(shoulderSpurRightBackOffset, angle));
    const shoulderSpurRightBackConfig = createTukmokSpurConfig(shoulderSpurRightBackPosition, Math.PI * 0.08, bodyHitbox, shoulderSpurRightBackOffset, HitboxFlag.TUKMOK_SPUR_SHOULDER_RIGHT_BACK, false);

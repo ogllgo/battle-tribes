@@ -12,7 +12,6 @@ interface Options {
     */
    showChunkBorders: boolean;
    /**
-    * If true, then render chunk borders will be displayed in a wireframe.
     * @default false
     */
    showRenderChunkBorders: boolean;

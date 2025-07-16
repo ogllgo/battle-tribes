@@ -322,6 +322,7 @@ export async function loadSoundEffects(): Promise<void> {
       "ingu-serpent-angry-1.mp3",
       "ingu-serpent-angry-2.mp3",
       "ingu-serpent-leap.mp3",
+      "tukmok-bone-hit.mp3"
    ];
 
    const tempAudioBuffers: Partial<Record<string, AudioBuffer>> = {};

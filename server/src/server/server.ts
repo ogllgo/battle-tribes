@@ -171,9 +171,10 @@ class GameServer {
       a = performance.now();
       forceMaxGrowAllIceSpikes();
       console.log("ice spikes",performance.now() - a)
-      a = performance.now();
-      generateGrassStrands();
-      console.log("grass",performance.now() - a)
+      // @Temporary
+      // a = performance.now();
+      // generateGrassStrands();
+      // console.log("grass",performance.now() - a)
       a = performance.now();
       generateDecorations();
       console.log("decorations",performance.now() - a)

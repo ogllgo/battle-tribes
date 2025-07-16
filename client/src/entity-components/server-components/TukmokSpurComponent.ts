@@ -1,8 +1,11 @@
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { ServerComponentType } from "../../../../shared/src/components";
+import { Entity } from "../../../../shared/src/entities";
+import { randFloat } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
+import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
@@ -19,7 +22,8 @@ export const TukmokSpurComponentArray = new ServerComponentArray<TukmokSpurCompo
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
-   updateFromData: updateFromData
+   updateFromData: updateFromData,
+   onHit: onHit
 });
 
 function createParamsFromData(): TukmokSpurComponentParams {
@@ -66,3 +70,7 @@ function getMaxRenderParts(): number {
 function padData(): void {}
 
 function updateFromData(): void {}
+
+function onHit(entity: Entity, hitbox: Hitbox): void {
+   playSoundOnHitbox("tukmok-bone-hit.mp3", 0.4, randFloat(0.92, 1.08), entity, hitbox, false);
+}

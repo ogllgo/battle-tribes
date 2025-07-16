@@ -187,24 +187,26 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    
    // Attack halo
    let attackHalo: RenderPart | null;
-   if (tamingComponentParams.isAttacking) {
-      // @Copynpaste
-      const headRenderPart = renderInfo.getRenderThing("tamingComponent:head");
-      attackHalo = createAttackHalo(headRenderPart);
-      renderInfo.attachRenderPart(attackHalo);
-   } else {
-      attackHalo = null;
-   }
+   // if (tamingComponentParams.isAttacking) {
+   //    // @Copynpaste
+   //    const headRenderPart = renderInfo.getRenderThing("tamingComponent:head");
+   //    attackHalo = createAttackHalo(headRenderPart);
+   //    renderInfo.attachRenderPart(attackHalo);
+   // } else {
+   //    attackHalo = null;
+   // }
+   attackHalo = null;
    
    // Follow halo
    let followHalo: RenderPart | null;
-   if (tamingComponentParams.isFollowing) {
-      const headRenderPart = renderInfo.getRenderThing("tamingComponent:head");
-      followHalo = createFollowHalo(headRenderPart);
-      renderInfo.attachRenderPart(followHalo);
-   } else {
-      followHalo = null;
-   }
+   // if (tamingComponentParams.isFollowing) {
+   //    const headRenderPart = renderInfo.getRenderThing("tamingComponent:head");
+   //    followHalo = createFollowHalo(headRenderPart);
+   //    renderInfo.attachRenderPart(followHalo);
+   // } else {
+   //    followHalo = null;
+   // }
+   followHalo = null;
    
    return {
       tamingTierRenderPart: tamingTierRenderPart,
