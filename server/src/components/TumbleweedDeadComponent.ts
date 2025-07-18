@@ -7,7 +7,7 @@ import { applyAccelerationFromGround, getHitboxTile, Hitbox } from "../hitboxes"
 import { getWindVector } from "../wind";
 import { destroyEntity, getEntityLayer, getEntityType } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { attachEntity, TransformComponentArray } from "./TransformComponent";
+import { attachHitbox, TransformComponentArray } from "./TransformComponent";
 
 export class TumbleweedDeadComponent {
    public isRooted = true;
@@ -78,7 +78,7 @@ function onHitboxCollision(tumbleweed: Entity, collidingEntity: Entity, affected
          const dist = hitbox.box.position.calculateDistanceBetween(otherHitbox.box.position);
          // @Hack: what if i change their radius?
          if (dist < 70) {
-            attachEntity(tumbleweed, collidingEntity, collidingHitbox, false);
+            attachHitbox(hitbox, collidingHitbox, tumbleweed, collidingEntity, false);
          }
       }
    }

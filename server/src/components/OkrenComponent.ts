@@ -317,7 +317,8 @@ function onTick(okren: Entity): void {
          if (okrenComponent.limbRegrowTimes[side] === 0) {
             const sideIsFlipped = side === OkrenSide.left ? true : false;
             const clawConfig = createOkrenClawConfig(okrenBodyHitbox.box.position.copy(), 0, okrenComponent.size, OkrenClawGrowthStage.ONE, sideIsFlipped, okrenBodyHitbox);
-            clawConfig.attachInfo = createEntityConfigAttachInfo(okren, null, true);
+            const clawRootHitbox = clawConfig.components[ServerComponentType.transform]!.children[0] as Hitbox;
+            clawConfig.attachInfo = createEntityConfigAttachInfo(okren, clawRootHitbox, okrenBodyHitbox, true);
             createEntity(clawConfig, getEntityLayer(okren), 0);
             okrenComponent.limbRegrowTimes[side] = LIMB_REGROW_TIME;
          } else {

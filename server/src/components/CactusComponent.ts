@@ -74,7 +74,11 @@ function onTick(cactus: Entity): void {
             const position = new Point(x, y);
             
             const fruitConfig = createPricklyPearConfig(position, randAngle());
-            fruitConfig.attachInfo = createEntityConfigAttachInfo(cactus, cactusHitbox, true);
+
+            const fruitTransformComponent = fruitConfig.components[ServerComponentType.transform]!;
+            const fruitHitbox = fruitTransformComponent.children[0] as Hitbox;
+            
+            fruitConfig.attachInfo = createEntityConfigAttachInfo(cactus, fruitHitbox, cactusHitbox, true);
             createEntity(fruitConfig, getEntityLayer(cactus), 0);
       
             cactusComponent.remainingFruitGrowTicks = randInt(MIN_FRUIT_GROW_TICKS, MAX_FRUIT_GROW_TICKS);

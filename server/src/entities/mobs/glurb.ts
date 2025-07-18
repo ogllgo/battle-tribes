@@ -2,7 +2,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Point, randAngle, randInt } from "battletribes-shared/utils";
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "../../../../shared/src/status-effects";
-import { EntityConfig } from "../../components";
+import { ChildConfigAttachInfo, EntityConfig } from "../../components";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { createGlurbHeadSegmentConfig } from "./glurb-head-segment";
 import { createGlurbBodySegmentConfig } from "./glurb-body-segment";
@@ -56,7 +56,7 @@ export function createGlurbConfig(position: Point, angle: number): EntityConfig 
    const numSegments = randInt(3, 5);
    const glurbComponent = new GlurbComponent(numSegments);
    
-   const childConfigs = new Array<EntityConfig>();
+   const childConfigs = new Array<ChildConfigAttachInfo>();
 
    let currentX = position.x;
    let currentY = position.y;
@@ -76,10 +76,20 @@ export function createGlurbConfig(position: Point, angle: number): EntityConfig 
       }
       
       const segmentTransformComponent = config.components[ServerComponentType.transform]!;
-      lastHitbox = segmentTransformComponent.children[0] as Hitbox;
-      lastTransformComponent = segmentTransformComponent;
+      const segmentHitbox = segmentTransformComponent.children[0] as Hitbox;
 
-      childConfigs.push(config);
+      // @INCOMPLETE this will cause head to no worky
+      if (typeof lastHitbox !== "undefined") {
+         childConfigs.push({
+            entityConfig: config,
+            attachedHitbox: segmentHitbox,
+            parentHitbox: lastHitbox,
+            destroyWhenParentIsDestroyed: true
+         });
+      }
+
+      lastHitbox = segmentHitbox;
+      lastTransformComponent = segmentTransformComponent;
    }
    
    const rootEntityConfig: EntityConfig = {

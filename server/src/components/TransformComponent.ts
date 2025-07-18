@@ -53,7 +53,7 @@ export class TransformComponent {
    public rootEntity: Entity = 0;
    public parentEntity: Entity = 0;
    
-   // @Speed: mix and matching 2 types is very bad for performance. Is there some arcitecture which won't do this?
+   // @Speed: mix and matching 2 types is very bad for performance. Is there some architecture which won't do this?
    // @Robustness: also having it be one or the other can easily introduce bugs where you assume it's one or the other. Should completely remove that architecturally
    /** All children attached to the entity */
    public readonly children = new Array<TransformNode>();
@@ -545,7 +545,7 @@ function onRemove(entity: Entity): void {
 
    // Remove from parent if attached
    if (entityExists(transformComponent.parentEntity)) {
-      removeAttachedEntity(transformComponent.parentEntity, entity);
+      detachHitbox(transformComponent.parentEntity, entity);
    }
 
    // Unattach any children of the entity which aren't being destroyed
@@ -553,7 +553,8 @@ function onRemove(entity: Entity): void {
    for (let i = transformComponent.children.length - 1; i >= 0; i--) {
       const child = transformComponent.children[i];
       if (entityChildIsEntity(child)) {
-         removeAttachedEntity(entity, child.attachedEntity);
+         console.log("removing attached",EntityTypeString[getEntityType(entity)]);
+         detachHitbox(entity, child.attachedEntity);
       } else {
          const hitbox = child;
 
@@ -644,7 +645,7 @@ const propagateRootEntityChange = (entity: Entity, rootEntity: Entity): void => 
    }
 }
 
-export function attachEntity(entity: Entity, parent: Entity, parentHitbox: Hitbox | null, destroyWhenParentIsDestroyed: boolean): void {
+export function attachHitboxRaw(hitbox: Hitbox, parentHitbox: Hitbox, entity: Entity, parent: Entity, destroyWhenParentIsDestroyed: boolean): void {
    assert(entity !== parent);
    
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
@@ -655,31 +656,8 @@ export function attachEntity(entity: Entity, parent: Entity, parentHitbox: Hitbo
    entityTransformComponent.rootEntity = parentTransformComponent.rootEntity;
    entityTransformComponent.parentEntity = parent;
 
-   if (parentHitbox !== null) {
-      const parentVelocity = getHitboxVelocity(parentHitbox);
-      // Attach all root hitboxes to the parent hitbox
-      for (const childHitbox of entityTransformComponent.rootChildren) {
-         if (entityChildIsHitbox(childHitbox)) {
-            // Note: we don't add the child to the parent's children array as we can't have hitboxes be related between entities.
-            childHitbox.parent = parentHitbox;
-
-            // Once the entity gets attached, it's going to have the parent hitboxes' angle added to it, so subtract it now.
-            // Adjust the child's relative rotation so that it stays pointed in the same direction relative to the parent
-            childHitbox.box.relativeAngle -= parentHitbox.box.angle;
-            childHitbox.previousRelativeAngle -= parentHitbox.box.angle;
-
-            const diffX = childHitbox.box.position.x - parentHitbox.box.position.x;
-            const diffY = childHitbox.box.position.y - parentHitbox.box.position.y;
-         
-            const rotatedDiffX = rotateXAroundOrigin(diffX, diffY, -parentHitbox.box.angle);
-            const rotatedDiffY = rotateYAroundOrigin(diffX, diffY, -parentHitbox.box.angle);
-            childHitbox.box.offset.x = rotatedDiffX;
-            childHitbox.box.offset.y = rotatedDiffY;
-
-            setHitboxVelocity(childHitbox, parentVelocity.x, parentVelocity.y);
-         }
-      }
-   }
+   // Note: we don't add the child to the parent's children array as we can't have hitboxes be related between entities.
+   hitbox.parent = parentHitbox;
    
    const attachInfo: EntityAttachInfo = {
       attachedEntity: entity,
@@ -690,6 +668,26 @@ export function attachEntity(entity: Entity, parent: Entity, parentHitbox: Hitbo
 
    registerDirtyEntity(entity);
    registerDirtyEntity(parent);
+}
+
+export function attachHitbox(hitbox: Hitbox, parentHitbox: Hitbox, entity: Entity, parent: Entity, destroyWhenParentIsDestroyed: boolean): void {
+   attachHitboxRaw(hitbox, parentHitbox, entity, parent, destroyWhenParentIsDestroyed);
+   
+   // Once the entity gets attached, it's going to have the parent hitboxes' angle added to it, so subtract it now.
+   // Adjust the child's relative rotation so that it stays pointed in the same direction relative to the parent
+   hitbox.box.relativeAngle -= parentHitbox.box.angle;
+   hitbox.previousRelativeAngle -= parentHitbox.box.angle;
+
+   const diffX = hitbox.box.position.x - parentHitbox.box.position.x;
+   const diffY = hitbox.box.position.y - parentHitbox.box.position.y;
+
+   const rotatedDiffX = rotateXAroundOrigin(diffX, diffY, -parentHitbox.box.angle);
+   const rotatedDiffY = rotateYAroundOrigin(diffX, diffY, -parentHitbox.box.angle);
+   hitbox.box.offset.x = rotatedDiffX;
+   hitbox.box.offset.y = rotatedDiffY;
+
+   const parentVelocity = getHitboxVelocity(parentHitbox);
+   setHitboxVelocity(hitbox, parentVelocity.x, parentVelocity.y);
 }
 
 // @Copynpaste !
@@ -734,8 +732,8 @@ export function attachEntityWithTether(entity: Entity, parent: Entity, parentHit
    registerDirtyEntity(parent);
 }
 
-/** Detatches a child from a parent */
-export function removeAttachedEntity(parent: Entity, child: Entity): void {
+/** Detatches a hitbox from its parent. */
+export function detachHitbox(parent: Entity, child: Entity): void {
    const parentTransformComponent = TransformComponentArray.getComponent(parent);
    const childTransformComponent = TransformComponentArray.getComponent(child);
    

@@ -46,6 +46,11 @@ export function createOkrenTongueConfig(position: Point, angle: number, okrenHit
          [ServerComponentType.okrenTongue]: okrenTongueComponent
       },
       lights: [],
-      childConfigs: [tongueTipConfig]
+      childConfigs: [{
+         entityConfig: tongueTipConfig,
+         attachedHitbox: tongueTipHitbox,
+         parentHitbox: okrenHitbox,
+            destroyWhenParentIsDestroyed: true
+      }]
    };
 }

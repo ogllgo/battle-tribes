@@ -19,6 +19,7 @@ import { Hitbox } from "./hitboxes";
 import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
 import { getHitboxesCollidingEntities } from "./collision-detection";
 import { createInguSerpentConfig } from "./entities/tundra/ingu-serpent";
+import { createTukmokConfig } from "./entities/tundra/tukmok";
 
 const spawnConditionsAreMet = (spawnInfo: EntitySpawnEvent): boolean => {
    // Make sure there is a block which lacks density
@@ -130,8 +131,8 @@ const entityTileTypesAreValid = (node: EntityConfig | Hitbox, spawnInfo: EntityS
       }
       
       if (typeof entityConfig.childConfigs !== "undefined") {
-         for (const childEntityConfig of entityConfig.childConfigs) {
-            if (!entityTileTypesAreValid(childEntityConfig, spawnInfo)) {
+         for (const childConfig of entityConfig.childConfigs) {
+            if (!entityTileTypesAreValid(childConfig.entityConfig, spawnInfo)) {
                return false;
             }
          }
@@ -332,8 +333,8 @@ export function runSpawnAttempt(): void {
 export function spawnInitialEntities(): void {
    // @Temporary
    setTimeout(() => {
-      // const cowConfig = createCowConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 0);
-      // createEntity(cowConfig, surfaceLayer, 0);
+      const tukmokConfig = createTukmokConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
+      createEntity(tukmokConfig, surfaceLayer, 0);
 
       // const yetiConfig = createYetiConfig(new Point(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, []);
       // createEntity(yetiConfig, surfaceLayer, 0);

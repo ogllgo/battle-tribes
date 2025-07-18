@@ -207,8 +207,10 @@ function onTick(glurbHead: Entity): void {
                      // Body segment
                      config = createGlurbBodySegmentConfig(new Point(x, y), randAngle(), finalSegmentHitbox, finalSegmentTransformComponent);
                   }
-                  config.attachInfo = createEntityConfigAttachInfo(glurb, null, true);
-                  createEntity(config, getEntityLayer(glurb), 0);
+                  // @INCOMPLETE CUZ BAD!!
+                  // const newSegmentHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
+                  // config.attachInfo = createEntityConfigAttachInfo(glurb, newSegmentHitbox, null, true);
+                  // createEntity(config, getEntityLayer(glurb), 0);
                }
             }
          }

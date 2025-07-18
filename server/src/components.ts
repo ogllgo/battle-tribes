@@ -283,21 +283,29 @@ type EntityComponents = Partial<{
    [T in ServerComponentType]: InstanceType<ReturnType<typeof ComponentClassRecord[T]>>;
 }>;
 
+// @ASS @ASS @ASS all of this @Hack
+
 export interface EntityConfigAttachInfo {
    readonly parent: Entity;
-   readonly parentHitbox: Hitbox | null;
+   readonly attachedHitbox: Hitbox;
+   readonly parentHitbox: Hitbox;
    readonly destroyWhenParentIsDestroyed: boolean;
 }
 
-export interface EntityConfigAttachInfoWithTether {
-   readonly parent: Entity;
-   readonly parentHitbox: Hitbox | null;
-   readonly destroyWhenParentIsDestroyed: boolean;
+export interface EntityConfigAttachInfoWithTether extends EntityConfigAttachInfo {
    readonly idealDistance: number;
    readonly springConstant: number;
    readonly damping: number;
    readonly affectsOriginHitbox: boolean;
    readonly angularTether?: HitboxAngularTether;
+}
+
+export interface ChildConfigAttachInfo {
+   readonly entityConfig: EntityConfig;
+   // @CLEANUP: i've basically copy pasted EntityConfigAttach into here but without the 'parent' field cuz wee can't know when we'ere creating it
+   readonly attachedHitbox: Hitbox;
+   readonly parentHitbox: Hitbox;
+   readonly destroyWhenParentIsDestroyed: boolean;
 }
 
 export interface EntityConfig {
@@ -307,20 +315,22 @@ export interface EntityConfig {
    /** If present, notes that upon being added to the world it should immediately be attached to an entity. */
    attachInfo?: EntityConfigAttachInfo | EntityConfigAttachInfoWithTether;
    /** Any child entities' configs. */
-   childConfigs?: ReadonlyArray<EntityConfig>;
+   childConfigs?: ReadonlyArray<ChildConfigAttachInfo>;
 }
 
-export function createEntityConfigAttachInfo(parent: Entity, parentHitbox: Hitbox | null, destroyWhenParentIsDestroyed: boolean): EntityConfigAttachInfo {
+export function createEntityConfigAttachInfo(parent: Entity, attachedHitbox: Hitbox, parentHitbox: Hitbox, destroyWhenParentIsDestroyed: boolean): EntityConfigAttachInfo {
    return {
       parent: parent,
+      attachedHitbox: attachedHitbox,
       parentHitbox: parentHitbox,
       destroyWhenParentIsDestroyed: destroyWhenParentIsDestroyed
    };
 }
 
-export function createEntityConfigAttachInfoWithTether(parent: Entity, parentHitbox: Hitbox | null, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, destroyWhenParentIsDestroyed: boolean, angularTether?: HitboxAngularTether): EntityConfigAttachInfoWithTether {
+export function createEntityConfigAttachInfoWithTether(parent: Entity, attachedHitbox: Hitbox, parentHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, destroyWhenParentIsDestroyed: boolean, angularTether?: HitboxAngularTether): EntityConfigAttachInfoWithTether {
    return {
       parent: parent,
+      attachedHitbox: attachedHitbox,
       parentHitbox: parentHitbox,
       destroyWhenParentIsDestroyed: destroyWhenParentIsDestroyed,
       idealDistance: idealDistance,

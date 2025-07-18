@@ -5,7 +5,7 @@ import { rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/ut
 import { Hitbox } from "../hitboxes";
 import { entityExists } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { attachEntity, attachEntityWithTether, removeAttachedEntity, TransformComponentArray } from "./TransformComponent";
+import { attachHitbox, attachEntityWithTether, detachHitbox, TransformComponentArray } from "./TransformComponent";
 
 interface CarrySlot {
    occupiedEntity: Entity;
@@ -70,7 +70,7 @@ export function mountCarrySlot(entity: Entity, mount: Entity, carrySlot: CarrySl
    
    // attachEntityWithTether(entity, mount, carrySlot.parentHitbox, 0, 10, 0.4, false);
    // @INCOMPLETE: SHOULD USE TETHER!!!!
-   attachEntity(entity, mount, carrySlot.parentHitbox, false);
+   attachHitbox(entityHitbox, carrySlot.parentHitbox, entity, mount, false);
    carrySlot.occupiedEntity = entity;
 }
 
@@ -89,7 +89,7 @@ export function dismountMount(entity: Entity, mount: Entity): void {
       return;
    }
 
-   removeAttachedEntity(mount, entity); 
+   detachHitbox(mount, entity); 
    carrySlot.occupiedEntity = 0;
 
    // Set the entity to the dismount position

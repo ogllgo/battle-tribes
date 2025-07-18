@@ -9,7 +9,7 @@ import { clampToSubtileBoardDimensions, distance, Point, positionIsInWorld, rand
 import { getEntitiesInRange } from "../ai-shared";
 import { AIHelperComponent } from "../components/AIHelperComponent";
 import { hasTamingSkill, TamingComponentArray } from "../components/TamingComponent";
-import { removeAttachedEntity, TransformComponentArray } from "../components/TransformComponent";
+import { detachHitbox, TransformComponentArray } from "../components/TransformComponent";
 import { createKrumblidMorphCocoonConfig } from "../entities/desert/krumblid-morph-cocoon";
 import { Hitbox } from "../hitboxes";
 import { createEntity, destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
@@ -160,7 +160,7 @@ export function runKrumblidHibernateAI(krumblid: Entity, aiHelperComponent: AIHe
    const krumblidTransformComponent = TransformComponentArray.getComponent(krumblid);
    // if the krumblid was previously latched onto a target or sitting on an object, unattach.
    if (krumblidTransformComponent.rootEntity !== krumblid) {
-      removeAttachedEntity(krumblidTransformComponent.rootEntity, krumblid);
+      detachHitbox(krumblidTransformComponent.rootEntity, krumblid);
    }
 
    if (hibernateAI.hibernateTargetPosition !== null) {

@@ -10,7 +10,7 @@ import { Point, randInt } from "../../../../shared/src/utils";
 import { accelerateEntityToPosition, moveEntityToPosition, turnToPosition } from "../../ai-shared";
 import { OkrenCombatAI } from "../../ai/OkrenCombatAI";
 import { SandBallingAI } from "../../ai/SandBallingAI";
-import { EntityConfig } from "../../components";
+import { ChildConfigAttachInfo, EntityConfig } from "../../components";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { EnergyStomachComponent } from "../../components/EnergyStomachComponent";
@@ -20,7 +20,7 @@ import { OkrenAgeStage, OkrenComponent, OkrenComponentArray } from "../../compon
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
-import { createHitbox } from "../../hitboxes";
+import { createHitbox, Hitbox } from "../../hitboxes";
 import { createOkrenClawConfig } from "./okren-claw";
 import { EnergyStoreComponent } from "../../components/EnergyStoreComponent";
 import { registerEntityTamingSpec } from "../../taming-specs";
@@ -139,10 +139,10 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
       case OkrenAgeStage.elder:    bodyRadius = 72; break;
       case OkrenAgeStage.ancient:  bodyRadius = 80; break;
    }
-   const fleshBodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, bodyRadius), 5, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_BODY]);
-   addHitboxToTransformComponent(transformComponent, fleshBodyHitbox);
+   const bodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, bodyRadius), 5, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_BODY]);
+   addHitboxToTransformComponent(transformComponent, bodyHitbox);
 
-   const childConfigs = new Array<EntityConfig>();
+   const childConfigs = new Array<ChildConfigAttachInfo>();
 
    for (let i = 0; i < 2; i++) {
       const sideIsFlipped = i === 1;
@@ -164,9 +164,9 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
          case OkrenAgeStage.elder:    eyeRadius = 18; break;
          case OkrenAgeStage.ancient:  eyeRadius = 18; break;
       }
-      const eyePosition = fleshBodyHitbox.box.position.copy();
+      const eyePosition = bodyHitbox.box.position.copy();
       eyePosition.add(eyeOffset);
-      const eyeHitbox = createHitbox(transformComponent, fleshBodyHitbox, new CircularBox(eyePosition, eyeOffset, 0, eyeRadius), 0.1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_EYE]);
+      const eyeHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(eyePosition, eyeOffset, 0, eyeRadius), 0.1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_EYE]);
       eyeHitbox.box.flipX = sideIsFlipped;
       // @Hack
       eyeHitbox.box.totalFlipXMultiplier = sideIsFlipped ? -1 : 1;
@@ -180,17 +180,22 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
          case OkrenAgeStage.elder:    mandibleOffset = new Point(22, 98);  break;
          case OkrenAgeStage.ancient:  mandibleOffset = new Point(22, 106); break;
       }
-      const mandiblePosition = fleshBodyHitbox.box.position.copy();
+      const mandiblePosition = bodyHitbox.box.position.copy();
       mandiblePosition.add(mandibleOffset);
-      const mandibleHitbox = createHitbox(transformComponent, fleshBodyHitbox, new RectangularBox(mandiblePosition, mandibleOffset, Math.PI * 0.1, 16, 28), 0.1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_MANDIBLE]);
+      const mandibleHitbox = createHitbox(transformComponent, bodyHitbox, new RectangularBox(mandiblePosition, mandibleOffset, Math.PI * 0.1, 16, 28), 0.1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_MANDIBLE]);
       mandibleHitbox.box.flipX = sideIsFlipped;
       // @Hack
       mandibleHitbox.box.totalFlipXMultiplier = sideIsFlipped ? -1 : 1;
       mandibleHitbox.box.pivot = createNormalisedPivotPoint(-0.5, -0.5);
       addHitboxToTransformComponent(transformComponent, mandibleHitbox);
 
-      const clawConfig = createOkrenClawConfig(fleshBodyHitbox.box.position.copy(), 0, size, OkrenClawGrowthStage.FOUR, sideIsFlipped, fleshBodyHitbox);
-      childConfigs.push(clawConfig);
+      const clawConfig = createOkrenClawConfig(bodyHitbox.box.position.copy(), 0, size, OkrenClawGrowthStage.FOUR, sideIsFlipped, bodyHitbox);
+      childConfigs.push({
+         entityConfig: clawConfig,
+         attachedHitbox: clawConfig.components[ServerComponentType.transform]!.children[0] as Hitbox,
+         parentHitbox: bodyHitbox,
+         destroyWhenParentIsDestroyed: true
+      });
    }
    
    const physicsComponent = new PhysicsComponent();
@@ -199,7 +204,7 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
 
    const healthComponent = new HealthComponent(HEALTHS[size]);
 
-   const aiHelperComponent = new AIHelperComponent(fleshBodyHitbox, VISION_RANGES[size], moveFunc, turnFunc);
+   const aiHelperComponent = new AIHelperComponent(bodyHitbox, VISION_RANGES[size], moveFunc, turnFunc);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(400, 5 * Math.PI, 0.6, 0.35, wanderPositionIsValid);
    aiHelperComponent.ais[AIType.okrenCombat] = new OkrenCombatAI(350, Math.PI * 1.6, 0.6);
    aiHelperComponent.ais[AIType.sandBalling] = new SandBallingAI(0, 0, 4);
@@ -209,9 +214,9 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
    const energyStomachComponent = new EnergyStomachComponent(1000, 4, 5);
    
    const rideableComponent = new RideableComponent();
-   rideableComponent.carrySlots.push(createCarrySlot(fleshBodyHitbox, 0, -40, 72, 0));
-   rideableComponent.carrySlots.push(createCarrySlot(fleshBodyHitbox, 30, 20, 72, 0));
-   rideableComponent.carrySlots.push(createCarrySlot(fleshBodyHitbox, -30, 20, 72, 0));
+   rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, 0, -40, 72, 0));
+   rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, 30, 20, 72, 0));
+   rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, -30, 20, 72, 0));
    
    const lootComponent = new LootComponent();
    

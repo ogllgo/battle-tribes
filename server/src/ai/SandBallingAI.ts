@@ -9,7 +9,7 @@ import { AIHelperComponent, AIType } from "../components/AIHelperComponent";
 import { HealthComponentArray } from "../components/HealthComponent";
 import { getOkrenMandibleHitbox, OKREN_SIDES } from "../components/OkrenComponent";
 import { SandBallComponentArray } from "../components/SandBallComponent";
-import { entityChildIsEntity, removeAttachedEntity, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
+import { entityChildIsEntity, detachHitbox, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { createSandBallConfig } from "../entities/desert/sand-ball";
 import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle, HitboxAngularTether, addHitboxAngularAcceleration } from "../hitboxes";
 import { createEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
@@ -103,9 +103,9 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
       // (max size)
       if (sandBallComponent.size > 6) {
          sandBallComponent.size = 6;
-         removeAttachedEntity(entity, currentSandBall);
+         detachHitbox(entity, currentSandBall);
       } else if (--sandBallingAI.remainingBallTimeTicks <= 0) {
-         removeAttachedEntity(entity, currentSandBall);
+         detachHitbox(entity, currentSandBall);
       }
 
       const newSizeCategory = Math.floor(sandBallComponent.size);
@@ -163,7 +163,7 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
       };
       ballHitbox.angularTethers.push(angularTether);
 
-      ballConfig.attachInfo = createEntityConfigAttachInfoWithTether(entity, entityHitbox, offsetMagnitude, 10, 0.4, false, false);
+      ballConfig.attachInfo = createEntityConfigAttachInfoWithTether(entity, ballHitbox, entityHitbox, offsetMagnitude, 10, 0.4, false, false);
       
       createEntity(ballConfig, getEntityLayer(entity), 0);
 

@@ -1,6 +1,6 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
-import { Point, polarVec2 } from "../../../shared/src/utils";
+import { getAbsAngleDiff, Point, polarVec2 } from "../../../shared/src/utils";
 import { getDistanceFromPointToEntity, getDistanceFromPointToHitbox, willStopAtDesiredDistance } from "../ai-shared";
 import { hitboxIsCollidingWithEntity } from "../collision-detection";
 import { applyAcceleration, Hitbox } from "../hitboxes";
@@ -8,7 +8,7 @@ import { getEntityType } from "../world";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { getEntityFullness } from "./EnergyStomachComponent";
-import { attachEntity, entityChildIsEntity, entityChildIsHitbox, TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { attachHitbox, entityChildIsEntity, entityChildIsHitbox, TransformComponent, TransformComponentArray } from "./TransformComponent";
 
 export class TukmokComponent {}
 
@@ -93,7 +93,7 @@ const getTargetTree = (tukmok: Entity, aiHelperComponent: AIHelperComponent): En
 
 function onTick(tukmok: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(tukmok);
-
+   
    // Grab leaves from trees if hungry
    // @TEMPORARY: make less than 1
    if (getEntityFullness(tukmok) < 1) {
@@ -112,11 +112,11 @@ function onTick(tukmok: Entity): void {
             const awayFromTarget = targetHitbox.box.position.calculateAngleBetween(tukmokHeadHitbox.box.position);
             const awayPos = tukmokHeadHitbox.box.position.offset(999, awayFromTarget);
             aiHelperComponent.moveFunc(tukmok, awayPos, 100);
-            aiHelperComponent.turnFunc(tukmok, targetHitbox.box.position, 1.5 * Math.PI, 0.6);
+            aiHelperComponent.turnFunc(tukmok, targetHitbox.box.position, 1 * Math.PI, 0.6);
          } else if (willStopAtDesiredDistance(tukmokHeadHitbox, IDEAL_DIST_FROM_TREE, dist)) {
             // Close enough to grab
 
-            aiHelperComponent.turnFunc(tukmok, targetHitbox.box.position, 1.5 * Math.PI, 0.6);
+            aiHelperComponent.turnFunc(tukmok, targetHitbox.box.position, 1 * Math.PI, 0.6);
 
             const trunk = getTrunk(transformComponent);
             if (trunkHasLeaf(trunk)) {
@@ -128,20 +128,20 @@ function onTick(tukmok: Entity): void {
                const trunkHeadHitbox = getTrunkHeadHitbox(trunk);
                
                if (trunkHeadHitbox.parent !== targetHitbox) {
+                  const trunkHeadToTree = trunkHeadHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
                   // First attach to the tree
-                  if (trunkHeadHitbox.box.isColliding(targetHitbox.box)) {
-                     attachEntity(trunk, target, targetHitbox, false);
+                  if (getAbsAngleDiff(trunkHeadHitbox.box.angle, trunkHeadToTree) < 0.1 && trunkHeadHitbox.box.isColliding(targetHitbox.box)) {
+                     attachHitbox(trunkHeadHitbox, targetHitbox, trunk, target, false);
                   }
                } else {
-                  
+
                }
-               
             }
          } else {
             // Not close enough to grab, move closer
 
             aiHelperComponent.moveFunc(tukmok, targetHitbox.box.position, 200);
-            aiHelperComponent.turnFunc(tukmok, targetHitbox.box.position, 1.5 * Math.PI, 0.6);
+            aiHelperComponent.turnFunc(tukmok, targetHitbox.box.position, 1 * Math.PI, 0.6);
          }
          
 

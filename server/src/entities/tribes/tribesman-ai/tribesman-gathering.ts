@@ -225,6 +225,8 @@ const moveTribesmanToBiome = (tribesman: Entity, layer: Layer, biome: Biome): vo
          return;
       }
    }
+
+   // Not on the way to the biome - need to find a path
    
    const localBiome = findBiomeForGathering(tribesman, layer, biome);
    assert(localBiome !== null, "There should always be a valid biome for the tribesman to move to, probs a bug causing the biome to not generate?");
@@ -232,7 +234,7 @@ const moveTribesmanToBiome = (tribesman: Entity, layer: Layer, biome: Biome): vo
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const tribesmanHitbox = transformComponent.children[0] as Hitbox;
    
-   // Try to find a close tile in the local biome to move to
+   // Try to find a close tile in the local biome to pathfind to
    let targetX = 0;
    let targetY = 0;
    let minDist = Number.MAX_SAFE_INTEGER;

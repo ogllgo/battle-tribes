@@ -96,7 +96,7 @@ const addTongueSegment = (tongue: Entity, okren: Entity, okrenHitbox: Hitbox, pr
 
    // Tether the old base entity to the new base entity
    tetherHitboxes(previousBaseHitbox, newSegmentHitbox, previousBaseTransformComponent, segmentTransformComponent, IDEAL_SEPARATION, 280, 2.5);
-   segmentConfig.attachInfo = createEntityConfigAttachInfo(tongue, null, true);
+   segmentConfig.attachInfo = createEntityConfigAttachInfo(tongue, newSegmentHitbox, previousBaseHitbox, true);
    previousBaseHitbox.angularTethers.push({
       originHitbox: newSegmentHitbox,
       idealAngle: 0,

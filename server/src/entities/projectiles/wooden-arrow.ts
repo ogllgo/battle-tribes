@@ -8,14 +8,13 @@ import { EntityRelationship, TribeComponent, TribeComponentArray, getEntityRelat
 import { StatusEffectComponentArray, applyStatusEffect } from "../../components/StatusEffectComponent";
 import { EntityConfig } from "../../components";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { addHitboxToTransformComponent, attachEntity, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, attachHitbox, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { ProjectileComponent, ProjectileComponentArray } from "../../components/ProjectileComponent";
 import { ItemType } from "battletribes-shared/items/items";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { entityExists, getEntityType } from "../../world";
 import Tribe from "../../Tribe";
-import { Settings } from "../../../../shared/src/settings";
 import { applyKnockback, createHitbox, getHitboxVelocity, Hitbox } from "../../hitboxes";
 
 export function createWoodenArrowConfig(position: Point, rotation: number, tribe: Tribe, owner: Entity): EntityConfig {
@@ -122,6 +121,6 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
    // Lodge the arrow in the entity when it's slow enough
    const arrowVelocity = getHitboxVelocity(affectedHitbox);
    if (arrowVelocity.length() < 50 || arrowVelocity.calculateDotProduct(angleToPoint(affectedHitbox.box.angle)) < 0) {
-      attachEntity(arrow, collidingEntity, collidingHitbox, false);
+      attachHitbox(affectedHitbox, collidingHitbox, arrow, collidingEntity, false);
    }
 }

@@ -7,7 +7,7 @@ import { getHitboxTile, Hitbox } from "../hitboxes";
 import { destroyEntity, getEntityLayer } from "../world";
 import { AIHelperComponentArray, AIType } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
-import { removeAttachedEntity, TransformComponentArray } from "./TransformComponent";
+import { detachHitbox, TransformComponentArray } from "./TransformComponent";
 
 export class SandBallComponent {
    public size = 1;
@@ -25,7 +25,7 @@ function onTick(sandBall: Entity): void {
    if (transformComponent.rootEntity !== sandBall) {
       const aiHelperComponent = AIHelperComponentArray.getComponent(transformComponent.rootEntity);
       if (aiHelperComponent.currentAIType !== AIType.sandBalling) {
-         removeAttachedEntity(transformComponent.rootEntity, sandBall);
+         detachHitbox(transformComponent.rootEntity, sandBall);
       }
    }
 

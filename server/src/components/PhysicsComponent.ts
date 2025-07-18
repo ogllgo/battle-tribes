@@ -1,6 +1,6 @@
 import { Settings } from "battletribes-shared/settings";
 import { ServerComponentType } from "battletribes-shared/components";
-import { Entity, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { TILE_PHYSICS_INFO_RECORD, TileType } from "battletribes-shared/tiles";
 import { ComponentArray } from "./ComponentArray";
 import { entityCanBlockPathfinding } from "../pathfinding";
@@ -10,8 +10,8 @@ import { Packet } from "battletribes-shared/packets";
 import { getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
 import { updateEntityLights } from "../lights";
-import { addHitboxAngularAcceleration, applyAcceleration, getHitboxAngularVelocity, getHitboxConnectedMass, getHitboxTile, getTotalMass, Hitbox, hitboxIsInRiver } from "../hitboxes";
-import { getAngleDiff, Point, polarVec2 } from "../../../shared/src/utils";
+import { addHitboxAngularAcceleration, applyAcceleration, getHitboxAngularVelocity, getHitboxConnectedMass, getHitboxTile, getHitboxVelocity, getTotalMass, Hitbox, hitboxIsInRiver } from "../hitboxes";
+import { angleToPoint, getAngleDiff, Point, polarVec2 } from "../../../shared/src/utils";
 
 // @Cleanup: Variable names (also is shit generally, shouldn't keep)
 const a = [0];
@@ -193,22 +193,30 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
       if (Math.abs(directionDiff) > angularTether.padding) {
          const rotationForce = (directionDiff - angularTether.padding * Math.sign(directionDiff)) * angularTether.springConstant;
 
-         // @Bug: I don't think using the angular velocity is right - shouldn't it be the actual velocity of the hitbox? but like projected in the torque direction
-         const hitboxAngularVelocity = getHitboxAngularVelocity(hitbox);
-         const originHitboxAngularVelocity = getHitboxAngularVelocity(originHitbox);
-         
-         const relVel = hitboxAngularVelocity - originHitboxAngularVelocity;
-         
-         const dampingForce = -relVel * angularTether.damping;
-         const force = rotationForce + dampingForce;
-
-         const hitboxAccMag = force / getTotalMass(hitbox) * 4;
          const hitboxAccDir = originToHitboxDirection + Math.PI/2;
+         const originHitboxAccDir = originToHitboxDirection - Math.PI/2;
+         
+         // @Bug: I don't think using the angular velocity is right - shouldn't it be the actual velocity of the hitbox? but like projected in the torque direction
+         // const hitboxAngularVelocity = getHitboxAngularVelocity(hitbox);
+         // const originHitboxAngularVelocity = getHitboxAngularVelocity(originHitbox);
+
+         const hitboxTorque = getHitboxVelocity(hitbox).scalarProj(angleToPoint(hitboxAccDir));
+         const originHitboxTorque = getHitboxVelocity(originHitbox).scalarProj(angleToPoint(originHitboxAccDir));
+         
+         // const relVel = hitboxAngularVelocity - originHitboxAngularVelocity;
+         const relVel = hitboxTorque - originHitboxTorque;
+         const dampingForce = -relVel * angularTether.damping;
+         
+         const force = (rotationForce + dampingForce) * 0.1;
+         // console.log(rotationForce, dampingForce);
+
+         // @HACK: the * 4
+         const hitboxAccMag = force / getTotalMass(hitbox) * 4;
          applyAcceleration(hitbox, polarVec2(hitboxAccMag, hitboxAccDir));
 
-         // @Speed: don't need to call 2nd polarVec2 cuz this is in the exact reverse direction
+         // @HACK: the * 4
          const originHitboxAccMag = force / getTotalMass(originHitbox) * 4;
-         const originHitboxAccDir = originToHitboxDirection - Math.PI/2;
+         // @Speed: don't need to call 2nd polarVec2 cuz this is in the exact reverse direction
          applyAcceleration(originHitbox, polarVec2(originHitboxAccMag, originHitboxAccDir));
       }
 
@@ -292,6 +300,10 @@ export function tickEntityPhysics(entity: Entity): void {
 
    for (const entityAttachInfo of transformComponent.children) {
       if (entityChildIsEntity(entityAttachInfo)) {
+         const t = TransformComponentArray.getComponent(entityAttachInfo.attachedEntity);
+         if (typeof t === "undefined") {
+            console.log(EntityTypeString[getEntityType(entity)]);
+         }
          tickEntityPhysics(entityAttachInfo.attachedEntity);
       }
    }

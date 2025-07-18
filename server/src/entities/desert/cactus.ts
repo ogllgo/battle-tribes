@@ -3,7 +3,7 @@ import { CactusFlowerSize, EntityType } from "battletribes-shared/entities";
 import { randInt, randFloat, Point, polarVec2, randAngle } from "battletribes-shared/utils";
 import { HealthComponent } from "../../components/HealthComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { EntityConfig } from "../../components";
+import { ChildConfigAttachInfo, createEntityConfigAttachInfo, EntityConfig } from "../../components";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -12,7 +12,7 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { CactusComponent, CactusFlower } from "../../components/CactusComponent";
 import { ItemType } from "../../../../shared/src/items/items";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { createHitbox } from "../../hitboxes";
+import { createHitbox, Hitbox } from "../../hitboxes";
 import { createPricklyPearConfig } from "./prickly-pear";
 
 const RADIUS = 40;
@@ -89,7 +89,7 @@ export function createCactusConfig(position: Point, rotation: number): EntityCon
 
    const lootComponent = new LootComponent();
 
-   const childConfigs = new Array<EntityConfig>();
+   const childConfigs = new Array<ChildConfigAttachInfo>();
    if (Math.random() < 0.4) {
       const offsetDirection = randAngle();
       const cactusRadius = (rootHitbox.box as CircularBox).radius;
@@ -101,7 +101,12 @@ export function createCactusConfig(position: Point, rotation: number): EntityCon
       const position = new Point(x, y);
       
       const config = createPricklyPearConfig(position, randAngle());
-      childConfigs.push(config);
+      childConfigs.push({
+         entityConfig: config,
+         attachedHitbox: config.components[ServerComponentType.transform]!.children[0] as Hitbox,
+         parentHitbox: rootHitbox,
+         destroyWhenParentIsDestroyed: true
+      });
    }
    
    const cactusComponent = new CactusComponent(flowers, childConfigs.length > 0);

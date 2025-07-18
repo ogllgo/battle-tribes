@@ -15,7 +15,7 @@ import { generateSurfaceTerrain } from "./world-generation/surface-layer-generat
 import { generateUndergroundTerrain } from "./world-generation/underground-layer-generation";
 import { EntityConfig, entityConfigAttachInfoIsTethered } from "./components";
 import { attachLightToHitbox } from "./lights";
-import { attachEntity, attachEntityWithTether } from "./components/TransformComponent";
+import { attachHitbox, attachEntityWithTether, attachHitboxRaw } from "./components/TransformComponent";
 
 const enum Vars {
    START_TIME = 12
@@ -236,7 +236,7 @@ export function pushEntityJoinBuffer(shouldTickJoinInfos: boolean): void {
             if (entityConfigAttachInfoIsTethered(attachInfo)) {
                attachEntityWithTether(joinInfo.entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.idealDistance, attachInfo.springConstant, attachInfo.damping, attachInfo.destroyWhenParentIsDestroyed);
             } else {
-               attachEntity(joinInfo.entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.destroyWhenParentIsDestroyed);
+               attachHitboxRaw(attachInfo.attachedHitbox, attachInfo.parentHitbox, joinInfo.entity, attachInfo.parent, attachInfo.destroyWhenParentIsDestroyed);
             }
          }
 
@@ -248,14 +248,14 @@ export function pushEntityJoinBuffer(shouldTickJoinInfos: boolean): void {
                let childJoinInfo: EntityJoinInfo | undefined;
                for (let j = 0; j <= finalPushedIdx; j++) {
                   const currentJoinInfo = entityJoinBuffer[j];
-                  if (currentJoinInfo.entityConfig === childConfig) {
+                  if (currentJoinInfo.entityConfig === childConfig.entityConfig) {
                      childJoinInfo = currentJoinInfo
                      break;
                   }
                }
                assert(typeof childJoinInfo !== "undefined");
                
-               attachEntity(childJoinInfo.entity, joinInfo.entity, null, true);
+               attachHitboxRaw(childConfig.attachedHitbox, childConfig.parentHitbox, childJoinInfo.entity, joinInfo.entity, childConfig.destroyWhenParentIsDestroyed);
             }
          }
       }
@@ -320,8 +320,8 @@ export function createEntity<ComponentTypes extends ServerComponentType>(entityC
 
    // @Hack? Should the child configs just be handled on the entity config when adding it to the world?
    if (typeof entityConfig.childConfigs !== "undefined") {
-      for (const childEntityConfig of entityConfig.childConfigs) {
-         createEntity(childEntityConfig, layer, joinDelayTicks);
+      for (const childConfig of entityConfig.childConfigs) {
+         createEntity(childConfig.entityConfig, layer, joinDelayTicks);
       }
    }
 
@@ -375,7 +375,7 @@ export function createEntityImmediate<ComponentTypes extends ServerComponentType
       if (entityConfigAttachInfoIsTethered(attachInfo)) {
          attachEntityWithTether(entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.idealDistance, attachInfo.springConstant, attachInfo.damping, attachInfo.destroyWhenParentIsDestroyed);
       } else {
-         attachEntity(entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.destroyWhenParentIsDestroyed);
+         attachHitboxRaw(attachInfo.attachedHitbox, attachInfo.parentHitbox, entity, attachInfo.parent, attachInfo.destroyWhenParentIsDestroyed);
       }
    }
 
@@ -383,9 +383,9 @@ export function createEntityImmediate<ComponentTypes extends ServerComponentType
    const childConfigs = entityConfig.childConfigs;
    if (typeof childConfigs !== "undefined") {
       for (const childConfig of childConfigs) {
-         const child = createEntityImmediate(childConfig, layer);
+         const child = createEntityImmediate(childConfig.entityConfig, layer);
 
-         attachEntity(child, entity, null, true);
+         attachHitboxRaw(childConfig.attachedHitbox, childConfig.parentHitbox, child, entity, true);
       }
    }
 

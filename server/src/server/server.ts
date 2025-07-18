@@ -235,10 +235,10 @@ class GameServer {
                setTimeout(() => {
                // // const trib = new Tribe(TribeType.plainspeople, false, spawnPosition.copy());
                
-                  const pos1 = spawnPosition.copy();
-                  pos1.x -= 50;
-                  const t1 = createTribeWorkerConfig(pos1, 0, tribe);
-                  createEntity(t1, layer, 0);
+                  // const pos1 = spawnPosition.copy();
+                  // pos1.x -= 50;
+                  // const t1 = createTribeWorkerConfig(pos1, 0, tribe);
+                  // createEntity(t1, layer, 0);
 
                //    setTimeout(() => {
                //       const pos2 = spawnPosition.copy();

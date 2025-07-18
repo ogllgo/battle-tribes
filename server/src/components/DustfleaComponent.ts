@@ -14,7 +14,7 @@ import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { addHungerEnergy, getEntityFullness } from "./EnergyStomachComponent";
 import { damageEntity } from "./HealthComponent";
-import { attachEntity, getTransformComponentFirstHitbox, removeAttachedEntity, TransformComponentArray } from "./TransformComponent";
+import { attachHitbox, getTransformComponentFirstHitbox, detachHitbox, TransformComponentArray } from "./TransformComponent";
 import { TribeMemberComponentArray } from "./TribeMemberComponent";
 
 const MIN_OBSTACLE_SIT_MODE_TICKS = 8 * Settings.TPS;
@@ -115,7 +115,7 @@ function onTick(dustflea: Entity): void {
       if (suckTarget !== null) {
          if (dustfleaTransformComponent.rootEntity !== dustflea && entityExists(dustfleaTransformComponent.rootEntity) && !entityIsSuckTarget(dustfleaTransformComponent.rootEntity)) {
             // If the dustflea is attached to something which isn't the suck target (like a rock or something), unattach
-            removeAttachedEntity(dustfleaTransformComponent.rootEntity, dustflea);
+            detachHitbox(dustfleaTransformComponent.rootEntity, dustflea);
          }
          if (dustfleaTransformComponent.rootEntity === dustflea) {
             const targetTransformComponent = TransformComponentArray.getComponent(suckTarget);
@@ -123,7 +123,7 @@ function onTick(dustflea: Entity): void {
             aiHelperComponent.moveFunc(dustflea, targetHitbox.box.position, 250);
             aiHelperComponent.turnFunc(dustflea, targetHitbox.box.position, 16 * Math.PI, 0.25);
             if (entitiesAreColliding(dustflea, suckTarget) !== CollisionVars.NO_COLLISION && getHitboxVelocity(dustfleaHitbox).calculateDistanceBetween(getHitboxVelocity(targetHitbox)) < 125) {
-               attachEntity(dustflea, suckTarget, targetHitbox, false);
+               attachHitbox(dustfleaHitbox, targetHitbox, dustflea, suckTarget, false);
 
                const tickEvent: EntityTickEvent = {
                   type: EntityTickEventType.dustfleaLatch,
@@ -156,7 +156,7 @@ function onTick(dustflea: Entity): void {
       
       // Unlatch when full
       if (getEntityFullness(dustflea) > 0.8) {
-         removeAttachedEntity(dustfleaTransformComponent.rootEntity, dustflea);
+         detachHitbox(dustfleaTransformComponent.rootEntity, dustflea);
       }
 
       return;
@@ -178,7 +178,7 @@ function onTick(dustflea: Entity): void {
             aiHelperComponent.moveFunc(dustflea, targetHitbox.box.position, 250);
             aiHelperComponent.turnFunc(dustflea, targetHitbox.box.position, 2 * Math.PI, 0.25);
             if (entitiesAreColliding(dustflea, sitTarget) !== CollisionVars.NO_COLLISION) {
-               attachEntity(dustflea, sitTarget, targetHitbox, false);
+               attachHitbox(dustfleaHitbox, targetHitbox, dustflea, sitTarget, false);
             }
             return;
          }
@@ -195,7 +195,7 @@ function onTick(dustflea: Entity): void {
    if (dustfleaTransformComponent.parentEntity !== dustflea) {
       // . what @Incomplete
       if (TransformComponentArray.hasComponent(dustfleaTransformComponent.parentEntity)) {
-         removeAttachedEntity(dustfleaTransformComponent.parentEntity, dustflea);
+         detachHitbox(dustfleaTransformComponent.parentEntity, dustflea);
       }
    }
    

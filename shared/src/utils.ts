@@ -159,7 +159,7 @@ export class Point {
    public lengthSquared(): number {
       return this.x * this.x + this.y * this.y;
    }
-   
+
    public package(): [number, number] {
       return [this.x, this.y];
    }
@@ -168,6 +168,11 @@ export class Point {
       const x = this.x + offsetMagnitude * Math.sin(offsetDirection);
       const y = this.y + offsetMagnitude * Math.cos(offsetDirection);
       return new Point(x, y);
+   }
+
+   /** Projects the point onto another point */
+   public scalarProj(pointB: Point): number {
+      return (this.x * pointB.x + this.y * pointB.y) / pointB.length();
    }
 
    public static unpackage(packagedPoint: [number, number]): Point {

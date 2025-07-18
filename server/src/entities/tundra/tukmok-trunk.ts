@@ -1,4 +1,3 @@
-import { createNormalisedPivotPoint } from "../../../../shared/src/boxes/BaseBox";
 import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
@@ -48,7 +47,6 @@ export function createTukmokTrunkConfig(position: Point, angle: number, trunkBas
       }
 
       const hitbox = createHitbox(transformComponent, parent, new CircularBox(hitboxPosition, offset, 0, 12), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, flags);
-      hitbox.box.pivot = createNormalisedPivotPoint(0, -0.5);
       addHitboxToTransformComponent(transformComponent, hitbox);
 
       if (lastHitbox !== null) {
