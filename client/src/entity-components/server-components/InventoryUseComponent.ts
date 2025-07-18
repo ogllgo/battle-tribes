@@ -248,6 +248,16 @@ const FOOD_EATING_COLOURS: { [T in ItemType as Exclude<T, FilterHealingItemTypes
       [217/255, 92/255, 111/255],
       [217/255, 151/255, 161/255],
    ],
+   [ItemType.rawTukmokMeat]: [
+      [184/255, 78/255, 97/255],
+      [217/255, 92/255, 111/255],
+      [217/255, 151/255, 161/255],
+   ],
+   [ItemType.cookedTukmokMeat]: [
+      [184/255, 78/255, 97/255],
+      [217/255, 92/255, 111/255],
+      [217/255, 151/255, 161/255],
+   ],
 };
 
 const BOW_CHARGE_DOMINANT_START_LIMB_STATE: LimbState = {
@@ -426,6 +436,13 @@ const updateHeldItemRenderPartForAttack = (inventoryUseComponent: InventoryUseCo
    let rotation: number;
    let showLargeTexture: boolean;
 
+   // @HACK
+   if (heldItemType === ItemType.ivoryTusk) {
+      offsetX = 12;
+      offsetY = 24;
+      rotation = 0;
+      showLargeTexture = true;
+   } else {
    // @Shit
    switch (ITEM_TYPE_RECORD[heldItemType]) {
       case "shield": {
@@ -479,6 +496,7 @@ const updateHeldItemRenderPartForAttack = (inventoryUseComponent: InventoryUseCo
          showLargeTexture = false;
          break;
       }
+   }
    }
 
    updateHeldItemRenderPart(inventoryUseComponent, entity, limbIdx, heldItemType, offsetX, offsetY, rotation, showLargeTexture);

@@ -40,6 +40,7 @@ const ARMOUR_TEXTURE_SOURCE_ENDINGS: Record<ArmourItemType, string> = {
    [ItemType.leaf_suit]: "leaf-suit.png",
    [ItemType.mithrilArmour]: "mithril-armour.png",
    [ItemType.crabplateArmour]: "crabplate-armour.png",
+   [ItemType.winterskinArmour]: "winterskin-armour.png",
 };
 
 const GLOVES_TEXTURE_SOURCE_RECORD: Record<GloveItemType, string> = {

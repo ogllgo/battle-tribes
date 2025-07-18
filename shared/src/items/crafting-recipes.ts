@@ -249,7 +249,15 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
       craftingStation: CraftingStation.water
    },
    {
-      product: ItemType.spear,
+      product: ItemType.woodenSpear,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.wood]: 10
+      }),
+      aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME
+   },
+   {
+      product: ItemType.stoneSpear,
       yield: 1,
       ingredients: createTallyFromRecord({
          [ItemType.wood]: 10,

@@ -136,7 +136,8 @@ const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
    [ItemType.gathering_gloves]: null,
    [ItemType.throngler]: null,
    [ItemType.leather_armour]: null,
-   [ItemType.spear]: null,
+   [ItemType.woodenSpear]: null,
+   [ItemType.stoneSpear]: null,
    [ItemType.paper]: null,
    [ItemType.research_bench]: null,
    [ItemType.wooden_wall]: null,
@@ -198,6 +199,12 @@ const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
    [ItemType.snobeHide]: null,
    [ItemType.inguSerpentTooth]: "sword",
    [ItemType.iceWringer]: null,
+   [ItemType.rawTukmokMeat]: "sword",
+   [ItemType.cookedTukmokMeat]: null,
+   [ItemType.tukmokFurHide]: "sword",
+   [ItemType.winterskinArmour]: null,
+   [ItemType.ivoryTusk]: "sword",
+   [ItemType.ivorySpear]: null,
 };
 
 const createAssignment = <T extends AIPlan>(plan: T, children: Array<AIPlanAssignment>): AIPlanAssignment<T> => {

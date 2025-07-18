@@ -325,6 +325,14 @@ export const SPEAR_DAMAGE_BOX_INFO: LimbHeldItemDamageBoxInfo = {
    offsetX: 5,
    offsetY: 30
 };
+// @HACK
+export const IVORY_SPEAR_DAMAGE_BOX_INFO: LimbHeldItemDamageBoxInfo = {
+   width: 20,
+   height: 112,
+   rotation: 0,
+   offsetX: 5,
+   offsetY: 38
+};
 
 export function createZeroedLimbState(): LimbState {
    return {

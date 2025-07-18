@@ -63,7 +63,8 @@ const GIFT_APPRECIATION_WEIGHTS: Record<ItemType, number> = {
    [ItemType.gathering_gloves]: 5,
    [ItemType.throngler]: 7,
    [ItemType.leather_armour]: 8,
-   [ItemType.spear]: 5,
+   [ItemType.woodenSpear]: 5,
+   [ItemType.stoneSpear]: 5,
    [ItemType.paper]: 2,
    [ItemType.research_bench]: 12,
    [ItemType.wooden_wall]: 3,
@@ -124,6 +125,12 @@ const GIFT_APPRECIATION_WEIGHTS: Record<ItemType, number> = {
    [ItemType.snobeHide]: 1,
    [ItemType.inguSerpentTooth]: 1,
    [ItemType.iceWringer]: 1,
+   [ItemType.rawTukmokMeat]: 1,
+   [ItemType.cookedTukmokMeat]: 1,
+   [ItemType.tukmokFurHide]: 1,
+   [ItemType.winterskinArmour]: 1,
+   [ItemType.ivoryTusk]: 1,
+   [ItemType.ivorySpear]: 1,
 };
 
 export const enum TribesmanPathType {

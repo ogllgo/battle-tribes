@@ -23,7 +23,7 @@ import { ItemType } from "../../../../shared/src/items/items";
 import { createHitbox, getHitboxVelocity, Hitbox } from "../../hitboxes";
 import { EnergyStomachComponent } from "../../components/EnergyStomachComponent";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
-import { accelerateEntityToPosition, moveEntityToPosition, turnToPosition } from "../../ai-shared";
+import { accelerateEntityToPosition, turnToPosition } from "../../ai-shared";
 import { SandBallingAI } from "../../ai/SandBallingAI";
 import { createNormalisedPivotPoint } from "../../../../shared/src/boxes/BaseBox";
 import { VegetationConsumeAI } from "../../ai/VegetationConsumeAI";

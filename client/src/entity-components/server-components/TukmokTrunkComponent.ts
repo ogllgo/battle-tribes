@@ -56,7 +56,7 @@ function createComponent(): TukmokTrunkComponent {
 
 function getMaxRenderParts(): number {
    // @HACK cuz we can't access the num segments constant defined in the server
-   return 9;
+   return 8;
 }
 
 function padData(): void {}

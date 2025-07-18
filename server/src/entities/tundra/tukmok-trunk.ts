@@ -14,7 +14,7 @@ import { TukmokTrunkComponent } from "../../components/TukmokTrunkComponent";
 import { createHitbox, Hitbox } from "../../hitboxes";
 import { tetherHitboxes } from "../../tethers";
 
-const NUM_SEGMENTS = 7;
+const NUM_SEGMENTS = 8;
 
 const IDEAL_DIST = 6;
 
@@ -37,14 +37,17 @@ export function createTukmokTrunkConfig(position: Point, angle: number, trunkBas
          offset = new Point(0, 0);
       }
 
+      let mass: number;
       let flags: Array<HitboxFlag>;
       if (i < NUM_SEGMENTS - 1) {
+         mass = 0.25;
          flags = [];
       } else {
+         mass = 0.35;
          flags = [HitboxFlag.TUKMOK_TRUNK_HEAD];
       }
 
-      const hitbox = createHitbox(transformComponent, parent, new CircularBox(hitboxPosition, offset, 0, 12), 0.08, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, flags);
+      const hitbox = createHitbox(transformComponent, parent, new CircularBox(hitboxPosition, offset, 0, 12), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, flags);
       hitbox.box.pivot = createNormalisedPivotPoint(0, -0.5);
       addHitboxToTransformComponent(transformComponent, hitbox);
 

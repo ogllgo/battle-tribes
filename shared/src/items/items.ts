@@ -1,4 +1,4 @@
-import { AttackPatternInfo, AttackTimingsInfo, AXE_ATTACK_TIMINGS, UNARMED_ATTACK_PATTERNS, DEFAULT_ATTACK_TIMINGS, DEFAULT_ITEM_DAMAGE_BOX_INFO, HAMMER_ATTACK_TIMINGS, LimbHeldItemDamageBoxInfo, PICKAXE_ATTACK_PATTERNS, PICKAXE_ATTACK_TIMINGS, PICKAXE_ITEM_DAMAGE_BOX_INFO, SHIELD_BLOCKING_DAMAGE_BOX_INFO, SPEAR_ATTACK_PATTERNS, SPEAR_ATTACK_TIMINGS, SPEAR_DAMAGE_BOX_INFO, SWORD_ATTACK_TIMINGS, SWORD_ITEM_DAMAGE_BOX_INFO, TOOL_ITEM_DAMAGE_BOX_INFO, LimbConfiguration } from "../attack-patterns";
+import { AttackPatternInfo, AttackTimingsInfo, AXE_ATTACK_TIMINGS, UNARMED_ATTACK_PATTERNS, DEFAULT_ATTACK_TIMINGS, DEFAULT_ITEM_DAMAGE_BOX_INFO, HAMMER_ATTACK_TIMINGS, LimbHeldItemDamageBoxInfo, PICKAXE_ATTACK_PATTERNS, PICKAXE_ATTACK_TIMINGS, PICKAXE_ITEM_DAMAGE_BOX_INFO, SHIELD_BLOCKING_DAMAGE_BOX_INFO, SPEAR_ATTACK_PATTERNS, SPEAR_ATTACK_TIMINGS, SPEAR_DAMAGE_BOX_INFO, SWORD_ATTACK_TIMINGS, SWORD_ITEM_DAMAGE_BOX_INFO, TOOL_ITEM_DAMAGE_BOX_INFO, LimbConfiguration, IVORY_SPEAR_DAMAGE_BOX_INFO } from "../attack-patterns";
 import { EntityType } from "../entities";
 import { Settings } from "../settings";
 import { StructureType } from "../structures";
@@ -9,6 +9,8 @@ export const enum ItemType {
    wooden_sword,
    wooden_axe,
    wooden_pickaxe,
+   wooden_hammer,
+   woodenSpear,
    berry,
    raw_beef,
    cooked_beef,
@@ -17,6 +19,7 @@ export const enum ItemType {
    stone_axe,
    stone_pickaxe,
    stone_hammer,
+   stoneSpear,
    leather,
    leather_backpack,
    cactus_spine,
@@ -43,11 +46,9 @@ export const enum ItemType {
    gathering_gloves,
    throngler,
    leather_armour,
-   spear,
    paper,
    research_bench,
    wooden_wall,
-   wooden_hammer,
    stone_battleaxe,
    living_rock,
    planter_box,
@@ -104,7 +105,13 @@ export const enum ItemType {
    snobeStew,
    snobeHide,
    inguSerpentTooth,
-   iceWringer
+   iceWringer,
+   rawTukmokMeat,
+   cookedTukmokMeat,
+   tukmokFurHide,
+   winterskinArmour,
+   ivoryTusk,
+   ivorySpear
 }
 
 // @Cleanup @Robustness: pretty sure there's a C++ thing to automatically do this
@@ -148,7 +155,8 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.gathering_gloves]: "gathering_gloves",
    [ItemType.throngler]: "throngler",
    [ItemType.leather_armour]: "leather_armour",
-   [ItemType.spear]: "spear",
+   [ItemType.woodenSpear]: "Wooden Spear",
+   [ItemType.stoneSpear]: "Stone Spear",
    [ItemType.paper]: "paper",
    [ItemType.research_bench]: "research_bench",
    [ItemType.wooden_wall]: "wooden_wall",
@@ -210,6 +218,12 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.snobeHide]: "Snobe Hide",
    [ItemType.inguSerpentTooth]: "Ingu Serpent Tooth",
    [ItemType.iceWringer]: "Ice Wringer",
+   [ItemType.rawTukmokMeat]: "Raw Tukmok Meat",
+   [ItemType.cookedTukmokMeat]: "Cooked Tukmok Meat",
+   [ItemType.tukmokFurHide]: "Tukmok Fur Hide",
+   [ItemType.winterskinArmour]: "Winterskin Armour",
+   [ItemType.ivoryTusk]: "Ivory Tusk",
+   [ItemType.ivorySpear]: "Ivory Spear",
 };
 
 export const NUM_ITEM_TYPES = Object.keys(ItemTypeString).length;
@@ -494,7 +508,8 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.gathering_gloves]: "glove",
    [ItemType.throngler]: "sword",
    [ItemType.leather_armour]: "armour",
-   [ItemType.spear]: "spear",
+   [ItemType.woodenSpear]: "spear",
+   [ItemType.stoneSpear]: "spear",
    [ItemType.paper]: "material",
    [ItemType.research_bench]: "placeable",
    [ItemType.wooden_wall]: "placeable",
@@ -555,6 +570,12 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.snobeHide]: "material",
    [ItemType.inguSerpentTooth]: "material",
    [ItemType.iceWringer]: "sword",
+   [ItemType.rawTukmokMeat]: "healing",
+   [ItemType.cookedTukmokMeat]: "healing",
+   [ItemType.tukmokFurHide]: "material",
+   [ItemType.winterskinArmour]: "armour",
+   [ItemType.ivoryTusk]: "sword",
+   [ItemType.ivorySpear]: "spear",
 } satisfies Record<ItemType, keyof ItemInfoRecord>;
 
 export type ItemInfo<T extends ItemType> = ItemInfoRecord[typeof ITEM_TYPE_RECORD[T]];
@@ -786,7 +807,15 @@ export const ITEM_INFO_RECORD = {
    [ItemType.leather_armour]: {
       defence: 0.1
    },
-   [ItemType.spear]: {
+   [ItemType.woodenSpear]: {
+      stackSize: 99,
+      toolType: "spear",
+      damage: 2,
+      knockback: 300
+      // @Incomplete
+      // attackCooldown: 0.8,
+   },
+   [ItemType.stoneSpear]: {
       stackSize: 99,
       toolType: "spear",
       damage: 4,
@@ -1029,6 +1058,36 @@ export const ITEM_INFO_RECORD = {
       damage: 2,
       knockback: 170
    },
+   [ItemType.rawTukmokMeat]: {
+      stackSize: 99,
+      consumeTime: 3,
+      healAmount: 1,
+      consumableItemCategory: ConsumableItemCategory.food
+   },
+   [ItemType.cookedTukmokMeat]: {
+      stackSize: 99,
+      consumeTime: 3,
+      healAmount: 5,
+      consumableItemCategory: ConsumableItemCategory.food
+   },
+   [ItemType.tukmokFurHide]: {
+      stackSize: 99
+   },
+   [ItemType.winterskinArmour]: {
+      defence: 0.3
+   },
+   [ItemType.ivoryTusk]: {
+      stackSize: 1,
+      toolType: "sword",
+      damage: 3,
+      knockback: 170
+   },
+   [ItemType.ivorySpear]: {
+      stackSize: 99,
+      toolType: "spear",
+      damage: 5,
+      knockback: 300
+   },
 } satisfies { [T in ItemType]: ItemInfo<T> };
 
 // Some typescript wizardry
@@ -1261,6 +1320,15 @@ export function itemTypeIsHammer(itemType: ItemType): itemType is HammerItemType
 export function getItemAttackInfo(itemType: ItemType | null): AttackInfo {
    if (itemType === null) {
       return UNARMED_ATTACK_INFO;
+   }
+
+   // @HACK cuz the ivory spear has a different hitbox than the other spears
+   if (itemType === ItemType.ivorySpear) {
+      return {
+         attackPatterns: SPEAR_ATTACK_PATTERNS,
+         attackTimings: SPEAR_ATTACK_TIMINGS,
+         heldItemDamageBoxInfo: IVORY_SPEAR_DAMAGE_BOX_INFO
+      };
    }
 
    const itemCategory = ITEM_TYPE_RECORD[itemType];

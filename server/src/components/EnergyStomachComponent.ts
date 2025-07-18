@@ -36,8 +36,6 @@ EnergyStomachComponentArray.onTick = {
 };
 
 function onTick(entity: Entity): void {
-   if(1+1===2)return;
-   
    const energyStomachComponent = EnergyStomachComponentArray.getComponent(entity);
    energyStomachComponent.energy -= energyStomachComponent.metabolism / Settings.TPS;
    // @Incomplete: make the entity take damage or something?

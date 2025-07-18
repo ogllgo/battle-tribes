@@ -352,12 +352,20 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       namePlural: "Leather Armours", 
       description: ""
    },
-   [ItemType.spear]: {
-      entityTextureSource: "items/small/spear.png",
-      textureSource: "items/large/spear.png",
-      toolTextureSource: "items/misc/spear.png",
-      name: "Spear",
-      namePlural: "Spears", 
+   [ItemType.woodenSpear]: {
+      entityTextureSource: "items/small/wooden-spear.png",
+      textureSource: "items/large/wooden-spear.png",
+      toolTextureSource: "items/misc/wooden-spear.png",
+      name: "Wooden Spear",
+      namePlural: "Wooden Spears", 
+      description: "Pointy end works best."
+   },
+   [ItemType.stoneSpear]: {
+      entityTextureSource: "items/small/stone-spear.png",
+      textureSource: "items/large/stone-spear.png",
+      toolTextureSource: "items/misc/stone-spear.png",
+      name: "Stone Spear",
+      namePlural: "Stone Spears", 
       description: "Pointy end works best."
    },
    [ItemType.paper]: {
@@ -827,7 +835,55 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       name: "Ice Wringer",
       namePlural: "Ice Wringer",
       description: ""
-   }
+   },
+   [ItemType.rawTukmokMeat]: {
+      entityTextureSource: "items/small/raw-tukmok-meat.png",
+      textureSource: "items/large/raw-tukmok-meat.png",
+      toolTextureSource: "",
+      name: "Raw Tukmok Meat",
+      namePlural: "Raw Tukmok Meat",
+      description: ""
+   },
+   [ItemType.cookedTukmokMeat]: {
+      entityTextureSource: "items/small/cooked-tukmok-meat.png",
+      textureSource: "items/large/cooked-tukmok-meat.png",
+      toolTextureSource: "",
+      name: "Cooked Tukmok Meat",
+      namePlural: "Cooked Tukmok Meat",
+      description: ""
+   },
+   [ItemType.tukmokFurHide]: {
+      entityTextureSource: "items/small/tukmok-fur-hide.png",
+      textureSource: "items/large/tukmok-fur-hide.png",
+      toolTextureSource: "",
+      name: "Tukmok Fur Hide",
+      namePlural: "Tukmok Fur Hides",
+      description: ""
+   },
+   [ItemType.winterskinArmour]: {
+      entityTextureSource: "items/small/winterskin-armour.png",
+      textureSource: "items/large/winterskin-armour.png",
+      toolTextureSource: "",
+      name: "Winterskin Armour",
+      namePlural: "Winterskin Armour",
+      description: ""
+   },
+   [ItemType.ivoryTusk]: {
+      entityTextureSource: "items/small/ivory-tusk.png",
+      textureSource: "items/large/ivory-tusk.png",
+      toolTextureSource: "items/misc/ivory-tusk.png",
+      name: "Ivory Tusk",
+      namePlural: "Ivory Tusk",
+      description: ""
+   },
+   [ItemType.ivorySpear]: {
+      entityTextureSource: "items/small/ivory-spear.png",
+      textureSource: "items/large/ivory-spear.png",
+      toolTextureSource: "items/misc/ivory-spear.png",
+      name: "Ivory Spear",
+      namePlural: "Ivory Spear",
+      description: ""
+   },
 };
 
 export function getItemTypeImage(itemType: ItemType): any {
