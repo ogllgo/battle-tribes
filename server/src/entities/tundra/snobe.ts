@@ -5,7 +5,7 @@ import { Point, polarVec2, randInt } from "battletribes-shared/utils";
 import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import { EntityConfig } from "../../components";
 import { TransformComponent, TransformComponentArray, addHitboxToTransformComponent } from "../../components/TransformComponent";
-import { applyAbsoluteKnockback, createHitbox, Hitbox } from "../../hitboxes";
+import { applyAbsoluteKnockback, Hitbox } from "../../hitboxes";
 import { HealthComponent } from "../../components/HealthComponent";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { SnobeComponent } from "../../components/SnobeComponent";
@@ -66,7 +66,7 @@ const moveFunc = (snobe: Entity, pos: Point, acceleration: number): void => {
    const ageTicks = getEntityAgeTicks(snobe);
    if ((ageTicks + snobe) % Math.floor(Settings.TPS / 3.5) === 0) {
       const transformComponent = TransformComponentArray.getComponent(snobe);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       
       const direction = hitbox.box.position.calculateAngleBetween(pos);
       // @HACK: so that snobes get affected by freezing from ingu serpents. But this shouldn't have to be thought about here!!
@@ -82,14 +82,14 @@ const turnFunc = (snobe: Entity, pos: Point, turnSpeed: number, turnDamping: num
 export function createSnobeConfig(position: Point, angle: number): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const bodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 24), 0.45, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.SNOBE_BODY]);
+   const bodyHitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), angle, 24), 0.45, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.SNOBE_BODY]);
    addHitboxToTransformComponent(transformComponent, bodyHitbox);
    
    const idealButtDistance = 20;
    const buttOffset = new Point(0, -idealButtDistance);
    const buttPosition = position.copy();
    buttPosition.add(buttOffset);
-   const buttHitbox = createHitbox(transformComponent, null, new CircularBox(buttPosition, new Point(0, 0), 0, 12), 0.15, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.SNOBE_BUTT]);
+   const buttHitbox = new Hitbox(transformComponent, null, true, new CircularBox(buttPosition, new Point(0, 0), 0, 12), 0.15, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.SNOBE_BUTT]);
    addHitboxToTransformComponent(transformComponent, buttHitbox);
    
    tetherHitboxes(buttHitbox, bodyHitbox, transformComponent, transformComponent, idealButtDistance, 25, 1);
@@ -109,7 +109,7 @@ export function createSnobeConfig(position: Point, angle: number): EntityConfig 
       const earOffset = new Point(22, -8);
       const earPosition = position.copy();
       earPosition.add(earOffset);
-      const earHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(earPosition, earOffset, SNOBE_EAR_IDEAL_ANGLE, 8), 0.05, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.SNOBE_EAR]);
+      const earHitbox = new Hitbox(transformComponent, bodyHitbox, true, new CircularBox(earPosition, earOffset, SNOBE_EAR_IDEAL_ANGLE, 8), 0.05, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.SNOBE_EAR]);
       earHitbox.box.flipX = sideIsFlipped;
       // @Hack
       earHitbox.box.totalFlipXMultiplier = sideIsFlipped ? -1 : 1;

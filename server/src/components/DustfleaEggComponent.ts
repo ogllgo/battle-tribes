@@ -38,7 +38,7 @@ function onTick(dustfleaEgg: Entity): void {
       dustfleaEggComponent.jiggleTimer = randInt(MIN_JIGGLE_TIME_TICKS, MAX_JIGGLE_TIME_TICKS);
 
       const transformComponent = TransformComponentArray.getComponent(dustfleaEgg);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       addHitboxAngularVelocity(hitbox, randFloat(0.4, 0.7) * randSign());
    }
 
@@ -46,7 +46,7 @@ function onTick(dustfleaEgg: Entity): void {
    if (ageHours >= 4) {
       // Dustflea!!
       const transformComponent = TransformComponentArray.getComponent(dustfleaEgg);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       const dustfleaConfig = createDustfleaConfig(hitbox.box.position.copy(), hitbox.box.angle);
       createEntity(dustfleaConfig, getEntityLayer(dustfleaEgg), 0);
       destroyEntity(dustfleaEgg);

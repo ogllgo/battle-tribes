@@ -10,7 +10,7 @@ import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { TukmokTailComponent } from "../../components/TukmokTailComponent";
-import { createHitbox, Hitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 import { tetherHitboxes } from "../../tethers";
 
 const NUM_SEGMENTS = 12;
@@ -57,7 +57,7 @@ export function createTukmokTailConfig(position: Point, angle: number, tailBaseO
          flags = [HitboxFlag.TUKMOK_TAIL_CLUB];
       }
       
-      const hitbox = createHitbox(transformComponent, parent, new CircularBox(hitboxPosition, offset, 0, radius), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, flags);
+      const hitbox = new Hitbox(transformComponent, parent, true, new CircularBox(hitboxPosition, offset, 0, radius), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, flags);
       addHitboxToTransformComponent(transformComponent, hitbox);
 
       if (lastHitbox !== null) {

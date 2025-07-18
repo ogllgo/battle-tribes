@@ -44,7 +44,7 @@ const createSpikyBall = (guardian: Entity, targetX: number, targetY: number): vo
       
       const config = createGuardianSpikyBallConfig(new Point(x!, y!), randAngle(), guardian);
 
-      const spikyBallHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
+      const spikyBallHitbox = config.components[ServerComponentType.transform]!.hitboxes[0];
       setHitboxVelocity(spikyBallHitbox, vx, vy);
       addHitboxAngularVelocity(spikyBallHitbox, Math.PI);
       

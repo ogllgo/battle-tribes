@@ -165,7 +165,7 @@ const FISH_SUIT_IGNORED_TILE_MOVE_SPEEDS = [TileType.water];
 /** Gets the radius of a humanoid creature with just the one circular hitbox */
 export function getHumanoidRadius(tribesman: Entity): number {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   return ((transformComponent.children[0] as Hitbox).box as CircularBox).radius;
+   return ((transformComponent.hitboxes[0]).box as CircularBox).radius;
 }
 
 const getSecondsSinceLastAttack = (entity: Entity): number => {
@@ -362,7 +362,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    // 
    
    const bodyRenderPart = new TexturedRenderPart(
-      transformComponentParams.children[0] as Hitbox,
+      transformComponentParams.hitboxes[0],
       2,
       0,
       getTextureArrayIndex(getBodyTextureSource(entityParams.entityType, tribeComponentParams.tribeType))
@@ -534,7 +534,7 @@ const regenerateTitleEffects = (tribeMemberComponent: TribesmanComponent, entity
             const offsetY = 24 - 6 * 4 / 2;
 
             const transformComponent = TransformComponentArray.getComponent(entity);
-            const hitbox = transformComponent.children[0] as Hitbox;
+            const hitbox = transformComponent.hitboxes[0];
 
             const renderPart = new TexturedRenderPart(
                hitbox,
@@ -555,7 +555,7 @@ const regenerateTitleEffects = (tribeMemberComponent: TribesmanComponent, entity
          case TribesmanTitle.shrewd: {
             for (let i = 0; i < 2; i++) {
                const transformComponent = TransformComponentArray.getComponent(entity);
-               const hitbox = transformComponent.children[0] as Hitbox;
+               const hitbox = transformComponent.hitboxes[0];
 
                const renderPart = new TexturedRenderPart(
                   hitbox,
@@ -597,7 +597,7 @@ const regenerateTitleEffects = (tribeMemberComponent: TribesmanComponent, entity
                const angle = ((i - (numLeaves - 1) / 2) * Math.PI * 0.2) + Math.PI;
 
                const transformComponent = TransformComponentArray.getComponent(entity);
-               const hitbox = transformComponent.children[0] as Hitbox;
+               const hitbox = transformComponent.hitboxes[0];
                
                const renderPart = new TexturedRenderPart(
                   hitbox,
@@ -619,7 +619,7 @@ const regenerateTitleEffects = (tribeMemberComponent: TribesmanComponent, entity
          }
          case TribesmanTitle.yetisbane: {
             const transformComponent = TransformComponentArray.getComponent(entity);
-            const hitbox = transformComponent.children[0] as Hitbox;
+            const hitbox = transformComponent.hitboxes[0];
 
             const renderPart = new TexturedRenderPart(
                hitbox,
@@ -655,7 +655,7 @@ const regenerateTitleEffects = (tribeMemberComponent: TribesmanComponent, entity
          }
          case TribesmanTitle.wellful: {
             const transformComponent = TransformComponentArray.getComponent(entity);
-            const hitbox = transformComponent.children[0] as Hitbox;
+            const hitbox = transformComponent.hitboxes[0];
 
             const renderPart = new TexturedRenderPart(
                hitbox,
@@ -676,7 +676,7 @@ const updateTitles = (tribeMemberComponent: TribesmanComponent, entity: Entity, 
       // If at least 1 title is added, do particle effects
       if (titlesArrayHasExtra(newTitles, tribeMemberComponent.titles)) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.children[0] as Hitbox;
+         const hitbox = transformComponent.hitboxes[0];
          for (let i = 0; i < 25; i++) {
             const offsetMagnitude = randFloat(12, 34);
             const offsetDirection = randAngle();
@@ -710,7 +710,7 @@ function onTick(entity: Entity): void {
    }
 
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = transformComponent.children[0] as Hitbox;
+   const entityHitbox = transformComponent.hitboxes[0];
    
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
@@ -863,7 +863,7 @@ function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 20);
    createBloodParticleFountain(entity, 0.1, 1);

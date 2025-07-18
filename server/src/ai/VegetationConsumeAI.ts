@@ -10,7 +10,7 @@ import { EnergyStoreComponentArray } from "../components/EnergyStoreComponent";
 import { HealthComponentArray, damageEntity } from "../components/HealthComponent";
 import { addHungerEnergy } from "../components/EnergyStomachComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
-import { Hitbox, turnHitboxToAngle } from "../hitboxes";
+import { turnHitboxToAngle } from "../hitboxes";
 import { convertEntityPathfindingGroupID, findSingleLayerPath, getEntityFootprint, Path, PathfindOptions } from "../pathfinding";
 import { entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 
@@ -33,7 +33,7 @@ const getVegetationConsumeAITarget = (krumblid: Entity, aiHelperComponent: AIHel
    const layer = getEntityLayer(krumblid);
    
    const transformComponent = TransformComponentArray.getComponent(krumblid);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    const pathfindingEntityFootprint = getEntityFootprint((hitbox.box as CircularBox).radius);
    
@@ -51,7 +51,7 @@ const getVegetationConsumeAITarget = (krumblid: Entity, aiHelperComponent: AIHel
       }
       
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
-      const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+      const entityHitbox = entityTransformComponent.hitboxes[0];
       assertBoxIsCircular(entityHitbox.box);
 
       const options: PathfindOptions = {
@@ -98,10 +98,10 @@ export function runVegetationConsumeAI(krumblid: Entity, aiHelperComponent: AIHe
    const target = vegetationConsumeAI.target;
    
    const transformComponent = TransformComponentArray.getComponent(krumblid);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const targetTransformComponent = TransformComponentArray.getComponent(target);
-   const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+   const targetHitbox = targetTransformComponent.hitboxes[0];
    
    // @Incomplete: move using pathfinding!!!
    aiHelperComponent.moveFunc(krumblid, targetHitbox.box.position, vegetationConsumeAI.acceleration);
@@ -111,7 +111,7 @@ export function runVegetationConsumeAI(krumblid: Entity, aiHelperComponent: AIHe
       // @Copynpaste
       for (let i = 0; i < 2; i++) {
          // @Hack
-         const mandibleHitbox = transformComponent.children[i + 1] as Hitbox;
+         const mandibleHitbox = transformComponent.hitboxes[i + 1];
          const idealAngle = ((getEntityAgeTicks(krumblid) * 3.2 + (i === 0 ? Settings.TPS * 0.35 : 0)) % Settings.TPS) / Settings.TPS < 0.5 ? -Math.PI * 0.3 : Math.PI * 0.1;
          turnHitboxToAngle(mandibleHitbox, idealAngle, 3 * Math.PI, 0.5, true);
       }

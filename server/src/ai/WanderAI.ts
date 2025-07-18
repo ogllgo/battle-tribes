@@ -48,7 +48,7 @@ export default class WanderAI {
    public update(entity: Entity): void {
       const transformComponent = TransformComponentArray.getComponent(entity);
       // @Hack
-      const entityHitbox = transformComponent.children[0] as Hitbox;
+      const entityHitbox = transformComponent.hitboxes[0];
       
       if (getEntityAgeTicks(entity) % Vars.POSITION_RECORD_INTERVAL === 0) {
          // If the entity hasn't moved enough since the last position check-in, clear the target as they are most likely stuck

@@ -7,9 +7,9 @@ import { AIHelperComponentArray } from "./AIHelperComponent";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { registerDirtyEntity, registerEntityHeal, registerEntityHit } from "../server/player-clients";
 import { ComponentArray, getComponentArrayRecord } from "./ComponentArray";
-import { getFirstEntityWithComponent, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
-import { destroyEntity, entityExists, getEntityComponentTypes, getEntityType } from "../world";
+import { destroyEntity, getEntityComponentTypes, getEntityType } from "../world";
 import { Hitbox } from "../hitboxes";
 
 export class HealthComponent {
@@ -88,7 +88,9 @@ const callOnDeathCallbacks = (entity: Entity, attackingEntity: Entity | null, da
  * @returns Whether the damage was received
  */
 export function damageEntity(entity: Entity, hitHitbox: Hitbox, attackingEntity: Entity | null, damage: number, damageSource: DamageSource, attackEffectiveness: AttackEffectiveness, hitPosition: Point, hitFlags: number): boolean {
-   const damagedEntity = getFirstEntityWithComponent(HealthComponentArray, entity);
+   // @HACK @INCOMPLETE
+   const damagedEntity = entity;
+   // const damagedEntity = getFirstEntityWithComponent(HealthComponentArray, entity);
    if (damagedEntity === null) {
       throw new Error();
    }

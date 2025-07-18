@@ -13,7 +13,7 @@ import { createBallistaRockConfig } from "../entities/projectiles/ballista-rock"
 import { createBallistaSlimeballConfig } from "../entities/projectiles/ballista-slimeball";
 import { createBallistaWoodenBoltConfig } from "../entities/projectiles/ballista-wooden-bolt";
 import { AIHelperComponentArray } from "./AIHelperComponent";
-import { TransformComponentArray, TransformComponent, entityChildIsHitbox } from "./TransformComponent";
+import { TransformComponentArray, TransformComponent } from "./TransformComponent";
 import { getEntityRelationship, EntityRelationship, TribeComponentArray } from "./TribeComponent";
 import { polarVec2, randAngle, UtilVars } from "battletribes-shared/utils";
 import { boxIsCircular } from "battletribes-shared/boxes/boxes";
@@ -21,7 +21,7 @@ import { createEntity, getEntityLayer, getEntityType } from "../world";
 import { registerDirtyEntity } from "../server/player-clients";
 import { createSlingTurretRockConfig } from "../entities/projectiles/sling-turret-rock";
 import { HealthComponentArray } from "./HealthComponent";
-import { Hitbox, addHitboxVelocity } from "../hitboxes";
+import { addHitboxVelocity } from "../hitboxes";
 
 export class TurretComponent {
    public aimDirection = 0;
@@ -67,22 +67,18 @@ const entityIsTargetted = (turret: Entity, entity: Entity): boolean => {
    const aimArcSize = getAimArcSize(turretEntityType);
    
    const turretTransformComponent = TransformComponentArray.getComponent(turret);
-   const turretHitbox = turretTransformComponent.children[0] as Hitbox;
+   const turretHitbox = turretTransformComponent.hitboxes[0];
    
    const minAngle = turretHitbox.box.angle - aimArcSize / 2;
    const maxAngle = turretHitbox.box.angle + aimArcSize / 2;
 
    // Make sure at least 1 of the entities' hitboxes is within the arc
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
-   for (let i = 0; i < entityTransformComponent.children.length; i++) {
+   for (let i = 0; i < entityTransformComponent.hitboxes.length; i++) {
       let minAngleToHitbox: number;
       let maxAngleToHitbox: number;
 
-      const hitbox = entityTransformComponent.children[i];
-      // @INCOMPLETE
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
+      const hitbox = entityTransformComponent.hitboxes[i];
       const box = hitbox.box;
       if (boxIsCircular(box)) {
          // Circular hitbox
@@ -104,7 +100,7 @@ const entityIsTargetted = (turret: Entity, entity: Entity): boolean => {
 
 const getTarget = (turret: Entity, visibleEntities: ReadonlyArray<Entity>): Entity | null => {
    const turretTransformComponent = TransformComponentArray.getComponent(turret);
-   const turretHitbox = turretTransformComponent.children[0] as Hitbox;
+   const turretHitbox = turretTransformComponent.hitboxes[0];
    
    let closestValidTarget: Entity;
    let minDist = 9999999.9;
@@ -116,7 +112,7 @@ const getTarget = (turret: Entity, visibleEntities: ReadonlyArray<Entity>): Enti
 
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
       // @Hack
-      const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+      const entityHitbox = entityTransformComponent.hitboxes[0];
 
       const dist = entityHitbox.box.position.calculateDistanceSquaredBetween(turretHitbox.box.position);
       if (dist < minDist) {
@@ -137,7 +133,7 @@ const createProjectile = (turret: Entity, transformComponent: TransformComponent
    
    const ammoInfo = AMMO_INFO_RECORD[ammoType];
 
-   const turretHitbox = transformComponent.children[0] as Hitbox;
+   const turretHitbox = transformComponent.hitboxes[0];
    const position = turretHitbox.box.position.copy();
    const rotation = ammoType === ItemType.rock || ammoType === ItemType.slimeball ? randAngle() : fireDirection;
    
@@ -167,7 +163,7 @@ const createProjectile = (turret: Entity, transformComponent: TransformComponent
       }
    }
 
-   const projectileHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
+   const projectileHitbox = config.components[ServerComponentType.transform]!.hitboxes[0];
    addHitboxVelocity(projectileHitbox, polarVec2(ammoInfo.projectileSpeed, fireDirection));
 
    createEntity(config, getEntityLayer(turret), 0)
@@ -175,7 +171,7 @@ const createProjectile = (turret: Entity, transformComponent: TransformComponent
 
 const fire = (turret: Entity, ammoType: TurretAmmoType): void => {
    const transformComponent = TransformComponentArray.getComponent(turret);
-   const turretHitbox = transformComponent.children[0] as Hitbox;
+   const turretHitbox = transformComponent.hitboxes[0];
    
    const turretComponent = TurretComponentArray.getComponent(turret);
 
@@ -225,11 +221,11 @@ function onTick(turret: Entity): void {
          turretComponent.hasTarget = true;
 
          const transformComponent = TransformComponentArray.getComponent(turret);
-         const turretHitbox = transformComponent.children[0] as Hitbox;
+         const turretHitbox = transformComponent.hitboxes[0];
          
          const targetTransformComponent = TransformComponentArray.getComponent(target);
          // @HACK
-         const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+         const targetHitbox = targetTransformComponent.hitboxes[0];
          
          const targetDirection = turretHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
 

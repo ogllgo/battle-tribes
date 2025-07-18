@@ -8,12 +8,12 @@ import { EntityConfig } from "../../components";
 import { OkrenTongueTipComponent } from "../../components/OkrenTongueTipComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { TransformComponent, addHitboxToTransformComponent } from "../../components/TransformComponent";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 export function createOkrenTongueTipConfig(position: Point, angle: number): EntityConfig {
    const transformComponent = new TransformComponent();
       
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), angle, 16, 24), 0.9, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.cactus, [HitboxFlag.KRUMBLID_BODY]);
+   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), angle, 16, 24), 0.9, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.cactus, [HitboxFlag.KRUMBLID_BODY]);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const physicsComponent = new PhysicsComponent();

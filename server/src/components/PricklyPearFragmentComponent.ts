@@ -27,7 +27,7 @@ PricklyPearFragmentProjectileComponentArray.onHitboxCollision = onHitboxCollisio
 
 function onTick(fragment: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(fragment);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    if (getHitboxVelocity(hitbox).length() < 200) {
       destroyEntity(fragment);

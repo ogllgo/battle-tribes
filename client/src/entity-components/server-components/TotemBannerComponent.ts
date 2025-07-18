@@ -110,7 +110,7 @@ const createBannerRenderPart = (tribeType: TribeType, renderInfo: EntityRenderIn
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    // Main render part
    renderInfo.attachRenderPart(
@@ -183,7 +183,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    for (const banner of banners) {
       if (!totemBannerComponent.banners.hasOwnProperty(banner.hutNum)) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.children[0] as Hitbox;
+         const hitbox = transformComponent.hitboxes[0];
          
          const tribeComponent = TribeComponentArray.getComponent(entity);
          const renderPart = createBannerRenderPart(tribeComponent.tribeType, renderInfo, hitbox, banner);
@@ -211,6 +211,6 @@ function onHit(entity: Entity, hitbox: Hitbox): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox("building-destroy-1.mp3", 0.4, 1, entity, hitbox, false);
 }

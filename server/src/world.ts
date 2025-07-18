@@ -15,7 +15,7 @@ import { generateSurfaceTerrain } from "./world-generation/surface-layer-generat
 import { generateUndergroundTerrain } from "./world-generation/underground-layer-generation";
 import { EntityConfig, entityConfigAttachInfoIsTethered } from "./components";
 import { attachLightToHitbox } from "./lights";
-import { attachHitbox, attachEntityWithTether, attachHitboxRaw } from "./components/TransformComponent";
+import { attachEntityWithTether, attachHitboxRaw } from "./components/TransformComponent";
 
 const enum Vars {
    START_TIME = 12
@@ -234,9 +234,9 @@ export function pushEntityJoinBuffer(shouldTickJoinInfos: boolean): void {
          const attachInfo = joinInfo.entityConfig.attachInfo;
          if (typeof attachInfo !== "undefined") {
             if (entityConfigAttachInfoIsTethered(attachInfo)) {
-               attachEntityWithTether(joinInfo.entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.idealDistance, attachInfo.springConstant, attachInfo.damping, attachInfo.destroyWhenParentIsDestroyed);
+               attachEntityWithTether(joinInfo.entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.idealDistance, attachInfo.springConstant, attachInfo.damping, attachInfo.isPartOfParent);
             } else {
-               attachHitboxRaw(attachInfo.attachedHitbox, attachInfo.parentHitbox, joinInfo.entity, attachInfo.parent, attachInfo.destroyWhenParentIsDestroyed);
+               attachHitboxRaw(attachInfo.attachedHitbox, attachInfo.parentHitbox, attachInfo.isPartOfParent);
             }
          }
 
@@ -255,7 +255,7 @@ export function pushEntityJoinBuffer(shouldTickJoinInfos: boolean): void {
                }
                assert(typeof childJoinInfo !== "undefined");
                
-               attachHitboxRaw(childConfig.attachedHitbox, childConfig.parentHitbox, childJoinInfo.entity, joinInfo.entity, childConfig.destroyWhenParentIsDestroyed);
+               attachHitboxRaw(childConfig.attachedHitbox, childConfig.parentHitbox, childConfig.isPartOfParent);
             }
          }
       }
@@ -373,9 +373,9 @@ export function createEntityImmediate<ComponentTypes extends ServerComponentType
    const attachInfo = entityConfig.attachInfo;
    if (typeof attachInfo !== "undefined") {
       if (entityConfigAttachInfoIsTethered(attachInfo)) {
-         attachEntityWithTether(entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.idealDistance, attachInfo.springConstant, attachInfo.damping, attachInfo.destroyWhenParentIsDestroyed);
+         attachEntityWithTether(entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.idealDistance, attachInfo.springConstant, attachInfo.damping, attachInfo.isPartOfParent);
       } else {
-         attachHitboxRaw(attachInfo.attachedHitbox, attachInfo.parentHitbox, entity, attachInfo.parent, attachInfo.destroyWhenParentIsDestroyed);
+         attachHitboxRaw(attachInfo.attachedHitbox, attachInfo.parentHitbox, attachInfo.isPartOfParent);
       }
    }
 
@@ -383,9 +383,8 @@ export function createEntityImmediate<ComponentTypes extends ServerComponentType
    const childConfigs = entityConfig.childConfigs;
    if (typeof childConfigs !== "undefined") {
       for (const childConfig of childConfigs) {
-         const child = createEntityImmediate(childConfig.entityConfig, layer);
-
-         attachHitboxRaw(childConfig.attachedHitbox, childConfig.parentHitbox, child, entity, true);
+         createEntityImmediate(childConfig.entityConfig, layer);
+         attachHitboxRaw(childConfig.attachedHitbox, childConfig.parentHitbox, childConfig.isPartOfParent);
       }
    }
 

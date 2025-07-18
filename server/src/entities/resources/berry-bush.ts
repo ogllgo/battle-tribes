@@ -13,7 +13,7 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { LootComponent, registerEntityLootOnHit } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerDirtyEntity } from "../../server/player-clients";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 registerEntityLootOnHit(EntityType.berryBush, {
    itemType: ItemType.berry,
@@ -34,7 +34,7 @@ registerEntityLootOnHit(EntityType.berryBush, {
 export function createBerryBushConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 40), 1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 40), 1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionBit = CollisionBit.plants;
    

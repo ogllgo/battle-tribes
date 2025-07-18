@@ -9,7 +9,6 @@ import { getEntitiesInRange } from "../ai-shared";
 import { AIHelperComponent } from "../components/AIHelperComponent";
 import { detachHitbox, TransformComponentArray } from "../components/TransformComponent";
 import { createDustfleaMorphCocoonConfig } from "../entities/desert/dustflea-morph-cocoon";
-import { Hitbox } from "../hitboxes";
 import { createEntity, destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 
 export class DustfleaHibernateAI {
@@ -28,7 +27,7 @@ export class DustfleaHibernateAI {
 
 const getRandomNearbyPosition = (dustflea: Entity): Point => {
    const dustfleaTransformComponent = TransformComponentArray.getComponent(dustflea);
-   const dustfleaHitbox = dustfleaTransformComponent.children[0] as Hitbox;
+   const dustfleaHitbox = dustfleaTransformComponent.hitboxes[0];
 
    const RANGE = 600;
    
@@ -155,9 +154,11 @@ export function runHibernateAI(dustflea: Entity, aiHelperComponent: AIHelperComp
    }
 
    const dustfleaTransformComponent = TransformComponentArray.getComponent(dustflea);
+   const dustfleaHitbox = dustfleaTransformComponent.hitboxes[0];
+
    // if the dustflea was previously latched onto a target or sitting on an object, unattach.
-   if (dustfleaTransformComponent.rootEntity !== dustflea) {
-      detachHitbox(dustfleaTransformComponent.rootEntity, dustflea);
+   if (dustfleaHitbox.parent !== null) {
+      detachHitbox(dustfleaHitbox);
    }
 
    if (ai.hibernateTargetPosition !== null) {
@@ -165,7 +166,6 @@ export function runHibernateAI(dustflea: Entity, aiHelperComponent: AIHelperComp
       aiHelperComponent.moveFunc(dustflea, ai.hibernateTargetPosition, ai.acceleration);
       aiHelperComponent.turnFunc(dustflea, ai.hibernateTargetPosition, ai.turnSpeed, ai.turnDamping);
 
-      const dustfleaHitbox = dustfleaTransformComponent.children[0] as Hitbox;
       if (dustfleaHitbox.box.position.calculateDistanceBetween(ai.hibernateTargetPosition) < 1) {
          destroyEntity(dustflea);
 

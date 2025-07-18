@@ -82,7 +82,7 @@ const getLayerColour = (entityParams: EntityParams, r: number, g: number, b: num
          // @Speed: a lot of this is shared for all strands
          
          const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-         const hitbox = transformComponentParams.children[0] as Hitbox;
+         const hitbox = transformComponentParams.hitboxes[0];
    
          const tileX = Math.floor(hitbox.box.position.x / Settings.TILE_SIZE);
          const tileY = Math.floor(hitbox.box.position.y / Settings.TILE_SIZE);
@@ -168,7 +168,7 @@ function createParamsFromData(reader: PacketReader): LayeredRodComponentParams {
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    const layeredRodComponentParams = entityParams.serverComponentParams[ServerComponentType.layeredRod]!;
 

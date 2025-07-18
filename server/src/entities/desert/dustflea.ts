@@ -21,7 +21,7 @@ import { HealthComponent } from "../../components/HealthComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
-import { applyAbsoluteKnockback, createHitbox, Hitbox } from "../../hitboxes";
+import { applyAbsoluteKnockback, Hitbox } from "../../hitboxes";
 import Layer from "../../Layer";
 import { getEntityAgeTicks, getEntityType } from "../../world";
 
@@ -34,7 +34,7 @@ const moveFunc = (dustflea: Entity, pos: Point, acceleration: number): void => {
    const ageTicks = getEntityAgeTicks(dustflea);
    if ((ageTicks + dustflea) % Math.floor(Settings.TPS / 2.3) === 0) {
       const transformComponent = TransformComponentArray.getComponent(dustflea);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       
       const direction = hitbox.box.position.calculateAngleBetween(pos);
       applyAbsoluteKnockback(dustflea, hitbox, polarVec2(125, direction));
@@ -51,10 +51,10 @@ const extraEscapeCondition = (dustflea: Entity, escapeTarget: Entity): boolean =
    }
 
    const dustfleaTransformComponent = TransformComponentArray.getComponent(dustflea);
-   const dustfleaHitbox = dustfleaTransformComponent.children[0] as Hitbox;
+   const dustfleaHitbox = dustfleaTransformComponent.hitboxes[0];
 
    const escapeTargetTransformComponent = TransformComponentArray.getComponent(escapeTarget);
-   const escapeTargetHitbox = escapeTargetTransformComponent.children[0] as Hitbox;
+   const escapeTargetHitbox = escapeTargetTransformComponent.hitboxes[0];
 
    const angleFromEscapeTarget = escapeTargetHitbox.box.position.calculateAngleBetween(dustfleaHitbox.box.position);
 
@@ -64,7 +64,7 @@ const extraEscapeCondition = (dustflea: Entity, escapeTarget: Entity): boolean =
 export function createDustfleaConfig(position: Point, angle: number): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 8), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), angle, 8), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();

@@ -4,7 +4,6 @@ import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityParams, getEntityRenderInfo } from "../../world";
-import { entityChildIsHitbox } from "./TransformComponent";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { Entity } from "../../../../shared/src/entities";
 import { Hitbox } from "../../hitboxes";
@@ -89,11 +88,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    }
    
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   for (const hitbox of transformComponentParams.children) {
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
-
+   for (const hitbox of transformComponentParams.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.OKREN_BODY)) {
          const bodyRenderPart = new TexturedRenderPart(
             hitbox,

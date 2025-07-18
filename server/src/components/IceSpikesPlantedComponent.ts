@@ -54,7 +54,7 @@ function preRemove(entity: Entity): void {
    const iceSpikesPlantedComponent = IceSpikesPlantedComponentArray.getComponent(entity);
 
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const layer = getEntityLayer(entity);
    if (iceSpikesPlantedComponent.plantGrowthTicks === Vars.GROWTH_TIME_TICKS) {

@@ -122,7 +122,7 @@ const updatePlayerRotation = (cursorX: number, cursorY: number): void => {
    cursorDirection = Math.PI/2 - cursorDirection;
 
    const transformComponent = TransformComponentArray.getComponent(playerInstance);
-   const playerHitbox = transformComponent.children[0] as Hitbox;
+   const playerHitbox = transformComponent.hitboxes[0];
    
    const previousRelativeAngle = playerHitbox.box.relativeAngle;
 

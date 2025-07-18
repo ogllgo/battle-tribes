@@ -5,7 +5,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
 import { Point, randAngle, randFloat, randInt } from "../../../../shared/src/utils";
 import { createBloodPoolParticle, createBloodParticle, BloodParticleSize, createBloodParticleFountain, createKrumblidChitinParticle } from "../../particles";
-import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 import { playSoundOnHitbox } from "../../sound";
 import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
@@ -36,11 +36,7 @@ function createParamsFromData(): KrumblidComponentParams {
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   for (const hitbox of transformComponentParams.children) {
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
-
+   for (const hitbox of transformComponentParams.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.KRUMBLID_BODY)) {
          renderInfo.attachRenderPart(
             new TexturedRenderPart(
@@ -101,7 +97,7 @@ function onDie(krumblid: Entity): void {
    }
    
    const transformComponent = TransformComponentArray.getComponent(krumblid);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 2; i++) {
       createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 35);

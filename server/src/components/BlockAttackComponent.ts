@@ -1,5 +1,5 @@
 import { BlockType, ServerComponentType } from "../../../shared/src/components";
-import { Entity, EntityType, EntityTypeString } from "../../../shared/src/entities";
+import { Entity, EntityType } from "../../../shared/src/entities";
 import { InventoryName } from "../../../shared/src/items/items";
 import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
@@ -52,7 +52,7 @@ function onTick(blockAttack: Entity): void {
    // @HACK: this is garbage and may cause the hitbox to lag behind. should instead bind the entity to the limb hitbox. . .
    
    const transformComponent = TransformComponentArray.getComponent(blockAttack);
-   const limbHitbox = transformComponent.children[0] as Hitbox;
+   const limbHitbox = transformComponent.hitboxes[0];
    
    const blockAttackComponent = BlockAttackComponentArray.getComponent(blockAttack);
    const limb = blockAttackComponent.limb;
@@ -140,11 +140,13 @@ function onHitboxCollision(blockAttack: Entity, collidingEntity: Entity, affecte
    // but this might be good behaviour anyways - maybe. probably not. want to encourage people to
    // use their swords to deflect the tongue. yeah remove after.
    if (getEntityType(collidingEntity) === EntityType.okrenTongueTip) {
-      const tongueTip = collidingEntity;
-      const tongueTipTransformComponent = TransformComponentArray.getComponent(tongueTip);
-      const tongue = tongueTipTransformComponent.parentEntity;
-      const okrenTongueComponent = OkrenTongueComponentArray.getComponent(tongue);
-      startRetractingTongue(tongue, okrenTongueComponent);
+      // @INCOMPLETE
+      
+      // const tongueTip = collidingEntity;
+      // const tongueTipTransformComponent = TransformComponentArray.getComponent(tongueTip);
+      // const tongue = tongueTipTransformComponent.parentEntity;
+      // const okrenTongueComponent = OkrenTongueComponentArray.getComponent(tongue);
+      // startRetractingTongue(tongue, okrenTongueComponent);
       return;
    }
 }

@@ -73,7 +73,7 @@ function addDataToComponent(packet: Packet, entity: Entity): void {
 export function placePlantInPlanterBox(planterBox: Entity, plantedEntityType: PlantedEntityType): void {
    const planterBoxComponent = PlanterBoxComponentArray.getComponent(planterBox);
    const transformComponent = TransformComponentArray.getComponent(planterBox);
-   const planterBoxHitbox = transformComponent.children[0] as Hitbox;
+   const planterBoxHitbox = transformComponent.hitboxes[0];
 
    // Create plant
    let config: EntityConfig;

@@ -103,7 +103,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
       const useInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
       useInfo.selectedItemSlot = placeableItemSlot;
       
-      const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+      const tribesmanHitbox = transformComponent.hitboxes[0];
       
       const targetDirection = angle(virtualBuilding.position.x - tribesmanHitbox.box.position.x, virtualBuilding.position.y - tribesmanHitbox.box.position.y);
       if (distance < getTribesmanAttackRadius(tribesman)) {
@@ -182,10 +182,10 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
    const desiredAttackRange = getTribesmanDesiredAttackRange(tribesman);
    
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
 
    const buildingTransformComponent = TransformComponentArray.getComponent(building);
-   const buildingHitbox = buildingTransformComponent.children[0] as Hitbox;
+   const buildingHitbox = buildingTransformComponent.hitboxes[0];
 
    const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, buildingTransformComponent) - getHumanoidRadius(transformComponent);
    if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange, distance)) {
@@ -211,7 +211,7 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
 
 export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: number): boolean {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
    
    const aiHelperComponent = AIHelperComponentArray.getComponent(tribesman);
    
@@ -229,7 +229,7 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
       }
 
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
-      const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+      const entityHitbox = entityTransformComponent.hitboxes[0];
 
       // @Incomplete: Skip buildings which there isn't a path to
 
@@ -252,7 +252,7 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
    const desiredAttackRange = getTribesmanDesiredAttackRange(tribesman);
 
    const buildingTransformComponent = TransformComponentArray.getComponent(closestDamagedBuilding);
-   const buildingHitbox = buildingTransformComponent.children[0] as Hitbox;
+   const buildingHitbox = buildingTransformComponent.hitboxes[0];
    
    const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, buildingTransformComponent) - getHumanoidRadius(transformComponent);
    if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange, distance)) {

@@ -15,8 +15,8 @@ import { GlurbSegmentComponent, GlurbSegmentComponentArray } from "../../compone
 import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
-import { addHitboxToTransformComponent, entityChildIsEntity, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
-import { applyAccelerationFromGround, createHitbox, Hitbox, turnHitboxToAngle } from "../../hitboxes";
+import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
+import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../hitboxes";
 import Layer from "../../Layer";
 import { createLight } from "../../lights";
 import { getEntityAgeTicks } from "../../world";
@@ -47,74 +47,78 @@ const moveFunc = (head: Entity, pos: Point): void => {
 
    const headTransformComponent = TransformComponentArray.getComponent(head);
 
-   const glurbTransformComponent = TransformComponentArray.getComponent(headTransformComponent.parentEntity);
-
-   for (let i = 0; i < glurbTransformComponent.children.length; i++) {
-      const child = glurbTransformComponent.children[i];
-      if (!entityChildIsEntity(child)) {
-         continue;
-      }
-
-      const glurbSegment = child.attachedEntity;
-      if (!GlurbSegmentComponentArray.hasComponent(glurbSegment)) {
-         continue;
-      }
-
-      const transformComponent = TransformComponentArray.getComponent(glurbSegment);
-      const hitbox = transformComponent.children[0] as Hitbox;
+   // @INCOMPLETE
    
-      let targetDir: number;
-      
-      if (GlurbHeadSegmentComponentArray.hasComponent(glurbSegment)) {
-         targetDir = hitbox.box.position.calculateAngleBetween(pos);
-      } else {
-         // Move to next hitbox in chain
+   // const glurbTransformComponent = TransformComponentArray.getComponent(headTransformComponent.parentEntity);
 
-         const lastChild = glurbTransformComponent.children[i - 1];
-         if (!entityChildIsEntity(lastChild)) {
-            throw new Error();
-         }
-         const lastSegmentTransformComponent = TransformComponentArray.getComponent(lastChild.attachedEntity);
-         const lastSegmentHitbox = lastSegmentTransformComponent.children[0] as Hitbox;
-         
-         targetDir = hitbox.box.position.calculateAngleBetween(lastSegmentHitbox.box.position);
-      }
+   // for (let i = 0; i < glurbTransformComponent.children.length; i++) {
+   //    const child = glurbTransformComponent.children[i];
+   //    if (!entityChildIsEntity(child)) {
+   //       continue;
+   //    }
+
+   //    const glurbSegment = child.attachedEntity;
+   //    if (!GlurbSegmentComponentArray.hasComponent(glurbSegment)) {
+   //       continue;
+   //    }
+
+   //    const transformComponent = TransformComponentArray.getComponent(glurbSegment);
+   //    const hitbox = transformComponent.hitboxes[0];
+   
+   //    let targetDir: number;
       
-      applyAccelerationFromGround(glurbSegment, hitbox, polarVec2(acceleration, targetDir));
-   }
+   //    if (GlurbHeadSegmentComponentArray.hasComponent(glurbSegment)) {
+   //       targetDir = hitbox.box.position.calculateAngleBetween(pos);
+   //    } else {
+   //       // Move to next hitbox in chain
+
+   //       const lastChild = glurbTransformComponent.children[i - 1];
+   //       if (!entityChildIsEntity(lastChild)) {
+   //          throw new Error();
+   //       }
+   //       const lastSegmentTransformComponent = TransformComponentArray.getComponent(lastChild.attachedEntity);
+   //       const lastSegmentHitbox = lastSegmentTransformComponent.hitboxes[0];
+         
+   //       targetDir = hitbox.box.position.calculateAngleBetween(lastSegmentHitbox.box.position);
+   //    }
+      
+   //    applyAccelerationFromGround(glurbSegment, hitbox, polarVec2(acceleration, targetDir));
+   // }
 }
 
 const turnFunc = (head: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
    const headTransformComponent = TransformComponentArray.getComponent(head);
 
-   const glurbTransformComponent = TransformComponentArray.getComponent(headTransformComponent.parentEntity);
+   // @INCOMPLETE
 
-   for (let i = 0; i < glurbTransformComponent.children.length; i++) {
-      const child = glurbTransformComponent.children[i];
-      if (!entityChildIsEntity(child)) {
-         continue;
-      }
+   // const glurbTransformComponent = TransformComponentArray.getComponent(headTransformComponent.parentEntity);
 
-      const glurbSegment = child.attachedEntity;
-      if (!GlurbSegmentComponentArray.hasComponent(glurbSegment)) {
-         continue;
-      }
+   // for (let i = 0; i < glurbTransformComponent.children.length; i++) {
+   //    const child = glurbTransformComponent.children[i];
+   //    if (!entityChildIsEntity(child)) {
+   //       continue;
+   //    }
 
-      const transformComponent = TransformComponentArray.getComponent(glurbSegment);
-      const hitbox = transformComponent.children[0] as Hitbox;
+   //    const glurbSegment = child.attachedEntity;
+   //    if (!GlurbSegmentComponentArray.hasComponent(glurbSegment)) {
+   //       continue;
+   //    }
+
+   //    const transformComponent = TransformComponentArray.getComponent(glurbSegment);
+   //    const hitbox = transformComponent.hitboxes[0];
    
-      if (GlurbHeadSegmentComponentArray.hasComponent(glurbSegment)) {
-         const targetDirection = hitbox.box.position.calculateAngleBetween(pos);
+   //    if (GlurbHeadSegmentComponentArray.hasComponent(glurbSegment)) {
+   //       const targetDirection = hitbox.box.position.calculateAngleBetween(pos);
 
-         turnHitboxToAngle(hitbox, targetDirection, Math.PI, 0.5, false);
-      }
-   }
+   //       turnHitboxToAngle(hitbox, targetDirection, Math.PI, 0.5, false);
+   //    }
+   // }
 }
 
 export function createGlurbHeadSegmentConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 24), 0.6, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 24), 0.6, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const physicsComponent = new PhysicsComponent();

@@ -70,7 +70,7 @@ function createParamsFromData(reader: PacketReader): PlanterBoxComponentParams {
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -141,7 +141,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          createGrowthParticleInEntity(transformComponent);
       }
 
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       playSoundOnHitbox("fertiliser.mp3", 0.6, 1, entity, hitbox, false);
    }
    planterBoxComponent.isFertilised = isFertilised;
@@ -150,7 +150,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    if (hasPlant && planterBoxComponent.hasPlant !== hasPlant) {
       // Plant sound effect
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       playSoundOnHitbox("plant.mp3", 0.4, 1, entity, hitbox, false);
    }
    planterBoxComponent.hasPlant = hasPlant;
@@ -158,7 +158,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    if (plantType !== -1) {
       if (planterBoxComponent.moundRenderPart === null) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.children[0] as Hitbox;
+         const hitbox = transformComponent.hitboxes[0];
 
          planterBoxComponent.moundRenderPart = createMoundRenderPart(plantType, hitbox);
          

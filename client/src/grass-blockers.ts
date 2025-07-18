@@ -48,7 +48,7 @@ const addAffectedGrassStrands = (layer: Layer, blockerBox: Box, blocker: GrassBl
          for (const entity of chunk.entities) {
             if (getEntityType(entity) === EntityType.grassStrand) {
                const grassTransformComponent = TransformComponentArray.getComponent(entity);
-               const grassHitbox = grassTransformComponent.children[0] as Hitbox;
+               const grassHitbox = grassTransformComponent.hitboxes[0];
                if (blockerBox.isColliding(grassHitbox.box)) {
                   blocker.affectedGrassStrands.push(entity);
                }

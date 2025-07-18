@@ -114,7 +114,7 @@ export function renderLineDebugData(debugData: EntityDebugData): void {
    }
 
    const transformComponent = TransformComponentArray.getComponent(debugData.entityID);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const vertices = new Array<number>();
    addCircleVertices(vertices, debugData, hitbox.box.position);

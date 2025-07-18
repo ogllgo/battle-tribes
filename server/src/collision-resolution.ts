@@ -79,9 +79,9 @@ export function collide(affectedEntity: Entity, collidingEntity: Entity, collidi
    
    // @Speed
    // @HACK @TEMPORARY
-   const affectedEntityHitbox = affectedEntityTransformComponent.children[0] as Hitbox;
+   const affectedEntityHitbox = affectedEntityTransformComponent.hitboxes[0];
    const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-   const collidingEntityHitbox = collidingEntityTransformComponent.children[0];
+   const collidingEntityHitbox = collidingEntityTransformComponent.hitboxes[0];
    const collisionPoint = new Point((affectedEntityHitbox.box.position.x + affectedEntityHitbox.box.position.x) / 2, (affectedEntityHitbox.box.position.y + affectedEntityHitbox.box.position.y) / 2);
    
    for (let i = 0; i < collidingHitboxPairs.length; i++) {

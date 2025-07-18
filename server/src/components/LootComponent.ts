@@ -8,7 +8,7 @@ import { getHitboxTile } from "../hitboxes";
 import { getEntityLayer, getEntityType } from "../world";
 import { LocalBiome } from "../world-generation/terrain-generation-utils";
 import { ComponentArray } from "./ComponentArray";
-import { getTransformComponentFirstHitbox, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 
 export interface LootEntry {
    readonly itemType: ItemType;
@@ -88,8 +88,7 @@ const removeFromPreviousLocalBiome = (entity: Entity, lootComponent: LootCompone
 
 const addToNewLocalBiome = (entity: Entity, lootComponent: LootComponent): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = getTransformComponentFirstHitbox(transformComponent);
-   assert(hitbox !== null);
+   const hitbox = transformComponent.hitboxes[0];
    
    const layer = getEntityLayer(entity);
    const tileIndex = getHitboxTile(hitbox);

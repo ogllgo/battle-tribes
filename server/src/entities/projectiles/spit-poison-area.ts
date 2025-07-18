@@ -13,12 +13,12 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { getEntityType } from "../../world";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { SpitPoisonAreaComponent } from "../../components/SpitPoisonAreaComponent";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 export function createSpitPoisonAreaConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
    // @Hack mass
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 55), Number.EPSILON, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 55), Number.EPSILON, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const spitPoisonAreaComponent = new SpitPoisonAreaComponent();

@@ -40,7 +40,7 @@ function onSpawn(entity: Entity): void {
    // Create dirt particles
    
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    for (let i = 0; i < 7; i++) {
       const offsetDirection = randAngle();
       const offsetMagnitude = randFloat(0, 10);

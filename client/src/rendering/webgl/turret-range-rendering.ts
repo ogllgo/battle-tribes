@@ -145,7 +145,7 @@ const getRenderingInfo = (): TurretRangeRenderingInfo | null => {
    const playerSelectedItem = getPlayerSelectedItem();
    if (playerSelectedItem !== null && (playerSelectedItem.type === ItemType.ballista || playerSelectedItem.type === ItemType.sling_turret)) {
       const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
-      const playerHitbox = playerTransformComponent.children[0] as Hitbox;
+      const playerHitbox = playerTransformComponent.hitboxes[0];
 
       const layer = getEntityLayer(playerInstance!);
       const structureType = ITEM_INFO_RECORD[playerSelectedItem.type as PlaceableItemType].entityType;
@@ -164,7 +164,7 @@ const getRenderingInfo = (): TurretRangeRenderingInfo | null => {
    if (entityExists(hoveredEntity) && TurretComponentArray.hasComponent(hoveredEntity)) {
       const hoveredEntityTransformComponent = TransformComponentArray.getComponent(hoveredEntity);
       // @Hack
-      const hoveredEntityHitbox = hoveredEntityTransformComponent.children[0] as Hitbox;
+      const hoveredEntityHitbox = hoveredEntityTransformComponent.hitboxes[0];
       
       const itemType = getTurretItemType(hoveredEntity);
       return {

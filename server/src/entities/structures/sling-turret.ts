@@ -15,7 +15,7 @@ import { SlingTurretComponent } from "../../components/SlingTurretComponent";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 import { Point } from "../../../../shared/src/utils";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
-import { createHitbox, Hitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { StructureConnection } from "../../structure-placement";
@@ -35,7 +35,7 @@ export function createSlingTurretConfig(position: Point, rotation: number, tribe
    const transformComponent = new TransformComponent();
    
    const box = new CircularBox(position, new Point(0, 0), rotation, 40);
-   const hitbox = createHitbox(transformComponent, null, box, 1.5, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, box, 1.5, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(25);
@@ -48,7 +48,7 @@ export function createSlingTurretConfig(position: Point, rotation: number, tribe
 
    const turretComponent = new TurretComponent(SLING_TURRET_SHOT_COOLDOWN_TICKS + SLING_TURRET_RELOAD_TIME_TICKS);
    
-   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 400, moveFunc, turnFunc);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.hitboxes[0], 400, moveFunc, turnFunc);
 
    const slingTurretComponent = new SlingTurretComponent();
    

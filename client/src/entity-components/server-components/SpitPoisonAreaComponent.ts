@@ -46,7 +46,7 @@ function getMaxRenderParts(): number {
 // @INCOMPLETE: Won't play when you walk into discovering a previously-offscreen spit poison!
 function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const spitPoisonAreaComponent = SpitPoisonAreaComponentArray.getComponent(entity);
    
@@ -63,7 +63,7 @@ function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const spitPoisonAreaComponent = SpitPoisonAreaComponentArray.getComponent(entity);
 
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    const box = hitbox.box as CircularBox;
    const range = box.radius;
 

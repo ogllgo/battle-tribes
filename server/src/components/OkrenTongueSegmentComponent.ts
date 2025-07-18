@@ -17,9 +17,11 @@ function addDataToPacket(): void {}
 
 // @Copynpaste
 function onTakeDamage(tongueSegment: Entity): void {
+   // @INCOMPLETE
+   
    // @Copynpaste
-   const tongueTipTransformComponent = TransformComponentArray.getComponent(tongueSegment);
-   const tongue = tongueTipTransformComponent.parentEntity;
-   const okrenTongueComponent = OkrenTongueComponentArray.getComponent(tongue);
-   startRetractingTongue(tongue, okrenTongueComponent);
+   // const tongueTipTransformComponent = TransformComponentArray.getComponent(tongueSegment);
+   // const tongue = tongueTipTransformComponent.parentEntity;
+   // const okrenTongueComponent = OkrenTongueComponentArray.getComponent(tongue);
+   // startRetractingTongue(tongue, okrenTongueComponent);
 }

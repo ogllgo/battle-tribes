@@ -25,7 +25,7 @@ export function tribeMemberShouldEscape(entityType: EntityType, healthComponent:
 // @Cleanup: just pass in visibleThreats
 export function escapeFromEnemies(tribesman: Entity, visibleEnemies: ReadonlyArray<Entity>, visibleHostileMobs: ReadonlyArray<Entity>): void {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
    
    const aiHelperComponent = AIHelperComponentArray.getComponent(tribesman);
    const visionRange = aiHelperComponent.visionRange;
@@ -37,7 +37,7 @@ export function escapeFromEnemies(tribesman: Entity, visibleEnemies: ReadonlyArr
       const enemy = visibleEnemies[i];
 
       const enemyTransformComponent = TransformComponentArray.getComponent(enemy);
-      const enemyHitbox = enemyTransformComponent.children[0] as Hitbox;
+      const enemyHitbox = enemyTransformComponent.hitboxes[0];
       
       let distance = tribesmanHitbox.box.position.calculateDistanceBetween(enemyHitbox.box.position);
       // @Hack
@@ -62,7 +62,7 @@ export function escapeFromEnemies(tribesman: Entity, visibleEnemies: ReadonlyArr
       const enemy = visibleHostileMobs[i];
 
       const enemyTransformComponent = TransformComponentArray.getComponent(enemy);
-      const enemyHitbox = enemyTransformComponent.children[0] as Hitbox;
+      const enemyHitbox = enemyTransformComponent.hitboxes[0];
 
       let distance = tribesmanHitbox.box.position.calculateDistanceBetween(enemyHitbox.box.position);
       if (distance > visionRange) {

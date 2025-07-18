@@ -3,9 +3,11 @@ import { Entity } from "../../../shared/src/entities";
 import { assert } from "../../../shared/src/utils";
 import { addEntityToSpawnDistribution, EntitySpawnEvent, removeEntityFromSpawnDistributions } from "../entity-spawn-info";
 import { ComponentArray } from "./ComponentArray";
-import { getTransformComponentFirstHitbox, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 
 // @Cleanup: perhaps put all the auto spawned logic in this file???
+
+// @INCOMPLETE: Wtf is this for
 
 export class AutoSpawnedComponent {
    public readonly spawnInfo: EntitySpawnEvent;
@@ -21,7 +23,7 @@ AutoSpawnedComponentArray.onRemove = onRemove;
 
 function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = getTransformComponentFirstHitbox(transformComponent);
+   const hitbox = transformComponent.hitboxes[0];
    assert(hitbox !== null);
 
    const autoSpawnedComponent = AutoSpawnedComponentArray.getComponent(entity);

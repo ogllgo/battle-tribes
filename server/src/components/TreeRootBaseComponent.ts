@@ -54,7 +54,7 @@ const segmentWillBeInWall = (rootLayer: Layer, rootX: number, rootY: number, off
 
 function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const treeRootHitbox = transformComponent.children[0] as Hitbox;
+   const treeRootHitbox = transformComponent.hitboxes[0];
    
    const layer = getEntityLayer(entity);
 
@@ -98,7 +98,7 @@ function onJoin(entity: Entity): void {
 
 function preRemove(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const treeRootHitbox = transformComponent.children[0] as Hitbox;
+   const treeRootHitbox = transformComponent.hitboxes[0];
 
    // Respawn the tree root after a while
    const config = createTreeRootBaseConfig(treeRootHitbox.box.position.copy(), randAngle());

@@ -42,7 +42,7 @@ function createParamsFromData(): CampfireComponentParams {
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -68,7 +68,7 @@ function onTick(entity: Entity): void {
    const cookingComponent = CookingComponentArray.getComponent(entity);
    if (cookingComponent.isCooking) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
 
       // Smoke particles
       if (Board.tickIntervalHasPassed(0.17)) {

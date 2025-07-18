@@ -289,7 +289,7 @@ export interface EntityConfigAttachInfo {
    readonly parent: Entity;
    readonly attachedHitbox: Hitbox;
    readonly parentHitbox: Hitbox;
-   readonly destroyWhenParentIsDestroyed: boolean;
+   readonly isPartOfParent: boolean;
 }
 
 export interface EntityConfigAttachInfoWithTether extends EntityConfigAttachInfo {
@@ -305,7 +305,7 @@ export interface ChildConfigAttachInfo {
    // @CLEANUP: i've basically copy pasted EntityConfigAttach into here but without the 'parent' field cuz wee can't know when we'ere creating it
    readonly attachedHitbox: Hitbox;
    readonly parentHitbox: Hitbox;
-   readonly destroyWhenParentIsDestroyed: boolean;
+   readonly isPartOfParent: boolean;
 }
 
 export interface EntityConfig {
@@ -318,21 +318,21 @@ export interface EntityConfig {
    childConfigs?: ReadonlyArray<ChildConfigAttachInfo>;
 }
 
-export function createEntityConfigAttachInfo(parent: Entity, attachedHitbox: Hitbox, parentHitbox: Hitbox, destroyWhenParentIsDestroyed: boolean): EntityConfigAttachInfo {
+export function createEntityConfigAttachInfo(parent: Entity, attachedHitbox: Hitbox, parentHitbox: Hitbox, isPartOfParent: boolean): EntityConfigAttachInfo {
    return {
       parent: parent,
       attachedHitbox: attachedHitbox,
       parentHitbox: parentHitbox,
-      destroyWhenParentIsDestroyed: destroyWhenParentIsDestroyed
+      isPartOfParent: isPartOfParent
    };
 }
 
-export function createEntityConfigAttachInfoWithTether(parent: Entity, attachedHitbox: Hitbox, parentHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, destroyWhenParentIsDestroyed: boolean, angularTether?: HitboxAngularTether): EntityConfigAttachInfoWithTether {
+export function createEntityConfigAttachInfoWithTether(parent: Entity, attachedHitbox: Hitbox, parentHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, isPartOfParent: boolean, angularTether?: HitboxAngularTether): EntityConfigAttachInfoWithTether {
    return {
       parent: parent,
       attachedHitbox: attachedHitbox,
       parentHitbox: parentHitbox,
-      destroyWhenParentIsDestroyed: destroyWhenParentIsDestroyed,
+      isPartOfParent: isPartOfParent,
       idealDistance: idealDistance,
       springConstant: springConstant,
       damping: damping,

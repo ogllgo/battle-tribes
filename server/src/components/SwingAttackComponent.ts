@@ -24,7 +24,7 @@ import { damageEntity, healEntity, HealthComponentArray, hitEntityWithoutDamage 
 import { InventoryComponentArray, hasInventory, getInventory } from "./InventoryComponent";
 import { getCurrentLimbState, getHeldItem, LimbInfo } from "./InventoryUseComponent";
 import { applyStatusEffect } from "./StatusEffectComponent";
-import { entityTreeHasComponent, TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { entitiesBelongToSameTribe, EntityRelationship, getEntityRelationship, TribeComponentArray } from "./TribeComponent";
 import { hasTitle } from "./TribesmanComponent";
 
@@ -63,7 +63,7 @@ export function setHitboxToLimbState(ownerTransformComponent: TransformComponent
 
 function onTick(swingAttack: Entity): void {
    const swingAttackTransformComponent = TransformComponentArray.getComponent(swingAttack);
-   const limbHitbox = swingAttackTransformComponent.children[0] as Hitbox;
+   const limbHitbox = swingAttackTransformComponent.hitboxes[0];
    
    const swingAttackComponent = SwingAttackComponentArray.getComponent(swingAttack);
    const limb = swingAttackComponent.limb;
@@ -151,7 +151,7 @@ const getPlantGatherAmount = (tribeman: Entity, plant: Entity, gloves: Item | nu
 
 const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void => {
    const plantTransformComponent = TransformComponentArray.getComponent(plant);
-   const plantHitbox = plantTransformComponent.children[0] as Hitbox;
+   const plantHitbox = plantTransformComponent.hitboxes[0];
    
    if (isBerryBushWithBerries(plant)) {
       const gatherMultiplier = getPlantGatherAmount(attacker, plant, gloves);
@@ -299,7 +299,7 @@ function onEntityCollision(swingAttack: Entity, collidingEntity: Entity, collidi
       }
    }
 
-   if (!entityTreeHasComponent(HealthComponentArray, collidingEntity)) {
+   if (!HealthComponentArray.hasComponent(collidingEntity)) {
       return;
    }
 

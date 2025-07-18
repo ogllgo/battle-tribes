@@ -55,7 +55,7 @@ function createParamsFromData(reader: PacketReader): TreeComponentParams {
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    const treeComponentParams = entityParams.serverComponentParams[ServerComponentType.tree]!;
    
@@ -131,7 +131,7 @@ function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point, hitFlags: num
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    const treeComponent = TreeComponentArray.getComponent(entity);
 

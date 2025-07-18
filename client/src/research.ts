@@ -37,7 +37,7 @@ const ORB_PARTICLES_PER_SECOND = [2, 3.5, 6];
 const generateResearchOrb = (researchBench: Entity): ResearchOrb => {
    const transformComponent = TransformComponentArray.getComponent(researchBench);
 
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const position = getRandomPositionInEntity(transformComponent);
    position.subtract(hitbox.box.position);
@@ -106,7 +106,7 @@ const completeOrb = (): void => {
    }
 
    const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
-   const playerHitbox = playerTransformComponent.children[0] as Hitbox;
+   const playerHitbox = playerTransformComponent.hitboxes[0];
 
    playSound("orb-complete.mp3", 0.3, ORB_COMPLETE_SOUND_PITCHES[currentResearchOrb!.size], playerHitbox.box.position, null);
 

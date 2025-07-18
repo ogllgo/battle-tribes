@@ -73,7 +73,7 @@ function createIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: Enti
    let ammoWarningRenderPart: VisualRenderPart | null;
    if (entityParams.serverComponentParams[ServerComponentType.ammoBox]!.ammoType === null) {
       const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-      const hitbox = transformComponentParams.children[0] as Hitbox;
+      const hitbox = transformComponentParams.hitboxes[0];
       
       ammoWarningRenderPart = createAmmoWarningRenderPart(hitbox);
       renderInfo.attachRenderPart(ammoWarningRenderPart);
@@ -106,7 +106,7 @@ const updateAmmoType = (ammoBoxComponent: AmmoBoxComponent, entity: Entity, ammo
 
       if (ammoBoxComponent.ammoWarningRenderPart === null) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.children[0] as Hitbox;
+         const hitbox = transformComponent.hitboxes[0];
          
          ammoBoxComponent.ammoWarningRenderPart = new TexturedRenderPart(
             hitbox,

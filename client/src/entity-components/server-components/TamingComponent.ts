@@ -16,7 +16,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { playerTribe } from "../../tribes";
 import { EntityParams, getEntityRenderInfo, getEntityType } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityAttachInfo, entityTreeHasComponent, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 
 interface TamingSkillLearning {
    readonly skill: TamingSkill;
@@ -170,7 +170,7 @@ const createTamingTierRenderPart = (tamingTier: number, parentHitbox: Hitbox): T
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    const tamingComponentParams = entityParams.serverComponentParams[ServerComponentType.taming]!;
    const tamingTier = tamingComponentParams.tamingTier;
@@ -321,30 +321,13 @@ function onTick(entity: Entity): void {
 
 // @Hack
 const getHeadHitbox = (entity: Entity): Hitbox => {
-   // @HACK!!!
-   if (getEntityType(entity) === EntityType.glurb) {
-      const glurbTransformComponent = TransformComponentArray.getComponent(entity);
-      const headChild = (glurbTransformComponent.children[0] as EntityAttachInfo).attachedEntity;
-
-      const headTransformComponent = TransformComponentArray.getComponent(headChild);
-      return headTransformComponent.children[0] as Hitbox;
-   } else {
-      const transformComponent = TransformComponentArray.getComponent(entity);
-      return transformComponent.children[0] as Hitbox;
-   }
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   return transformComponent.hitboxes[0];
 }
 
 // @Hack
 const getHeadRenderInfo = (entity: Entity): EntityRenderInfo => {
-   // @HACK!!!
-   if (getEntityType(entity) === EntityType.glurb) {
-      const glurbTransformComponent = TransformComponentArray.getComponent(entity);
-      const headChild = (glurbTransformComponent.children[0] as EntityAttachInfo).attachedEntity;
-
-      return getEntityRenderInfo(headChild);
-   } else {
-      return getEntityRenderInfo(entity);
-   }
+   return getEntityRenderInfo(entity);
 }
 
 function updateFromData(reader: PacketReader, entity: Entity): void {
@@ -465,11 +448,5 @@ export function entityIsTameableByPlayer(entity: Entity): boolean {
       return false;
    }
 
-   // @HACK: Cast
-   return entityTreeHasComponent(TamingComponentArray as any, entity);
-}
-
-export function getRootEntity(entity: Entity): Entity {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   return transformComponent.rootEntity;
+   return TamingComponentArray.hasComponent(entity);
 }

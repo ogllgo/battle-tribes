@@ -18,7 +18,7 @@ import { processAcquireTamingSkillPacket, processAnimalStaffFollowCommandPacket,
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { SpikesComponentArray } from "../components/SpikesComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
-import { entityChildIsEntity, TransformComponentArray } from "../components/TransformComponent";
+import { TransformComponentArray } from "../components/TransformComponent";
 import { generateDecorations } from "../world-generation/decoration-generation";
 import { forceMaxGrowAllIceSpikes } from "../components/IceSpikesComponent";
 import { sortComponentArrays } from "../components/ComponentArray";
@@ -62,12 +62,13 @@ const entityIsHiddenFromPlayer = (entity: Entity, playerTribe: Tribe): boolean =
 const addEntityHierarchy = (playerClient: PlayerClient, entitiesToSend: Set<Entity>, entity: Entity): void => {
    entitiesToSend.add(entity);
 
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   for (const child of transformComponent.children) {
-      if (entityChildIsEntity(child)) {
-         addEntityHierarchy(playerClient, entitiesToSend, child.attachedEntity);
-      }
-   }
+   // @INCOMPLETE
+   // const transformComponent = TransformComponentArray.getComponent(entity);
+   // for (const child of transformComponent.children) {
+   //    if (entityChildIsEntity(child)) {
+   //       addEntityHierarchy(playerClient, entitiesToSend, child.attachedEntity);
+   //    }
+   // }
 }
 
 const getPlayerVisibleEntities = (playerClient: PlayerClient): Set<Entity> => {
@@ -91,12 +92,14 @@ const getPlayerVisibleEntities = (playerClient: PlayerClient): Set<Entity> => {
 
             const transformComponent = TransformComponentArray.getComponent(entity);
             // @Hack @Temporary
-            if (!TransformComponentArray.hasComponent(transformComponent.rootEntity)) {
-               continue;
-            }
+            // if (!TransformComponentArray.hasComponent(transformComponent.rootEntity)) {
+            //    continue;
+            // }
             if (transformComponent.boundingAreaMinX <= maxVisibleX && transformComponent.boundingAreaMaxX >= minVisibleX && transformComponent.boundingAreaMinY <= maxVisibleY && transformComponent.boundingAreaMaxY >= minVisibleY) {
                // @Speed?
-               addEntityHierarchy(playerClient, visibleEntities, transformComponent.rootEntity);
+               // addEntityHierarchy(playerClient, visibleEntities, transformComponent.rootEntity);
+               // @INCOMPLETE: NOT ADDING ROOT!
+               addEntityHierarchy(playerClient, visibleEntities, entity);
             }
          }
       }
@@ -518,7 +521,7 @@ class GameServer {
          // Update player client info
          if (entityExists(viewedEntity)) {
             const transformComponent = TransformComponentArray.getComponent(viewedEntity);
-            const hitbox = transformComponent.children[0] as Hitbox;
+            const hitbox = transformComponent.hitboxes[0];
             playerClient.updatePosition(hitbox.box.position.x, hitbox.box.position.y);
 
             playerClient.lastLayer = getEntityLayer(viewedEntity);

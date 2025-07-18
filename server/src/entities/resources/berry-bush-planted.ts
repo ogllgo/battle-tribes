@@ -11,10 +11,10 @@ import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { BerryBushPlantedComponent, BerryBushPlantedComponentArray } from "../../components/BerryBushPlantedComponent";
-import { createHitbox } from "../../hitboxes";
 import { registerEntityLootOnHit } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerDirtyEntity } from "../../server/player-clients";
+import { Hitbox } from "../../hitboxes";
 
 registerEntityLootOnHit(EntityType.berryBushPlanted, {
    itemType: ItemType.berry,
@@ -35,7 +35,7 @@ registerEntityLootOnHit(EntityType.berryBushPlanted, {
 export function createBerryBushPlantedConfig(position: Point, rotation: number, planterBox: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 28), 0.3, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 28), 0.3, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionBit = CollisionBit.plants;
 

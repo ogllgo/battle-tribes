@@ -46,7 +46,7 @@ function createParamsFromData(reader: PacketReader): MithrilOreNodeComponentPara
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const mithrilOreNodeComponentParams = entityParams.serverComponentParams[ServerComponentType.mithrilOreNode]!;
    const size = mithrilOreNodeComponentParams.size;
@@ -111,7 +111,7 @@ function onHit(entity: Entity, hitbox: Hitbox): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    for (let i = 0; i < 6; i++) {
       const c = randFloat(0.25, 0.4);
       

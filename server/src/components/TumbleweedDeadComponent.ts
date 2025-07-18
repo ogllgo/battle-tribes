@@ -7,7 +7,7 @@ import { applyAccelerationFromGround, getHitboxTile, Hitbox } from "../hitboxes"
 import { getWindVector } from "../wind";
 import { destroyEntity, getEntityLayer, getEntityType } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { attachHitbox, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 
 export class TumbleweedDeadComponent {
    public isRooted = true;
@@ -40,7 +40,7 @@ function onTick(tumbleweed: Entity): void {
    
    if (!tumbleweedDeadComponent.isRooted) {
       const transformComponent = TransformComponentArray.getComponent(tumbleweed);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
    
       const wind = getWindVector(hitbox.box.position.x, hitbox.box.position.y);
       applyAccelerationFromGround(tumbleweed, hitbox, wind);
@@ -69,17 +69,18 @@ function onHitboxCollision(tumbleweed: Entity, collidingEntity: Entity, affected
    return;
 
    // Attach to the other tumbleweed!
-   const transformComponent = TransformComponentArray.getComponent(tumbleweed);
-   if (transformComponent.rootEntity === tumbleweed) {
-      const otherTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-      if (transformComponent.rootEntity !== otherTransformComponent.rootEntity) {
-         const hitbox = transformComponent.children[0] as Hitbox;
-         const otherHitbox = otherTransformComponent.children[0] as Hitbox;
-         const dist = hitbox.box.position.calculateDistanceBetween(otherHitbox.box.position);
-         // @Hack: what if i change their radius?
-         if (dist < 70) {
-            attachHitbox(hitbox, collidingHitbox, tumbleweed, collidingEntity, false);
-         }
-      }
-   }
+   // @INCOMPLETE from rework
+   // const transformComponent = TransformComponentArray.getComponent(tumbleweed);
+   // if (transformComponent.rootEntity === tumbleweed) {
+   //    const otherTransformComponent = TransformComponentArray.getComponent(collidingEntity);
+   //    if (transformComponent.rootEntity !== otherTransformComponent.rootEntity) {
+   //       const hitbox = transformComponent.hitboxes[0];
+   //       const otherHitbox = otherTransformComponent.hitboxes[0];
+   //       const dist = hitbox.box.position.calculateDistanceBetween(otherHitbox.box.position);
+   //       // @Hack: what if i change their radius?
+   //       if (dist < 70) {
+   //          attachHitbox(hitbox, collidingHitbox, tumbleweed, collidingEntity, false);
+   //       }
+   //    }
+   // }
 }

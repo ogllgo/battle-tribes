@@ -41,7 +41,7 @@ export default class GuardianCrystalSlamAI {
    private slam(guardian: Entity): void {
       // Push back the guardian
       const transformComponent = TransformComponentArray.getComponent(guardian);
-      const bodyHitbox = transformComponent.children[0] as Hitbox;
+      const bodyHitbox = transformComponent.hitboxes[0];
       
       applyAbsoluteKnockback(guardian, bodyHitbox, polarVec2(150, bodyHitbox.box.angle + Math.PI));
 

@@ -11,7 +11,7 @@ import { getEntityType } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { OkrenAgeStage } from "./OkrenComponent";
-import { entityChildIsHitbox, TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { TransformComponent, TransformComponentArray } from "./TransformComponent";
 
 export const enum OkrenClawGrowthStage {
    ONE,
@@ -49,8 +49,8 @@ OkrenClawComponentArray.onTick = {
 };
 
 const getHitbox = (transformComponent: TransformComponent, flag: HitboxFlag): Hitbox => {
-   for (const hitbox of transformComponent.children) {
-      if (entityChildIsHitbox(hitbox) && hitbox.flags.includes(flag)) {
+   for (const hitbox of transformComponent.hitboxes) {
+      if (hitbox.flags.includes(flag)) {
          return hitbox;
       }
    }

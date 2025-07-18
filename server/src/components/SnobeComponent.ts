@@ -5,7 +5,7 @@ import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { createEntity, destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
-import { entityChildIsHitbox, TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { addHitboxAngularAcceleration, addHitboxAngularVelocity, addHitboxVelocity, getHitboxAngularVelocity, getHitboxTile, Hitbox, teleportHitbox } from "../hitboxes";
 import { TileType } from "../../../shared/src/tiles";
 import { Settings } from "../../../shared/src/settings";
@@ -53,11 +53,7 @@ const entityIsFollowable = (entity: Entity): boolean => {
 
 const getEarHitbox = (transformComponent: TransformComponent, i: number): Hitbox => {
    let currI = 0;
-   for (const hitbox of transformComponent.children) {
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
-
+   for (const hitbox of transformComponent.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.SNOBE_EAR) && currI++ === i) {
          return hitbox;
       }
@@ -68,7 +64,7 @@ const getEarHitbox = (transformComponent: TransformComponent, i: number): Hitbox
 
 function onTick(snobe: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(snobe);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    const layer = getEntityLayer(snobe);
 
@@ -103,7 +99,7 @@ function onTick(snobe: Entity): void {
       }
       
       const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.followTarget);
-      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+      const targetHitbox = targetTransformComponent.hitboxes[0];
       
       aiHelperComponent.turnFunc(snobe, targetHitbox.box.position, 8 * Math.PI, 0.5);
       aiHelperComponent.moveFunc(snobe, targetHitbox.box.position, 800);
@@ -147,7 +143,7 @@ function onTick(snobe: Entity): void {
             const snowballConfig = createSnowballConfig(position, randAngle(), snobe, Math.random() < 0.75 ? 0 : 1);
 
             const snowballTransformComponent = snowballConfig.components[ServerComponentType.transform]!;
-            const snowballHitbox = snowballTransformComponent.children[0] as Hitbox;
+            const snowballHitbox = snowballTransformComponent.hitboxes[0];
             addHitboxVelocity(snowballHitbox, polarVec2(randFloat(50, 80), offsetDir + randFloat(0.1, 0.3) * randSign()))
             
             createEntity(snowballConfig, getEntityLayer(snobe), 0);
@@ -157,10 +153,8 @@ function onTick(snobe: Entity): void {
          snobeComponent.isDigging = false;
 
          // Return the collision mask back to normal
-         for (const child of transformComponent.children) {
-            if (entityChildIsHitbox(child)) {
-               child.collisionMask |= DEFAULT_COLLISION_MASK;
-            }
+         for (const hitbox of transformComponent.hitboxes) {
+            hitbox.collisionMask |= DEFAULT_COLLISION_MASK;
          }
 
          if (entityExists(snobeComponent.diggingMound)) {
@@ -188,7 +182,7 @@ function onTick(snobe: Entity): void {
          const itemComponent = ItemComponentArray.getComponent(entity);
          if (itemComponent.itemType === ItemType.snowberry) {
             const entityTransformComponent = TransformComponentArray.getComponent(entity);
-            const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+            const entityHitbox = entityTransformComponent.hitboxes[0];
             
             const distance = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
             if (distance < minDist) {
@@ -199,7 +193,7 @@ function onTick(snobe: Entity): void {
       }
       if (closestFoodItem !== null) {
          const foodTransformComponent = TransformComponentArray.getComponent(closestFoodItem);
-         const foodHitbox = foodTransformComponent.children[0] as Hitbox;
+         const foodHitbox = foodTransformComponent.hitboxes[0];
          
          aiHelperComponent.turnFunc(snobe, foodHitbox.box.position, 8 * Math.PI, 0.5);
          aiHelperComponent.moveFunc(snobe, foodHitbox.box.position, 800);
@@ -249,10 +243,8 @@ function onTick(snobe: Entity): void {
 
       // @HACK: this is so bad, basically temporarily make the snobe not collide with any snowball.
       // ideally this would just be not colliding with snowballs the snobe has created
-      for (const child of transformComponent.children) {
-         if (entityChildIsHitbox(child)) {
-            child.collisionMask = 0;
-         }
+      for (const hitbox of transformComponent.hitboxes) {
+         hitbox.collisionMask = 0;
       }
 
       snobeComponent.diggingStartPosition.x = hitbox.box.position.x;

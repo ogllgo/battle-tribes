@@ -7,7 +7,7 @@ import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { TundraRockComponent } from "../../components/TundraRockComponent";
 import { EntityConfig } from "../../components";
 import { TransformComponent, addHitboxToTransformComponent } from "../../components/TransformComponent";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 
@@ -35,7 +35,7 @@ export function createTundraRockConfig(position: Point, angle: number): EntityCo
       }
    }
 
-   const hitbox = createHitbox(transformComponent, null, box, MASSES[variant], HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, box, MASSES[variant], HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(HEALTHS[variant]);

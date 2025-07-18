@@ -86,7 +86,7 @@ const createLeafRenderPart = (isSmall: boolean, parentHitbox: Hitbox): VisualRen
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const leafRenderParts = new Array<VisualRenderPart>();
    for (let i = 0; i < NUM_SMALL_COVER_LEAVES; i++) {
@@ -147,7 +147,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    
    if (isCoveredBefore !== spikesComponent.isCovered) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
 
       if (spikesComponent.isCovered) {
          // When covering trap

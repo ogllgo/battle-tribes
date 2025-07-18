@@ -357,7 +357,7 @@ const renderNames = (frameProgress: number): void => {
       const tribeMemberComponent = TribeMemberComponentArray.components[i];
 
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       const hitboxRenderPosition = calculateHitboxRenderPosition(hitbox, frameProgress);
       
       renderName(hitboxRenderPosition.x, hitboxRenderPosition.y + getHumanoidRadius(entity) + 4, tribeMemberComponent.name, getEntityType(entity) === EntityType.player ? "#fff" : "#bbb");
@@ -372,7 +372,7 @@ const renderNames = (frameProgress: number): void => {
          }
          
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.children[0] as Hitbox;
+         const hitbox = transformComponent.hitboxes[0];
          const hitboxRenderPosition = calculateHitboxRenderPosition(hitbox, frameProgress);
    
          const x = hitboxRenderPosition.x;

@@ -79,7 +79,7 @@ const tribesmanIsElegibleToHarvestEntityType = (tribesman: Entity, entityType: E
 
 const getGatherTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entity>, gatheredItemType: ItemType): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
    
    let minDist = Number.MAX_SAFE_INTEGER;
    let closestResource: Entity | undefined;
@@ -97,7 +97,7 @@ const getGatherTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entit
       }
       
       const resourceTransformComponent = TransformComponentArray.getComponent(resource);
-      const resourceHitbox = resourceTransformComponent.children[0] as Hitbox;
+      const resourceHitbox = resourceTransformComponent.hitboxes[0];
       
       const dist = tribesmanHitbox.box.position.calculateDistanceBetween(resourceHitbox.box.position);
       if (dist < minDist) {
@@ -111,7 +111,7 @@ const getGatherTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entit
 
 const getFoodTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entity>): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
 
    let minDist = Number.MAX_SAFE_INTEGER;
    let target: Entity | undefined;
@@ -121,7 +121,7 @@ const getFoodTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entity>
       }
 
       const resourceTransformComponent = TransformComponentArray.getComponent(entity);
-      const resourceHitbox = resourceTransformComponent.children[0] as Hitbox;
+      const resourceHitbox = resourceTransformComponent.hitboxes[0];
 
       const dist = tribesmanHitbox.box.position.calculateDistanceBetween(resourceHitbox.box.position);
       if (dist < minDist) {
@@ -135,7 +135,7 @@ const getFoodTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entity>
 
 const tribesmanGetItemPickupTarget = (tribesman: Entity, visibleItemEntities: ReadonlyArray<Entity>, gatheredItemType: ItemType): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
    
    const healthComponent = HealthComponentArray.getComponent(tribesman);
    const shouldEscape = tribeMemberShouldEscape(getEntityType(tribesman), healthComponent);
@@ -164,7 +164,7 @@ const tribesmanGetItemPickupTarget = (tribesman: Entity, visibleItemEntities: Re
          continue;
       }
 
-      const itemEntityHitbox = itemEntityTransformComponent.children[0] as Hitbox;
+      const itemEntityHitbox = itemEntityTransformComponent.hitboxes[0];
       
       const distance = tribesmanHitbox.box.position.calculateDistanceBetween(itemEntityHitbox.box.position);
       if (distance < minDistance) {
@@ -178,7 +178,7 @@ const tribesmanGetItemPickupTarget = (tribesman: Entity, visibleItemEntities: Re
 
 const goPickupItemEntity = (tribesman: Entity, pickupTarget: Entity): void => {
    const targetTransformComponent = TransformComponentArray.getComponent(pickupTarget);
-   const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+   const targetHitbox = targetTransformComponent.hitboxes[0];
    
    pathfindTribesman(tribesman, targetHitbox.box.position.x, targetHitbox.box.position.y, getEntityLayer(pickupTarget), pickupTarget, TribesmanPathType.default, Math.floor(VACUUM_RANGE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
    
@@ -188,7 +188,7 @@ const goPickupItemEntity = (tribesman: Entity, pickupTarget: Entity): void => {
 
 const findBiomeForGathering = (tribesman: Entity, layer: Layer, biome: Biome): LocalBiome | null => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
    
    let minDist = Number.MAX_SAFE_INTEGER;
    let closestBiome: LocalBiome | null = null;
@@ -232,7 +232,7 @@ const moveTribesmanToBiome = (tribesman: Entity, layer: Layer, biome: Biome): vo
    assert(localBiome !== null, "There should always be a valid biome for the tribesman to move to, probs a bug causing the biome to not generate?");
    
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
    
    // Try to find a close tile in the local biome to pathfind to
    let targetX = 0;
@@ -334,7 +334,7 @@ export function workOnGatherPlan(tribesman: Entity, gatherPlan: AIGatherItemPlan
 
       // If the entity isn't in the right biome, go to the right biome
       const transformComponent = TransformComponentArray.getComponent(tribesman);
-      const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+      const tribesmanHitbox = transformComponent.hitboxes[0];
       const currentTile = getHitboxTile(tribesmanHitbox);
       if (layer.getTileBiome(currentTile) !== spawnInfo.biome) {
          moveTribesmanToBiome(tribesman, spawnInfo.layer, spawnInfo.biome);

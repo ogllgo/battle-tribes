@@ -2,7 +2,7 @@ import { CollisionBit } from "battletribes-shared/collision";
 import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { EntityConfig } from "../components";
-import { addHitboxToTransformComponent, entityChildIsHitbox, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { HealthComponent } from "../components/HealthComponent";
 import { BlueprintComponent } from "../components/BlueprintComponent";
 import Tribe from "../Tribe";
@@ -48,11 +48,7 @@ export function createBlueprintEntityConfig(position: Point, rotation: number, t
    if (associatedEntityID !== 0) {
       const structureTransformComponent = TransformComponentArray.getComponent(associatedEntityID);
 
-      for (const structureHitbox of structureTransformComponent.children) {
-         if (!entityChildIsHitbox(structureHitbox)) {
-            continue;
-         }
-
+      for (const structureHitbox of structureTransformComponent.hitboxes) {
          const hitbox = cloneHitbox(transformComponent, structureHitbox);
          hitbox.mass = 0;
          hitbox.collisionType = HitboxCollisionType.soft;
@@ -60,14 +56,11 @@ export function createBlueprintEntityConfig(position: Point, rotation: number, t
       }
    } else {
       const entityType = getBlueprintEntityType(blueprintType);
+      
       const entityConfig = createStructureConfig(tribe, entityType, position, rotation, []);
 
       const transformComponentParams = entityConfig.components[ServerComponentType.transform]!;
-      for (const hitbox of transformComponentParams.children) {
-         if (!entityChildIsHitbox(hitbox)) {
-            continue;
-         }
-         
+      for (const hitbox of transformComponentParams.hitboxes) {
          hitbox.mass = 0;
          hitbox.collisionType = HitboxCollisionType.soft;
          addHitboxToTransformComponent(transformComponent, hitbox);

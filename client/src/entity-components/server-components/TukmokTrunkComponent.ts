@@ -5,7 +5,6 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { entityChildIsHitbox } from "./TransformComponent";
 
 export interface TukmokTrunkComponentParams {}
 
@@ -29,11 +28,8 @@ function createParamsFromData(): TukmokTrunkComponentParams {
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
 
-   for (let i = 0; i < transformComponentParams.children.length; i++) {
-      const hitbox = transformComponentParams.children[i];
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
+   for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
+      const hitbox = transformComponentParams.hitboxes[i];
 
       const textureSource = hitbox.flags.includes(HitboxFlag.TUKMOK_TRUNK_HEAD) ? "entities/tukmok-trunk/head-segment.png" : "entities/tukmok-trunk/middle-segment.png";
       

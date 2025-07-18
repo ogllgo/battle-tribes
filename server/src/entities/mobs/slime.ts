@@ -20,8 +20,8 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { CraftingStationComponent } from "../../components/CraftingStationComponent";
 import { registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
-import { createHitbox } from "../../hitboxes";
 import { accelerateEntityToPosition, turnToPosition } from "../../ai-shared";
+import { Hitbox } from "../../hitboxes";
 
 export interface SlimeEntityAnger {
    angerAmount: number;
@@ -73,7 +73,7 @@ const turnFunc = (slime: Entity, pos: Point): void => {
 export function createSlimeConfig(position: Point, rotation: number, size: SlimeSize): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, SLIME_RADII[size]), 1 + size * 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, SLIME_RADII[size]), 1 + size * 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();

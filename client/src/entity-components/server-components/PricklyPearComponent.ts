@@ -35,7 +35,7 @@ function createParamsFromData(): PricklyPearComponentParams {
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -63,7 +63,7 @@ function updateFromData(reader: PacketReader): void {}
 
 function onDie(pricklyPear: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(pricklyPear);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    const healthComponent = HealthComponentArray.getComponent(pricklyPear);
    if (healthComponent.health <= 0) {

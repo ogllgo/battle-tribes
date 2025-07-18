@@ -44,7 +44,7 @@ TombstoneComponentArray.preRemove = preRemove;
 
 const generateZombieSpawnPosition = (tombstone: Entity): Point => {
    const transformComponent = TransformComponentArray.getComponent(tombstone);
-   const tombstoneHitbox = transformComponent.children[0] as Hitbox;
+   const tombstoneHitbox = transformComponent.hitboxes[0];
    
    const seenIs = new Array<number>();
    for (;;) {
@@ -131,7 +131,7 @@ function preRemove(tombstone: Entity): void {
    const isGolden = tombstoneComponent.tombstoneType === 0 && Math.random() < 0.005;
    
    const tombstoneTransformComponent = TransformComponentArray.getComponent(tombstone);
-   const tombstoneHitbox = tombstoneTransformComponent.children[0] as Hitbox;
+   const tombstoneHitbox = tombstoneTransformComponent.hitboxes[0];
 
    const config = createZombieConfig(tombstoneHitbox.box.position.copy(), randAngle(), isGolden, tombstone);
    createEntity(config, getEntityLayer(tombstone), 0);

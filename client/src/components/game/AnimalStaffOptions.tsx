@@ -116,7 +116,7 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
 
    const updateFromEntity = (entity: Entity): void => {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
 
       const screenX = Camera.calculateXScreenPos(hitbox.box.position.x);
       const screenY = Camera.calculateYScreenPos(hitbox.box.position.y);

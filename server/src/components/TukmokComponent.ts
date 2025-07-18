@@ -1,14 +1,13 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { getAbsAngleDiff, Point, polarVec2 } from "../../../shared/src/utils";
-import { getDistanceFromPointToEntity, getDistanceFromPointToHitbox, willStopAtDesiredDistance } from "../ai-shared";
-import { hitboxIsCollidingWithEntity } from "../collision-detection";
+import { getDistanceFromPointToHitbox, willStopAtDesiredDistance } from "../ai-shared";
 import { applyAcceleration, Hitbox } from "../hitboxes";
 import { getEntityType } from "../world";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { getEntityFullness } from "./EnergyStomachComponent";
-import { attachHitbox, entityChildIsEntity, entityChildIsHitbox, TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { attachHitbox, TransformComponent, TransformComponentArray } from "./TransformComponent";
 
 export class TukmokComponent {}
 
@@ -21,9 +20,11 @@ TukmokComponentArray.onTick = {
 };
 
 const getTrunk = (transformComponent: TransformComponent): Entity => {
-   for (const child of transformComponent.children) {
-      if (entityChildIsEntity(child) && getEntityType(child.attachedEntity) === EntityType.tukmokTrunk) {
-         return child.attachedEntity;
+   for (const hitbox of transformComponent.hitboxes) {
+      for (const childHitbox of hitbox.children) {
+         if (getEntityType(childHitbox.entity) === EntityType.tukmokTrunk) {
+            return childHitbox.entity;
+         }
       }
    }
 
@@ -32,20 +33,16 @@ const getTrunk = (transformComponent: TransformComponent): Entity => {
 
 const getTrunkHeadHitbox = (trunk: Entity): Hitbox => {
    const trunkTransformComponent = TransformComponentArray.getComponent(trunk);
-   for (let i = trunkTransformComponent.children.length - 1; i >= 0; i--) {
-      const child = trunkTransformComponent.children[i];
-      if (entityChildIsHitbox(child)) {
-         return child;
-      }
-   }
-   throw new Error();
+   return trunkTransformComponent.hitboxes[trunkTransformComponent.hitboxes.length - 1];
 }
 
 const trunkHasLeaf = (trunk: Entity): boolean => {
    const trunkTransformComponent = TransformComponentArray.getComponent(trunk);
-   for (const trunkChild of trunkTransformComponent.children) {
-      if (entityChildIsEntity(trunkChild) && getEntityType(trunkChild.attachedEntity) === EntityType.itemEntity) {
-         return true;
+   for (const hitbox of trunkTransformComponent.hitboxes) {
+      for (const childHitbox of hitbox.children) {
+         if (getEntityType(childHitbox.entity) === EntityType.itemEntity) {
+            return true;
+         }
       }
    }
 
@@ -54,13 +51,10 @@ const trunkHasLeaf = (trunk: Entity): boolean => {
 
 const moveTrunk = (trunk: Entity, targetPos: Point): void => {
    const trunkTransformComponent = TransformComponentArray.getComponent(trunk);
-   for (let i = 0; i < trunkTransformComponent.children.length; i++) {
-      const hitbox = trunkTransformComponent.children[i];
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
+   for (let i = 0; i < trunkTransformComponent.hitboxes.length; i++) {
+      const hitbox = trunkTransformComponent.hitboxes[i];
 
-      const isHead = i === trunkTransformComponent.children.length - 1;
+      const isHead = i === trunkTransformComponent.hitboxes.length - 1;
       const mag = 650 * (isHead ? 1 : 0.4);
       const acc = polarVec2(mag, hitbox.box.position.calculateAngleBetween(targetPos));
       applyAcceleration(hitbox, acc);
@@ -69,7 +63,7 @@ const moveTrunk = (trunk: Entity, targetPos: Point): void => {
 
 const getTargetTree = (tukmok: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(tukmok);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    let minDist = Number.MAX_SAFE_INTEGER;
    let closestTree: Entity | null = null;
@@ -79,7 +73,7 @@ const getTargetTree = (tukmok: Entity, aiHelperComponent: AIHelperComponent): En
       }
 
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
-      const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+      const entityHitbox = entityTransformComponent.hitboxes[0];
 
       const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
       if (dist < minDist) {
@@ -100,10 +94,10 @@ function onTick(tukmok: Entity): void {
       const target = getTargetTree(tukmok, aiHelperComponent);
       if (target !== null) {
          const transformComponent = TransformComponentArray.getComponent(tukmok);
-         const tukmokHeadHitbox = transformComponent.children[1] as Hitbox;
+         const tukmokHeadHitbox = transformComponent.hitboxes[1];
          
          const targetTransformComponent = TransformComponentArray.getComponent(target);
-         const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+         const targetHitbox = targetTransformComponent.hitboxes[0];
       
          const dist = getDistanceFromPointToHitbox(targetHitbox.box.position, tukmokHeadHitbox);
          if (willStopAtDesiredDistance(tukmokHeadHitbox, IDEAL_DIST_FROM_TREE - 8, dist)) {
@@ -131,7 +125,7 @@ function onTick(tukmok: Entity): void {
                   const trunkHeadToTree = trunkHeadHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
                   // First attach to the tree
                   if (getAbsAngleDiff(trunkHeadHitbox.box.angle, trunkHeadToTree) < 0.1 && trunkHeadHitbox.box.isColliding(targetHitbox.box)) {
-                     attachHitbox(trunkHeadHitbox, targetHitbox, trunk, target, false);
+                     attachHitbox(trunkHeadHitbox, targetHitbox, false);
                   }
                } else {
 

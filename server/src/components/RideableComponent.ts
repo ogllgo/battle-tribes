@@ -5,7 +5,7 @@ import { rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/ut
 import { Hitbox } from "../hitboxes";
 import { entityExists } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { attachHitbox, attachEntityWithTether, detachHitbox, TransformComponentArray } from "./TransformComponent";
+import { attachHitbox, detachHitbox, TransformComponentArray } from "./TransformComponent";
 
 interface CarrySlot {
    occupiedEntity: Entity;
@@ -61,16 +61,16 @@ export function getAvailableCarrySlot(rideableComponent: RideableComponent): Car
    return null;
 }
 
-export function mountCarrySlot(entity: Entity, mount: Entity, carrySlot: CarrySlot): void {
+export function mountCarrySlot(entity: Entity, carrySlot: CarrySlot): void {
    // Set the entity to the carry slot's position
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+   const entityHitbox = entityTransformComponent.hitboxes[0];
    entityHitbox.box.position.x = carrySlot.parentHitbox.box.position.x + rotateXAroundOrigin(carrySlot.offsetX, carrySlot.offsetY, carrySlot.parentHitbox.box.angle);
    entityHitbox.box.position.y = carrySlot.parentHitbox.box.position.y + rotateYAroundOrigin(carrySlot.offsetX, carrySlot.offsetY, carrySlot.parentHitbox.box.angle);
    
    // attachEntityWithTether(entity, mount, carrySlot.parentHitbox, 0, 10, 0.4, false);
    // @INCOMPLETE: SHOULD USE TETHER!!!!
-   attachHitbox(entityHitbox, carrySlot.parentHitbox, entity, mount, false);
+   attachHitbox(entityHitbox, carrySlot.parentHitbox, false);
    carrySlot.occupiedEntity = entity;
 }
 
@@ -89,16 +89,22 @@ export function dismountMount(entity: Entity, mount: Entity): void {
       return;
    }
 
-   detachHitbox(mount, entity); 
+   const transformComponent = TransformComponentArray.getComponent(entity);
+
+   for (const hitbox of transformComponent.hitboxes) {
+      if (hitbox.parent !== null && hitbox.parent.entity === mount) {
+         detachHitbox(hitbox);
+      }
+   }
+
    carrySlot.occupiedEntity = 0;
 
    // Set the entity to the dismount position
 
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = transformComponent.children[0] as Hitbox;
+   const entityHitbox = transformComponent.hitboxes[0];
    
    const mountTransformComponent = TransformComponentArray.getComponent(mount);
-   const mountHitbox = mountTransformComponent.children[0] as Hitbox;
+   const mountHitbox = mountTransformComponent.hitboxes[0];
    
    entityHitbox.box.position.x = mountHitbox.box.position.x + rotateXAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountHitbox.box.angle);
    entityHitbox.box.position.y = mountHitbox.box.position.y + rotateYAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountHitbox.box.angle);

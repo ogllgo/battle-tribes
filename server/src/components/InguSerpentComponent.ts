@@ -76,7 +76,7 @@ InguSerpentComponentArray.onHitboxCollision = onHitboxCollision;
 
 function onJoin(serpent: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(serpent);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    const tile = getHitboxTile(hitbox);
    
    const layer = getEntityLayer(serpent);
@@ -88,7 +88,7 @@ function onJoin(serpent: Entity): void {
 
 const isTarget = (serpent: Entity, entity: Entity): boolean => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    // @HACK so that it can attack trees n shit
    const tamingComponent = TamingComponentArray.getComponent(serpent);
@@ -134,7 +134,7 @@ const isTarget = (serpent: Entity, entity: Entity): boolean => {
 
 const getTarget = (serpent: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(serpent);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    let target: Entity | null = null;
    let minDist = Number.MAX_SAFE_INTEGER;
@@ -144,7 +144,7 @@ const getTarget = (serpent: Entity, aiHelperComponent: AIHelperComponent): Entit
       }
 
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
-      const targetHitbox = entityTransformComponent.children[0] as Hitbox;
+      const targetHitbox = entityTransformComponent.hitboxes[0];
       const dist = hitbox.box.position.calculateDistanceBetween(targetHitbox.box.position);
       if (dist < minDist) {
          minDist = dist;
@@ -160,10 +160,10 @@ const attackEntity = (serpent: Entity, target: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(serpent);
    const aiHelperComponent = AIHelperComponentArray.getComponent(serpent);
 
-   const headHitbox = transformComponent.children[0] as Hitbox;
+   const headHitbox = transformComponent.hitboxes[0];
 
    const targetTransformComponent = TransformComponentArray.getComponent(target);
-   const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+   const targetHitbox = targetTransformComponent.hitboxes[0];
 
    const headToTarget = headHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
    const distFromTarget = getDistanceFromPointToHitbox(headHitbox.box.position, targetHitbox);
@@ -194,7 +194,7 @@ const attackEntity = (serpent: Entity, target: Entity): void => {
       registerEntityTickEvent(serpent, tickEvent);
 
       // Initial jump
-      const bodyHitbox = transformComponent.children[0] as Hitbox;
+      const bodyHitbox = transformComponent.hitboxes[0];
       const bodyToTargetDir = bodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
       addHitboxVelocity(bodyHitbox, polarVec2(300, bodyToTargetDir));
 
@@ -262,13 +262,13 @@ function onTick(serpent: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(serpent);
    const aiHelperComponent = AIHelperComponentArray.getComponent(serpent);
 
-   const headHitbox = transformComponent.children[0] as Hitbox;
+   const headHitbox = transformComponent.hitboxes[0];
    
    // Go to follow target if possible
    // @Copynpaste
    if (entityExists(tamingComponent.followTarget)) {
       const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.followTarget);
-      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+      const targetHitbox = targetTransformComponent.hitboxes[0];
       
       aiHelperComponent.moveFunc(serpent, targetHitbox.box.position, SLOW_ACCELERATION);
       aiHelperComponent.turnFunc(serpent, targetHitbox.box.position, 3.5 * Math.PI, 1.8);
@@ -289,7 +289,7 @@ function onTick(serpent: Entity): void {
          const itemComponent = ItemComponentArray.getComponent(entity);
          if (itemComponent.itemType === ItemType.rawSnobeMeat) {
             const entityTransformComponent = TransformComponentArray.getComponent(entity);
-            const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+            const entityHitbox = entityTransformComponent.hitboxes[0];
             
             const distance = headHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
             if (distance < minDist) {
@@ -305,7 +305,7 @@ function onTick(serpent: Entity): void {
          }
          
          const foodTransformComponent = TransformComponentArray.getComponent(closestFoodItem);
-         const foodHitbox = foodTransformComponent.children[0] as Hitbox;
+         const foodHitbox = foodTransformComponent.hitboxes[0];
          
          aiHelperComponent.turnFunc(serpent, foodHitbox.box.position, 3.5 * Math.PI, 1.8);
          aiHelperComponent.moveFunc(serpent, foodHitbox.box.position, SLOW_ACCELERATION);
@@ -343,7 +343,7 @@ function onTick(serpent: Entity): void {
 
    // If not in its home biome, move back to home
    if (inguSerpentComponent.homeBiome !== null) {
-      const bodyHitbox = transformComponent.children[0] as Hitbox;
+      const bodyHitbox = transformComponent.hitboxes[0];
 
       const layer = getEntityLayer(serpent);
       const tile = getHitboxTile(bodyHitbox);

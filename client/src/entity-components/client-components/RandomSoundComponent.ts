@@ -73,7 +73,7 @@ function onTick(entity: Entity): void {
       randomSoundComponent.soundTimerTicks = randFloat(randomSoundComponent.minSoundIntervalTicks, randomSoundComponent.maxSoundIntervalTicks);
 
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       
       const soundSrc = randItem(randomSoundComponent.sounds);
       playSoundOnHitbox(soundSrc, randomSoundComponent.volume, 1, entity, hitbox, false);

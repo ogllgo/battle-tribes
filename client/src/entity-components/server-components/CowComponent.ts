@@ -8,7 +8,7 @@ import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { CowSpecies, Entity } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
 import { EntityParams, getEntityLayer } from "../../world";
-import { entityChildIsHitbox, getHitboxTile, TransformComponentArray } from "./TransformComponent";
+import { getHitboxTile, TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -68,11 +68,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    const cowNum = cowComponentParams.species === CowSpecies.brown ? 1 : 2;
 
    let headRenderPart!: RenderPart;
-   for (const hitbox of transformComponentParams.children) {
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
-      
+   for (const hitbox of transformComponentParams.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.COW_BODY)) {
          const bodyRenderPart = new TexturedRenderPart(
             hitbox,
@@ -119,7 +115,7 @@ function onTick(entity: Entity): void {
 
    if (cowComponent.grazeProgress !== -1 && Board.tickIntervalHasPassed(0.1)) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       
       const spawnOffsetMagnitude = 30 * Math.random();
       const spawnOffsetDirection = randAngle();
@@ -130,7 +126,7 @@ function onTick(entity: Entity): void {
 
    if (Math.random() < 0.1 / Settings.TPS) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       playSoundOnHitbox("cow-ambient-" + randInt(1, 3) + ".mp3", 0.2, 1, entity, hitbox, true);
    }
 }
@@ -148,7 +144,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    // When the cow has finished grazing, create a bunch of dirt particles
    if (grazeProgress < cowComponent.grazeProgress) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       const layer = getEntityLayer(entity);
       
       const tile = getHitboxTile(layer, hitbox);
@@ -164,7 +160,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    reader.padOffset(3);
    if (isRamming && !cowComponent.isRamming) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       playSoundOnHitbox("cow-angry.mp3", 0.4, 1, entity, hitbox, true);
    }
    cowComponent.isRamming = isRamming;
@@ -191,7 +187,7 @@ function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 3; i++) {
       createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 35);

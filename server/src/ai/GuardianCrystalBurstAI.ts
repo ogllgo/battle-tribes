@@ -22,7 +22,7 @@ const enum Vars {
 
 const createFragmentProjectile = (guardian: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(guardian);
-   const bodyHitbox = transformComponent.children[0] as Hitbox;
+   const bodyHitbox = transformComponent.hitboxes[0];
 
    const offsetDirection = bodyHitbox.box.angle + randFloat(-0.2, 0.2);
    const offsetMagnitude = GuardianVars.LIMB_ORBIT_RADIUS;
@@ -35,7 +35,7 @@ const createFragmentProjectile = (guardian: Entity): void => {
    
    const config = createGuardianGemFragmentProjectileConfig(new Point(originX, originY), randAngle(), guardian);
 
-   const snowballHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
+   const snowballHitbox = config.components[ServerComponentType.transform]!.hitboxes[0];
    addHitboxVelocity(snowballHitbox, vel);
    addHitboxAngularVelocity(snowballHitbox, randFloat(3.5 * Math.PI, 6 * Math.PI) * randSign());
 

@@ -286,7 +286,7 @@ function onTick(entity: Entity): void {
 
                // Push forwards
                const transformComponent = TransformComponentArray.getComponent(entity);
-               const entityHitbox = transformComponent.children[0] as Hitbox;
+               const entityHitbox = transformComponent.hitboxes[0];
                
                applyKnockback(entity, entityHitbox, 250, entityHitbox.box.angle);
 

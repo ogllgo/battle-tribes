@@ -32,7 +32,7 @@ const angleToCenter = angle(16, 64);
 
 const updateDoorOpenProgress = (door: Entity, doorComponent: DoorComponent): void => {
    const transformComponent = TransformComponentArray.getComponent(door);
-   const doorHitbox = transformComponent.children[0] as Hitbox;
+   const doorHitbox = transformComponent.hitboxes[0];
    
    const angle = doorComponent.closedAngle + lerp(0, -Math.PI/2 + 0.1, doorComponent.openProgress);
    
@@ -59,7 +59,7 @@ function onTick(door: Entity): void {
          }
          updateDoorOpenProgress(door, doorComponent);
 
-         (transformComponent.children[0] as Hitbox).collisionType = HitboxCollisionType.soft;
+         (transformComponent.hitboxes[0]).collisionType = HitboxCollisionType.soft;
          break;
       }
       case DoorToggleType.close: {
@@ -70,7 +70,7 @@ function onTick(door: Entity): void {
          }
          updateDoorOpenProgress(door, doorComponent);
 
-         (transformComponent.children[0] as Hitbox).collisionType = HitboxCollisionType.hard;
+         (transformComponent.hitboxes[0]).collisionType = HitboxCollisionType.hard;
          break;
       }
    }
@@ -96,7 +96,7 @@ export function toggleDoor(door: Entity): void {
 // @Hack
 function onInitialise(config: EntityConfig): void {
    const transformComponent = config.components[ServerComponentType.transform]!;
-   const doorHitbox = transformComponent.children[0] as Hitbox;
+   const doorHitbox = transformComponent.hitboxes[0];
    
    config.components[ServerComponentType.door]!.originX = doorHitbox.box.position.x;
    config.components[ServerComponentType.door]!.originY = doorHitbox.box.position.y;

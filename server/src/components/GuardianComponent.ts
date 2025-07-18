@@ -11,7 +11,7 @@ import { AIHelperComponentArray, AIType } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { GuardianSpikyBallComponentArray } from "./GuardianSpikyBallComponent";
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
-import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 import { applyKnockback, Hitbox } from "../hitboxes";
 
 const enum Vars {
@@ -59,7 +59,7 @@ export class GuardianComponent {
 
       // @Hack
       const transformComponent = TransformComponentArray.getComponent(guardian);
-      const guardianHitbox = transformComponent.children[0] as Hitbox;
+      const guardianHitbox = transformComponent.hitboxes[0];
       this.limbNormalDirection = guardianHitbox.box.angle;
 
       const aiHelperComponent = AIHelperComponentArray.getComponent(guardian);
@@ -96,12 +96,10 @@ export function getGuardianLimbOrbitRadius(): number {
 function onJoin(guardian: Entity): void {
    const guardianComponent = GuardianComponentArray.getComponent(guardian);
    const transformComponent = TransformComponentArray.getComponent(guardian);
-   for (let i = 0; i < transformComponent.children.length; i++) {
-      const hitbox = transformComponent.children[i];
-      if (entityChildIsHitbox(hitbox)) {
-         if (hitbox.flags.includes(HitboxFlag.GUARDIAN_LIMB_HITBOX)) {
-            guardianComponent.limbHitboxes.push(hitbox);
-         }
+   for (let i = 0; i < transformComponent.hitboxes.length; i++) {
+      const hitbox = transformComponent.hitboxes[i];
+      if (hitbox.flags.includes(HitboxFlag.GUARDIAN_LIMB_HITBOX)) {
+         guardianComponent.limbHitboxes.push(hitbox);
       }
    }
 }
@@ -144,7 +142,7 @@ const moveGemActivation = (guardianComponent: GuardianComponent, targetActivatio
 
 const updateOrbitingGuardianLimbs = (guardian: Entity, guardianComponent: GuardianComponent): void => {
    const transformComponent = TransformComponentArray.getComponent(guardian);
-   const guardianHitbox = transformComponent.children[0] as Hitbox;
+   const guardianHitbox = transformComponent.hitboxes[0];
    for (let i = 0; i < guardianComponent.limbHitboxes.length; i++) {
       const hitbox = guardianComponent.limbHitboxes[i];
       const box = hitbox.box;
@@ -162,7 +160,7 @@ const updateOrbitingGuardianLimbs = (guardian: Entity, guardianComponent: Guardi
 
 const limbsAreInStagingPosition = (guardian: Entity, guardianComponent: GuardianComponent): boolean => {
    const transformComponent = TransformComponentArray.getComponent(guardian);
-   const guardianHitbox = transformComponent.children[0] as Hitbox;
+   const guardianHitbox = transformComponent.hitboxes[0];
 
    // @Hack
    const diffFromTarget1 = getAngleDiff(guardianComponent.limbNormalDirection, guardianHitbox.box.angle);
@@ -178,7 +176,7 @@ function onTick(guardian: Entity): void {
    const target = guardianAI.getTarget(guardian);
    if (target !== null) {
       const targetTransformComponent = TransformComponentArray.getComponent(target);
-      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+      const targetHitbox = targetTransformComponent.hitboxes[0];
       
       guardianComponent.lastTargetX = targetHitbox.box.position.x;
       guardianComponent.lastTargetY = targetHitbox.box.position.y;
@@ -269,7 +267,7 @@ function onTick(guardian: Entity): void {
 
          // @Hack
          const transformComponent = TransformComponentArray.getComponent(guardian);
-         const guardianHitbox = transformComponent.children[0] as Hitbox;
+         const guardianHitbox = transformComponent.hitboxes[0];
          guardianComponent.limbNormalDirection = guardianHitbox.box.angle;
    
          // @Copynpaste
@@ -293,7 +291,7 @@ function onTick(guardian: Entity): void {
          guardianComponent.limbMoveProgress = 0;
 
          const transformComponent = TransformComponentArray.getComponent(guardian);
-         const guardianHitbox = transformComponent.children[0] as Hitbox;
+         const guardianHitbox = transformComponent.hitboxes[0];
          guardianComponent.limbNormalDirection = guardianHitbox.box.angle;
       }
       updateOrbitingGuardianLimbs(guardian, guardianComponent);

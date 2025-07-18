@@ -11,12 +11,12 @@ import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { TukmokSpurComponent } from "../../components/TukmokSpurComponent";
-import { createHitbox, Hitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 export function createTukmokSpurConfig(position: Point, angle: number, parentHitbox: Hitbox, offset: Point, hitboxFlag: HitboxFlag, isFlipped: boolean): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, parentHitbox, new CircularBox(position, offset, angle, 12), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [hitboxFlag]);
+   const hitbox = new Hitbox(transformComponent, parentHitbox, true, new CircularBox(position, offset, angle, 12), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [hitboxFlag]);
    hitbox.box.flipX = isFlipped;
    // @Hack
    hitbox.box.totalFlipXMultiplier = isFlipped ? -1 : 1;

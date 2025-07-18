@@ -47,7 +47,7 @@ function onJoin(entity: Entity): void {
 
 function onTick(tribeMember: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(tribeMember);
-   const tribeMemberHitbox = transformComponent.children[0] as Hitbox;
+   const tribeMemberHitbox = transformComponent.hitboxes[0];
    
    const layer = getEntityLayer(tribeMember);
    
@@ -72,7 +72,7 @@ function onTick(tribeMember: Entity): void {
             }
 
             const itemEntityTransformComponent = TransformComponentArray.getComponent(itemEntity);
-            const itemEntityHitbox = itemEntityTransformComponent.children[0] as Hitbox;
+            const itemEntityHitbox = itemEntityTransformComponent.hitboxes[0];
             
             const distance = tribeMemberHitbox.box.position.calculateDistanceBetween(itemEntityHitbox.box.position);
             if (distance <= VACUUM_RANGE) {

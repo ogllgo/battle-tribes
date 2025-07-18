@@ -1,21 +1,20 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { angle, assert, polarVec2, UtilVars } from "battletribes-shared/utils";
+import { polarVec2, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition, runHerdAI } from "../ai-shared";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { runEscapeAI } from "../ai/EscapeAI";
 import { updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget } from "../ai/FollowAI";
-import { getTransformComponentFirstHitbox, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType, ticksToGameHours } from "../world";
-import { applyAccelerationFromGround, getHitboxTile, Hitbox, turnHitboxToAngle } from "../hitboxes";
+import { applyAccelerationFromGround, getHitboxTile, turnHitboxToAngle } from "../hitboxes";
 import { HealthComponentArray } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { Biome } from "../../../shared/src/biomes";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
 import { addHungerEnergy, getEntityFullness } from "./EnergyStomachComponent";
 import { EnergyStoreComponentArray } from "./EnergyStoreComponent";
-import { runSandBallingAI, shouldRunSandBallingAI, updateSandBallingAI } from "../ai/SandBallingAI";
 import { runVegetationConsumeAI, shouldRunVegetationConsumeAI, updateVegetationConsumeAI } from "../ai/VegetationConsumeAI";
 import { getKrumblidAttackTarget, getKrumblidDustfleaThreatTarget, runKrumblidCombatAI } from "../ai/KrumblidCombatAI";
 import { runKrumblidHibernateAI } from "../ai/KrumblidHibernateAI";
@@ -42,7 +41,7 @@ KrumblidComponentArray.onTick = {
 
 const getTargetPricklyPear = (krumblid: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(krumblid);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    let minDist = Number.MAX_SAFE_INTEGER;
    let target: Entity | null = null;
@@ -52,7 +51,7 @@ const getTargetPricklyPear = (krumblid: Entity, aiHelperComponent: AIHelperCompo
       }
       
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
-      const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+      const entityHitbox = entityTransformComponent.hitboxes[0];
 
       const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
       if (dist < minDist) {
@@ -96,8 +95,7 @@ const entityIsFollowable = (entity: Entity): boolean => {
    // Not interested in entities outside of the desert
    // @Incomplete: should be interested in entities oustide of the desert, just won't walk out of the desert!
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = getTransformComponentFirstHitbox(transformComponent);
-   assert(hitbox !== null);
+   const hitbox = transformComponent.hitboxes[0];
    const entityTile = getHitboxTile(hitbox);
    const layer = getEntityLayer(entity);
    if (layer.getTileBiome(entityTile) !== Biome.desert) {
@@ -136,7 +134,7 @@ const chaseAndEatLeafItem = (krumblid: Entity, berryItemEntity: Entity): boolean
    }
 
    const berryTransformComponent = TransformComponentArray.getComponent(berryItemEntity);
-   const berryHitbox = berryTransformComponent.children[0] as Hitbox;
+   const berryHitbox = berryTransformComponent.hitboxes[0];
 
    const targetX = berryHitbox.box.position.x;
    const targetY = berryHitbox.box.position.y;
@@ -167,7 +165,7 @@ function onTick(krumblid: Entity): void {
    // By default, move the krumblids' mandibles back to their resting position
    const transformComponent = TransformComponentArray.getComponent(krumblid);
    for (let i = 0; i < 2; i++) {
-      const mandibleHitbox = transformComponent.children[i + 1] as Hitbox;
+      const mandibleHitbox = transformComponent.hitboxes[i + 1];
       turnHitboxToAngle(mandibleHitbox, 0.1 * Math.PI, 3 * Math.PI, 0.5, true);
    }
 
@@ -213,7 +211,7 @@ function onTick(krumblid: Entity): void {
       if (targetPricklyPear !== null) {
          const targetTransformComponent = TransformComponentArray.getComponent(targetPricklyPear);
          // @Hack
-         const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+         const targetHitbox = targetTransformComponent.hitboxes[0];
          
          moveEntityToPosition(krumblid, targetHitbox.box.position.x, targetHitbox.box.position.y, 250, Vars.TURN_SPEED, 1);
    
@@ -242,7 +240,7 @@ function onTick(krumblid: Entity): void {
    if (entityExists(followedEntity)) {
       const followedEntityTransformComponent = TransformComponentArray.getComponent(followedEntity);
       // @Hack
-      const followedEntityHitbox = followedEntityTransformComponent.children[0] as Hitbox;
+      const followedEntityHitbox = followedEntityTransformComponent.hitboxes[0];
       
       // Continue following the entity
       moveEntityToPosition(krumblid, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y, 250, Vars.TURN_SPEED, 1);
@@ -300,7 +298,7 @@ function onTick(krumblid: Entity): void {
    if (herdMembers.length >= 2 && herdMembers.length <= 6) {
       runHerdAI(krumblid, herdMembers, aiHelperComponent.visionRange, 2 * Math.PI, 50, 0.7, 0.5, 0.3);
 
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       
       // @Incomplete: use new move func
       applyAccelerationFromGround(krumblid, hitbox, polarVec2(200, hitbox.box.angle));

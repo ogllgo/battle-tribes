@@ -42,7 +42,7 @@ const getTextureSource = (size: number): string => {
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    const sandBallComponentParams = entityParams.serverComponentParams[ServerComponentType.sandBall]!;
    
@@ -87,7 +87,7 @@ function getMaxRenderParts(): number {
 function onTick(sandBall: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(sandBall);
    if (transformComponent.rootEntity !== sandBall) {
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       const hitboxRadius = (hitbox.box as CircularBox).radius;
       const hitboxVelocity = getHitboxVelocity(hitbox);
 

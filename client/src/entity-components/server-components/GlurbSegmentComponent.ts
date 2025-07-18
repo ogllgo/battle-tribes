@@ -12,7 +12,7 @@ import { playSound, playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityParams, getEntityLayer, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { entityIsVisibleToCamera, TransformComponentArray, getRandomPositionInBox, entityChildIsHitbox } from "./TransformComponent";
+import { entityIsVisibleToCamera, TransformComponentArray, getRandomPositionInBox } from "./TransformComponent";
 
 export interface GlurbSegmentComponentParams {
    readonly mossBallCompleteness: number;
@@ -74,7 +74,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    let renderPart: TexturedRenderPart | null;
    if (glurbSegmentComponentParams.mossBallCompleteness > 0) {
       const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-      const hitbox = transformComponentParams.children[0] as Hitbox;
+      const hitbox = transformComponentParams.hitboxes[0];
    
       renderPart = createMossBallRenderPart(glurbSegmentComponentParams.mossBallCompleteness, hitbox);
       renderInfo.attachRenderPart(renderPart);
@@ -115,7 +115,7 @@ function updateFromData(reader: PacketReader, glurbSegment: Entity): void {
    } else {
       if (glurbSegmentComponent.mossBallRenderPart === null) {
          const transformComponent = TransformComponentArray.getComponent(glurbSegment);
-         const hitbox = transformComponent.children[0] as Hitbox;
+         const hitbox = transformComponent.hitboxes[0];
          
          glurbSegmentComponent.mossBallRenderPart = createMossBallRenderPart(mossBallCompleteness, hitbox);
          const renderInfo = getEntityRenderInfo(glurbSegment);
@@ -131,10 +131,8 @@ function onTick(glurb: Entity): void {
    if (entityIsVisibleToCamera(glurb)) {
       const layer = getEntityLayer(glurb);
       const transformComponent = TransformComponentArray.getComponent(glurb);
-      for (const hitbox of transformComponent.children) {
-         if (entityChildIsHitbox(hitbox)) {
-            coatSlimeTrails(layer, hitbox.box);
-         }
+      for (const hitbox of transformComponent.hitboxes) {
+         coatSlimeTrails(layer, hitbox.box);
       }
    }
 
@@ -155,7 +153,7 @@ function onHit(entity: Entity, _hitbox: Hitbox, hitPosition: Point): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 3; i++) {
       const pos = getRandomPositionInBox(hitbox.box);

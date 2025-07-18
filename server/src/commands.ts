@@ -15,7 +15,7 @@ const ENTITY_SPAWN_RANGE = 200;
 
 const killPlayer = (player: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(player);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const hitPosition = getRandomPositionInEntity(transformComponent);
    damageEntity(player, hitbox, null, 999999, DamageSource.god, AttackEffectiveness.effective, hitPosition, 0);
@@ -23,7 +23,7 @@ const killPlayer = (player: Entity): void => {
 
 const damagePlayer = (player: Entity, damage: number): void => {
    const transformComponent = TransformComponentArray.getComponent(player);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    const hitPosition = getRandomPositionInEntity(transformComponent);
    damageEntity(player, hitbox, null, damage, DamageSource.god, AttackEffectiveness.effective, hitPosition, 0);

@@ -37,7 +37,7 @@ export function createPlayerDataPacket(): ArrayBuffer {
    const packet = new Packet(PacketType.playerData, lengthBytes);
    
    const transformComponent = TransformComponentArray.getComponent(playerInstance!);
-   const playerHitbox = transformComponent.children[0] as Hitbox;
+   const playerHitbox = transformComponent.hitboxes[0];
    packet.addNumber(playerHitbox.box.position.x);
    packet.addNumber(playerHitbox.box.position.y);
    packet.addNumber(playerHitbox.box.relativeAngle);
@@ -116,7 +116,7 @@ export function createSyncRequestPacket(): ArrayBuffer {
 
 export function createAttackPacket(): ArrayBuffer {
    const transformComponent = TransformComponentArray.getComponent(playerInstance!);
-   const playerHitbox = transformComponent.children[0] as Hitbox;
+   const playerHitbox = transformComponent.hitboxes[0];
    
    const packet = new Packet(PacketType.attack, 3 * Float32Array.BYTES_PER_ELEMENT);
 

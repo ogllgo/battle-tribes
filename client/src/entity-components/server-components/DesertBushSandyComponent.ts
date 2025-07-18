@@ -40,7 +40,7 @@ function createParamsFromData(reader: PacketReader): DesertBushSandyComponentPar
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    const desertBushSandyComponentParams = entityParams.serverComponentParams[ServerComponentType.desertBushSandy]!;
    
@@ -89,7 +89,7 @@ function onHit(entity: Entity, hitbox: Hitbox): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    playSoundOnHitbox("desert-plant-hit.mp3", randFloat(0.375, 0.425), randFloat(0.85, 1.15), entity, hitbox, false);
 }

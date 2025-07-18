@@ -4,7 +4,7 @@ import { Settings } from "battletribes-shared/settings";
 import Chunk from "../Chunk";
 import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { entityChildIsEntity, TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { Box, boxIsCircular } from "battletribes-shared/boxes/boxes";
 import { getEntityLayer, getEntityType } from "../world";
@@ -180,28 +180,36 @@ const boxIsVisible = (seeingHitbox: Hitbox, box: Box, visionRange: number): bool
    }
 }
 
-const entityIsVisible = (seeingHitbox: Hitbox, checkEntityTransformComponent: TransformComponent, visionRange: number): boolean => {
-   // If the mob can see any of the game object's hitboxes, it is visible
-   for (const child of checkEntityTransformComponent.children) {
-      if (entityChildIsEntity(child)) {
-         const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
-         if (entityIsVisible(seeingHitbox, childTransformComponent, visionRange)) {
-            return true;
-         }
-      } else {
-         if (boxIsVisible(seeingHitbox, child.box, visionRange)) {
-            return true;
-         }
+const hitboxWithChildrenIsVisible = (seeingHitbox: Hitbox, hitbox: Hitbox, visionRange: number): boolean => {
+   // @Hack? There surely must be some cases in which we do want an entity to see the entities in its carry heirarchy
+   if (hitbox.rootEntity === seeingHitbox.rootEntity) {
+      return false;
+   }
+   
+   if (boxIsVisible(seeingHitbox, hitbox.box, visionRange)) {
+      return true;
+   }
+   
+   for (const childHitbox of hitbox.children) {
+      if (childHitbox.isPartOfParent && hitboxWithChildrenIsVisible(seeingHitbox, childHitbox, visionRange)) {
+         return true;
       }
    }
 
    return false;
 }
 
+const entityIsVisible = (seeingHitbox: Hitbox, checkEntityTransformComponent: TransformComponent, visionRange: number): boolean => {
+   for (const rootHitbox of checkEntityTransformComponent.rootHitboxes) {
+      if (hitboxWithChildrenIsVisible(seeingHitbox, rootHitbox, visionRange)) {
+         return true;
+      }
+   }
+   return false;
+}
+
 // @Speed: I'd say a good 70% of the entities here are ice spikes and decorations - unnecessary
-const calculateVisibleEntities = (entity: Entity, aiHelperComponent: AIHelperComponent): Array<Entity> => {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   
+const calculateVisibleEntities = (aiHelperComponent: AIHelperComponent): Array<Entity> => {
    const visibleEntities = new Array<Entity>();
 
    const potentialVisibleEntities = aiHelperComponent.potentialVisibleEntities;
@@ -210,11 +218,6 @@ const calculateVisibleEntities = (entity: Entity, aiHelperComponent: AIHelperCom
    for (let i = 0; i < potentialVisibleEntities.length; i++) {
       const currentEntity = potentialVisibleEntities[i];
       const currentEntityTransformComponent = TransformComponentArray.getComponent(currentEntity);
-
-      // @Hack? There surely must be some cases in which we do want an entity to see the entities in its carry heirarchy
-      if (transformComponent.rootEntity === currentEntityTransformComponent.rootEntity) {
-         continue;
-      }
 
       if (entityIsVisible(aiHelperComponent.seeingHitbox, currentEntityTransformComponent, visionRange)) {
          visibleEntities.push(currentEntity);
@@ -247,7 +250,7 @@ function onTick(entity: Entity): void {
    // If the entity hasn't changed visible chunk bounds, then the potential visible entities will be the same
    // and only the visible entities need to updated
    if (minChunkX === aiHelperComponent.visibleChunkBounds[0] && maxChunkX === aiHelperComponent.visibleChunkBounds[1] && minChunkY === aiHelperComponent.visibleChunkBounds[2] && maxChunkY === aiHelperComponent.visibleChunkBounds[3]) {
-      aiHelperComponent.visibleEntities = calculateVisibleEntities(entity, aiHelperComponent);
+      aiHelperComponent.visibleEntities = calculateVisibleEntities(aiHelperComponent);
       return;
    }
 
@@ -315,7 +318,7 @@ function onTick(entity: Entity): void {
       }
    }
 
-   aiHelperComponent.visibleEntities = calculateVisibleEntities(entity, aiHelperComponent);
+   aiHelperComponent.visibleEntities = calculateVisibleEntities(aiHelperComponent);
 }
 
 function getDataLength(): number {

@@ -10,7 +10,7 @@ import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { TukmokTrunkComponent } from "../../components/TukmokTrunkComponent";
-import { createHitbox, Hitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 import { tetherHitboxes } from "../../tethers";
 
 const NUM_SEGMENTS = 8;
@@ -46,7 +46,7 @@ export function createTukmokTrunkConfig(position: Point, angle: number, trunkBas
          flags = [HitboxFlag.TUKMOK_TRUNK_HEAD];
       }
 
-      const hitbox = createHitbox(transformComponent, parent, new CircularBox(hitboxPosition, offset, 0, 12), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, flags);
+      const hitbox = new Hitbox(transformComponent, parent, true, new CircularBox(hitboxPosition, offset, 0, 12), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, flags);
       addHitboxToTransformComponent(transformComponent, hitbox);
 
       if (lastHitbox !== null) {

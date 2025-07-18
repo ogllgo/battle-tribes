@@ -50,7 +50,7 @@ function createParamsFromData(): SlurbTorchComponentParams {
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -81,7 +81,7 @@ function onTick(entity: Entity): void {
    // @Copynpaste: all of these effects from InventoryUseComponent
    
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    // Slurb particles
    const slurbTorchComponent = SlurbTorchComponentArray.getComponent(entity);

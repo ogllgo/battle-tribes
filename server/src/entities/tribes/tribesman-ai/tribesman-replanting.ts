@@ -27,7 +27,7 @@ const getSeedItemSlot = (hotbarInventory: Inventory, plantedEntityType: PlantedE
 
 export function replantPlanterBoxes(tribesman: Entity, aiHelperComponent: AIHelperComponent, transformComponent: TransformComponent, hotbarInventory: Inventory, tribesmanAIComponent: TribesmanAIComponent): boolean {
    // @Hack
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
 
    // Replace plants in planter boxes
    // @Speed
@@ -56,7 +56,7 @@ export function replantPlanterBoxes(tribesman: Entity, aiHelperComponent: AIHelp
       }
 
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
-      const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+      const entityHitbox = entityTransformComponent.hitboxes[0];
 
       const dist = tribesmanHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
       if (dist < minDist) {
@@ -94,7 +94,7 @@ export function replantPlanterBoxes(tribesman: Entity, aiHelperComponent: AIHelp
          consumeItemFromSlot(tribesman, hotbarInventory, hotbarUseInfo.selectedItemSlot, 1);
       } else {
          const planterBoxTransformComponent = TransformComponentArray.getComponent(closestReplantablePlanterBox);
-         const planterBoxHitbox = planterBoxTransformComponent.children[0] as Hitbox;
+         const planterBoxHitbox = planterBoxTransformComponent.hitboxes[0];
 
          const pointDistance = tribesmanHitbox.box.position.calculateDistanceBetween(planterBoxHitbox.box.position);
          const targetDirectRadius = pointDistance - distance;

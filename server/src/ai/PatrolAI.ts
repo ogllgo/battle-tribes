@@ -21,7 +21,7 @@ const getTargetTileHeuristic = (transformComponent: TransformComponent, tileInde
    const IDEAL_DIST = 1000;
 
    // @HACK
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    const tileX = getTileX(tileIndex);
    const tileY = getTileY(tileIndex);
@@ -54,7 +54,7 @@ const generateRandomPatrolTargetTile = (transformComponent: TransformComponent, 
 
 const generatePatrolTarget = (tribesman: Entity, patrolArea: ReadonlyArray<TileIndex>): Point | null => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
    
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
 

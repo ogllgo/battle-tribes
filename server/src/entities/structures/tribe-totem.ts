@@ -11,7 +11,7 @@ import { addHitboxToTransformComponent, TransformComponent } from "../../compone
 import { TribeComponent } from "../../components/TribeComponent";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 import { Point } from "../../../../shared/src/utils";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
@@ -21,7 +21,7 @@ export function createTribeTotemConfig(position: Point, rotation: number, tribe:
    const transformComponent = new TransformComponent();
 
    const box = new CircularBox(position, new Point(0, 0), rotation, 60);
-   const hitbox = createHitbox(transformComponent, null, box, 2.2, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, box, 2.2, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(50);

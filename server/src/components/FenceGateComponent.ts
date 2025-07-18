@@ -3,7 +3,7 @@ import { DoorToggleType, Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { angle, lerp } from "battletribes-shared/utils";
 import { ComponentArray } from "./ComponentArray";
-import { cleanTransform, TransformComponentArray } from "./TransformComponent";
+import { cleanEntityTransform, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
@@ -44,14 +44,14 @@ const updateDoorOpenProgress = (fenceGate: Entity, fenceGateComponent: FenceGate
 
    const transformComponent = TransformComponentArray.getComponent(fenceGate);
    
-   const hitbox = (transformComponent.children[0] as Hitbox).box as RectangularBox;
+   const hitbox = (transformComponent.hitboxes[0]).box as RectangularBox;
    hitbox.offset.x = xOffset;
    hitbox.offset.y = yOffset;
    hitbox.relativeAngle = angle - Math.PI/2;
 
    // @Hack: dirtying doesn't work on transform components for now
    // transformComponent.isDirty = true;
-   cleanTransform(fenceGate);
+   cleanEntityTransform(fenceGate);
    registerDirtyEntity(fenceGate);
 }
 
@@ -90,7 +90,7 @@ export function toggleFenceGateDoor(fenceGate: Entity): void {
 
    const transformComponent = TransformComponentArray.getComponent(fenceGate);
    
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    if (fenceGateComponent.openProgress === 0) {
       // Open the door
       fenceGateComponent.toggleType = DoorToggleType.open;

@@ -4,7 +4,6 @@ import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { lerp } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { Hitbox } from "../../hitboxes";
 import { Light } from "../../lights";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
@@ -13,7 +12,7 @@ import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityParams, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 
 export interface GuardianComponentParams {
    readonly rubyGemActivation: number;
@@ -107,7 +106,7 @@ function createParamsFromData(reader: PacketReader): GuardianComponentParams {
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const rubyRenderParts = new Array<VisualRenderPart>();
    const amethystRenderParts = new Array<VisualRenderPart>();
@@ -171,11 +170,8 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    
    // Attach limb render parts
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   for (let i = 0; i < transformComponentParams.children.length; i++) {
-      const hitbox = transformComponentParams.children[i];
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
+   for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
+      const hitbox = transformComponentParams.hitboxes[i];
       
       if (hitbox.flags.includes(HitboxFlag.GUARDIAN_LIMB_HITBOX)) {
          const limbRenderPart = new TexturedRenderPart(
@@ -255,7 +251,7 @@ function getMaxRenderParts(entityParams: EntityParams): number {
    let maxRenderParts = 5;
    
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   maxRenderParts += 2 * transformComponentParams.children.length;
+   maxRenderParts += 2 * transformComponentParams.hitboxes.length;
 
    return maxRenderParts;
 }
@@ -373,7 +369,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    }
    
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    switch (attackType) {
       case GuardianAttackType.crystalSlam: {
          // If just starting the slam, play charge sound

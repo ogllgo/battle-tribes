@@ -52,7 +52,7 @@ function createParamsFromData(reader: PacketReader): TribeWarriorComponentParams
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const tribeWarriorComponentParams = entityParams.serverComponentParams[ServerComponentType.tribeWarrior]!;
    for (let i = 0; i < tribeWarriorComponentParams.scars.length; i++) {

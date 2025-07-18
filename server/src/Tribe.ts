@@ -405,7 +405,7 @@ export default class Tribe {
       hutComponent.hasTribesman = true;
       
       const transformComponent = TransformComponentArray.getComponent(hut);
-      const hutHitbox = transformComponent.children[0] as Hitbox;
+      const hutHitbox = transformComponent.hitboxes[0];
       
       // Offset the spawn position so the tribesman comes out of the correct side of the hut
       const position = new Point(hutHitbox.box.position.x + 10 * Math.sin(hutHitbox.box.angle), hutHitbox.box.position.y + 10 * Math.cos(hutHitbox.box.angle));

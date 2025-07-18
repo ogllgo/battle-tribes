@@ -5,7 +5,7 @@ import RectangularBox from "../../../shared/src/boxes/RectangularBox";
 import { PacketReader } from "../../../shared/src/packets";
 import { Point } from "../../../shared/src/utils";
 import Board from "../Board";
-import { getHitboxByLocalID, TransformNode } from "../entity-components/server-components/TransformComponent";
+import { getHitboxByLocalID } from "../entity-components/server-components/TransformComponent";
 import { createHitbox, Hitbox, HitboxTether } from "../hitboxes";
 
 const readCircularBoxFromData = (reader: PacketReader): CircularBox => {
@@ -90,7 +90,7 @@ export function padBoxData(reader: PacketReader): void {
    }
 }
 
-export function readHitboxFromData(reader: PacketReader, localID: number, children: ReadonlyArray<TransformNode>): Hitbox {
+export function readHitboxFromData(reader: PacketReader, localID: number, hitboxes: ReadonlyArray<Hitbox>): Hitbox {
    const box = readBoxFromData(reader);
 
    const previousPosition = new Point(reader.readNumber(), reader.readNumber());
@@ -126,11 +126,17 @@ export function readHitboxFromData(reader: PacketReader, localID: number, childr
       flags.push(reader.readNumber());
    }
 
+   const entity = reader.readNumber();
+   const rootEntity = reader.readNumber();
+
    const parentHitboxLocalID = reader.readNumber();
    // @INCOMPLETE @BUG: can't get from other transform components!
-   const parentHitbox = getHitboxByLocalID(children, parentHitboxLocalID);
+   const parentHitbox = getHitboxByLocalID(hitboxes, parentHitboxLocalID);
 
-   const hitbox = createHitbox(localID, parentHitbox, box, previousPosition, acceleration, tethers, previousRelativeAngle, angularAcceleration, mass, collisionType, collisionBit, collisionMask, flags);
+   const isPartOfParent = reader.readBoolean();
+   reader.padOffset(3);
+
+   const hitbox = createHitbox(localID, entity, rootEntity, parentHitbox, isPartOfParent, box, previousPosition, acceleration, tethers, previousRelativeAngle, angularAcceleration, mass, collisionType, collisionBit, collisionMask, flags);
    return hitbox;
 }
 export function padHitboxDataExceptLocalID(reader: PacketReader): void {

@@ -32,7 +32,7 @@ function onTick(cocoon: Entity): void {
       destroyEntity(cocoon);
 
       const transformComponent = TransformComponentArray.getComponent(cocoon);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       
       const krumblidConfig = createKrumblidConfig(hitbox.box.position.copy(), hitbox.box.angle);
       createEntity(krumblidConfig, getEntityLayer(cocoon), 0);
@@ -40,7 +40,7 @@ function onTick(cocoon: Entity): void {
       dustfleaMorphCocoonComponent.stage = stage;
 
       const transformComponent = TransformComponentArray.getComponent(cocoon);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       (hitbox.box as CircularBox).radius += 4;
       transformComponent.isDirty = true;
    }

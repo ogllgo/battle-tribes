@@ -4,7 +4,7 @@ import { randFloat, getTileIndexIncludingEdges, distance, assert, randAngle, Poi
 import Layer from "./Layer";
 import { addEntityToCensus, getEntityCount } from "./census";
 import OPTIONS from "./options";
-import { entityChildIsEntity, entityChildIsHitbox, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
+import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { createEntity, createEntityImmediate, getEntityType, isNight } from "./world";
 import { EntityConfig } from "./components";
@@ -18,7 +18,6 @@ import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collis
 import { Hitbox } from "./hitboxes";
 import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
 import { getHitboxesCollidingEntities } from "./collision-detection";
-import { createInguSerpentConfig } from "./entities/tundra/ingu-serpent";
 import { createTukmokConfig } from "./entities/tundra/tukmok";
 
 const spawnConditionsAreMet = (spawnInfo: EntitySpawnEvent): boolean => {
@@ -46,48 +45,54 @@ const tileIsSpawnable = (tileIndex: number, spawnInfo: EntitySpawnEvent): boolea
    return spawnInfo.tileTypes.includes(spawnInfo.layer.getTileType(tileIndex)) && spawnInfo.layer.getTileBiome(tileIndex) === spawnInfo.biome && !spawnInfo.layer.unspawnableTiles.has(tileIndex);
 }
 
-const entityWouldSpawnInWall = (layer: Layer, transformComponent: TransformComponent): boolean => {
+const hitboxIncludingChildrenWouldSpawnInWall = (layer: Layer, hitbox: Hitbox): boolean => {
+   if (hitbox.flags.includes(HitboxFlag.IGNORES_WALL_COLLISIONS)) {
+      return false;
+   }
+
    // @Copynpaste from transform component resolveWallCollisions
-   for (let i = 0; i < transformComponent.children.length; i++) {
-      const child = transformComponent.children[i];
-      if (entityChildIsEntity(child)) {
-         const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
-         if (entityWouldSpawnInWall(layer, childTransformComponent)) {
+
+   const box = hitbox.box;
+
+   const boundsMinX = box.calculateBoundsMinX();
+   const boundsMaxX = box.calculateBoundsMaxX();
+   const boundsMinY = box.calculateBoundsMinY();
+   const boundsMaxY = box.calculateBoundsMaxY();
+
+   const minSubtileX = Math.max(Math.floor(boundsMinX / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
+   const maxSubtileX = Math.min(Math.floor(boundsMaxX / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+   const minSubtileY = Math.max(Math.floor(boundsMinY / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
+   const maxSubtileY = Math.min(Math.floor(boundsMaxY / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+
+   for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
+      for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
+         const subtileIndex = getSubtileIndex(subtileX, subtileY);
+         if (layer.subtileIsWall(subtileIndex) && boxIsCollidingWithSubtile(box, subtileX, subtileY)) {
             return true;
          }
-      } else {
-         const hitbox = child;
-         if (hitbox.flags.includes(HitboxFlag.IGNORES_WALL_COLLISIONS)) {
-            continue;
-         }
-   
-         const box = hitbox.box;
-   
-         const boundsMinX = box.calculateBoundsMinX();
-         const boundsMaxX = box.calculateBoundsMaxX();
-         const boundsMinY = box.calculateBoundsMinY();
-         const boundsMaxY = box.calculateBoundsMaxY();
-   
-         const minSubtileX = Math.max(Math.floor(boundsMinX / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
-         const maxSubtileX = Math.min(Math.floor(boundsMaxX / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
-         const minSubtileY = Math.max(Math.floor(boundsMinY / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
-         const maxSubtileY = Math.min(Math.floor(boundsMaxY / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
-   
-         for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
-            for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
-               const subtileIndex = getSubtileIndex(subtileX, subtileY);
-               if (layer.subtileIsWall(subtileIndex) && boxIsCollidingWithSubtile(box, subtileX, subtileY)) {
-                  return true;
-               }
-            }
-         }
+      }
+   }
+
+   for (const childHitbox of hitbox.children) {
+      if (childHitbox.isPartOfParent && hitboxIncludingChildrenWouldSpawnInWall(layer, childHitbox)) {
+         return true;
       }
    }
 
    return false;
 }
 
-const hitboxTileTypesAreValid = (hitbox: Hitbox, spawnInfo: EntitySpawnEvent): boolean => {
+const entityWouldSpawnInWall = (layer: Layer, transformComponent: TransformComponent): boolean => {
+   for (const rootHitbox of transformComponent.rootHitboxes) {
+      if (hitboxIncludingChildrenWouldSpawnInWall(layer, rootHitbox)) {
+         return true;
+      }
+   }
+
+   return false;
+}
+
+const hitboxIncludingChildrenTileTypesAreValid = (hitbox: Hitbox, spawnInfo: EntitySpawnEvent): boolean => {
    const minX = hitbox.box.calculateBoundsMinX();
    const maxX = hitbox.box.calculateBoundsMaxX();
    const minY = hitbox.box.calculateBoundsMinY();
@@ -106,44 +111,22 @@ const hitboxTileTypesAreValid = (hitbox: Hitbox, spawnInfo: EntitySpawnEvent): b
       }
    }
 
-   return true;
-}
-
-// @Hack
-const nodeIsEntityConfig = (node: EntityConfig | Hitbox): node is EntityConfig => {
-   return typeof (node as EntityConfig).components !== "undefined";
-}
-
-const entityTileTypesAreValid = (node: EntityConfig | Hitbox, spawnInfo: EntitySpawnEvent): boolean => {
-   if (nodeIsEntityConfig(node)) {
-      const entityConfig = node;
-
-      const transformComponent = entityConfig.components[ServerComponentType.transform]!;
-      for (const child of transformComponent.children) {
-         if (entityChildIsEntity(child)) {
-            // @Hack! would this actually be the preferrable way of doing it as opposed to having a whole ass child configs thing?
-            throw new Error();
-         } else {
-            if (!entityTileTypesAreValid(child, spawnInfo)) {
-               return false;
-            }
-         }
-      }
-      
-      if (typeof entityConfig.childConfigs !== "undefined") {
-         for (const childConfig of entityConfig.childConfigs) {
-            if (!entityTileTypesAreValid(childConfig.entityConfig, spawnInfo)) {
-               return false;
-            }
-         }
-      }
-   } else {
-      const hitbox = node;
-      if (!hitboxTileTypesAreValid(hitbox, spawnInfo)) {
+   for (const childHitbox of hitbox.children) {
+      if (childHitbox.isPartOfParent && !hitboxIncludingChildrenTileTypesAreValid(childHitbox, spawnInfo)) {
          return false;
       }
    }
 
+   return true;
+}
+
+const entityTileTypesAreValid = (entityConfig: EntityConfig, spawnInfo: EntitySpawnEvent): boolean => {
+   const transformComponent = entityConfig.components[ServerComponentType.transform]!;
+   for (const rootHitbox of transformComponent.rootHitboxes) {
+      if (!hitboxIncludingChildrenTileTypesAreValid(rootHitbox, spawnInfo)) {
+         return false;
+      }
+   }
    return true;
 }
 
@@ -166,11 +149,9 @@ const attemptToSpawnEntity = (spawnInfo: EntitySpawnEvent, pos: Point, firstEnti
       return null;
    }
 
-   for (const hitbox of transformComponent.children) {
-      if (entityChildIsHitbox(hitbox)) {
-         if (hitbox.box.calculateBoundsMinX() < 0 || hitbox.box.calculateBoundsMaxX() >= Settings.BOARD_UNITS || hitbox.box.calculateBoundsMinY() < 0 || hitbox.box.calculateBoundsMaxY() >= Settings.BOARD_UNITS) {
-            return null;
-         }
+   for (const hitbox of transformComponent.hitboxes) {
+      if (hitbox.box.calculateBoundsMinX() < 0 || hitbox.box.calculateBoundsMaxX() >= Settings.BOARD_UNITS || hitbox.box.calculateBoundsMinY() < 0 || hitbox.box.calculateBoundsMaxY() >= Settings.BOARD_UNITS) {
+         return null;
       }
    }
 
@@ -182,9 +163,7 @@ const attemptToSpawnEntity = (spawnInfo: EntitySpawnEvent, pos: Point, firstEnti
    }
 
    if (spawnInfo.doStrictCollisionCheck) {
-      // @Speed @Garbage
-      const hitboxes = transformComponent.children.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>;
-      const collidingEntities = getHitboxesCollidingEntities(spawnInfo.layer, hitboxes);
+      const collidingEntities = getHitboxesCollidingEntities(spawnInfo.layer, transformComponent.hitboxes);
       if (collidingEntities.length > 0) {
          return null;
       }
@@ -259,7 +238,7 @@ export function spawnPositionIsClear(spawnInfo: EntitySpawnEvent, positionX: num
             
             const transformComponent = TransformComponentArray.getComponent(entity);
             // @Hack
-            const entityHitbox = transformComponent.children[0] as Hitbox;
+            const entityHitbox = transformComponent.hitboxes[0];
             
             const distanceSquared = Math.pow(positionX - entityHitbox.box.position.x, 2) + Math.pow(positionY - entityHitbox.box.position.y, 2);
             if (distanceSquared <= spawnInfo.minSpawnDistance * spawnInfo.minSpawnDistance) {

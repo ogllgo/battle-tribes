@@ -150,7 +150,7 @@ const renderConnectors = (pathData: PathData): void => {
    }
 
    const transformComponent = TransformComponentArray.getComponent(debugEntity);
-   const entityHitbox = transformComponent.children[0] as Hitbox;
+   const entityHitbox = transformComponent.hitboxes[0];
    
    const vertices = new Array<number>();
    let lastNodeX = entityHitbox.box.position.x;

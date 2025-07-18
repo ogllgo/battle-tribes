@@ -1,8 +1,8 @@
 import { ServerComponentType } from "../../../shared/src/components";
-import { Entity, EntityType, EntityTypeString } from "../../../shared/src/entities";
+import { Entity, EntityType } from "../../../shared/src/entities";
 import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 import { Point } from "../../../shared/src/utils";
-import { getTotalMass, Hitbox } from "../hitboxes";
+import { getHitboxTotalMassIncludingChildren, Hitbox } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
 import { tetherHitboxes } from "../tethers";
 import { getEntityType } from "../world";
@@ -38,7 +38,9 @@ const entityIsSnaggable = (entity: Entity): boolean => {
       return false;
    }
 
-   const mass = getTotalMass(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   const mass = getHitboxTotalMassIncludingChildren(hitbox);
    if (mass > 2) {
       return false;
    }
@@ -64,41 +66,45 @@ function onHitboxCollision(tongueTip: Entity, collidingEntity: Entity, affectedH
       }
    }
 
-   {
-   const tongueTipTransformComponent = TransformComponentArray.getComponent(tongueTip);
-   const tongue = tongueTipTransformComponent.parentEntity;
-   const okrenTongueComponent = OkrenTongueComponentArray.getComponent(tongue);
-      // @Hack @Temporary
-      if (okrenTongueComponent.isRetracting) {
-         return;
-      }
-   }
+   // @INCOMPLETE
+   
+   // {
+   // const tongueTipTransformComponent = TransformComponentArray.getComponent(tongueTip);
+   // const tongue = tongueTipTransformComponent.parentEntity;
+   // const okrenTongueComponent = OkrenTongueComponentArray.getComponent(tongue);
+   //    // @Hack @Temporary
+   //    if (okrenTongueComponent.isRetracting) {
+   //       return;
+   //    }
+   // }
 
-   const tongueTipTransformComponent = TransformComponentArray.getComponent(tongueTip);
+   // const tongueTipTransformComponent = TransformComponentArray.getComponent(tongueTip);
 
-   const collidingHitboxTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-   tetherHitboxes(collidingHitbox, affectedHitbox, collidingHitboxTransformComponent, tongueTipTransformComponent, 0, 100, 2);
+   // const collidingHitboxTransformComponent = TransformComponentArray.getComponent(collidingEntity);
+   // tetherHitboxes(collidingHitbox, affectedHitbox, collidingHitboxTransformComponent, tongueTipTransformComponent, 0, 100, 2);
 
-   const tongue = tongueTipTransformComponent.parentEntity;
-   const okrenTongueComponent = OkrenTongueComponentArray.getComponent(tongue);
-   startRetractingTongue(tongue, okrenTongueComponent);
-   okrenTongueComponent.hasCaughtSomething = true;
-   // @Hack
-   okrenTongueComponent.caughtEntity = collidingEntity;
+   // const tongue = tongueTipTransformComponent.parentEntity;
+   // const okrenTongueComponent = OkrenTongueComponentArray.getComponent(tongue);
+   // startRetractingTongue(tongue, okrenTongueComponent);
+   // okrenTongueComponent.hasCaughtSomething = true;
+   // // @Hack
+   // okrenTongueComponent.caughtEntity = collidingEntity;
 
-   const tickEvent: EntityTickEvent = {
-      type: EntityTickEventType.tongueGrab,
-      entityID: tongueTip,
-      data: 0
-   };
-   registerEntityTickEvent(tongueTip, tickEvent);
+   // const tickEvent: EntityTickEvent = {
+   //    type: EntityTickEventType.tongueGrab,
+   //    entityID: tongueTip,
+   //    data: 0
+   // };
+   // registerEntityTickEvent(tongueTip, tickEvent);
 }
 
 // @Copynpaste
 function onTakeDamage(tongueTip: Entity): void {
+   // @INCOMPLETE
+   
    // @Copynpaste
-   const tongueTipTransformComponent = TransformComponentArray.getComponent(tongueTip);
-   const tongue = tongueTipTransformComponent.parentEntity;
-   const okrenTongueComponent = OkrenTongueComponentArray.getComponent(tongue);
-   startRetractingTongue(tongue, okrenTongueComponent);
+   // const tongueTipTransformComponent = TransformComponentArray.getComponent(tongueTip);
+   // const tongue = tongueTipTransformComponent.parentEntity;
+   // const okrenTongueComponent = OkrenTongueComponentArray.getComponent(tongue);
+   // startRetractingTongue(tongue, okrenTongueComponent);
 }

@@ -32,7 +32,7 @@ function createParamsFromData(): SpearProjectileComponentParams {
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -56,7 +56,7 @@ function getMaxRenderParts(): number {
 
 function onSpawn(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox("spear-throw.mp3", 0.4, 1, entity, hitbox, false);
 }
 
@@ -66,6 +66,6 @@ function updateFromData(): void {}
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox("spear-hit.mp3", 0.4, 1, entity, hitbox, false);
 }

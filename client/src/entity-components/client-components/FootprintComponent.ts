@@ -70,7 +70,7 @@ function getMaxRenderParts(): number {
 
 const createFootstepSound = (entity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    const layer = getEntityLayer(entity);
    
    const tile = getHitboxTile(layer, hitbox);
@@ -106,7 +106,7 @@ function onTick(entity: Entity): void {
    const footprintComponent = FootprintComponentArray.getComponent(entity);
 
    if (transformComponent.rootEntity === entity) {
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       const velocity = getHitboxVelocity(hitbox);
       
       // Footsteps

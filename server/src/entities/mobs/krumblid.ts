@@ -20,7 +20,7 @@ import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesCo
 import { Settings } from "../../../../shared/src/settings";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
-import { createHitbox, getHitboxVelocity, Hitbox } from "../../hitboxes";
+import {getHitboxVelocity, Hitbox } from "../../hitboxes";
 import { EnergyStomachComponent } from "../../components/EnergyStomachComponent";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { accelerateEntityToPosition, turnToPosition } from "../../ai-shared";
@@ -95,10 +95,10 @@ const extraEscapeCondition = (krumblid: Entity, escapeTarget: Entity): boolean =
    }
 
    const krumblidTransformComponent = TransformComponentArray.getComponent(krumblid);
-   const krumblidHitbox = krumblidTransformComponent.children[0] as Hitbox;
+   const krumblidHitbox = krumblidTransformComponent.hitboxes[0];
 
    const escapeTargetTransformComponent = TransformComponentArray.getComponent(escapeTarget);
-   const escapeTargetHitbox = escapeTargetTransformComponent.children[0] as Hitbox;
+   const escapeTargetHitbox = escapeTargetTransformComponent.hitboxes[0];
 
    const angleFromEscapeTarget = escapeTargetHitbox.box.position.calculateAngleBetween(krumblidHitbox.box.position);
    const positionFromEscapeTarget = new Point(krumblidHitbox.box.position.x - escapeTargetHitbox.box.position.x, krumblidHitbox.box.position.y - escapeTargetHitbox.box.position.y);
@@ -111,7 +111,7 @@ const extraEscapeCondition = (krumblid: Entity, escapeTarget: Entity): boolean =
 export function createKrumblidConfig(position: Point, angle: number): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const bodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 24), 0.75, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.cactus, [HitboxFlag.KRUMBLID_BODY]);
+   const bodyHitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), angle, 24), 0.75, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.cactus, [HitboxFlag.KRUMBLID_BODY]);
    addHitboxToTransformComponent(transformComponent, bodyHitbox);
    
    // Mandibles
@@ -121,7 +121,7 @@ export function createKrumblidConfig(position: Point, angle: number): EntityConf
       const offset = new Point(12, 28);
       const position = bodyHitbox.box.position.copy();
       position.add(offset);
-      const mandibleHitbox = createHitbox(transformComponent, bodyHitbox, new RectangularBox(position, offset, Math.PI * 0.1, 12, 16), 0.1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.cactus, [HitboxFlag.KRUMBLID_MANDIBLE]);
+      const mandibleHitbox = new Hitbox(transformComponent, bodyHitbox, true, new RectangularBox(position, offset, Math.PI * 0.1, 12, 16), 0.1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.cactus, [HitboxFlag.KRUMBLID_MANDIBLE]);
       mandibleHitbox.box.flipX = sideIsFlipped;
       // @Hack
       mandibleHitbox.box.totalFlipXMultiplier = sideIsFlipped ? -1 : 1;

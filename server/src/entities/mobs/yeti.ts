@@ -18,8 +18,8 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 import { ItemType } from "../../../../shared/src/items/items";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { createHitbox } from "../../hitboxes";
 import { accelerateEntityToPosition, turnToPosition } from "../../ai-shared";
+import { Hitbox } from "../../hitboxes";
 
 export const YETI_SNOW_THROW_COOLDOWN = 7;
 
@@ -62,13 +62,13 @@ const turnFunc = (slimewisp: Entity, pos: Point, turnSpeed: number, turnDamping:
 export function createYetiConfig(position: Point, rotation: number, territory: ReadonlyArray<TileIndex>): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const bodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 64), 3, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.YETI_BODY]);
+   const bodyHitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 64), 3, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.YETI_BODY]);
    addHitboxToTransformComponent(transformComponent, bodyHitbox);
 
    const headOffset = new Point(0, 36);
    const headPosition = position.copy();
    headPosition.add(headOffset);
-   const headHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(headPosition, headOffset, 0, 28), 3, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.YETI_HEAD]);
+   const headHitbox = new Hitbox(transformComponent, bodyHitbox, true, new CircularBox(headPosition, headOffset, 0, 28), 3, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.YETI_HEAD]);
    addHitboxToTransformComponent(transformComponent, headHitbox);
    
    const physicsComponent = new PhysicsComponent();

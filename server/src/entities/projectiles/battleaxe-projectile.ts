@@ -14,12 +14,12 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { validateEntity } from "../../world";
 import Tribe from "../../Tribe";
 import { BattleaxeProjectileComponent } from "../../components/BattleaxeProjectileComponent";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 export function createBattleaxeProjectileConfig(position: Point, rotation: number, tribe: Tribe, tribeMember: Entity, itemID: number | null): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 32), 0.6, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 32), 0.6, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);   
    
    const physicsComponent = new PhysicsComponent();

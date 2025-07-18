@@ -25,7 +25,7 @@ import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { applyAcceleration, applyAccelerationFromGround, createHitbox, Hitbox, turnHitboxToAngle } from "../../hitboxes";
+import { applyAcceleration, applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../hitboxes";
 import { tetherHitboxes } from "../../tethers";
 import { findAngleAlignment } from "../../ai-shared";
 import { createNormalisedPivotPoint } from "../../../../shared/src/boxes/BaseBox";
@@ -105,7 +105,7 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 
 const moveFunc = (cow: Entity, pos: Point, accelerationMagnitude: number): void => {
    const transformComponent = TransformComponentArray.getComponent(cow);
-   const cowBodyHitbox = transformComponent.rootChildren[0] as Hitbox;
+   const cowBodyHitbox = transformComponent.rootHitboxes[0];
 
    const bodyToTargetDirection = cowBodyHitbox.box.position.calculateAngleBetween(pos);
 
@@ -115,7 +115,7 @@ const moveFunc = (cow: Entity, pos: Point, accelerationMagnitude: number): void 
    applyAccelerationFromGround(cow, cowBodyHitbox, polarVec2(accelerationMagnitude * accelerationMultiplier, bodyToTargetDirection));
    
    // Move head to the target
-   const headHitbox = transformComponent.children[1] as Hitbox;
+   const headHitbox = transformComponent.hitboxes[1] as Hitbox;
    const headToTargetDirection = headHitbox.box.position.calculateAngleBetween(pos);
    // @Hack?
    const headForce = accelerationMagnitude * 0.8;
@@ -124,13 +124,13 @@ const moveFunc = (cow: Entity, pos: Point, accelerationMagnitude: number): void 
 
 const turnFunc = (cow: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
    const transformComponent = TransformComponentArray.getComponent(cow);
-   const cowBodyHitbox = transformComponent.rootChildren[0] as Hitbox;
+   const cowBodyHitbox = transformComponent.rootHitboxes[0];
 
    const bodyToTargetDirection = cowBodyHitbox.box.position.calculateAngleBetween(pos);
    turnHitboxToAngle(cowBodyHitbox, bodyToTargetDirection, turnSpeed, turnDamping, false);
    
    // Turn the head to face the target
-   const headHitbox = transformComponent.children[1] as Hitbox;
+   const headHitbox = transformComponent.hitboxes[1] as Hitbox;
    const headToTargetDirection = headHitbox.box.position.calculateAngleBetween(pos);
    turnHitboxToAngle(headHitbox, headToTargetDirection, 1.5 * Math.PI, 0.5, false);
 }
@@ -139,14 +139,14 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
    const transformComponent = new TransformComponent();
 
    // Body hitbox
-   const bodyHitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, -20), angle, 50, 80), 1.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_BODY]);
+   const bodyHitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, -20), angle, 50, 80), 1.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_BODY]);
    addHitboxToTransformComponent(transformComponent, bodyHitbox);
  
    const idealHeadDist = 50;
    
    // Head hitbox
    const headPosition = position.offset(idealHeadDist, angle);
-   const headHitbox = createHitbox(transformComponent, null, new CircularBox(headPosition, new Point(0, idealHeadDist), 0, 30), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
+   const headHitbox = new Hitbox(transformComponent, null, true, new CircularBox(headPosition, new Point(0, idealHeadDist), 0, 30), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
    headHitbox.box.pivot = createNormalisedPivotPoint(0, -0.5);
    addHitboxToTransformComponent(transformComponent, headHitbox);
 

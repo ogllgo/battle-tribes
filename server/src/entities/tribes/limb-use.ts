@@ -86,7 +86,7 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
    // limb.heldItemDamageBox.isBlockedByWall = false;
 
    const transformComponent = TransformComponentArray.getComponent(attackingEntity);
-   const attackingEntityHitbox = transformComponent.children[0] as Hitbox;
+   const attackingEntityHitbox = transformComponent.hitboxes[0];
 
    // Add extra range for moving attacks
    const velocity = getHitboxVelocity(attackingEntityHitbox);

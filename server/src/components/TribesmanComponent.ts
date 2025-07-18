@@ -251,7 +251,7 @@ const tickInventoryUseInfo = (tribeMember: Entity, inventoryUseInfo: LimbInfo): 
 
 function onTick(tribeMember: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(tribeMember);
-   const tribeMemberHitbox = transformComponent.children[0] as Hitbox;
+   const tribeMemberHitbox = transformComponent.hitboxes[0];
       
    const chance = TITLE_REWARD_CHANCES.SPRINTER_REWARD_CHANCE_PER_SPEED * getHitboxVelocity(tribeMemberHitbox).length();
    if (Math.random() < chance / Settings.TPS) {

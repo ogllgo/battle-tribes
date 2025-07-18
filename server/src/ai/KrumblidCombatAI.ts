@@ -25,10 +25,10 @@ export class KrumblidCombatAI {
 
 const dustfleaIsThreat = (krumblid: Entity, dustflea: Entity): boolean => {
    const krumblidTransformComponent = TransformComponentArray.getComponent(krumblid);
-   const krumblidHitbox = krumblidTransformComponent.children[0] as Hitbox;
+   const krumblidHitbox = krumblidTransformComponent.hitboxes[0];
 
    const dustfleaTransformComponent = TransformComponentArray.getComponent(dustflea);
-   const dustfleaHitbox = dustfleaTransformComponent.children[0] as Hitbox;
+   const dustfleaHitbox = dustfleaTransformComponent.hitboxes[0];
 
    // Make sure not too far away
    if (getDistanceFromPointToHitbox(krumblidHitbox.box.position, dustfleaHitbox) > 120) {
@@ -47,7 +47,7 @@ const wantsToAttackEntity = (entity: Entity): boolean => {
 // @Cleanup: shouldn't be extorted to everywhere!!
 export function getKrumblidDustfleaThreatTarget(krumblid: Entity, aiHelperComponent: AIHelperComponent): Entity | null {
    const transformComponent = TransformComponentArray.getComponent(krumblid);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    let minDist = Number.MAX_SAFE_INTEGER;
    let target: Entity | null = null;
@@ -57,7 +57,7 @@ export function getKrumblidDustfleaThreatTarget(krumblid: Entity, aiHelperCompon
       }
       
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
-      const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+      const entityHitbox = entityTransformComponent.hitboxes[0];
       assertBoxIsCircular(entityHitbox.box);
 
       const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
@@ -73,7 +73,7 @@ export function getKrumblidDustfleaThreatTarget(krumblid: Entity, aiHelperCompon
 // @Cleanup: shouldn't be extorted to everywhere!!
 export function getKrumblidAttackTarget(krumblid: Entity, aiHelperComponent: AIHelperComponent): Entity | null {
    const transformComponent = TransformComponentArray.getComponent(krumblid);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    let minDist = Number.MAX_SAFE_INTEGER;
    let target: Entity | null = null;
@@ -83,7 +83,7 @@ export function getKrumblidAttackTarget(krumblid: Entity, aiHelperComponent: AIH
       }
       
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
-      const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+      const entityHitbox = entityTransformComponent.hitboxes[0];
       assertBoxIsCircular(entityHitbox.box);
 
       const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
@@ -100,10 +100,10 @@ export function runKrumblidCombatAI(krumblid: Entity, aiHelperComponent: AIHelpe
    aiHelperComponent.currentAIType = AIType.krumblidCombat;
    
    const transformComponent = TransformComponentArray.getComponent(krumblid);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const targetTransformComponent = TransformComponentArray.getComponent(target);
-   const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+   const targetHitbox = targetTransformComponent.hitboxes[0];
    
    // @Incomplete: move using pathfinding!!!
    aiHelperComponent.moveFunc(krumblid, targetHitbox.box.position, krumblidCombatAI.acceleration);
@@ -113,7 +113,7 @@ export function runKrumblidCombatAI(krumblid: Entity, aiHelperComponent: AIHelpe
       // @Copynpaste
       for (let i = 0; i < 2; i++) {
          // @Hack
-         const mandibleHitbox = transformComponent.children[i + 1] as Hitbox;
+         const mandibleHitbox = transformComponent.hitboxes[i + 1];
          const idealAngle = ((getEntityAgeTicks(krumblid) * 3.2 + (i === 0 ? Settings.TPS * 0.35 : 0)) % Settings.TPS) / Settings.TPS < 0.5 ? -Math.PI * 0.3 : Math.PI * 0.1;
          turnHitboxToAngle(mandibleHitbox, idealAngle, 3 * Math.PI, 0.5, true);
       }

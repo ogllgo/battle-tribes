@@ -22,7 +22,7 @@ import { AIAssignmentComponent } from "../../components/AIAssignmentComponent";
 import { PatrolAI } from "../../ai/PatrolAI";
 import { generateTribesmanName } from "../../tribesman-names";
 import { TribesmanComponent } from "../../components/TribesmanComponent";
-import { createHitbox, Hitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 const moveFunc = () => {
    throw new Error();
@@ -69,7 +69,7 @@ const getHitboxRadius = (tribeType: TribeType): number => {
 export function createTribeWarriorConfig(position: Point, rotation: number, tribe: Tribe): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, getHitboxRadius(tribe.tribeType)), 1.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, getHitboxRadius(tribe.tribeType)), 1.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
@@ -88,7 +88,7 @@ export function createTribeWarriorConfig(position: Point, rotation: number, trib
    
    const tribesmanAIComponent = new TribesmanAIComponent();
 
-   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 560, moveFunc, turnFunc);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.hitboxes[0], 560, moveFunc, turnFunc);
    aiHelperComponent.ais[AIType.patrol] = new PatrolAI();
 
    const aiAssignmentComponent = new AIAssignmentComponent();

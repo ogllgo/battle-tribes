@@ -101,8 +101,14 @@ export function addHitboxDataToPacket(packet: Packet, hitbox: Hitbox): void {
       packet.addNumber(flag);
    }
 
+   packet.addNumber(hitbox.entity);
+   packet.addNumber(hitbox.rootEntity);
+
    const parentLocalID = hitbox.parent !== null ? hitbox.parent.localID : -1;
    packet.addNumber(parentLocalID);
+
+   packet.addBoolean(hitbox.isPartOfParent);
+   packet.padOffset(3);
 }
 export function getHitboxDataLength(hitbox: Hitbox): number {
    let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
@@ -121,6 +127,8 @@ export function getHitboxDataLength(hitbox: Hitbox): number {
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += 4 * Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT * hitbox.flags.length;
+   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT; // entity and rootEntity
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT; // isPartOfParent
    return lengthBytes;
 }

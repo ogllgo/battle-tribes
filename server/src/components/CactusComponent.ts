@@ -8,7 +8,7 @@ import { getEntityType, destroyEntity, getEntityLayer, createEntity } from "../w
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { applyAbsoluteKnockback, Hitbox } from "../hitboxes";
 import { Settings } from "../../../shared/src/settings";
-import { entityChildIsEntity, TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { TransformComponent, TransformComponentArray } from "./TransformComponent";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { createPricklyPearConfig } from "../entities/desert/prickly-pear";
 import { createEntityConfigAttachInfo } from "../components";
@@ -45,9 +45,11 @@ CactusComponentArray.onTick = {
 };
 
 const hasFruit = (transformComponent: TransformComponent): boolean => {
-   for (const child of transformComponent.children) {
-      if (entityChildIsEntity(child) && getEntityType(child.attachedEntity) === EntityType.pricklyPear) {
-         return true;
+   for (const hitbox of transformComponent.hitboxes) {
+      for (const childHitbox of hitbox.children) {
+         if (getEntityType(childHitbox.entity) === EntityType.pricklyPear) {
+            return true;
+         }
       }
    }
 
@@ -62,7 +64,7 @@ function onTick(cactus: Entity): void {
          if (cactusComponent.remainingFruitGrowTicks <= 0) {
             // @Copynpaste
             
-            const cactusHitbox = transformComponent.children[0] as Hitbox;
+            const cactusHitbox = transformComponent.hitboxes[0];
             const cactusRadius = (cactusHitbox.box as CircularBox).radius;
       
             const offsetDirection = randAngle();
@@ -76,7 +78,7 @@ function onTick(cactus: Entity): void {
             const fruitConfig = createPricklyPearConfig(position, randAngle());
 
             const fruitTransformComponent = fruitConfig.components[ServerComponentType.transform]!;
-            const fruitHitbox = fruitTransformComponent.children[0] as Hitbox;
+            const fruitHitbox = fruitTransformComponent.hitboxes[0];
             
             fruitConfig.attachInfo = createEntityConfigAttachInfo(cactus, fruitHitbox, cactusHitbox, true);
             createEntity(fruitConfig, getEntityLayer(cactus), 0);

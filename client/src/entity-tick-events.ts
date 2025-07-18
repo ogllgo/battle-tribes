@@ -6,12 +6,11 @@ import { entityExists } from "./world";
 import { Entity } from "../../shared/src/entities";
 import { getRandomPositionOnBoxEdge, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { createHotSparkParticle } from "./particles";
-import { Hitbox } from "./hitboxes";
 
 export function playBowFireSound(sourceEntity: Entity, bowItemType: ItemType): void {
    // @Hack
    const transformComponent = TransformComponentArray.getComponent(sourceEntity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    switch (bowItemType) {
       case ItemType.wooden_bow: {
@@ -32,7 +31,7 @@ export function playBowFireSound(sourceEntity: Entity, bowItemType: ItemType): v
 const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
    // @Hack
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    switch (tickEvent.type) {
       case EntityTickEventType.cowFart: {

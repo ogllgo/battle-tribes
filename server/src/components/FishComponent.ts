@@ -83,7 +83,7 @@ const unfollowLeader = (fish: Entity, leader: Entity): void => {
 
 function onTick(fish: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(fish);
-   const fishHitbox = transformComponent.children[0] as Hitbox;
+   const fishHitbox = transformComponent.hitboxes[0];
    
    const physicsComponent = PhysicsComponentArray.getComponent(fish);
    const fishComponent = FishComponentArray.getComponent(fish);
@@ -130,14 +130,14 @@ function onTick(fish: Entity): void {
       const target = fishComponent.attackTargetID;
       if (entityExists(target)) {
          const leaderTransformComponent = TransformComponentArray.getComponent(fishComponent.leader);
-         const leaderHitbox = leaderTransformComponent.children[0] as Hitbox;
+         const leaderHitbox = leaderTransformComponent.hitboxes[0];
          
          // Follow leader
          aiHelperComponent.moveFunc(fish, leaderHitbox.box.position, 40);
          aiHelperComponent.turnFunc(fish, leaderHitbox.box.position, Math.PI / 1.5, 0.5);
       } else {
          const targetTransformComponent = TransformComponentArray.getComponent(target);
-         const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+         const targetHitbox = targetTransformComponent.hitboxes[0];
 
          // Attack the target
          aiHelperComponent.moveFunc(fish, targetHitbox.box.position, 40);

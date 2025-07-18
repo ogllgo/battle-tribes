@@ -171,7 +171,7 @@ function onJoin(yeti: Entity): void {
 
 const throwSnowball = (yeti: Entity, size: number, throwAngle: number): void => {
    const transformComponent = TransformComponentArray.getComponent(yeti);
-   const yetiHitbox = transformComponent.rootChildren[0] as Hitbox;
+   const yetiHitbox = transformComponent.rootHitboxes[0];
    
    const angle = throwAngle + randFloat(-Vars.SNOW_THROW_ARC, Vars.SNOW_THROW_ARC);
    
@@ -188,7 +188,7 @@ const throwSnowball = (yeti: Entity, size: number, throwAngle: number): void => 
 
    const config = createSnowballConfig(position, randAngle(), yeti, size);
 
-   const snowballHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
+   const snowballHitbox = config.components[ServerComponentType.transform]!.hitboxes[0];
    addHitboxVelocity(snowballHitbox, polarVec2(velocityMagnitude, angle));
 
    createEntity(config, getEntityLayer(yeti), 0);
@@ -196,7 +196,7 @@ const throwSnowball = (yeti: Entity, size: number, throwAngle: number): void => 
 
 const throwSnow = (yeti: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(yeti);
-   const yetiHitbox = transformComponent.rootChildren[0] as Hitbox;
+   const yetiHitbox = transformComponent.rootHitboxes[0];
    
    const throwAngle = yetiHitbox.box.angle;
 
@@ -232,7 +232,7 @@ const entityIsTargetted = (yeti: Entity, entity: Entity, attackingEntitiesCompon
 
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
    // @Hack
-   const hitbox = entityTransformComponent.children[0] as Hitbox;
+   const hitbox = entityTransformComponent.hitboxes[0];
    const entityTileIndex = getHitboxTile(hitbox);
 
    // Don't attack entities which aren't attacking the yeti and aren't encroaching on its territory
@@ -289,7 +289,7 @@ const getYetiTarget = (yeti: Entity, visibleEntities: ReadonlyArray<Entity>): En
 function onTick(yeti: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(yeti);
    const transformComponent = TransformComponentArray.getComponent(yeti);
-   const yetiBodyHitbox = transformComponent.rootChildren[0] as Hitbox;
+   const yetiBodyHitbox = transformComponent.rootHitboxes[0];
 
    const yetiComponent = YetiComponentArray.getComponent(yeti);
 
@@ -307,7 +307,7 @@ function onTick(yeti: Entity): void {
          yetiComponent.isThrowingSnow = false;
       } else {
          const targetTransformComponent = TransformComponentArray.getComponent(yetiComponent.attackTarget);
-         const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+         const targetHitbox = targetTransformComponent.hitboxes[0];
          
          switch (yetiComponent.snowThrowStage) {
             case SnowThrowStage.windup: {
@@ -362,7 +362,7 @@ function onTick(yeti: Entity): void {
    const chaseTarget = getYetiTarget(yeti, aiHelperComponent.visibleEntities);
    if (chaseTarget !== null) {
       const targetTransformComponent = TransformComponentArray.getComponent(chaseTarget);
-      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+      const targetHitbox = targetTransformComponent.hitboxes[0];
       moveEntityToPosition(yeti, targetHitbox.box.position.x, targetHitbox.box.position.y, 700, Vars.TURN_SPEED, 1);
       return;
    }
@@ -380,7 +380,7 @@ function onTick(yeti: Entity): void {
          const itemComponent = ItemComponentArray.getComponent(entity);
          if (itemComponent.itemType === ItemType.raw_beef || itemComponent.itemType === ItemType.raw_fish) {
             const entityTransformComponent = TransformComponentArray.getComponent(entity);
-            const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+            const entityHitbox = entityTransformComponent.hitboxes[0];
             
             const distance = yetiBodyHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
             if (distance < minDist) {
@@ -391,7 +391,7 @@ function onTick(yeti: Entity): void {
       }
       if (closestFoodItem !== null) {
          const foodTransformComponent = TransformComponentArray.getComponent(closestFoodItem);
-         const foodHitbox = foodTransformComponent.children[0] as Hitbox;
+         const foodHitbox = foodTransformComponent.hitboxes[0];
          
          moveEntityToPosition(yeti, foodHitbox.box.position.x, foodHitbox.box.position.y, 300, Vars.TURN_SPEED, 1);
 

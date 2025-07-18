@@ -3,7 +3,7 @@ import { Entity } from "battletribes-shared/entities";
 import { collisionBitsAreCompatible } from "battletribes-shared/hitbox-collision";
 import { Settings } from "battletribes-shared/settings";
 import { collide } from "./collision-resolution";
-import { entityChildIsHitbox, TransformComponentArray, TransformNode } from "./components/TransformComponent";
+import { TransformComponentArray } from "./components/TransformComponent";
 import Layer from "./Layer";
 import { Hitbox } from "./hitboxes";
 import { Box } from "../../shared/src/boxes/boxes";
@@ -58,22 +58,15 @@ const markEntityCollisions = (entityCollisionPairs: Array<EntityCollisionPair>, 
    
    // Check hitboxes
    const collidingHitboxPairs = new Array<HitboxCollisionPair>();
-   const numHitboxes = affectedEntityTransformComponent.children.length;
-   const numOtherHitboxes = collidingEntityTransformComponent.children.length;
+   const numHitboxes = affectedEntityTransformComponent.hitboxes.length;
+   const numOtherHitboxes = collidingEntityTransformComponent.hitboxes.length;
    for (let i = 0; i < numHitboxes; i++) {
-      const hitbox = affectedEntityTransformComponent.children[i];
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
+      const hitbox = affectedEntityTransformComponent.hitboxes[i];
       
       const box = hitbox.box;
 
       for (let j = 0; j < numOtherHitboxes; j++) {
-         const otherHitbox = collidingEntityTransformComponent.children[j];
-         if (!entityChildIsHitbox(otherHitbox)) {
-            continue;
-         }
-         
+         const otherHitbox = collidingEntityTransformComponent.hitboxes[j];
          if (!collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, otherHitbox.collisionMask, otherHitbox.collisionBit)) {
             continue;
          }
@@ -118,18 +111,12 @@ export function entitiesAreColliding(entity1: Entity, entity2: Entity): number {
    }
    
    // More expensive hitbox check
-   for (let i = 0; i < transformComponent1.children.length; i++) {
-      const hitbox = transformComponent1.children[i];
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
+   for (let i = 0; i < transformComponent1.hitboxes.length; i++) {
+      const hitbox = transformComponent1.hitboxes[i];
       const box = hitbox.box;
 
-      for (let j = 0; j < transformComponent2.children.length; j++) {
-         const otherHitbox = transformComponent2.children[j];
-         if (!entityChildIsHitbox(otherHitbox)) {
-            continue;
-         }
+      for (let j = 0; j < transformComponent2.hitboxes.length; j++) {
+         const otherHitbox = transformComponent2.hitboxes[j];
 
          // If the objects are colliding, add the colliding object and this object
          if (collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, otherHitbox.collisionMask, otherHitbox.collisionBit) && box.isColliding(otherHitbox.box)) {
@@ -144,11 +131,7 @@ export function entitiesAreColliding(entity1: Entity, entity2: Entity): number {
 export function hitboxIsCollidingWithEntity(hitbox: Hitbox, entity: Entity): boolean {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
-   for (const currentHitbox of transformComponent.children) {
-      if (!entityChildIsHitbox(currentHitbox)) {
-         continue;
-      }
-
+   for (const currentHitbox of transformComponent.hitboxes) {
       if (collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, currentHitbox.collisionMask, currentHitbox.collisionBit) && hitbox.box.isColliding(currentHitbox.box)) {
          return true;
       }
@@ -205,7 +188,10 @@ export function resolveEntityCollisions(layer: Layer): void {
                const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
 
                // Make sure the entities aren't in the same carry heirarchy
-               if (affectedEntityTransformComponent.rootEntity === collidingEntityTransformComponent.rootEntity) {
+               // @HACK
+               const firstAffectedEntityHitbox = affectedEntityTransformComponent.hitboxes[0];
+               const firstCollidingEntityHitbox = collidingEntityTransformComponent.hitboxes[0];
+               if (firstAffectedEntityHitbox.rootEntity === firstCollidingEntityHitbox.rootEntity) {
                   continue;
                }
 
@@ -260,13 +246,11 @@ export function boxHasCollisionWithBoxes(box: Box, boxes: ReadonlyArray<Box>, ep
    return false;
 }
 
-const boxHasCollisionWithChildren = (box: Box, children: ReadonlyArray<TransformNode>, epsilon: number = 0): boolean => {
-   for (let i = 0; i < children.length; i++) {
-      const otherHitbox = children[i];
-      if (entityChildIsHitbox(otherHitbox)) {
-         if (box.isColliding(otherHitbox.box, epsilon)) {
-            return true;
-         }
+const boxHasCollisionWithHitboxes = (box: Box, hitboxes: ReadonlyArray<Hitbox>, epsilon: number = 0): boolean => {
+   for (let i = 0; i < hitboxes.length; i++) {
+      const otherHitbox = hitboxes[i];
+      if (box.isColliding(otherHitbox.box, epsilon)) {
+         return true;
       }
    }
    return false;
@@ -313,7 +297,7 @@ export function getBoxesCollidingEntities(layer: Layer, boxes: ReadonlyArray<Box
                seenEntityIDs.add(entity);
                
                const entityTransformComponent = TransformComponentArray.getComponent(entity);
-               if (boxHasCollisionWithChildren(box, entityTransformComponent.children, epsilon)) {
+               if (boxHasCollisionWithHitboxes(box, entityTransformComponent.hitboxes, epsilon)) {
                   collidingEntities.push(entity);
                }
             }
@@ -367,7 +351,7 @@ export function getHitboxesCollidingEntities(layer: Layer, hitboxes: ReadonlyArr
                seenEntityIDs.add(entity);
                
                const entityTransformComponent = TransformComponentArray.getComponent(entity);
-               if (boxHasCollisionWithChildren(box, entityTransformComponent.children, epsilon)) {
+               if (boxHasCollisionWithHitboxes(box, entityTransformComponent.hitboxes, epsilon)) {
                   collidingEntities.push(entity);
                }
             }

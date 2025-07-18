@@ -41,7 +41,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    // @Incomplete: SIZE DOESN'T ACTUALLY AFFECT ANYTHING
 
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    const renderPart1 = new TexturedRenderPart(
       hitbox,
@@ -74,7 +74,7 @@ function getMaxRenderParts(): number {
 
 function onLoad(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox("slime-spit.mp3", 0.5, 1, entity, hitbox, false);
 }
 

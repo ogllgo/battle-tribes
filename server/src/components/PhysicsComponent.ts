@@ -1,16 +1,16 @@
 import { Settings } from "battletribes-shared/settings";
 import { ServerComponentType } from "battletribes-shared/components";
-import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { TILE_PHYSICS_INFO_RECORD, TileType } from "battletribes-shared/tiles";
 import { ComponentArray } from "./ComponentArray";
 import { entityCanBlockPathfinding } from "../pathfinding";
 import { registerDirtyEntity } from "../server/player-clients";
-import { cleanTransform, resolveEntityBorderCollisions, entityChildIsEntity, entityChildIsHitbox, TransformComponent, TransformComponentArray, changeEntityLayer } from "./TransformComponent";
+import { cleanEntityTransform, resolveEntityBorderCollisions, TransformComponent, TransformComponentArray, changeEntityLayer } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
 import { updateEntityLights } from "../lights";
-import { addHitboxAngularAcceleration, applyAcceleration, getHitboxAngularVelocity, getHitboxConnectedMass, getHitboxTile, getHitboxVelocity, getTotalMass, Hitbox, hitboxIsInRiver } from "../hitboxes";
+import { addHitboxAngularAcceleration, applyAcceleration, getHitboxAngularVelocity, getHitboxTile, getHitboxVelocity, getHitboxTotalMassIncludingChildren, Hitbox, hitboxIsInRiver } from "../hitboxes";
 import { angleToPoint, getAngleDiff, Point, polarVec2 } from "../../../shared/src/utils";
 
 // @Cleanup: Variable names (also is shit generally, shouldn't keep)
@@ -132,7 +132,7 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent):
       return;
    }
    
-   cleanTransform(entity);
+   cleanEntityTransform(entity);
 
    // @Correctness: Is this correct? Or should we dirtify these things wherever the isDirty flag is set?
    dirtifyPathfindingNodes(entity, transformComponent);
@@ -143,7 +143,7 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent):
 
    // If the object moved due to resolving wall tile collisions, recalculate
    if (transformComponent.isDirty) {
-      cleanTransform(entity);
+      cleanEntityTransform(entity);
       // @Cleanup: pointless, if always done above?
       registerDirtyEntity(entity);
    }
@@ -153,7 +153,7 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent):
 
    // If the object moved due to resolving border collisions, recalculate
    if (transformComponent.isDirty) {
-      cleanTransform(entity);
+      cleanEntityTransform(entity);
       // @Cleanup: pointless, if always done above?
       registerDirtyEntity(entity);
    }
@@ -161,20 +161,17 @@ const updatePosition = (entity: Entity, transformComponent: TransformComponent):
    // Check to see if the entity has descended into the underground layer
    const entityType = getEntityType(entity);
    if (entityType !== EntityType.guardian && entityType !== EntityType.guardianSpikyBall) {
-      // @Hack: fo da glurb container entity
-      if (entityChildIsHitbox(transformComponent.children[0])) {
-         // Update the last valid layer
-         const layer = getEntityLayer(entity);
-         // @Hack
-         const hitbox = transformComponent.children[0] as Hitbox;
-         const tileIndex = getHitboxTile(hitbox);
-         if (layer.getTileType(tileIndex) !== TileType.dropdown) {
-            transformComponent.lastValidLayer = layer;
-         // If the layer is valid and the entity is on a dropdown, move down
-         } else if (layer === transformComponent.lastValidLayer) {
-            // @Temporary
-            changeEntityLayer(entity, undergroundLayer);
-         }
+      // Update the last valid layer
+      const layer = getEntityLayer(entity);
+      // @Hack
+      const hitbox = transformComponent.hitboxes[0];
+      const tileIndex = getHitboxTile(hitbox);
+      if (layer.getTileType(tileIndex) !== TileType.dropdown) {
+         transformComponent.lastValidLayer = layer;
+      // If the layer is valid and the entity is on a dropdown, move down
+      } else if (layer === transformComponent.lastValidLayer) {
+         // @Temporary
+         changeEntityLayer(entity, undergroundLayer);
       }
    }
 
@@ -211,11 +208,11 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
          // console.log(rotationForce, dampingForce);
 
          // @HACK: the * 4
-         const hitboxAccMag = force / getTotalMass(hitbox) * 4;
+         const hitboxAccMag = force / getHitboxTotalMassIncludingChildren(hitbox) * 4;
          applyAcceleration(hitbox, polarVec2(hitboxAccMag, hitboxAccDir));
 
          // @HACK: the * 4
-         const originHitboxAccMag = force / getTotalMass(originHitbox) * 4;
+         const originHitboxAccMag = force / getHitboxTotalMassIncludingChildren(originHitbox) * 4;
          // @Speed: don't need to call 2nd polarVec2 cuz this is in the exact reverse direction
          applyAcceleration(originHitbox, polarVec2(originHitboxAccMag, originHitboxAccDir));
       }
@@ -234,7 +231,7 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
 
          const force = rotationForce + dampingForce;
          
-         addHitboxAngularAcceleration(hitbox, force / getTotalMass(hitbox));
+         addHitboxAngularAcceleration(hitbox, force / getHitboxTotalMassIncludingChildren(hitbox));
       }
    }
 }
@@ -252,7 +249,7 @@ const applyHitboxRelativeAngleConstraints = (hitbox: Hitbox): void => {
 
          const force = rotationForce + dampingForce;
          
-         addHitboxAngularAcceleration(hitbox, force / getTotalMass(hitbox));
+         addHitboxAngularAcceleration(hitbox, force / getHitboxTotalMassIncludingChildren(hitbox));
       }
    }
 }
@@ -269,44 +266,33 @@ const applyHitboxTethers = (hitbox: Hitbox, transformComponent: TransformCompone
    }
 }
 
+const tickHitboxPhysics = (hitbox: Hitbox): void => {
+   // @CLEANUP
+   const transformComponent = TransformComponentArray.getComponent(hitbox.entity);
+
+   tickHitboxAngularPhysics(hitbox.entity, hitbox, transformComponent);
+
+   // @Hack: this physics component check is needed because the applyHitboxKinematics function needs a physics component... for now, perhaps....
+   if (hitbox.parent === null && PhysicsComponentArray.hasComponent(hitbox.entity)) {
+      const physicsComponent = PhysicsComponentArray.getComponent(hitbox.entity);
+      applyHitboxKinematics(hitbox.entity, hitbox, transformComponent, physicsComponent);
+   }
+   
+   applyHitboxTethers(hitbox, transformComponent);
+
+   for (const childHitbox of hitbox.children) {
+      tickHitboxPhysics(childHitbox);
+   }
+}
+
 // @Hack: this function used to be called from the physicscomponent, but I realised that all entities need to tick this regardless, so it's now called from the transformcomponent's onTick function. but it's still here, i guess.
 export function tickEntityPhysics(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
-   for (const child of transformComponent.children) {
-      if (entityChildIsHitbox(child)) {
-         tickHitboxAngularPhysics(entity, child, transformComponent);
-      }
-   }
-   // @Hack: this physics component check is needed because the applyHitboxKinematics function needs a physics component... for now, perhaps....
-   if (PhysicsComponentArray.hasComponent(entity)) {
-      for (const rootChild of transformComponent.rootChildren) {
-         if (entityChildIsHitbox(rootChild)) {
-            applyHitboxKinematics(entity, rootChild, transformComponent, physicsComponent);
-         }
-      }
-   }
-
-   for (const child of transformComponent.children) {
-      if (!entityChildIsHitbox(child)) {
-         continue;
-      }
-
-      const hitbox = child;
-      applyHitboxTethers(hitbox, transformComponent);
+   for (const rootHitbox of transformComponent.rootHitboxes) {
+      tickHitboxPhysics(rootHitbox);
    }
 
    updatePosition(entity, transformComponent);
-
-   for (const entityAttachInfo of transformComponent.children) {
-      if (entityChildIsEntity(entityAttachInfo)) {
-         const t = TransformComponentArray.getComponent(entityAttachInfo.attachedEntity);
-         if (typeof t === "undefined") {
-            console.log(EntityTypeString[getEntityType(entity)]);
-         }
-         tickEntityPhysics(entityAttachInfo.attachedEntity);
-      }
-   }
 
    // @Speed: what if the hitboxes don't change?
    // (just for carried entities)

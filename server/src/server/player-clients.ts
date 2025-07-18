@@ -441,7 +441,7 @@ export function registerEntityHeal(healedEntity: Entity, healer: Entity, healAmo
 
    const transformComponent = TransformComponentArray.getComponent(healedEntity);
    // @Hack
-   const healedEntityHitbox = transformComponent.children[0] as Hitbox;
+   const healedEntityHitbox = transformComponent.hitboxes[0];
    
    const healData: HealData = {
       entityPositionX: healedEntityHitbox.box.position.x,

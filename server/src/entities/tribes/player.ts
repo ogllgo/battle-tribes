@@ -24,7 +24,7 @@ import { PlayerComponent } from "../../components/PlayerComponent";
 import { TRIBE_INFO_RECORD, TribeType } from "battletribes-shared/tribes";
 import PlayerClient from "../../server/PlayerClient";
 import { TribesmanComponent } from "../../components/TribesmanComponent";
-import { createHitbox, Hitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 const getHitboxRadius = (tribeType: TribeType): number => {
    switch (tribeType) {
@@ -43,7 +43,7 @@ const getHitboxRadius = (tribeType: TribeType): number => {
 export function createPlayerConfig(position: Point, rotation: number, tribe: Tribe, playerClient: PlayerClient): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, getHitboxRadius(tribe.tribeType)), 1.25, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, getHitboxRadius(tribe.tribeType)), 1.25, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
@@ -143,10 +143,10 @@ const modifyTunnel = (player: Entity, tunnel: Entity): void => {
    switch (tunnelComponent.doorBitset) {
       case 0b00: {
          const playerTransformComponent = TransformComponentArray.getComponent(player);
-         const playerHitbox = playerTransformComponent.children[0] as Hitbox;
+         const playerHitbox = playerTransformComponent.hitboxes[0];
          
          const tunnelTransformComponent = TransformComponentArray.getComponent(tunnel);
-         const tunnelHitbox = tunnelTransformComponent.children[0] as Hitbox;
+         const tunnelHitbox = tunnelTransformComponent.hitboxes[0];
          
          // Place the door blueprint on whichever side is closest to the player
          const dirToPlayer = tunnelHitbox.box.position.calculateAngleBetween(playerHitbox.box.position);

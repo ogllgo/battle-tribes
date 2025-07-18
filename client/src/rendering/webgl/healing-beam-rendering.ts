@@ -137,7 +137,7 @@ const getVisibleHealingBeams = (): ReadonlyArray<HealingBeam> => {
       const healingTotemComponent = HealingTotemComponentArray.components[i];
 
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
 
       for (let i = 0; i < healingTotemComponent.healingTargetsData.length; i++) {
          const healingTargetData = healingTotemComponent.healingTargetsData[i];
@@ -165,7 +165,7 @@ const createData = (visibleBeams: ReadonlyArray<HealingBeam>): ReadonlyArray<num
       let endY: number;
       if (entityExists(beam.entityID)) {
          const transformComponent = TransformComponentArray.getComponent(beam.entityID)
-         const hitbox = transformComponent.children[0] as Hitbox;
+         const hitbox = transformComponent.hitboxes[0];
          endX = hitbox.box.position.x;
          endY = hitbox.box.position.y;
       } else {

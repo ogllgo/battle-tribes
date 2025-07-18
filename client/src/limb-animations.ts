@@ -57,7 +57,7 @@ export function createCraftingAnimationParticles(entity: Entity, limbIdx: number
    
    const transformComponent = TransformComponentArray.getComponent(entity);
    // @Hack
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    for (const itemTypeString of Object.keys(recipe.ingredients)) {
       const ingredientType = Number(itemTypeString) as ItemType;
@@ -90,7 +90,7 @@ export function createCraftingAnimationParticles(entity: Entity, limbIdx: number
 
 const createBandageRenderPart = (entity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -133,7 +133,7 @@ export function updateBandageRenderPart(entity: Entity, renderPart: VisualRender
 export function createMedicineAnimationParticles(entity: Entity, limbIdx: number): void {
    if (Math.random() < 5 / Settings.TPS) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
 
       const colour = randItem(MEDICINE_PARTICLE_COLOURS);
       const pos = generateRandomLimbPosition();
@@ -217,7 +217,7 @@ export function updateCustomItemRenderPart(entity: Entity): void {
    if (customItemState !== null) {
       if (inventoryUseComponent.customItemRenderPart === null) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.children[0] as Hitbox;
+         const hitbox = transformComponent.hitboxes[0];
          
          inventoryUseComponent.customItemRenderPart = new TexturedRenderPart(
             hitbox,

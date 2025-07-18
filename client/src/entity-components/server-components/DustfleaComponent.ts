@@ -34,7 +34,7 @@ function createParamsFromData(): DustfleaComponentParams {
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -66,6 +66,6 @@ function onHit(dustflea: Entity, hitbox: Hitbox): void {
 
 function onDie(dustflea: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(dustflea);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox("dustflea-explosion.mp3", 0.4, randFloat(0.9, 1.1), dustflea, hitbox, false);
 }

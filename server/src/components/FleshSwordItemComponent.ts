@@ -30,7 +30,7 @@ FleshSwordItemComponentArray.onTick = {
 /** Returns the entity the flesh sword should run away from, or null if there are none */
 const getRunTarget = (itemEntity: Entity, visibleEntities: ReadonlyArray<Entity>): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(itemEntity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    let closestRunTargetDistance = Number.MAX_SAFE_INTEGER;
    let runTarget: Entity | null = null;
@@ -39,7 +39,7 @@ const getRunTarget = (itemEntity: Entity, visibleEntities: ReadonlyArray<Entity>
       const entityType = getEntityType(entity);
       if (entityType === EntityType.player || entityType === EntityType.tribeWorker || entityType === EntityType.tribeWarrior) {
          const entityTransformComponent = TransformComponentArray.getComponent(itemEntity);
-         const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+         const entityHitbox = entityTransformComponent.hitboxes[0];
 
          const distance = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
          if (distance < closestRunTargetDistance) {
@@ -54,7 +54,7 @@ const getRunTarget = (itemEntity: Entity, visibleEntities: ReadonlyArray<Entity>
 
 const getTileWanderTargets = (itemEntity: Entity): Array<TileIndex> => {
    const transformComponent = TransformComponentArray.getComponent(itemEntity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    const layer = getEntityLayer(itemEntity);
    
    const aiHelperComponent = AIHelperComponentArray.getComponent(itemEntity);
@@ -97,14 +97,14 @@ function onTick(fleshSword: Entity): void {
    const runTarget = getRunTarget(fleshSword, visibleEntities);
 
    const transformComponent = TransformComponentArray.getComponent(fleshSword);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    const fleshSwordComponent = FleshSwordItemComponentArray.getComponent(fleshSword);
 
    // Run away from the run target
    if (runTarget !== null) {
       const runTargetTransformComponent = TransformComponentArray.getComponent(runTarget);
-      const targetHitbox = runTargetTransformComponent.children[0] as Hitbox;
+      const targetHitbox = runTargetTransformComponent.hitboxes[0];
       
       const angleFromTarget = hitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
       targetPositionX = hitbox.box.position.x + 100 * Math.sin(angleFromTarget + Math.PI);

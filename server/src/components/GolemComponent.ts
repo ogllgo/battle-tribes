@@ -7,7 +7,7 @@ import { Settings } from "battletribes-shared/settings";
 import { randFloat, lerp, randInt, Point, polarVec2, randAngle } from "battletribes-shared/utils";
 import { createPebblumConfig } from "../entities/mobs/pebblum";
 import { PebblumComponentArray } from "./PebblumComponent";
-import { entityChildIsHitbox, TransformComponentArray, TransformNode } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { createEntity, destroyEntity, entityExists, getEntityLayer, getGameTicks } from "../world";
 import { addLocalInvulnerabilityHash, canDamageEntity, damageEntity, HealthComponentArray } from "./HealthComponent";
@@ -38,14 +38,10 @@ export interface GolemTargetInfo {
    timeSinceLastAggro: number;
 }
 
-const generateRockInfoArray = (children: ReadonlyArray<TransformNode>): Array<RockInfo> => {
+const generateRockInfoArray = (hitboxes: ReadonlyArray<Hitbox>): Array<RockInfo> => {
    const rockInfoArray = new Array<RockInfo>();
    
-   for (const hitbox of children) {
-      if (!entityChildIsHitbox(hitbox)) {
-         throw new Error();
-      }
-
+   for (const hitbox of hitboxes) {
       const box = hitbox.box as CircularBox;
 
       const offsetMagnitude = BODY_GENERATION_RADIUS * Math.random()
@@ -77,8 +73,8 @@ export class GolemComponent {
    public summonedPebblumIDs = new Array<number>();
    public pebblumSummonCooldownTicks: number;
    
-   constructor(children: ReadonlyArray<TransformNode>, pebblumSummonCooldownTicks: number) {
-      this.rockInfoArray = generateRockInfoArray(children);
+   constructor(hitboxes: ReadonlyArray<Hitbox>, pebblumSummonCooldownTicks: number) {
+      this.rockInfoArray = generateRockInfoArray(hitboxes);
       this.pebblumSummonCooldownTicks = pebblumSummonCooldownTicks;
    }
 }
@@ -144,7 +140,7 @@ const shiftRocks = (golem: Entity, golemComponent: GolemComponent): void => {
 
 const summonPebblums = (golem: Entity, golemComponent: GolemComponent, target: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(golem);
-   const golemHitbox = transformComponent.children[0] as Hitbox;
+   const golemHitbox = transformComponent.hitboxes[0];
    
    const layer = getEntityLayer(golem);
    
@@ -233,10 +229,10 @@ function onTick(golem: Entity): void {
    }
 
    const transformComponent = TransformComponentArray.getComponent(golem);
-   const golemHitbox = transformComponent.children[0] as Hitbox;
+   const golemHitbox = transformComponent.hitboxes[0];
    
    const targetTransformComponent = TransformComponentArray.getComponent(target);
-   const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+   const targetHitbox = targetTransformComponent.hitboxes[0];
 
    const targetDir = golemHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
 

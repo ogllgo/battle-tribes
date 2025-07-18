@@ -98,7 +98,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       if (occupiedEntity !== carrySlot.occupiedEntity) {
          const transformComponent = TransformComponentArray.getComponent(entity);
          // @Hack
-         const mountHitbox = transformComponent.children[0] as Hitbox;
+         const mountHitbox = transformComponent.hitboxes[0];
          const layer = getEntityLayer(entity);
          
          if (entityExists(occupiedEntity)) {
@@ -121,7 +121,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
                // Set the player to the dismount position
    
                const transformComponent = TransformComponentArray.getComponent(playerInstance);
-               const playerHitbox = transformComponent.children[0] as Hitbox;
+               const playerHitbox = transformComponent.hitboxes[0];
    
                playerHitbox.box.position.x = mountHitbox.box.position.x + rotateXAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountHitbox.box.relativeAngle);
                playerHitbox.box.position.y = mountHitbox.box.position.y + rotateYAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountHitbox.box.relativeAngle);

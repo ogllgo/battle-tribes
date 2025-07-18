@@ -12,7 +12,7 @@ import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 
 const ICE_SPECK_COLOUR: ParticleColour = [140/255, 143/255, 207/255];
 const SIZE = 80;
@@ -75,11 +75,7 @@ const createIceSpeckProjectile = (hitbox: Hitbox): void => {
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
 
-   for (const hitbox of transformComponentParams.children) {
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
-
+   for (const hitbox of transformComponentParams.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.INGU_SERPENT_HEAD)) {
          const renderPart = new TexturedRenderPart(
             hitbox,
@@ -145,13 +141,11 @@ function onHit(serpent: Entity, hitbox: Hitbox): void {
 
 function onDie(serpent: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(serpent);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
-   for (const hitbox of transformComponent.children) {
-      if (entityChildIsHitbox(hitbox)) {
-         for (let i = 0; i < 15; i++) {
-            createIceSpeckProjectile(hitbox);
-         }
+   for (const hitbox of transformComponent.hitboxes) {
+      for (let i = 0; i < 15; i++) {
+         createIceSpeckProjectile(hitbox);
       }
    }
    

@@ -72,7 +72,7 @@ function createParamsFromData(reader: PacketReader): HealingTotemComponentParams
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -166,7 +166,7 @@ function onTick(entity: Entity): void {
    }
    
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const healingTotemHitbox = transformComponent.children[0] as Hitbox;
+   const healingTotemHitbox = transformComponent.hitboxes[0];
    
    for (let i = 0; i < healingTotemComponent.healingTargetsData.length; i++) {    
       const targetData = healingTotemComponent.healingTargetsData[i];

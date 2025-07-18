@@ -283,7 +283,7 @@ abstract class Client {
 
       if (playerInstance !== null) {
          const transformComponent = TransformComponentArray.getComponent(playerInstance);
-         const playerHitbox = transformComponent.children[0] as Hitbox;
+         const playerHitbox = transformComponent.hitboxes[0];
          // Register player knockback
          for (let i = 0; i < gameDataPacket.playerKnockbacks.length; i++) {
             const knockbackData = gameDataPacket.playerKnockbacks[i];

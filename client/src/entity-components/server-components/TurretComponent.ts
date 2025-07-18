@@ -105,7 +105,7 @@ const getProjectilePullbackAmount = (entity: Entity, chargeProgress: number): nu
 
 const playFireSound = (entity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    switch (getEntityType(entity) as TurretType) {
       case EntityType.slingTurret: {

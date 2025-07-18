@@ -8,7 +8,6 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { OkrenAgeStage } from "./OkrenComponent";
-import { entityChildIsHitbox } from "./TransformComponent";
 
 export interface OkrenClawComponentParams {
    readonly size: OkrenAgeStage;
@@ -89,11 +88,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    let slashingArmSegment!: TexturedRenderPart;
    
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   for (const hitbox of transformComponentParams.children) {
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
-
+   for (const hitbox of transformComponentParams.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.OKREN_BIG_ARM_SEGMENT)) {
          bigArmSegment = new TexturedRenderPart(
             hitbox,

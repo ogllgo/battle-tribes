@@ -98,7 +98,7 @@ const tribesmanSpawnPositionIsValid = (layer: Layer, x: number, y: number): bool
             // @HACK
             
             const transformComponent = TransformComponentArray.getComponent(entity);
-            const entityHitbox = transformComponent.children[0] as Hitbox;
+            const entityHitbox = transformComponent.hitboxes[0];
             
             const distanceSquared = Math.pow(x - entityHitbox.box.position.x, 2) + Math.pow(y - entityHitbox.box.position.y, 2);
             if (distanceSquared <= Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE * Vars.TRIBESMAN_SPAWN_EXCLUSION_RANGE) {

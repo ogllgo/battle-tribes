@@ -15,7 +15,7 @@ import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { SlimewispComponent } from "../../components/SlimewispComponent";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 import { accelerateEntityToPosition, turnToPosition } from "../../ai-shared";
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
@@ -33,7 +33,7 @@ const turnFunc = (slimewisp: Entity, pos: Point, turnSpeed: number, turnDamping:
 export function createSlimewispConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 16), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 16), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const physicsComponent = new PhysicsComponent();

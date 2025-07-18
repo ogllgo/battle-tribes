@@ -130,7 +130,7 @@ const getBestBowItemSlot = (tribesman: Entity): number | null => {
 
 const getNearbyEmbrasureUsePoints = (tribesman: Entity): ReadonlyArray<Point> => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
    
    const layer = getEntityLayer(tribesman);
    
@@ -151,7 +151,7 @@ const getNearbyEmbrasureUsePoints = (tribesman: Entity): ReadonlyArray<Point> =>
             }
 
             const entityTransformComponent = TransformComponentArray.getComponent(entity);
-            const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+            const entityHitbox = entityTransformComponent.hitboxes[0];
 
             const usePointX = entityHitbox.box.position.x - 22 * Math.sin(entityHitbox.box.angle);
             const usePointY = entityHitbox.box.position.y - 22 * Math.cos(entityHitbox.box.angle);
@@ -168,7 +168,7 @@ const getNearbyEmbrasureUsePoints = (tribesman: Entity): ReadonlyArray<Point> =>
 
 const getClosestEmbrasureUsePoint = (tribesman: Entity, usePoints: ReadonlyArray<Point>): Point => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
 
    let minDist = Number.MAX_SAFE_INTEGER;
    let closestPoint!: Point;
@@ -190,7 +190,7 @@ const getFriendlyProximityDirection = (tribesman: Entity, aiHelperComponent: AIH
    const dir = new Point(0, 0);
 
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
 
    for (const friendly of aiHelperComponent.visibleEntities) {
       if (getEntityRelationship(tribesman, friendly) !== EntityRelationship.friendly) {
@@ -198,7 +198,7 @@ const getFriendlyProximityDirection = (tribesman: Entity, aiHelperComponent: AIH
       }
 
       const friendlyTransformComponent = TransformComponentArray.getComponent(friendly);
-      const friendlyHitbox = friendlyTransformComponent.children[0] as Hitbox;
+      const friendlyHitbox = friendlyTransformComponent.hitboxes[0];
       
       const dist = tribesmanHitbox.box.position.calculateDistanceBetween(friendlyHitbox.box.position);
       if (dist === 0) {
@@ -237,12 +237,12 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
    // @Incomplete: Only accounts for hotbar
 
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
    
    const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
 
    const huntedEntityTransformComponent = TransformComponentArray.getComponent(huntedEntity);
-   const huntedHitbox = huntedEntityTransformComponent.children[0] as Hitbox;
+   const huntedHitbox = huntedEntityTransformComponent.hitboxes[0];
    
    let mostDamagingItemSlot = getMostDamagingItemSlot(tribesman, huntedEntity);
    

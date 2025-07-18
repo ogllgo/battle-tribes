@@ -129,7 +129,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
       const ticksHealed = healingTotemComponent.healTargetsTicksHealed[i];
 
       const transformComponent = TransformComponentArray.getComponent(healTarget);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
 
       packet.addNumber(healTarget);
       packet.addNumber(hitbox.box.position.x);

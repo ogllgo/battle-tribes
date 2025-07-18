@@ -83,7 +83,7 @@ function onTick(scrappy: Entity): void {
       const hotbar = getInventory(inventoryComponent, InventoryName.hotbar);
       
       const transformComponent = TransformComponentArray.getComponent(scrappy);
-      const scrappyHitbox = transformComponent.children[0] as Hitbox;
+      const scrappyHitbox = transformComponent.hitboxes[0];
 
       let hasAccident = false;
       if (hotbar.hasItem(1) && Math.random() < 0.7) {

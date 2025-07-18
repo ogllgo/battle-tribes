@@ -115,7 +115,7 @@ function onTick(entity: Entity): void {
          case StatusEffect.burning: {
             const transformComponent = TransformComponentArray.getComponent(entity);
             // @Hack
-            const hitbox = transformComponent.children[0] as Hitbox;
+            const hitbox = transformComponent.hitboxes[0];
             // If the entity is in a river, clear the fire effect
             if (hitboxIsInRiver(entity, hitbox)) {
                clearStatusEffect(entity, i);
@@ -134,7 +134,7 @@ function onTick(entity: Entity): void {
             if (customTickIntervalHasPassed(ticksElapsed, 0.5)) {
                const transformComponent = TransformComponentArray.getComponent(entity);
                // @Hack
-               const hitbox = transformComponent.children[0] as Hitbox;
+               const hitbox = transformComponent.hitboxes[0];
                const hitPosition = getRandomPositionInEntity(transformComponent);
                damageEntity(entity, hitbox, null, 1, DamageSource.poison, AttackEffectiveness.effective, hitPosition, 0);
             }
@@ -145,7 +145,7 @@ function onTick(entity: Entity): void {
             if (customTickIntervalHasPassed(ticksElapsed, 1)) {
                const transformComponent = TransformComponentArray.getComponent(entity);
                // @Hack
-               const hitbox = transformComponent.children[0] as Hitbox;
+               const hitbox = transformComponent.hitboxes[0];
                const hitPosition = getRandomPositionInEntity(transformComponent);
                damageEntity(entity, hitbox, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
             }
@@ -156,7 +156,7 @@ function onTick(entity: Entity): void {
             if (customTickIntervalHasPassed(ticksElapsed, 2)) {
                const transformComponent = TransformComponentArray.getComponent(entity);
                // @Hack
-               const hitbox = transformComponent.children[0] as Hitbox;
+               const hitbox = transformComponent.hitboxes[0];
                const hitPosition = getRandomPositionInEntity(transformComponent);
                damageEntity(entity, hitbox, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
             }

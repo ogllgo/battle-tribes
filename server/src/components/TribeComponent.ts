@@ -124,7 +124,7 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
       case EntityType.guardian: {
          const transformComponent = TransformComponentArray.getComponent(entity);
          // @Hack
-         const hitbox = transformComponent.children[0] as Hitbox;
+         const hitbox = transformComponent.hitboxes[0];
          const tileIndex = getHitboxTile(hitbox);
 
          const tribeComponent = TribeComponentArray.getComponent(entity);

@@ -32,7 +32,7 @@ function createParamsFromData(): TukmokSpurComponentParams {
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    let textureSource: string;
    if (hitbox.flags.includes(HitboxFlag.TUKMOK_SPUR_HEAD)) {

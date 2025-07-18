@@ -31,7 +31,7 @@ const getOccupiedResearchBenchID = (tribesman: Entity, tribeComponent: TribeComp
 
 const getAvailableResearchBenchID = (tribesman: Entity, tribeComponent: TribeComponent): Entity => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
    
    let id = 0;
    let minDist = Number.MAX_SAFE_INTEGER;
@@ -43,7 +43,7 @@ const getAvailableResearchBenchID = (tribesman: Entity, tribeComponent: TribeCom
       }
 
       const benchTransformComponent = TransformComponentArray.getComponent(bench);
-      const researchBenchHitbox = benchTransformComponent.children[0] as Hitbox;
+      const researchBenchHitbox = benchTransformComponent.hitboxes[0];
 
       const dist = tribesmanHitbox.box.position.calculateDistanceBetween(researchBenchHitbox.box.position);
       if (dist < minDist) {
@@ -57,7 +57,7 @@ const getAvailableResearchBenchID = (tribesman: Entity, tribeComponent: TribeCom
 
 export function goResearchTech(tribesman: Entity, tech: Tech): void {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
    
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
    
@@ -70,7 +70,7 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
    const occupiedBench = getOccupiedResearchBenchID(tribesman, tribeComponent);
    if (occupiedBench !== 0) {
       const benchTransformComponent = TransformComponentArray.getComponent(occupiedBench);
-      const researchBenchHitbox = benchTransformComponent.children[0] as Hitbox;
+      const researchBenchHitbox = benchTransformComponent.hitboxes[0];
       
       const targetDir = tribesmanHitbox.box.position.calculateAngleBetween(researchBenchHitbox.box.position);
 
@@ -93,7 +93,7 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
    const bench = getAvailableResearchBenchID(tribesman, tribeComponent);
    if (bench !== 0) {
       const benchTransformComponent = TransformComponentArray.getComponent(bench);
-      const researchBenchHitbox = benchTransformComponent.children[0] as Hitbox;
+      const researchBenchHitbox = benchTransformComponent.hitboxes[0];
 
       const benchLayer = getEntityLayer(bench);
 

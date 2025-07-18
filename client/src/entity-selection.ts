@@ -20,7 +20,7 @@ import { TunnelComponentArray } from "./entity-components/server-components/Tunn
 import { PlanterBoxComponentArray } from "./entity-components/server-components/PlanterBoxComponent";
 import { CraftingStationComponentArray } from "./entity-components/server-components/CraftingStationComponent";
 import { getLimbByInventoryName, InventoryUseComponentArray } from "./entity-components/server-components/InventoryUseComponent";
-import { entityChildIsHitbox, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { TribeComponentArray } from "./entity-components/server-components/TribeComponent";
 import { playerTribe } from "./tribes";
 import { sendMountCarrySlotPacket, sendPickUpEntityPacket, sendStructureInteractPacket, sendModifyBuildingPacket, sendSetCarryTargetPacket, sendSetAttackTargetPacket } from "./networking/packet-creation";
@@ -202,7 +202,7 @@ const getSelectedCarrySlotIdx = (entity: Entity): number | null => {
    }
    
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    const rideableComponent = RideableComponentArray.getComponent(entity);
 
@@ -360,7 +360,7 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
    // Pick up arrows
    if (entityType === EntityType.woodenArrow) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       if (getHitboxVelocity(hitbox).length() < 1) {
          return {
             type: InteractActionType.pickUpEntity,
@@ -422,7 +422,7 @@ const createInteractRenderInfo = (interactAction: InteractAction): EntityRenderI
       }
       case InteractActionType.mountCarrySlot: {
          const transformComponent = TransformComponentArray.getComponent(interactAction.interactEntity);
-         const interactEntityHitbox = transformComponent.children[0] as Hitbox;
+         const interactEntityHitbox = transformComponent.hitboxes[0];
          
          const renderInfo = new EntityRenderInfo(0, 0, 0, 1);
 
@@ -628,7 +628,7 @@ export function deselectHighlightedEntity(): void {
 // @Cleanup: name
 const getEntityID = (gameInteractState: GameInteractState, doPlayerProximityCheck: boolean, doCanSelectCheck: boolean): number => {
    const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
-   const playerHitbox = playerTransformComponent.children[0] as Hitbox;
+   const playerHitbox = playerTransformComponent.hitboxes[0];
    const layer = getEntityLayer(playerInstance!);
    
    const minChunkX = Math.max(Math.floor((Game.cursorX! - HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), 0);
@@ -651,7 +651,7 @@ const getEntityID = (gameInteractState: GameInteractState, doPlayerProximityChec
 
             const entityTransformComponent = TransformComponentArray.getComponent(currentEntity);
             if (doPlayerProximityCheck && doCanSelectCheck) {
-               const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+               const entityHitbox = entityTransformComponent.hitboxes[0];
                // @Incomplete: Should do it based on the distance from the closest hitbox rather than distance from player center
                if (playerHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position) > interactAction!.interactRange) {
                   continue;
@@ -659,8 +659,8 @@ const getEntityID = (gameInteractState: GameInteractState, doPlayerProximityChec
             }
             
             // Distance from cursor
-            for (const hitbox of entityTransformComponent.children) {
-               if (entityChildIsHitbox(hitbox) && boxIsWithinRange(hitbox.box, cursorPosition, HIGHLIGHT_CURSOR_RANGE)) {
+            for (const hitbox of entityTransformComponent.hitboxes) {
+               if (boxIsWithinRange(hitbox.box, cursorPosition, HIGHLIGHT_CURSOR_RANGE)) {
                   const distance = cursorPosition.calculateDistanceBetween(hitbox.box.position);
                   if (distance < minDist) {
                      minDist = distance;
@@ -712,7 +712,7 @@ const updateHighlightedEntity = (gameInteractState: GameInteractState, entity: E
    highlightedRenderInfo = createInteractRenderInfo(interactAction);
    
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+   const entityHitbox = entityTransformComponent.hitboxes[0];
    
    switch (interactAction.type) {
       case InteractActionType.plantSeed: {

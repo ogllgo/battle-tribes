@@ -39,7 +39,7 @@ function createParamsFromData(reader: PacketReader): PricklyPearFragmentProjecti
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    const pricklyPearFragmentProjectileComponentParams = entityParams.serverComponentParams[ServerComponentType.pricklyPearFragmentProjectile]!;
 
@@ -73,7 +73,7 @@ function updateFromData(reader: PacketReader): void {
 
 function onDie(fragment: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(fragment);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    playSoundOnHitbox("prickly-pear-fragment-projectile-explode.mp3", 0.4, randFloat(0.9, 1.1), fragment, hitbox, false);
    

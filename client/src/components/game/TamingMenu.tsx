@@ -3,7 +3,7 @@ import CLIENT_ENTITY_INFO_RECORD from "../../client-entity-info";
 import { entityExists, getCurrentLayer, getEntityType } from "../../world";
 import { Entity } from "../../../../shared/src/entities";
 import { TamingSkill, TamingSkillID, TamingSkillNode, TamingTier } from "battletribes-shared/taming";
-import { getRootEntity, hasTamingSkill, TamingComponent, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
+import { hasTamingSkill, TamingComponent, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
 import Menu from "./menus/Menu";
 import { keyIsPressed } from "../../keyboard-input";
 import { sendAcquireTamingSkillPacket, sendCompleteTamingTierPacket, sendForceAcquireTamingSkillPacket, sendForceCompleteTamingTierPacket } from "../../networking/packet-creation";
@@ -114,10 +114,8 @@ const TamingMenu = () => {
 
    const clientEntityInfo = CLIENT_ENTITY_INFO_RECORD[getEntityType(entity)];
 
-   // @HACK: for glurb garbage
-   const rootEntity = getRootEntity(entity);
-   const tamingComponent = TamingComponentArray.getComponent(rootEntity);
-   const tamingSpec = getEntityTamingSpec(rootEntity);
+   const tamingComponent = TamingComponentArray.getComponent(entity);
+   const tamingSpec = getEntityTamingSpec(entity);
    const nextTamingTierFoodCost: number | undefined = tamingSpec.tierFoodRequirements[(tamingComponent.tamingTier + 1) as TamingTier];
 
    const foodProgress = typeof nextTamingTierFoodCost !== "undefined" ? Math.min(tamingComponent.foodEatenInTier / nextTamingTierFoodCost, 1) : 1;
@@ -234,7 +232,7 @@ const TamingMenu = () => {
                }
 
                const ending = SKILL_ICON_NAMES[skill.id];
-               const entityInternalName = CLIENT_ENTITY_INFO_RECORD[getEntityType(rootEntity)].internalName;
+               const entityInternalName = CLIENT_ENTITY_INFO_RECORD[getEntityType(entity)].internalName;
                const iconSrc = require("../../images/menus/taming-almanac/" + entityInternalName + "-skills/" + ending);
 
                return <div key={i} className={className} style={{top: skillNode.y * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem", left: `calc(50% + ${skillNode.x * Vars.SKILL_TRANSFORM_SCALE_FACTOR}rem)`}}>

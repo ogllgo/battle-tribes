@@ -23,7 +23,7 @@ BattleaxeProjectileComponentArray.onTick = {
 
 function onTick(battleaxe: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(battleaxe);
-   const battleaxeHitbox = transformComponent.children[0] as Hitbox;
+   const battleaxeHitbox = transformComponent.hitboxes[0];
 
    const ageTicks = getEntityAgeTicks(battleaxe);
    if (ageTicks < Vars.RETURN_TIME_TICKS) {
@@ -43,7 +43,7 @@ function onTick(battleaxe: Entity): void {
 
       
       const ownerTransformComponent = TransformComponentArray.getComponent(throwingProjectileComponent.tribeMember);
-      const ownerHitbox = ownerTransformComponent.children[0] as Hitbox;
+      const ownerHitbox = ownerTransformComponent.hitboxes[0];
       
       const ageTicks = getEntityAgeTicks(battleaxe);
       const ticksSinceReturn = ageTicks - Vars.RETURN_TIME_TICKS;

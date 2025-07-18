@@ -20,7 +20,7 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { TamingComponent } from "../../components/TamingComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { TukmokComponent } from "../../components/TukmokComponent";
-import { createHitbox, Hitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 import Layer from "../../Layer";
 import { createTukmokSpurConfig } from "./tukmok-spur";
 import { createTukmokTailConfig } from "./tukmok-tail";
@@ -55,13 +55,13 @@ function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: numb
 export function createTukmokConfig(position: Point, angle: number): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const bodyHitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), angle, 104, 176), 8, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.TUKMOK_BODY]);
+   const bodyHitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), angle, 104, 176), 8, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.TUKMOK_BODY]);
    addHitboxToTransformComponent(transformComponent, bodyHitbox);
 
    const headOffset = new Point(0, 108);
    const headPosition = position.copy();
    headPosition.add(rotatePoint(headOffset, angle));
-   const headHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(headPosition, headOffset, 0, 28), 2.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.TUKMOK_HEAD]);
+   const headHitbox = new Hitbox(transformComponent, bodyHitbox, true, new CircularBox(headPosition, headOffset, 0, 28), 2.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.TUKMOK_HEAD]);
    headHitbox.box.pivot = createAbsolutePivotPoint(0, -20);
    addHitboxToTransformComponent(transformComponent, headHitbox);
 
@@ -83,9 +83,9 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
       const trunkConfig = createTukmokSpurConfig(spurPosition, 0, headHitbox, offset, HitboxFlag.TUKMOK_SPUR_HEAD, sideIsFlipped);
       childConfigs.push({
          entityConfig: trunkConfig,
-         attachedHitbox: trunkConfig.components[ServerComponentType.transform]!.children[0] as Hitbox,
+         attachedHitbox: trunkConfig.components[ServerComponentType.transform]!.hitboxes[0],
          parentHitbox: headHitbox,
-         destroyWhenParentIsDestroyed: true
+         isPartOfParent: true
       });
    }
 
@@ -95,9 +95,9 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
    const shoulderSpurLeftFrontConfig = createTukmokSpurConfig(shoulderSpurLeftFrontPosition, -Math.PI * 0.05, bodyHitbox, shoulderSpurLeftFrontOffset, HitboxFlag.TUKMOK_SPUR_SHOULDER_LEFT_FRONT, false);
    childConfigs.push({
       entityConfig: shoulderSpurLeftFrontConfig,
-      attachedHitbox: shoulderSpurLeftFrontConfig.components[ServerComponentType.transform]!.children[0] as Hitbox,
+      attachedHitbox: shoulderSpurLeftFrontConfig.components[ServerComponentType.transform]!.hitboxes[0],
       parentHitbox: bodyHitbox,
-      destroyWhenParentIsDestroyed: true
+      isPartOfParent: true
    });
 
    const shoulderSpurLeftBackOffset = new Point(-70, 76);
@@ -106,9 +106,9 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
    const shoulderSpurLeftBackConfig = createTukmokSpurConfig(shoulderSpurLeftBackPosition, 0, bodyHitbox, shoulderSpurLeftBackOffset, HitboxFlag.TUKMOK_SPUR_SHOULDER_LEFT_BACK, false);
    childConfigs.push({
       entityConfig: shoulderSpurLeftBackConfig,
-      attachedHitbox: shoulderSpurLeftBackConfig.components[ServerComponentType.transform]!.children[0] as Hitbox,
+      attachedHitbox: shoulderSpurLeftBackConfig.components[ServerComponentType.transform]!.hitboxes[0],
       parentHitbox: bodyHitbox,
-      destroyWhenParentIsDestroyed: true
+      isPartOfParent: true
    });
 
    const shoulderSpurRightFrontOffset = new Point(56, 80);
@@ -117,9 +117,9 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
    const shoulderSpurRightFrontConfig = createTukmokSpurConfig(shoulderSpurRightFrontPosition, -Math.PI * 0.04, bodyHitbox, shoulderSpurRightFrontOffset, HitboxFlag.TUKMOK_SPUR_SHOULDER_RIGHT_FRONT, false);
    childConfigs.push({
       entityConfig: shoulderSpurRightFrontConfig,
-      attachedHitbox: shoulderSpurRightFrontConfig.components[ServerComponentType.transform]!.children[0] as Hitbox,
+      attachedHitbox: shoulderSpurRightFrontConfig.components[ServerComponentType.transform]!.hitboxes[0],
       parentHitbox: bodyHitbox,
-      destroyWhenParentIsDestroyed: true
+      isPartOfParent: true
    });
 
    const shoulderSpurRightBackOffset = new Point(68, 62);
@@ -128,9 +128,9 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
    const shoulderSpurRightBackConfig = createTukmokSpurConfig(shoulderSpurRightBackPosition, Math.PI * 0.08, bodyHitbox, shoulderSpurRightBackOffset, HitboxFlag.TUKMOK_SPUR_SHOULDER_RIGHT_BACK, false);
    childConfigs.push({
       entityConfig: shoulderSpurRightBackConfig,
-      attachedHitbox: shoulderSpurRightBackConfig.components[ServerComponentType.transform]!.children[0] as Hitbox,
+      attachedHitbox: shoulderSpurRightBackConfig.components[ServerComponentType.transform]!.hitboxes[0],
       parentHitbox: bodyHitbox,
-      destroyWhenParentIsDestroyed: true
+      isPartOfParent: true
    });
 
    const trunkOffset = new Point(0, 26);
@@ -139,9 +139,9 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
    const trunkConfig = createTukmokTrunkConfig(trunkPosition, angle, trunkOffset, headHitbox);
    childConfigs.push({
       entityConfig: trunkConfig,
-      attachedHitbox: trunkConfig.components[ServerComponentType.transform]!.children[0] as Hitbox,
+      attachedHitbox: trunkConfig.components[ServerComponentType.transform]!.hitboxes[0],
       parentHitbox: headHitbox,
-      destroyWhenParentIsDestroyed: true
+      isPartOfParent: true
    });
 
    const tailOffset = new Point(0, -100);
@@ -150,9 +150,9 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
    const tailConfig = createTukmokTailConfig(tailPosition, angle, tailOffset, bodyHitbox);
    childConfigs.push({
       entityConfig: tailConfig,
-      attachedHitbox: tailConfig.components[ServerComponentType.transform]!.children[0] as Hitbox,
+      attachedHitbox: tailConfig.components[ServerComponentType.transform]!.hitboxes[0],
       parentHitbox: bodyHitbox,
-      destroyWhenParentIsDestroyed: true
+      isPartOfParent: true
    });
 
    const physicsComponent = new PhysicsComponent();

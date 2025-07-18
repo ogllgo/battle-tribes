@@ -1,11 +1,9 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { entityChildIsHitbox } from "./TransformComponent";
 
 export interface BracingsComponentParams {}
 
@@ -38,11 +36,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
 
    // Vertical posts
-   for (const hitbox of transformComponentParams.children) {
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
-      
+   for (const hitbox of transformComponentParams.hitboxes) {
       const renderPart = new TexturedRenderPart(
          hitbox,
          0,
@@ -53,7 +47,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
       renderInfo.attachRenderPart(renderPart);
    }
 
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    // Horizontal bar connecting the vertical ones
    const horizontalBar = new TexturedRenderPart(

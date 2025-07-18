@@ -11,7 +11,6 @@ import { AIHelperComponent } from "../components/AIHelperComponent";
 import { hasTamingSkill, TamingComponentArray } from "../components/TamingComponent";
 import { detachHitbox, TransformComponentArray } from "../components/TransformComponent";
 import { createKrumblidMorphCocoonConfig } from "../entities/desert/krumblid-morph-cocoon";
-import { Hitbox } from "../hitboxes";
 import { createEntity, destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 
 export class KrumblidHibernateAI {
@@ -30,7 +29,7 @@ export class KrumblidHibernateAI {
 
 const getRandomNearbyPosition = (krumblid: Entity): Point => {
    const krumblidTransformComponent = TransformComponentArray.getComponent(krumblid);
-   const krumblidHitbox = krumblidTransformComponent.children[0] as Hitbox;
+   const krumblidHitbox = krumblidTransformComponent.hitboxes[0];
 
    const RANGE = 600;
    
@@ -158,9 +157,11 @@ export function runKrumblidHibernateAI(krumblid: Entity, aiHelperComponent: AIHe
    }
 
    const krumblidTransformComponent = TransformComponentArray.getComponent(krumblid);
+   const krumblidHitbox = krumblidTransformComponent.hitboxes[0];
+
    // if the krumblid was previously latched onto a target or sitting on an object, unattach.
-   if (krumblidTransformComponent.rootEntity !== krumblid) {
-      detachHitbox(krumblidTransformComponent.rootEntity, krumblid);
+   if (krumblidHitbox.parent !== null) {
+      detachHitbox(krumblidHitbox);
    }
 
    if (hibernateAI.hibernateTargetPosition !== null) {
@@ -168,7 +169,6 @@ export function runKrumblidHibernateAI(krumblid: Entity, aiHelperComponent: AIHe
       aiHelperComponent.moveFunc(krumblid, hibernateAI.hibernateTargetPosition, hibernateAI.acceleration);
       aiHelperComponent.turnFunc(krumblid, hibernateAI.hibernateTargetPosition, hibernateAI.turnSpeed, hibernateAI.turnDamping);
 
-      const krumblidHitbox = krumblidTransformComponent.children[0] as Hitbox;
       if (krumblidHitbox.box.position.calculateDistanceBetween(hibernateAI.hibernateTargetPosition) < 1) {
          destroyEntity(krumblid);
 

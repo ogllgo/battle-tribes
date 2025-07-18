@@ -54,7 +54,7 @@ function createParamsFromData(reader: PacketReader): TreePlantedComponentParams 
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    const growthProgress = entityParams.serverComponentParams[ServerComponentType.treePlanted]!.growthProgress;
    
@@ -139,6 +139,6 @@ function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point, hitFlags: num
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox(randItem(TREE_DESTROY_SOUNDS), 0.5, 1, entity, hitbox, false);
 }

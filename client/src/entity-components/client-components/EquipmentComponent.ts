@@ -167,7 +167,7 @@ const updateArmourRenderPart = (equipmentComponent: EquipmentComponent, entity: 
       
       if (equipmentComponent.armourRenderPart === null) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.children[0] as Hitbox;
+         const hitbox = transformComponent.hitboxes[0] as Hitbox;
          
          equipmentComponent.armourRenderPart = new TexturedRenderPart(
             hitbox,

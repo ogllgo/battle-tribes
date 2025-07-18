@@ -11,11 +11,11 @@ import { addHitboxToTransformComponent, TransformComponent } from "../components
 import { PhysicsComponent } from "../components/PhysicsComponent";
 import { FleshSwordItemComponent } from "../components/FleshSwordItemComponent";
 import { AIHelperComponent } from "../components/AIHelperComponent";
-import { createHitbox } from "../hitboxes";
+import { Hitbox } from "../hitboxes";
 
 export function createFleshSwordItemEntityConfig(position: Point, rotation: number, itemType: ItemType, amount: number, throwingEntity: Entity | null): EntityConfig {
    const transformComponent = new TransformComponent();
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 16, 16), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 16, 16), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionMask = DEFAULT_COLLISION_MASK & ~CollisionBit.planterBox;
    

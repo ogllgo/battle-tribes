@@ -19,7 +19,7 @@ import Layer from "../../Layer";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { InventoryUseComponent } from "../../components/InventoryUseComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 export const enum ZombieVars {
    CHASE_PURSUE_TIME_TICKS = 5 * Settings.TPS,
@@ -48,7 +48,7 @@ export function createZombieConfig(position: Point, rotation: number, isGolden: 
 
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 32), 1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 32), 1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const physicsComponent = new PhysicsComponent();

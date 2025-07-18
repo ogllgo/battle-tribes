@@ -104,7 +104,7 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
    
@@ -319,7 +319,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          switch (statusEffectData.type) {
             case StatusEffect.freezing: {
                const transformComponent = TransformComponentArray.getComponent(entity);
-               const hitbox = transformComponent.children[0] as Hitbox;
+               const hitbox = transformComponent.hitboxes[0];
                playSoundOnHitbox("freezing.mp3", 0.4, 1, entity, hitbox, false);
                break;
             }

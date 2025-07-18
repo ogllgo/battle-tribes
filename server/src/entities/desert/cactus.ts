@@ -12,7 +12,7 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { CactusComponent, CactusFlower } from "../../components/CactusComponent";
 import { ItemType } from "../../../../shared/src/items/items";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { createHitbox, Hitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 import { createPricklyPearConfig } from "./prickly-pear";
 
 const RADIUS = 40;
@@ -29,7 +29,7 @@ export function createCactusConfig(position: Point, rotation: number): EntityCon
    transformComponent.collisionBit = CollisionBit.cactus;
 
    // Root hitbox
-   const rootHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, RADIUS - HITBOX_PADDING), 1, HitboxCollisionType.soft, CollisionBit.cactus, DEFAULT_COLLISION_MASK, []);
+   const rootHitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, RADIUS - HITBOX_PADDING), 1, HitboxCollisionType.soft, CollisionBit.cactus, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, rootHitbox);
 
    const flowers = new Array<CactusFlower>();
@@ -65,7 +65,7 @@ export function createCactusConfig(position: Point, rotation: number): EntityCon
    // Limbs
    for (let i = 0; i < numLimbs; i++) {
       const box = new CircularBox(new Point(0, 0), polarVec2(37, randAngle()), 0, 18);
-      const hitbox = createHitbox(transformComponent, rootHitbox, box, 0.4, HitboxCollisionType.soft, CollisionBit.cactus, DEFAULT_COLLISION_MASK, []);
+      const hitbox = new Hitbox(transformComponent, rootHitbox, true, box, 0.4, HitboxCollisionType.soft, CollisionBit.cactus, DEFAULT_COLLISION_MASK, []);
       addHitboxToTransformComponent(transformComponent, hitbox);
 
       if (Math.random() < 0.45) {
@@ -103,9 +103,9 @@ export function createCactusConfig(position: Point, rotation: number): EntityCon
       const config = createPricklyPearConfig(position, randAngle());
       childConfigs.push({
          entityConfig: config,
-         attachedHitbox: config.components[ServerComponentType.transform]!.children[0] as Hitbox,
+         attachedHitbox: config.components[ServerComponentType.transform]!.hitboxes[0],
          parentHitbox: rootHitbox,
-         destroyWhenParentIsDestroyed: true
+         isPartOfParent: true
       });
    }
    

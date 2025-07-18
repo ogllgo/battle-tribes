@@ -24,7 +24,7 @@ export class HitboxTether {
 
       // @Hack shitass checks until i decouple tethers from transform components
       let hasFound = false;
-      for (const hitbox of transformComponent1.children) {
+      for (const hitbox of transformComponent1.hitboxes) {
          if (hitbox === hitbox1) {
             hasFound = true;
             break;
@@ -34,7 +34,7 @@ export class HitboxTether {
          throw new Error();
       }
       hasFound = false;
-      for (const hitbox of transformComponent2.children) {
+      for (const hitbox of transformComponent2.hitboxes) {
          if (hitbox === hitbox2) {
             hasFound = true;
             break;

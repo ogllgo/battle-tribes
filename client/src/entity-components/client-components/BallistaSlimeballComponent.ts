@@ -29,7 +29,7 @@ export function createBallistaSlimeballComponentParams(): BallistaSlimeballCompo
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -54,7 +54,7 @@ function getMaxRenderParts(): number {
 function onDie(entity: Entity): void {
    // Create arrow break particles
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    const velocity = getHitboxVelocity(hitbox);
    for (let i = 0; i < 6; i++) {
       createArrowDestroyParticle(hitbox.box.position.x, hitbox.box.position.y, velocity.x, velocity.y);

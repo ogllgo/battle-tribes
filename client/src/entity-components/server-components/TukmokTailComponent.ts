@@ -5,7 +5,6 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { entityChildIsHitbox } from "./TransformComponent";
 
 export interface TukmokTailComponentParams {}
 
@@ -29,11 +28,8 @@ function createParamsFromData(): TukmokTailComponentParams {
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
 
-   for (let i = 0; i < transformComponentParams.children.length; i++) {
-      const hitbox = transformComponentParams.children[i];
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
+   for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
+      const hitbox = transformComponentParams.hitboxes[i];
 
       let textureSource: string;
       if (hitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_CLUB)) {

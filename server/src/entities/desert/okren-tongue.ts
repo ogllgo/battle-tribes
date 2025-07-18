@@ -21,7 +21,7 @@ export function createOkrenTongueConfig(position: Point, angle: number, okrenHit
    const tongueTipConfig = createOkrenTongueTipConfig(position, angle);
 
    // Restrict the new base entity to match the direction of the okren
-   const tongueTipHitbox = tongueTipConfig.components[ServerComponentType.transform]!.children[0] as Hitbox;
+   const tongueTipHitbox = tongueTipConfig.components[ServerComponentType.transform]!.hitboxes[0];
    // @Copynpaste
    const angularTether: HitboxAngularTether = {
       originHitbox: okrenHitbox,
@@ -50,7 +50,7 @@ export function createOkrenTongueConfig(position: Point, angle: number, okrenHit
          entityConfig: tongueTipConfig,
          attachedHitbox: tongueTipHitbox,
          parentHitbox: okrenHitbox,
-            destroyWhenParentIsDestroyed: true
+            isPartOfParent: true
       }]
    };
 }

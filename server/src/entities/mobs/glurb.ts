@@ -76,7 +76,7 @@ export function createGlurbConfig(position: Point, angle: number): EntityConfig 
       }
       
       const segmentTransformComponent = config.components[ServerComponentType.transform]!;
-      const segmentHitbox = segmentTransformComponent.children[0] as Hitbox;
+      const segmentHitbox = segmentTransformComponent.hitboxes[0];
 
       // @INCOMPLETE this will cause head to no worky
       if (typeof lastHitbox !== "undefined") {
@@ -84,7 +84,7 @@ export function createGlurbConfig(position: Point, angle: number): EntityConfig 
             entityConfig: config,
             attachedHitbox: segmentHitbox,
             parentHitbox: lastHitbox,
-            destroyWhenParentIsDestroyed: true
+            isPartOfParent: true
          });
       }
 

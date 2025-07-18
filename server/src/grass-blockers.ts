@@ -1,7 +1,7 @@
 import { Settings } from "battletribes-shared/settings";
 import Chunk from "./Chunk";
 import { Entity } from "battletribes-shared/entities";
-import { entityChildIsHitbox, TransformComponentArray } from "./components/TransformComponent";
+import { TransformComponentArray } from "./components/TransformComponent";
 import { Box, boxIsCircular, cloneBox, HitboxFlag, updateVertexPositionsAndSideAxes } from "battletribes-shared/boxes/boxes";
 import { entityExists, getEntityLayer } from "./world";
 import { surfaceLayer } from "./layers";
@@ -116,9 +116,9 @@ export function createStructureGrassBlockers(structure: Entity): void {
    const layer = getEntityLayer(structure);
    const transformComponent = TransformComponentArray.getComponent(structure);
    
-   for (let i = 0; i < transformComponent.children.length; i++) {
-      const hitbox = transformComponent.children[i];
-      if (!entityChildIsHitbox(hitbox) || hitbox.flags.includes(HitboxFlag.NON_GRASS_BLOCKING)) {
+   for (let i = 0; i < transformComponent.hitboxes.length; i++) {
+      const hitbox = transformComponent.hitboxes[i];
+      if (hitbox.flags.includes(HitboxFlag.NON_GRASS_BLOCKING)) {
          continue;
       }
       

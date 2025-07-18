@@ -62,7 +62,7 @@ const grow = (iceSpikes: Entity): void => {
    // @Speed: Garbage collection
 
    const transformComponent = TransformComponentArray.getComponent(iceSpikes);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    // Calculate the spawn position for the new ice spikes
    const position = hitbox.box.position.copy();
@@ -108,7 +108,7 @@ function onTick(iceSpikes: Entity): void {
 
 function preRemove(iceSpikes: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(iceSpikes);
-   const iceSpikesHitbox = transformComponent.children[0] as Hitbox;
+   const iceSpikesHitbox = transformComponent.hitboxes[0];
    
    // Explode into a bunch of ice spikes
    const numProjectiles = randInt(3, 4);
@@ -149,7 +149,7 @@ export function createIceShardExplosion(layer: Layer, originX: number, originY: 
 
       const config = createIceShardConfig(position, moveDirection);
 
-      const iceShardHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
+      const iceShardHitbox = config.components[ServerComponentType.transform]!.hitboxes[0];
       addHitboxVelocity(iceShardHitbox, polarVec2(700, moveDirection));
 
       createEntity(config, layer, 0);

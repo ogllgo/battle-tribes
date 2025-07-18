@@ -644,7 +644,7 @@ export function createSyncDataPacket(playerClient: PlayerClient): ArrayBuffer {
    const packet = new Packet(PacketType.syncData, lengthBytes);
    
    const transformComponent = TransformComponentArray.getComponent(player);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    packet.addNumber(hitbox.box.position.x);
    packet.addNumber(hitbox.box.position.y);
    packet.addNumber(hitbox.box.angle);

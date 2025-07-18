@@ -41,7 +41,7 @@ export function createWallComponentParams(): WallComponentParams {
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const buildingMaterialComponentParams = entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!;
    
@@ -90,7 +90,7 @@ const updateDamageRenderPart = (entity: Entity, health: number, maxHealth: numbe
    const textureSource = "entities/wall/wooden-wall-damage-" + damageStage + ".png";
    if (wallComponent.damageRenderPart === null) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       
       wallComponent.damageRenderPart = new TexturedRenderPart(
          hitbox,
@@ -130,7 +130,7 @@ function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
 // @Incomplete: doesn't play when removed by deconstruction
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    // @Speed @Hack
    // Don't play death effects if the wall was replaced by a blueprint
@@ -141,7 +141,7 @@ function onDie(entity: Entity): void {
          }
 
          const entityTransformComponent = TransformComponentArray.getComponent(entity);
-         const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+         const entityHitbox = entityTransformComponent.hitboxes[0];
 
          const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
          if (dist < 1) {

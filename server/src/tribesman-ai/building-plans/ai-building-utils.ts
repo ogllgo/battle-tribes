@@ -7,8 +7,6 @@ import { StructureType } from "../../../../shared/src/structures";
 import { getSubtileIndex } from "../../../../shared/src/subtiles";
 import { getTileIndexIncludingEdges, Point, randAngle, randFloat } from "../../../../shared/src/utils";
 import { boxArraysAreColliding, boxHasCollisionWithBoxes } from "../../collision-detection";
-import { entityChildIsHitbox } from "../../components/TransformComponent";
-import { Hitbox } from "../../hitboxes";
 import { createStructureConfig } from "../../structure-placement";
 import { getTribes } from "../../world";
 import { SafetyNode, addBoxesOccupiedNodes } from "../ai-building";
@@ -30,13 +28,12 @@ export function createBuildingCandidate(entityType: StructureType, buildingLayer
    const tribe = getTribes()[0];
    const entityConfig = createStructureConfig(tribe, entityType, new Point(x, y), rotation, []);
    const transformComponent = entityConfig.components[ServerComponentType.transform]!;
-   const hitboxes = transformComponent.children.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>;
 
    const candidate: BuildingCandidate = {
       buildingLayer: buildingLayer,
       position: new Point(x, y),
       rotation: rotation,
-      boxes: hitboxes.map(hitbox => hitbox.box)
+      boxes: transformComponent.hitboxes.map(hitbox => hitbox.box)
    };
 
    return candidate;

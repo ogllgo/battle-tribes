@@ -9,7 +9,7 @@ import { AIHelperComponent, AIType } from "../components/AIHelperComponent";
 import { HealthComponentArray } from "../components/HealthComponent";
 import { getOkrenMandibleHitbox, OKREN_SIDES } from "../components/OkrenComponent";
 import { SandBallComponentArray } from "../components/SandBallComponent";
-import { entityChildIsEntity, detachHitbox, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
+import { detachHitbox, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { createSandBallConfig } from "../entities/desert/sand-ball";
 import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle, HitboxAngularTether, addHitboxAngularAcceleration } from "../hitboxes";
 import { createEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
@@ -54,9 +54,11 @@ export function getSandBallMass(sizeInteger: number): number {
 }
 
 const getCurrentSandBall = (transformComponent: TransformComponent): Entity | null => {
-   for (const child of transformComponent.children) {
-      if (entityChildIsEntity(child) && getEntityType(child.attachedEntity) === EntityType.sandBall) {
-         return child.attachedEntity;
+   for (const hitbox of transformComponent.hitboxes) {
+      for (const childHitbox of hitbox.children) {
+         if (getEntityType(childHitbox.entity) === EntityType.sandBall) {
+            return childHitbox.entity;
+         }
       }
    }
    return null;
@@ -66,7 +68,7 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
    aiHelperComponent.currentAIType = AIType.sandBalling;
 
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+   const entityHitbox = entityTransformComponent.hitboxes[0];
    assertBoxIsCircular(entityHitbox.box);
 
    const currentSandBall = getCurrentSandBall(entityTransformComponent);
@@ -76,7 +78,7 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
       const sandBall = currentSandBall;
 
       const sandBallTransformComponent = TransformComponentArray.getComponent(sandBall);
-      const sandBallHitbox = sandBallTransformComponent.children[0] as Hitbox;
+      const sandBallHitbox = sandBallTransformComponent.hitboxes[0];
 
       if ((getEntityAgeTicks(entity) % Math.floor(Settings.TPS / 2)) === 0 && Math.random() < 0.5 / (Settings.TPS / 2)) {
          sandBallingAI.isTurningClockwise = !sandBallingAI.isTurningClockwise;
@@ -103,9 +105,9 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
       // (max size)
       if (sandBallComponent.size > 6) {
          sandBallComponent.size = 6;
-         detachHitbox(entity, currentSandBall);
+         detachHitbox(sandBallHitbox);
       } else if (--sandBallingAI.remainingBallTimeTicks <= 0) {
-         detachHitbox(entity, currentSandBall);
+         detachHitbox(sandBallHitbox);
       }
 
       const newSizeCategory = Math.floor(sandBallComponent.size);
@@ -123,7 +125,7 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
       if (getEntityType(entity) === EntityType.krumblid) {
          for (let i = 0; i < 2; i++) {
             // @Hack
-            const mandibleHitbox = entityTransformComponent.children[i + 1] as Hitbox;
+            const mandibleHitbox = entityTransformComponent.hitboxes[i + 1];
             const idealAngle = ((getEntityAgeTicks(entity) * 3.2 + (i === 0 ? Settings.TPS * 0.35 : 0)) % Settings.TPS) / Settings.TPS < 0.5 ? -Math.PI * 0.3 : Math.PI * 0.1;
             turnHitboxToAngle(mandibleHitbox, idealAngle, 3 * Math.PI, 0.5, true);
          }
@@ -152,7 +154,7 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
       
       const ballConfig = createSandBallConfig(new Point(x, y), entityHitbox.box.angle);
 
-      const ballHitbox = ballConfig.components[ServerComponentType.transform]!.children[0] as Hitbox;
+      const ballHitbox = ballConfig.components[ServerComponentType.transform]!.hitboxes[0];
       const angularTether: HitboxAngularTether = {
          originHitbox: entityHitbox,
          idealAngle: 0,

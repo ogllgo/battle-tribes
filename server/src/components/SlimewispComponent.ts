@@ -31,7 +31,7 @@ SlimewispComponentArray.onTick = {
 
 function onTick(slimewisp: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(slimewisp);
-   const slimewispHitbox = transformComponent.children[0] as Hitbox;
+   const slimewispHitbox = transformComponent.hitboxes[0];
 
    const tileIndex = getHitboxTile(slimewispHitbox);
    const layer = getEntityLayer(slimewisp);
@@ -49,7 +49,7 @@ function onTick(slimewisp: Entity): void {
       const mergingSlimewisp = aiHelperComponent.visibleEntities[i];
       if (getEntityType(mergingSlimewisp) === EntityType.slimewisp) {
          const mergingSlimewispTransformComponent = TransformComponentArray.getComponent(mergingSlimewisp);
-         const mergingSlimewispHitbox = mergingSlimewispTransformComponent.children[0] as Hitbox;
+         const mergingSlimewispHitbox = mergingSlimewispTransformComponent.hitboxes[0];
          
          moveEntityToPosition(slimewisp, mergingSlimewispHitbox.box.position.x, mergingSlimewispHitbox.box.position.y, Vars.ACCELERATION, Vars.TURN_SPEED, 1);
    

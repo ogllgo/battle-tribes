@@ -78,7 +78,7 @@ interface EntityDebugInfoProps {
 }
 const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    const displayX = roundNum(hitbox.box.position.x, 0);
    const displayY = roundNum(hitbox.box.position.y, 0);

@@ -79,7 +79,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    // Tribesman conversion
    if (tribeID !== tribeComponent.tribeID && TribesmanComponentArray.hasComponent(entity)) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
 
       playSoundOnHitbox("conversion.mp3", 0.4, 1, entity, hitbox, false);
 

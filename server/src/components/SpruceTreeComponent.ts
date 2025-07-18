@@ -28,7 +28,7 @@ SpruceTreeComponentArray.onJoin = onJoin;
 
 function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const treeHitbox = transformComponent.children[0] as Hitbox;
+   const treeHitbox = transformComponent.hitboxes[0];
    
    const spruceTreeComponent = SpruceTreeComponentArray.getComponent(entity);
 

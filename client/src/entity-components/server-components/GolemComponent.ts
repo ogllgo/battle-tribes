@@ -10,7 +10,7 @@ import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
-import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityParams } from "../../world";
@@ -127,11 +127,8 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    const eyeLights = new Array<Light>();
    
    // Add new rocks
-   for (let i = 0; i < transformComponentParams.children.length; i++) {
-      const hitbox = transformComponentParams.children[i];
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
+   for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
+      const hitbox = transformComponentParams.hitboxes[i];
 
       const box = hitbox.box as CircularBox;
       const size = getHitboxSize(box);
@@ -183,10 +180,7 @@ function getMaxRenderParts(entityParams: EntityParams): number {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    
    let maxRenderParts = 0;
-   for (const hitbox of transformComponentParams.children) {
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
+   for (const hitbox of transformComponentParams.hitboxes) {
       
       maxRenderParts++;
 
@@ -204,11 +198,8 @@ function onTick(entity: Entity): void {
    const golemComponent = GolemComponentArray.getComponent(entity);
 
    if (golemComponent.wakeProgress > 0 && golemComponent.wakeProgress < 1) {
-      for (let i = 0; i < transformComponent.children.length; i++) {
-         const hitbox = transformComponent.children[i];
-         if (!entityChildIsHitbox(hitbox)) {
-            continue;
-         }
+      for (let i = 0; i < transformComponent.hitboxes.length; i++) {
+         const hitbox = transformComponent.hitboxes[i];
          
          const box = hitbox.box as CircularBox;
          const velocity = getHitboxVelocity(hitbox);
@@ -219,15 +210,12 @@ function onTick(entity: Entity): void {
          createRockSpeckParticle(x, y, 0, velocity.x, velocity.y, ParticleRenderLayer.low);
       }
    } else if (golemComponent.wakeProgress === 1) {
-      for (let i = 0; i < transformComponent.children.length; i++) {
+      for (let i = 0; i < transformComponent.hitboxes.length; i++) {
          if (Math.random() >= 6 / Settings.TPS) {
             continue;
          }
 
-         const hitbox = transformComponent.children[i];
-         if (!entityChildIsHitbox(hitbox)) {
-            continue;
-         }
+         const hitbox = transformComponent.hitboxes[i];
          const box = hitbox.box as CircularBox;
          const velocity = getHitboxVelocity(hitbox);
 
@@ -254,7 +242,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    if (isAwake && ticksAwake % ANGRY_SOUND_INTERVAL_TICKS === 0) {
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       playSoundOnHitbox("golem-angry.mp3", 0.4, 1, entity, hitbox, true);
    }
    
@@ -262,11 +250,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
    // @CLEANUP
    const shakeAmount = golemComponent.wakeProgress > 0 && golemComponent.wakeProgress < 1 ? 1 : 0;
-   for (let i = 0; i < transformComponent.children.length; i++) {
-      const hitbox = transformComponent.children[i];
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
+   for (let i = 0; i < transformComponent.hitboxes.length; i++) {
+      const hitbox = transformComponent.hitboxes[i];
       
       const box = hitbox.box;
       const renderPart = golemComponent.rockRenderParts[i];

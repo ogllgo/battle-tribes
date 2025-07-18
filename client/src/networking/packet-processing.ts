@@ -629,7 +629,7 @@ export function processGameDataPacket(reader: PacketReader): void {
             // Register stopped hit
                      
             const transformComponent = TransformComponentArray.getComponent(hitEntity);
-            const hitbox = transformComponent.children[0] as Hitbox;
+            const hitbox = transformComponent.hitboxes[0];
             for (let i = 0; i < 6; i++) {
                const position = hitbox.box.position.offset(randFloat(0, 6), randAngle());
                createSparkParticle(position.x, position.y);
@@ -641,7 +641,7 @@ export function processGameDataPacket(reader: PacketReader): void {
 
             // If the entity is hit by a flesh sword, create slime puddles
             if (flags & HitFlags.HIT_BY_FLESH_SWORD) {
-               const hitbox = transformComponent.children[0] as Hitbox;
+               const hitbox = transformComponent.hitboxes[0];
                for (let i = 0; i < 2; i++) {
                   createSlimePoolParticle(hitbox.box.position.x, hitbox.box.position.y, 32);
                }
@@ -864,7 +864,7 @@ export function processSyncDataPacket(reader: PacketReader): void {
    if (!Game.isRunning || playerInstance === null) return;
 
    const transformComponent = TransformComponentArray.getComponent(playerInstance);
-   const playerHitbox = transformComponent.children[0] as Hitbox;
+   const playerHitbox = transformComponent.hitboxes[0];
    
    const x = reader.readNumber();
    const y = reader.readNumber();
@@ -891,7 +891,7 @@ export function processForcePositionUpdatePacket(reader: PacketReader): void {
    const y = reader.readNumber();
 
    const transformComponent = TransformComponentArray.getComponent(playerInstance);
-   const playerHitbox = transformComponent.children[0] as Hitbox;
+   const playerHitbox = transformComponent.hitboxes[0];
    playerHitbox.box.position.x = x;
    playerHitbox.box.position.y = y;
 }

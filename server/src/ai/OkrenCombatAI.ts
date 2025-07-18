@@ -9,7 +9,7 @@ import { AIHelperComponent, AIType } from "../components/AIHelperComponent";
 import { getOkrenMandibleHitbox, OKREN_SIDES, OkrenComponentArray, okrenHitboxesHaveReachedIdealAngles, OkrenSide, OkrenSwingState, restingIdealAngles } from "../components/OkrenComponent";
 import { OkrenTongueComponentArray } from "../components/OkrenTongueComponent";
 import { TamingComponentArray } from "../components/TamingComponent";
-import { entityChildIsEntity, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
+import { TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
 import { TribeMemberComponentArray } from "../components/TribeMemberComponent"
 import { createOkrenTongueConfig } from "../entities/desert/okren-tongue";
@@ -63,7 +63,7 @@ const entityIsPrey = (_okren: Entity, entity: Entity): boolean => {
 
 const getAttackTarget = (okren: Entity, aiHelperComponent: AIHelperComponent, entityIsTargetted: (okren: Entity, entity: Entity) => boolean): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(okren);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    let minDist = Number.MAX_SAFE_INTEGER;
    let target: Entity | null = null;
@@ -73,7 +73,7 @@ const getAttackTarget = (okren: Entity, aiHelperComponent: AIHelperComponent, en
       }
       
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
-      const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+      const entityHitbox = entityTransformComponent.hitboxes[0];
 
       const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
       if (dist < minDist) {
@@ -93,10 +93,12 @@ export function getOkrenPreyTarget(okren: Entity, aiHelperComponent: AIHelperCom
    return getAttackTarget(okren, aiHelperComponent, entityIsPrey);
 }
 
-const getTongue = (transformComponent: TransformComponent): Entity | null => {
-   for (const child of transformComponent.children) {
-      if (entityChildIsEntity(child) && getEntityType(child.attachedEntity) === EntityType.okrenTongue) {
-         return child.attachedEntity;
+const getTongue = (okrenTransformComponent: TransformComponent): Entity | null => {
+   for (const hitbox of okrenTransformComponent.hitboxes) {
+      for (const childHitbox of hitbox.children) {
+         if (getEntityType(childHitbox.entity) === EntityType.okrenTongue) {
+            return childHitbox.entity;
+         }
       }
    }
    return null;
@@ -113,7 +115,7 @@ const deployTongue = (okren: Entity, okrenHitbox: Hitbox, target: Entity): void 
    const position = getTonguePosition(okrenHitbox, TONGUE_INITIAL_OFFSET);
    
    const tongueConfig = createOkrenTongueConfig(position, okrenHitbox.box.angle, okrenHitbox, target);
-   const tongueHitbox = tongueConfig.components[ServerComponentType.transform]!.children[0] as Hitbox;
+   const tongueHitbox = tongueConfig.components[ServerComponentType.transform]!.hitboxes[0];
    tongueConfig.attachInfo = createEntityConfigAttachInfo(okren, tongueHitbox, okrenHitbox, true);
    createEntity(tongueConfig, getEntityLayer(okren), 0);
 
@@ -131,7 +133,7 @@ export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperCompo
    const okrenComponent = OkrenComponentArray.getComponent(okren);
       
    const transformComponent = TransformComponentArray.getComponent(okren);
-   const okrenHitbox = transformComponent.children[0] as Hitbox;
+   const okrenHitbox = transformComponent.hitboxes[0];
 
    let target: Entity;
    const existingTongue = getTongue(transformComponent);
@@ -155,7 +157,7 @@ export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperCompo
    }
    
    const targetTransformComponent = TransformComponentArray.getComponent(target);
-   const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+   const targetHitbox = targetTransformComponent.hitboxes[0];
 
    let isLeaning = false;
    // @Hack: override the ideal angle

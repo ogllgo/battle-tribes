@@ -4,9 +4,9 @@ import { CollisionBit } from "../../shared/src/collision";
 import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { TILE_PHYSICS_INFO_RECORD, TileType } from "../../shared/src/tiles";
-import { assert, clampAngleA, getAngleDiff, getTileIndexIncludingEdges, Point, polarVec2, TileIndex } from "../../shared/src/utils";
+import { assert, getAngleDiff, getTileIndexIncludingEdges, Point, polarVec2, TileIndex } from "../../shared/src/utils";
 import { PhysicsComponentArray } from "./components/PhysicsComponent";
-import { EntityAttachInfo, entityChildIsEntity, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
+import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { registerPlayerKnockback } from "./server/player-clients";
 import { HitboxTether } from "./tethers";
 import { getEntityLayer, getEntityType } from "./world";
@@ -30,69 +30,66 @@ export interface HitboxRelativeAngleConstraint {
    readonly damping: number;
 }
 
-export interface Hitbox {
-   readonly localID: number;
+export class Hitbox {
+   public readonly localID: number;
+
+   // THESE BOTH START AT 0 BUT WILL BE FILLED BY THE TRANSFORM COMPONENT'S INITIALISATION
+   /** The entity the hitbox belongs to. */
+   // @Cleanup would be really nice to make the entity field readonly, but rn it has to be set when it's initialised so idk how that would work
+   public entity: Entity = 0;
+   public rootEntity: Entity = 0;
    
-   parent: Hitbox | null;
-   readonly children: Array<Hitbox | EntityAttachInfo>;
+   public parent: Hitbox | null;
+   /** If true, the hitbox will be considered like it and its parent are part of the same thing, regardless even of if they belong to different entities. */
+   public isPartOfParent: boolean;
+
+   public readonly children = new Array<Hitbox>();
    
-   readonly box: Box;
+   public readonly box: Box;
    
-   readonly previousPosition: Point;
-   readonly acceleration: Point;
+   public readonly previousPosition: Point;
+   public readonly acceleration = new Point(0, 0);
    // @Incomplete: make it impossible to add or remove from here
-   readonly tethers: Array<HitboxTether>;
+   public readonly tethers = new Array<HitboxTether>();
    
-   previousRelativeAngle: number;
-   angularAcceleration: number;
-   // NOTE: Angular tethers only work correctly when the hitbox has a normalised pivot point of (0, -0.5)
-   readonly angularTethers: Array<HitboxAngularTether>;
-   readonly relativeAngleConstraints: Array<HitboxRelativeAngleConstraint>;
+   public previousRelativeAngle: number;
+   public angularAcceleration = 0;
+   public readonly angularTethers = new Array<HitboxAngularTether>();
+   public readonly relativeAngleConstraints = new Array<HitboxRelativeAngleConstraint>();
    
-   mass: number;
-   collisionType: HitboxCollisionType;
-   readonly collisionBit: CollisionBit;
+   public mass: number;
+   public collisionType: HitboxCollisionType;
+   public readonly collisionBit: CollisionBit;
    // @Temporary: this isn't readonly so that snobes can temporarily not collide with snowballs when digging
-   collisionMask: number;
-   readonly flags: ReadonlyArray<HitboxFlag>;
+   public collisionMask: number;
+   public readonly flags: ReadonlyArray<HitboxFlag>;
 
    // @Memory: entities without physics components don't need these 4.
-   boundsMinX: number;
-   boundsMaxX: number;
-   boundsMinY: number;
-   boundsMaxY: number;
-}
+   public boundsMinX = 0;
+   public boundsMaxX = 0;
+   public boundsMinY = 0;
+   public boundsMaxY = 0;
 
-export function createHitbox(transformComponent: TransformComponent, parent: Hitbox | null, box: Box, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
-   const localID = transformComponent.nextHitboxLocalID++;
+   constructor(transformComponent: TransformComponent, parent: Hitbox | null, isPartOfParent: boolean, box: Box, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>) {
+      this.localID = transformComponent.nextHitboxLocalID++;
+      this.parent = parent;
+      this.isPartOfParent = isPartOfParent;
+      this.box = box;
    
-   return {
-      localID: localID,
-      parent: parent,
-      children: [],
-      box: box,
-      previousPosition: box.position.copy(),
-      acceleration: new Point(0, 0),
-      tethers: [],
-      previousRelativeAngle: box.relativeAngle,
-      angularAcceleration: 0,
-      angularTethers: [],
-      relativeAngleConstraints: [],
-      mass: mass,
-      collisionType: collisionType,
-      collisionBit: collisionBit,
-      collisionMask: collisionMask,
-      flags: flags,
-      boundsMinX: 0,
-      boundsMaxX: 0,
-      boundsMinY: 0,
-      boundsMaxY: 0
-   };
+      this.previousPosition = box.position.copy();
+      this.previousRelativeAngle = box.relativeAngle;
+
+      this.mass = mass;
+      this.collisionType = collisionType;
+      this.collisionBit = collisionBit;
+      this.collisionMask = collisionMask;
+      this.flags = flags;
+   }
 }
 
 /** Returns a deep-clone of the hitbox. */
 export function cloneHitbox(transformComponent: TransformComponent, hitbox: Hitbox): Hitbox {
-   return createHitbox(transformComponent, hitbox.parent, cloneBox(hitbox.box), hitbox.mass, hitbox.collisionType, hitbox.collisionBit, hitbox.collisionMask, hitbox.flags);
+   return new Hitbox(transformComponent, hitbox.parent, hitbox.isPartOfParent, cloneBox(hitbox.box), hitbox.mass, hitbox.collisionType, hitbox.collisionBit, hitbox.collisionMask, hitbox.flags);
 }
 
 export function getHitboxVelocity(hitbox: Hitbox): Point {
@@ -149,27 +146,11 @@ export function teleportHitbox(hitbox: Hitbox, transformComponent: TransformComp
    transformComponent.isDirty = true;
 }
 
-export function getTotalMass(node: Hitbox | Entity): number {
-   let totalMass = 0;
-   if (typeof node === "number") {
-      const transformComponent = TransformComponentArray.getComponent(node);
-      for (const child of transformComponent.children) {
-         if (entityChildIsEntity(child)) {
-            totalMass += getTotalMass(child.attachedEntity);
-         } else {
-            totalMass += getTotalMass(child);
-         }
-      }
-   } else {
-      const hitbox = node;
-      totalMass += hitbox.mass;
-
-      for (const child of hitbox.children) {
-         if (entityChildIsEntity(child)) {
-            totalMass += getTotalMass(child.attachedEntity);
-         } else {
-            totalMass += getTotalMass(child);
-         }
+export function getHitboxTotalMassIncludingChildren(hitbox: Hitbox): number {
+   let totalMass = hitbox.mass;
+   for (const childHitbox of hitbox.children) {
+      if (childHitbox.isPartOfParent) {
+         totalMass += getHitboxTotalMassIncludingChildren(childHitbox);
       }
    }
    return totalMass;
@@ -177,7 +158,7 @@ export function getTotalMass(node: Hitbox | Entity): number {
 
 export function getHitboxConnectedMass(hitbox: Hitbox): number {
    const rootHitbox = getRootHitbox(hitbox);
-   return getTotalMass(rootHitbox);
+   return getHitboxTotalMassIncludingChildren(rootHitbox);
 }
 
 export function applyKnockback(entity: Entity, hitbox: Hitbox, knockback: number, knockbackDirection: number): void {

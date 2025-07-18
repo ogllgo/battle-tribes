@@ -164,7 +164,7 @@ const GameScreen = (props: GameScreenProps) => {
             let canAscendLayer = false;
             if (getCurrentLayer() === undergroundLayer) {
                const transformComponent = TransformComponentArray.getComponent(playerInstance);
-               const hitbox = transformComponent.children[0] as Hitbox;
+               const hitbox = transformComponent.hitboxes[0];
                const tileAbove = getHitboxTile(surfaceLayer, hitbox);
                if (tileAbove.type === TileType.dropdown) {
                   canAscendLayer = true;

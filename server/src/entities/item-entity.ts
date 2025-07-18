@@ -13,13 +13,13 @@ import { PhysicsComponent } from "../components/PhysicsComponent";
 import Layer from "../Layer";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { createEntity, getEntityLayer } from "../world";
-import { createHitbox, Hitbox } from "../hitboxes";
+import { Hitbox } from "../hitboxes";
 import { createLight } from "../lights";
 
 export function createItemEntityConfig(position: Point, rotation: number, itemType: ItemType, amount: number, throwingEntity: Entity | null): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 16, 16), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 16, 16), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionMask = DEFAULT_COLLISION_MASK & ~CollisionBit.planterBox;
    
@@ -53,7 +53,7 @@ const generateItemEntitySpawnPosition = (entityLayer: Layer, transformComponent:
       // @Speed: if hitboxIdx is defined, then this does the same thing every loop. also this condition is checked every time
       let hitbox: Hitbox;
       if (typeof hitboxIdx !== "undefined") {
-         hitbox = transformComponent.children[hitboxIdx] as Hitbox;
+         hitbox = transformComponent.hitboxes[hitboxIdx];
       } else {
          hitbox = getRandomWeightedHitbox(transformComponent);
       }

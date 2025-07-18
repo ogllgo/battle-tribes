@@ -23,7 +23,7 @@ export const SlingTurretComponentArray = new ServerComponentArray<SlingTurretCom
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    // Base
    renderInfo.attachRenderPart(

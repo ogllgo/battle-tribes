@@ -63,7 +63,7 @@ export function followAISetFollowTarget(followAI: FollowAI, followedEntity: Enti
    // @Temporary: now that cow uses custom move func.
    //    - will want to go through all places which call this and make them handle the movement themselves
    // const followedEntityTransformComponent = TransformComponentArray.getComponent(followedEntity);
-   // const followedEntityHitbox = followedEntityTransformComponent.children[0] as Hitbox;
+   // const followedEntityHitbox = followedEntityTransformComponent.hitboxes[0];
    // moveEntityToPosition(entity, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y, acceleration, turnSpeed);
 };
 
@@ -71,10 +71,10 @@ export function continueFollowingEntity(entity: Entity, followAI: FollowAI, foll
    const aiHelperComponent = AIHelperComponentArray.getComponent(entity);
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   const entityHitbox = transformComponent.children[0] as Hitbox;
+   const entityHitbox = transformComponent.hitboxes[0];
    
    const followTargetTransformComponent = TransformComponentArray.getComponent(followTarget);
-   const followTargetHitbox = followTargetTransformComponent.children[0] as Hitbox;
+   const followTargetHitbox = followTargetTransformComponent.hitboxes[0];
    
    // @Incomplete: do getDistanceBetweenEntities
    // @Hack: not right - assumes 1 circular hitbox with radius of 32

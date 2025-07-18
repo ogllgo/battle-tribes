@@ -12,7 +12,7 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { BoulderComponent } from "../../components/BoulderComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 registerEntityLootOnDeath(EntityType.boulder, {
    itemType: ItemType.rock,
@@ -21,7 +21,7 @@ registerEntityLootOnDeath(EntityType.boulder, {
 
 export function createBoulderConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 40), 1.25, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 40), 1.25, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(40);

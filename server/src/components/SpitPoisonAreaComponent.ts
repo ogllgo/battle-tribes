@@ -18,7 +18,7 @@ SpitPoisonAreaComponentArray.onTick = {
 function onTick(spit: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(spit);
    
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    const box = hitbox.box as CircularBox;
    box.radius -= 5 / Settings.TPS;
    if (box.radius <= 0) {

@@ -46,7 +46,7 @@ function onTick(cocoon: Entity): void {
       destroyEntity(cocoon);
 
       const transformComponent = TransformComponentArray.getComponent(cocoon);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       
       // @Temporary: size
       const okrenConfig = createOkrenConfig(hitbox.box.position.copy(), hitbox.box.angle, 4);
@@ -63,7 +63,7 @@ function onTick(cocoon: Entity): void {
       krumblidMorphCocoonComponent.stage = stage;
 
       const transformComponent = TransformComponentArray.getComponent(cocoon);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       (hitbox.box as CircularBox).radius += 4;
       transformComponent.isDirty = true;
    }

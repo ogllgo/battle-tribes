@@ -41,7 +41,7 @@ function createParamsFromData(reader: PacketReader): ItemComponentParams {
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const itemComponentParams = entityParams.serverComponentParams[ServerComponentType.item]!;
       
@@ -72,7 +72,7 @@ function onTick(entity: Entity): void {
    // Make the deep frost heart item spew blue blood particles
    if (itemComponent.itemType === ItemType.deepfrost_heart) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       createDeepFrostHeartBloodParticles(hitbox.box.position.x, hitbox.box.position.y, 0, 0);
    }
 }

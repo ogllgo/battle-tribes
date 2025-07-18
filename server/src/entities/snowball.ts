@@ -11,7 +11,7 @@ import { addHitboxToTransformComponent, TransformComponent } from "../components
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { StatusEffectComponent } from "../components/StatusEffectComponent";
-import { addHitboxAngularVelocity, createHitbox } from "../hitboxes";
+import { addHitboxAngularVelocity, Hitbox } from "../hitboxes";
 
 const MAX_HEALTHS: ReadonlyArray<number> = [1, 3, 5, 7];
 
@@ -28,7 +28,7 @@ export function createSnowballConfig(position: Point, rotation: number, yeti: En
    }
    const mass = radius * radius * 0.003;
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, radius), mass, HitboxCollisionType.soft, CollisionBit.snowball, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, radius), mass, HitboxCollisionType.soft, CollisionBit.snowball, DEFAULT_COLLISION_MASK, []);
    addHitboxAngularVelocity(hitbox, randFloat(1, 2) * Math.PI * randSign());
    addHitboxToTransformComponent(transformComponent, hitbox);
    

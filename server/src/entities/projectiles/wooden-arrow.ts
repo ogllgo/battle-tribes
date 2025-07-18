@@ -1,7 +1,7 @@
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collision";
 import { AMMO_INFO_RECORD, ServerComponentType } from "battletribes-shared/components";
 import { EntityType, DamageSource, Entity } from "battletribes-shared/entities";
-import { angleToPoint, Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { angleToPoint, Point } from "battletribes-shared/utils";
 import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { EntityRelationship, TribeComponent, TribeComponentArray, getEntityRelationship } from "../../components/TribeComponent";
@@ -15,12 +15,12 @@ import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { entityExists, getEntityType } from "../../world";
 import Tribe from "../../Tribe";
-import { applyKnockback, createHitbox, getHitboxVelocity, Hitbox } from "../../hitboxes";
+import { applyKnockback, getHitboxVelocity, Hitbox } from "../../hitboxes";
 
 export function createWoodenArrowConfig(position: Point, rotation: number, tribe: Tribe, owner: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 12, 64), 0.05, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.arrowPassable, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 12, 64), 0.05, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.arrowPassable, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
@@ -66,8 +66,8 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
    const projectileComponent = ProjectileComponentArray.getComponent(arrow);
    if (entityExists(projectileComponent.creator)) {
       const creatorTransformComponent = TransformComponentArray.getComponent(projectileComponent.creator);
-      const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-      if (creatorTransformComponent.rootEntity === collidingEntityTransformComponent.rootEntity) {
+      const creatorHitbox = creatorTransformComponent.hitboxes[0];
+      if (collidingHitbox.rootEntity === creatorHitbox.rootEntity) {
          return;
       }
    }
@@ -87,8 +87,7 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
 
    // Don't collide with anything when the arrow is being carried
    // @Speed: faster to just change its collision group
-   const transformComponent = TransformComponentArray.getComponent(arrow);
-   if (transformComponent.rootEntity !== arrow) {
+   if (affectedHitbox.parent !== null) {
       return;
    }
 
@@ -121,6 +120,6 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
    // Lodge the arrow in the entity when it's slow enough
    const arrowVelocity = getHitboxVelocity(affectedHitbox);
    if (arrowVelocity.length() < 50 || arrowVelocity.calculateDotProduct(angleToPoint(affectedHitbox.box.angle)) < 0) {
-      attachHitbox(affectedHitbox, collidingHitbox, arrow, collidingEntity, false);
+      attachHitbox(affectedHitbox, collidingHitbox, false);
    }
 }

@@ -79,7 +79,7 @@ const upgradeBuilding = (building: Entity): void => {
 const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: BlueprintComponent): void => {
    const transformComponent = TransformComponentArray.getComponent(blueprintEntity);
    // @Hack
-   const blueprintEntityHitbox = transformComponent.children[0] as Hitbox;
+   const blueprintEntityHitbox = transformComponent.hitboxes[0];
    
    const tribeComponent = TribeComponentArray.getComponent(blueprintEntity);
    const tribe = tribeComponent.tribe;
@@ -89,7 +89,7 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
    const entityType = getBlueprintEntityType(blueprintComponent.blueprintType);
 
    // @Hack
-   const originHitbox = transformComponent.children[0] as Hitbox;
+   const originHitbox = transformComponent.hitboxes[0];
    const position = originHitbox.box.position.copy();
    const layer = getEntityLayer(blueprintEntity);
 

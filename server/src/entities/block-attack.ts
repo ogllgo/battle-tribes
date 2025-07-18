@@ -11,11 +11,11 @@ import { getHeldItem, LimbInfo } from "../components/InventoryUseComponent";
 import { PhysicsComponent } from "../components/PhysicsComponent";
 import { setHitboxToLimbState } from "../components/SwingAttackComponent";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
-import { createHitbox, Hitbox } from "../hitboxes";
+import { Hitbox } from "../hitboxes";
 
 export function createBlockAttackConfig(owner: Entity, limb: LimbInfo): EntityConfig {
    const ownerTransformComponent = TransformComponentArray.getComponent(owner);
-   const ownerHitbox = ownerTransformComponent.children[0] as Hitbox;
+   const ownerHitbox = ownerTransformComponent.hitboxes[0];
 
    const transformComponent = new TransformComponent();
 
@@ -25,7 +25,7 @@ export function createBlockAttackConfig(owner: Entity, limb: LimbInfo): EntityCo
    const heldItemAttackInfo = getItemAttackInfo(heldItem !== null ? heldItem.type : null);
    const damageBoxInfo = heldItemAttackInfo.heldItemDamageBoxInfo!;
 
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(new Point(0, 0), new Point(damageBoxInfo.offsetX * (isFlipped ? -1 : 1), damageBoxInfo.offsetY), damageBoxInfo.rotation * (isFlipped ? -1 : 1), damageBoxInfo.width, damageBoxInfo.height), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(new Point(0, 0), new Point(damageBoxInfo.offsetX * (isFlipped ? -1 : 1), damageBoxInfo.offsetY), damageBoxInfo.rotation * (isFlipped ? -1 : 1), damageBoxInfo.width, damageBoxInfo.height), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    setHitboxToLimbState(ownerTransformComponent, transformComponent, hitbox, limb.currentActionStartLimbState, isFlipped);

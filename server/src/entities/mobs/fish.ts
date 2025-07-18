@@ -20,7 +20,7 @@ import { Biome } from "../../../../shared/src/biomes";
 import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
-import { applyAccelerationFromGround, createHitbox, getHitboxTile, Hitbox, addHitboxVelocity, turnHitboxToAngle } from "../../hitboxes";
+import { applyAccelerationFromGround, getHitboxTile, Hitbox, addHitboxVelocity, turnHitboxToAngle } from "../../hitboxes";
 import { getEntityLayer } from "../../world";
 
 const enum Vars {
@@ -65,7 +65,7 @@ function wanderTargetIsValid(fish: Entity, layer: Layer, x: number, y: number): 
    }
 
    const transformComponent = TransformComponentArray.getComponent(fish);
-   const fishHitbox = transformComponent.children[0] as Hitbox;
+   const fishHitbox = transformComponent.hitboxes[0];
    
    if (!layer.tileRaytraceMatchesTileTypes(fishHitbox.box.position.x, fishHitbox.box.position.y, x, y, [TileType.water])) {
       return false;
@@ -76,7 +76,7 @@ function wanderTargetIsValid(fish: Entity, layer: Layer, x: number, y: number): 
 
 const moveFunc = (fish: Entity, pos: Point, acceleration: number): void => {
    const transformComponent = TransformComponentArray.getComponent(fish);
-   const fishHitbox = transformComponent.children[0] as Hitbox;
+   const fishHitbox = transformComponent.hitboxes[0];
 
    const direction = fishHitbox.box.position.calculateAngleBetween(pos);
 
@@ -100,7 +100,7 @@ const moveFunc = (fish: Entity, pos: Point, acceleration: number): void => {
 
 const turnFunc = (fish: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
    const transformComponent = TransformComponentArray.getComponent(fish);
-   const fishHitbox = transformComponent.children[0] as Hitbox;
+   const fishHitbox = transformComponent.hitboxes[0];
 
    const direction = fishHitbox.box.position.calculateAngleBetween(pos);
 
@@ -129,7 +129,7 @@ const turnFunc = (fish: Entity, pos: Point, turnSpeed: number, turnDamping: numb
 export function createFishConfig(position: Point, rotation: number, colour: FishColour): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 28, 56), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 28, 56), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const physicsComponent = new PhysicsComponent();

@@ -13,7 +13,7 @@ import { OkrenAgeStage } from "../../components/OkrenComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
-import { createHitbox, Hitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 const MAX_HEALTHS = [20, 25, 30, 35, 40];
 const ENERGIES = [400, 600, 800, 1000, 1200];
@@ -128,7 +128,7 @@ export function createOkrenClawConfig(position: Point, angle: number, size: Okre
    
    const bigArmSegmentPosition = position.copy();
    bigArmSegmentPosition.add(bigArmSegmentOffset);
-   const bigArmSegmentHitbox = createHitbox(transformComponent, parentHitbox, new RectangularBox(bigArmSegmentPosition, bigArmSegmentOffset, Math.PI * 0.3, bigArmSegmentSize.x, bigArmSegmentSize.y), 2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_BIG_ARM_SEGMENT]);
+   const bigArmSegmentHitbox = new Hitbox(transformComponent, parentHitbox, true, new RectangularBox(bigArmSegmentPosition, bigArmSegmentOffset, Math.PI * 0.3, bigArmSegmentSize.x, bigArmSegmentSize.y), 2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_BIG_ARM_SEGMENT]);
    bigArmSegmentHitbox.box.flipX = sideIsFlipped;
    // @Hack
    bigArmSegmentHitbox.box.totalFlipXMultiplier = sideIsFlipped ? -1 : 1;
@@ -140,7 +140,7 @@ export function createOkrenClawConfig(position: Point, angle: number, size: Okre
 
    const mediumArmSegmentPosition = bigArmSegmentHitbox.box.position.copy();
    mediumArmSegmentPosition.add(mediumArmSegmentOffset);
-   const mediumArmSegmentHitbox = createHitbox(transformComponent, bigArmSegmentHitbox, new RectangularBox(mediumArmSegmentPosition, mediumArmSegmentOffset, -Math.PI * 0.3, mediumArmSegmentSize.x, mediumArmSegmentSize.y), 1.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_MEDIUM_ARM_SEGMENT]);
+   const mediumArmSegmentHitbox = new Hitbox(transformComponent, bigArmSegmentHitbox, true, new RectangularBox(mediumArmSegmentPosition, mediumArmSegmentOffset, -Math.PI * 0.3, mediumArmSegmentSize.x, mediumArmSegmentSize.y), 1.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_MEDIUM_ARM_SEGMENT]);
    // @Temporary?? see if this absolute stuff works right
    // let mediumArmPivotY: number;
    // switch (size) {
@@ -159,7 +159,7 @@ export function createOkrenClawConfig(position: Point, angle: number, size: Okre
 
    const slashingArmSegmentPosition = mediumArmSegmentHitbox.box.position.copy();
    slashingArmSegmentPosition.add(slashingArmSegmentOffset);
-   const slashingArmSegmentHitbox = createHitbox(transformComponent, mediumArmSegmentHitbox, new RectangularBox(slashingArmSegmentPosition, slashingArmSegmentOffset, -Math.PI * 0.3, slashingArmSegmentSize.x, slashingArmSegmentSize.y), 0.8, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_ARM_SEGMENT_OF_SLASHING_AND_DESTRUCTION]);
+   const slashingArmSegmentHitbox = new Hitbox(transformComponent, mediumArmSegmentHitbox, true, new RectangularBox(slashingArmSegmentPosition, slashingArmSegmentOffset, -Math.PI * 0.3, slashingArmSegmentSize.x, slashingArmSegmentSize.y), 0.8, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_ARM_SEGMENT_OF_SLASHING_AND_DESTRUCTION]);
    // @Temporary?
    // let smallArmPivotPoint: PivotPoint;
    // switch (size) {

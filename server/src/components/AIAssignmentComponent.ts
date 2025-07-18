@@ -154,7 +154,7 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
             let hasThrown = false;
             const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
             const transformComponent = TransformComponentArray.getComponent(entity);
-            const entityHitbox = transformComponent.children[0] as Hitbox;
+            const entityHitbox = transformComponent.hitboxes[0];
             
             for (let i = 0; i < hotbarInventory.items.length; i++) {
                const item = hotbarInventory.items[i];

@@ -5,7 +5,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityParams, getEntityRenderInfo } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
-import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
 import { Point, randAngle, randFloat, randInt } from "../../../../shared/src/utils";
 import { createBloodPoolParticle, createBloodParticle, BloodParticleSize, createBloodParticleFountain, createHighSnowParticle } from "../../particles";
@@ -56,11 +56,7 @@ function createParamsFromData(reader: PacketReader): SnobeComponentParams {
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   for (const hitbox of transformComponentParams.children) {
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
-
+   for (const hitbox of transformComponentParams.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.SNOBE_BODY)) {
          const renderPart = new TexturedRenderPart(
             hitbox,
@@ -114,7 +110,7 @@ function onTick(snobe: Entity): void {
    const snobeComponent = SnobeComponentArray.getComponent(snobe);
    if (snobeComponent.isDigging && snobeComponent.diggingProgress < 1 && Math.random() < 15 / Settings.TPS) {
       const transformComponent = TransformComponentArray.getComponent(snobe);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
 
       const position = hitbox.box.position.offset(32 * Math.random(), randAngle());
       createHighSnowParticle(position.x, position.y, randFloat(30, 50));
@@ -168,7 +164,7 @@ function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 3; i++) {
       createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 35);

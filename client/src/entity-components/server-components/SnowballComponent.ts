@@ -45,7 +45,7 @@ function createParamsFromData(reader: PacketReader): SnowballComponentParams {
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    const snowballComponentParams = entityParams.serverComponentParams[ServerComponentType.snowball]!;
 
@@ -71,7 +71,7 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    const velocity = getHitboxVelocity(hitbox);
    if (velocity.length() > 50) {
       if (Board.tickIntervalHasPassed(0.05)) {
@@ -134,7 +134,7 @@ function onHit(entity: Entity, hitbox: Hitbox): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    // Create a bunch of snow particles throughout the snowball
    const radius = (hitbox.box as CircularBox).radius;
