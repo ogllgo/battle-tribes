@@ -25,7 +25,7 @@ export const enum HitboxParentType {
 export interface Hitbox {
    readonly localID: number;
 
-   entity: Entity;
+   readonly entity: Entity;
    rootEntity: Entity;
 
    parent: Hitbox | null;

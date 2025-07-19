@@ -158,7 +158,11 @@ export function padHitboxDataExceptLocalID(reader: PacketReader): void {
    const numFlags = reader.readNumber();
    reader.padOffset(numFlags * Float32Array.BYTES_PER_ELEMENT);
 
+   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT); // entity and rootEntity
+
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT); // isPartOfParent
 }
 
 const updateCircularBoxFromData = (box: CircularBox, reader: PacketReader): void => {
@@ -244,8 +248,14 @@ export function updateHitboxExceptLocalIDFromData(hitbox: Hitbox, reader: Packet
    const numFlags = reader.readNumber();
    reader.padOffset(numFlags * Float32Array.BYTES_PER_ELEMENT);
 
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT); // entity
+   hitbox.rootEntity = reader.readNumber();
+   
    // @HACK @INCOMPLETE
    const parentLocalID = reader.readNumber();
+
+   hitbox.isPartOfParent = reader.readBoolean();
+   reader.padOffset(3);
 
    hitbox.lastUpdateTicks = Board.serverTicks;
 }

@@ -193,19 +193,14 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
          const hitboxAccDir = originToHitboxDirection + Math.PI/2;
          const originHitboxAccDir = originToHitboxDirection - Math.PI/2;
          
-         // @Bug: I don't think using the angular velocity is right - shouldn't it be the actual velocity of the hitbox? but like projected in the torque direction
-         // const hitboxAngularVelocity = getHitboxAngularVelocity(hitbox);
-         // const originHitboxAngularVelocity = getHitboxAngularVelocity(originHitbox);
-
          const hitboxTorque = getHitboxVelocity(hitbox).scalarProj(angleToPoint(hitboxAccDir));
          const originHitboxTorque = getHitboxVelocity(originHitbox).scalarProj(angleToPoint(originHitboxAccDir));
          
-         // const relVel = hitboxAngularVelocity - originHitboxAngularVelocity;
          const relVel = hitboxTorque - originHitboxTorque;
          const dampingForce = -relVel * angularTether.damping;
          
+         // @HACK: the * 0.1
          const force = (rotationForce + dampingForce) * 0.1;
-         // console.log(rotationForce, dampingForce);
 
          // @HACK: the * 4
          const hitboxAccMag = force / getHitboxTotalMassIncludingChildren(hitbox) * 4;
@@ -230,7 +225,6 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
          const dampingForce = -getHitboxAngularVelocity(hitbox) * angleDamping;
 
          const force = rotationForce + dampingForce;
-         
          addHitboxAngularAcceleration(hitbox, force / getHitboxTotalMassIncludingChildren(hitbox));
       }
    }
@@ -280,6 +274,8 @@ const tickHitboxPhysics = (hitbox: Hitbox): void => {
    
    applyHitboxTethers(hitbox, transformComponent);
 
+   updatePosition(hitbox.entity, transformComponent);
+
    for (const childHitbox of hitbox.children) {
       tickHitboxPhysics(childHitbox);
    }
@@ -292,11 +288,11 @@ export function tickEntityPhysics(entity: Entity): void {
       tickHitboxPhysics(rootHitbox);
    }
 
-   updatePosition(entity, transformComponent);
-
    // @Speed: what if the hitboxes don't change?
    // (just for carried entities)
-   registerDirtyEntity(entity);
+   if (transformComponent.rootHitboxes.length > 0) {
+      registerDirtyEntity(entity);
+   }
 }
 
 function getDataLength(): number {

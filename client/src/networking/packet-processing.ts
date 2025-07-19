@@ -652,7 +652,7 @@ export function processGameDataPacket(reader: PacketReader): void {
                playSound("spike-stab.mp3", 0.3, 1, new Point(hitPositionX, hitPositionY), getEntityLayer(hitEntity));
             }
 
-            const hitHitbox = getHitboxByLocalID(transformComponent.children, hitHitboxLocalID);
+            const hitHitbox = getHitboxByLocalID(transformComponent.hitboxes, hitHitboxLocalID);
             if (hitHitbox !== null) {
                // @Speed
                const componentArrays = getComponentArrays();

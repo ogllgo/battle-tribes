@@ -12,8 +12,7 @@ import { createTranslationMatrix, matrixMultiplyInPlace } from "../../rendering/
 import { playSound } from "../../sound";
 import { GameInteractState } from "./GameScreen";
 import { playerInstance } from "../../player";
-import { getRootEntity, hasTamingSkill, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
-import { Hitbox } from "../../hitboxes";
+import { hasTamingSkill, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
 import { setShittyCarrier } from "./GameInteractableLayer";
 import { TamingSkillID } from "../../../../shared/src/taming";
 
@@ -123,9 +122,7 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
       setX(screenX);
       setY(screenY);
 
-      // @HACK: FOR GLURB GARBAGE
-      const rootEntity = getRootEntity(entity);
-      const tamingComponent = TamingComponentArray.getComponent(rootEntity);
+      const tamingComponent = TamingComponentArray.getComponent(entity);
       setFollowOptionIsSelected(tamingComponent.isFollowing);
    }
    

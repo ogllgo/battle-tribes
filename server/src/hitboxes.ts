@@ -122,6 +122,16 @@ export function getRootHitbox(hitbox: Hitbox): Hitbox {
 
 export function addHitboxVelocity(hitbox: Hitbox, addVec: Point): void {
    const pushedHitbox = getRootHitbox(hitbox);
+
+   // Don't add velocity if the hitbox is immovable
+   if (!PhysicsComponentArray.hasComponent(pushedHitbox.entity)) {
+      return;
+   }
+   const physicsComponent = PhysicsComponentArray.getComponent(pushedHitbox.entity);
+   if (physicsComponent.isImmovable) {
+      return;
+   }
+   
    pushedHitbox.box.position.x += addVec.x / Settings.TPS;
    pushedHitbox.box.position.y += addVec.y / Settings.TPS;
 }

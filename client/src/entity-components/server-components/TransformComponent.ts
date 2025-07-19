@@ -194,7 +194,7 @@ const updateContainingChunks = (transformComponent: TransformComponent, entity: 
    }
 }
 
-const cleanHitboxTransform = (hitbox: Hitbox): void => {
+const cleanHitboxIncludingChildrenTransform = (hitbox: Hitbox): void => {
    if (hitbox.parent === null) {
       hitbox.box.angle = hitbox.box.relativeAngle;
    } else {
@@ -203,13 +203,17 @@ const cleanHitboxTransform = (hitbox: Hitbox): void => {
       const parentVelocity = getHitboxVelocity(hitbox.parent);
       setHitboxVelocity(hitbox, parentVelocity.x, parentVelocity.y);
    }
+
+   for (const childHitbox of hitbox.children) {
+      cleanHitboxIncludingChildrenTransform(childHitbox);
+   }
 }
 
 export function cleanEntityTransform(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    for (const rootHitbox of transformComponent.rootHitboxes) {
-      cleanHitboxTransform(rootHitbox);
+      cleanHitboxIncludingChildrenTransform(rootHitbox);
    }
 
    transformComponent.boundingAreaMinX = Number.MAX_SAFE_INTEGER;
@@ -472,6 +476,9 @@ const updatePlayerHitboxFromData = (hitbox: Hitbox, parentEntity: Entity, reader
    const numFlags = reader.readNumber();
    reader.padOffset(numFlags * Float32Array.BYTES_PER_ELEMENT);
 
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT) // entity
+   hitbox.rootEntity = reader.readNumber();
+
    // @HACK @INCOMPLETE
    const parentLocalID = reader.readNumber();
    if (parentLocalID === -1) {
@@ -485,6 +492,8 @@ const updatePlayerHitboxFromData = (hitbox: Hitbox, parentEntity: Entity, reader
       hitbox.box.offset.x = dataBox.offset.x;
       hitbox.box.offset.y = dataBox.offset.y;
    }
+
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT); // isPartOfParent
 
    hitbox.lastUpdateTicks = Board.serverTicks;
 }

@@ -146,7 +146,7 @@ export function updateLightsFromData(reader: PacketReader): void {
       const hitboxLocalID = reader.readNumber();
 
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = getHitboxByLocalID(transformComponent.children, hitboxLocalID);
+      const hitbox = getHitboxByLocalID(transformComponent.hitboxes, hitboxLocalID);
       assert(hitbox !== null);
       
       const lightID = reader.readNumber();

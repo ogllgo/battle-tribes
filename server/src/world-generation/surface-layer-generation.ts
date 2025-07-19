@@ -724,26 +724,27 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          return createSnowberryBushConfig(pos, angle);
       }
    });
-   registerNewSpawnInfo({
-      entityTypes: [EntityType.snobe],
-      layer: surfaceLayer,
-      spawnRate: 0.01,
-      biome: Biome.tundra,
-      tileTypes: [TileType.snow, TileType.ice],
-      onlySpawnsInNight: false,
-      minSpawnDistance: 30,
-      spawnDistribution: createRawSpawnDistribution(32, 0.008),
-      balanceSpawnDistribution: true,
-      doStrictTileTypeCheck: false,
-      doStrictCollisionCheck: true,
-      packSpawning: {
-         getPackSize: () => Math.random() < 0.5 ? 2 : 4,
-         spawnRange: 120
-      },
-      createEntity: (pos: Point, angle: number): EntityConfig | null => {
-         return createSnobeConfig(pos, angle);
-      }
-   });
+   // @Temporary cuz they crash
+   // registerNewSpawnInfo({
+   //    entityTypes: [EntityType.snobe],
+   //    layer: surfaceLayer,
+   //    spawnRate: 0.01,
+   //    biome: Biome.tundra,
+   //    tileTypes: [TileType.snow, TileType.ice],
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 30,
+   //    spawnDistribution: createRawSpawnDistribution(32, 0.008),
+   //    balanceSpawnDistribution: true,
+   //    doStrictTileTypeCheck: false,
+   //    doStrictCollisionCheck: true,
+   //    packSpawning: {
+   //       getPackSize: () => Math.random() < 0.5 ? 2 : 4,
+   //       spawnRange: 120
+   //    },
+   //    createEntity: (pos: Point, angle: number): EntityConfig | null => {
+   //       return createSnobeConfig(pos, angle);
+   //    }
+   // });
    registerNewSpawnInfo({
       entityTypes: [EntityType.inguSerpent],
       layer: surfaceLayer,

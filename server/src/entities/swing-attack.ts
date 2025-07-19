@@ -5,7 +5,7 @@ import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../shared/src/collis
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { getItemAttackInfo, InventoryName } from "../../../shared/src/items/items";
-import { Point } from "../../../shared/src/utils";
+import { Point, rotatePoint } from "../../../shared/src/utils";
 import { createEntityConfigAttachInfo, EntityConfig } from "../components";
 import { getHeldItem, LimbInfo } from "../components/InventoryUseComponent";
 import { PhysicsComponent } from "../components/PhysicsComponent";
@@ -13,7 +13,7 @@ import { setHitboxToLimbState, SwingAttackComponent } from "../components/SwingA
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { Hitbox } from "../hitboxes";
 
-export function createSwingAttackConfig(position: Point, rotation: number, owner: Entity, limb: LimbInfo): EntityConfig {
+export function createSwingAttackConfig(position: Point, angle: number, owner: Entity, limb: LimbInfo): EntityConfig {
    const isFlipped = limb.associatedInventory.name === InventoryName.offhand;
    
    const ownerTransformComponent = TransformComponentArray.getComponent(owner);
@@ -25,7 +25,7 @@ export function createSwingAttackConfig(position: Point, rotation: number, owner
    
    const transformComponent = new TransformComponent();
 
-   const limbHitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 12), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const limbHitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), angle, 12), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, limbHitbox);
 
    setHitboxToLimbState(ownerTransformComponent, transformComponent, limbHitbox, limb.currentActionStartLimbState, isFlipped);
@@ -33,7 +33,10 @@ export function createSwingAttackConfig(position: Point, rotation: number, owner
    updateBox(limbHitbox.box, ownerHitbox.box);
 
    if (damageBoxInfo !== null) {
-      const heldItemHitbox = new Hitbox(transformComponent, limbHitbox, true, new RectangularBox(new Point(0, 0), new Point(damageBoxInfo.offsetX * (isFlipped ? -1 : 1), damageBoxInfo.offsetY), damageBoxInfo.rotation * (isFlipped ? -1 : 1), damageBoxInfo.width, damageBoxInfo.height), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+      const offset = new Point(damageBoxInfo.offsetX * (isFlipped ? -1 : 1), damageBoxInfo.offsetY);
+      const heldItemPosition = position.copy();
+      heldItemPosition.add(rotatePoint(offset, angle));
+      const heldItemHitbox = new Hitbox(transformComponent, limbHitbox, true, new RectangularBox(heldItemPosition, offset, damageBoxInfo.rotation * (isFlipped ? -1 : 1), damageBoxInfo.width, damageBoxInfo.height), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
       addHitboxToTransformComponent(transformComponent, heldItemHitbox);
    }
 
