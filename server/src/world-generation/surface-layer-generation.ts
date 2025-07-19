@@ -760,22 +760,22 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          return [createInguSerpentConfig(pos, angle)];
       }
    });
-   registerNewSpawnInfo({
-      entityTypes: [EntityType.tukmok],
-      layer: surfaceLayer,
-      spawnRate: 0.01,
-      biome: Biome.tundra,
-      tileTypes: [TileType.snow],
-      onlySpawnsInNight: false,
-      minSpawnDistance: 30,
-      spawnDistribution: createRawSpawnDistribution(32, 0.002),
-      balanceSpawnDistribution: true,
-      doStrictTileTypeCheck: false,
-      doStrictCollisionCheck: true,
-      createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
-         return [createTukmokConfig(pos, angle)];
-      }
-   });
+   // registerNewSpawnInfo({
+   //    entityTypes: [EntityType.tukmok],
+   //    layer: surfaceLayer,
+   //    spawnRate: 0.01,
+   //    biome: Biome.tundra,
+   //    tileTypes: [TileType.snow],
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 30,
+   //    spawnDistribution: createRawSpawnDistribution(32, 0.002),
+   //    balanceSpawnDistribution: true,
+   //    doStrictTileTypeCheck: false,
+   //    doStrictCollisionCheck: true,
+   //    createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
+   //       return [createTukmokConfig(pos, angle)];
+   //    }
+   // });
 
    registerNewSpawnInfo({
       entityTypes: [EntityType.slimewisp],

@@ -284,7 +284,6 @@ type EntityComponents = Partial<{
 // @ASS @ASS @ASS all of this @Hack
 
 export interface EntityConfigAttachInfo {
-   readonly parent: Entity;
    readonly attachedHitbox: Hitbox;
    readonly parentHitbox: Hitbox;
    readonly isPartOfParent: boolean;
@@ -316,18 +315,16 @@ export interface EntityConfig {
    childConfigs?: ReadonlyArray<ChildConfigAttachInfo>;
 }
 
-export function createEntityConfigAttachInfo(parent: Entity, attachedHitbox: Hitbox, parentHitbox: Hitbox, isPartOfParent: boolean): EntityConfigAttachInfo {
+export function createEntityConfigAttachInfo(attachedHitbox: Hitbox, parentHitbox: Hitbox, isPartOfParent: boolean): EntityConfigAttachInfo {
    return {
-      parent: parent,
       attachedHitbox: attachedHitbox,
       parentHitbox: parentHitbox,
       isPartOfParent: isPartOfParent
    };
 }
 
-export function createEntityConfigAttachInfoWithTether(parent: Entity, attachedHitbox: Hitbox, parentHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, isPartOfParent: boolean, angularTether?: HitboxAngularTether): EntityConfigAttachInfoWithTether {
+export function createEntityConfigAttachInfoWithTether(attachedHitbox: Hitbox, parentHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, isPartOfParent: boolean, angularTether?: HitboxAngularTether): EntityConfigAttachInfoWithTether {
    return {
-      parent: parent,
       attachedHitbox: attachedHitbox,
       parentHitbox: parentHitbox,
       isPartOfParent: isPartOfParent,

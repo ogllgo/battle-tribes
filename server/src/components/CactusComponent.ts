@@ -80,7 +80,7 @@ function onTick(cactus: Entity): void {
             const fruitTransformComponent = fruitConfig.components[ServerComponentType.transform]!;
             const fruitHitbox = fruitTransformComponent.hitboxes[0];
             
-            fruitConfig.attachInfo = createEntityConfigAttachInfo(cactus, fruitHitbox, cactusHitbox, true);
+            fruitConfig.attachInfo = createEntityConfigAttachInfo(fruitHitbox, cactusHitbox, true);
             createEntity(fruitConfig, getEntityLayer(cactus), 0);
       
             cactusComponent.remainingFruitGrowTicks = randInt(MIN_FRUIT_GROW_TICKS, MAX_FRUIT_GROW_TICKS);

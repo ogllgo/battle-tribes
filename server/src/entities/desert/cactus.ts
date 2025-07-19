@@ -3,7 +3,7 @@ import { CactusFlowerSize, EntityType } from "battletribes-shared/entities";
 import { randInt, randFloat, Point, polarVec2, randAngle } from "battletribes-shared/utils";
 import { HealthComponent } from "../../components/HealthComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { ChildConfigAttachInfo, createEntityConfigAttachInfo, EntityConfig } from "../../components";
+import { ChildConfigAttachInfo, EntityConfig } from "../../components";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";

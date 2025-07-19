@@ -165,7 +165,7 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
       };
       ballHitbox.angularTethers.push(angularTether);
 
-      ballConfig.attachInfo = createEntityConfigAttachInfoWithTether(entity, ballHitbox, entityHitbox, offsetMagnitude, 10, 0.4, false, false);
+      ballConfig.attachInfo = createEntityConfigAttachInfoWithTether(ballHitbox, entityHitbox, offsetMagnitude, 10, 0.4, false, false);
       
       createEntity(ballConfig, getEntityLayer(entity), 0);
 

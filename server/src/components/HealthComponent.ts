@@ -179,7 +179,6 @@ export function damageEntity(entity: Entity, hitHitbox: Hitbox, attackingEntity:
 
 /** Basically every effect of hitEntity, but doesn't reduce the entity's health. */
 export function hitEntityWithoutDamage(entity: Entity, hitHitbox: Hitbox, attackingEntity: Entity | null, hitPosition: Point): void {
-   console.log(hitHitbox);
    // @Incomplete
    // damageEntity(entity, hitHitbox, attackingEntity, 0, 0, AttackEffectiveness.effective, hitPosition, hitFlags);
    registerEntityHit(entity, hitHitbox, attackingEntity, hitPosition, AttackEffectiveness.effective, 0, HitFlags.NON_DAMAGING_HIT);

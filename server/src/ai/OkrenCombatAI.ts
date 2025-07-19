@@ -116,7 +116,7 @@ const deployTongue = (okren: Entity, okrenHitbox: Hitbox, target: Entity): void 
    
    const tongueConfig = createOkrenTongueConfig(position, okrenHitbox.box.angle, okrenHitbox, target);
    const tongueHitbox = tongueConfig.components[ServerComponentType.transform]!.hitboxes[0];
-   tongueConfig.attachInfo = createEntityConfigAttachInfo(okren, tongueHitbox, okrenHitbox, true);
+   tongueConfig.attachInfo = createEntityConfigAttachInfo(tongueHitbox, okrenHitbox, true);
    createEntity(tongueConfig, getEntityLayer(okren), 0);
 
    const tickEvent: EntityTickEvent = {

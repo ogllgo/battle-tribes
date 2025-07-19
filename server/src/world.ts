@@ -234,7 +234,7 @@ export function pushEntityJoinBuffer(shouldTickJoinInfos: boolean): void {
          const attachInfo = joinInfo.entityConfig.attachInfo;
          if (typeof attachInfo !== "undefined") {
             if (entityConfigAttachInfoIsTethered(attachInfo)) {
-               attachEntityWithTether(joinInfo.entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.idealDistance, attachInfo.springConstant, attachInfo.damping, attachInfo.isPartOfParent);
+               attachEntityWithTether(joinInfo.entity, attachInfo.parentHitbox.entity, attachInfo.parentHitbox, attachInfo.idealDistance, attachInfo.springConstant, attachInfo.damping, attachInfo.isPartOfParent);
             } else {
                attachHitboxRaw(attachInfo.attachedHitbox, attachInfo.parentHitbox, attachInfo.isPartOfParent);
             }
@@ -373,7 +373,7 @@ export function createEntityImmediate<ComponentTypes extends ServerComponentType
    const attachInfo = entityConfig.attachInfo;
    if (typeof attachInfo !== "undefined") {
       if (entityConfigAttachInfoIsTethered(attachInfo)) {
-         attachEntityWithTether(entity, attachInfo.parent, attachInfo.parentHitbox, attachInfo.idealDistance, attachInfo.springConstant, attachInfo.damping, attachInfo.isPartOfParent);
+         attachEntityWithTether(entity, attachInfo.parentHitbox.entity, attachInfo.parentHitbox, attachInfo.idealDistance, attachInfo.springConstant, attachInfo.damping, attachInfo.isPartOfParent);
       } else {
          attachHitboxRaw(attachInfo.attachedHitbox, attachInfo.parentHitbox, attachInfo.isPartOfParent);
       }
