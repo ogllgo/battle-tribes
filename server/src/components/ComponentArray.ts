@@ -281,7 +281,7 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
    }
 
    /** VERY slow function. Should only be used for debugging purposes. */
-   public getEntityFromComponent(component: T): Entity {
+   public getEntityFromComponentNONOSQUARE(component: T): Entity {
       let idx: number | undefined;
       for (let i = 0; i < this.components.length; i++) {
          const currentComponent = this.components[i];
@@ -374,10 +374,9 @@ export function sortComponentArrays(): void {
       [ServerComponentType.furnace]: ComponentArrayPriority.medium,
       [ServerComponentType.fireTorch]: ComponentArrayPriority.medium,
       [ServerComponentType.spikyBastard]: ComponentArrayPriority.medium,
-      [ServerComponentType.glurb]: ComponentArrayPriority.medium,
-      [ServerComponentType.glurbSegment]: ComponentArrayPriority.medium,
-      [ServerComponentType.glurbBodySegment]: ComponentArrayPriority.medium,
       [ServerComponentType.glurbHeadSegment]: ComponentArrayPriority.medium,
+      [ServerComponentType.glurbBodySegment]: ComponentArrayPriority.medium,
+      [ServerComponentType.glurbSegment]: ComponentArrayPriority.medium,
       [ServerComponentType.slurbTorch]: ComponentArrayPriority.medium,
       [ServerComponentType.attackingEntities]: ComponentArrayPriority.medium,
       [ServerComponentType.aiAssignment]: ComponentArrayPriority.medium,

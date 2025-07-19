@@ -19,6 +19,7 @@ import { Hitbox } from "./hitboxes";
 import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
 import { getHitboxesCollidingEntities } from "./collision-detection";
 import { createTukmokConfig } from "./entities/tundra/tukmok";
+import { createSnobeConfig } from "./entities/tundra/snobe";
 
 const spawnConditionsAreMet = (spawnInfo: EntitySpawnEvent): boolean => {
    // Make sure there is a block which lacks density
@@ -130,50 +131,53 @@ const entityTileTypesAreValid = (entityConfig: EntityConfig, spawnInfo: EntitySp
    return true;
 }
 
-const attemptToSpawnEntity = (spawnInfo: EntitySpawnEvent, pos: Point, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
+const attemptToSpawnEntity = (spawnInfo: EntitySpawnEvent, pos: Point, firstEntity: ReadonlyArray<EntityConfig> | null): ReadonlyArray<EntityConfig> | null => {
    // @Bug: If two yetis spawn at once after the server is running, they could potentially have overlapping territories
 
-   const config = spawnInfo.createEntity(pos, randAngle(), firstEntityConfig, spawnInfo.layer);
-   if (config === null) {
+   const configs = spawnInfo.createEntity(pos, randAngle(), firstEntity, spawnInfo.layer);
+   if (configs === null) {
       return null;
    }
 
-   assert(typeof config.components[ServerComponentType.autoSpawned] === "undefined");
-   const autoSpawnedComponent = new AutoSpawnedComponent(spawnInfo);
-   config.components[ServerComponentType.autoSpawned] = autoSpawnedComponent;
+   // First make sure the entity wouldn't violate any rules
+   for (const config of configs) {
+      assert(typeof config.components[ServerComponentType.autoSpawned] === "undefined");
+      const autoSpawnedComponent = new AutoSpawnedComponent(spawnInfo);
+      config.components[ServerComponentType.autoSpawned] = autoSpawnedComponent;
 
-   // @Cleanup: should this instead be done automatically as the entity is created??
-
-   const transformComponent = config.components[ServerComponentType.transform];
-   if (typeof transformComponent === "undefined" || entityWouldSpawnInWall(spawnInfo.layer, transformComponent)) {
-      return null;
-   }
-
-   for (const hitbox of transformComponent.hitboxes) {
-      if (hitbox.box.calculateBoundsMinX() < 0 || hitbox.box.calculateBoundsMaxX() >= Settings.BOARD_UNITS || hitbox.box.calculateBoundsMinY() < 0 || hitbox.box.calculateBoundsMaxY() >= Settings.BOARD_UNITS) {
+      const transformComponent = config.components[ServerComponentType.transform];
+      if (typeof transformComponent === "undefined" || entityWouldSpawnInWall(spawnInfo.layer, transformComponent)) {
          return null;
       }
-   }
 
-   // If there is strict tile type checking, make sure all tiles the entity is overlapping with match the spawn info's spawnable tile types
-   // @Bug: this seems to be a bit brokey... if enabled with cactus sandy dirt, almost no cacti spawn, which should not be the case.
-   // - this may be crippling entity counts that i jhust haven't noticed... or will cripple them in the future. @Investigate
-   if (spawnInfo.doStrictTileTypeCheck && !entityTileTypesAreValid(config, spawnInfo)) {
-      return null;
-   }
+      for (const hitbox of transformComponent.hitboxes) {
+         if (hitbox.box.calculateBoundsMinX() < 0 || hitbox.box.calculateBoundsMaxX() >= Settings.BOARD_UNITS || hitbox.box.calculateBoundsMinY() < 0 || hitbox.box.calculateBoundsMaxY() >= Settings.BOARD_UNITS) {
+            return null;
+         }
+      }
 
-   if (spawnInfo.doStrictCollisionCheck) {
-      const collidingEntities = getHitboxesCollidingEntities(spawnInfo.layer, transformComponent.hitboxes);
-      if (collidingEntities.length > 0) {
+      // If there is strict tile type checking, make sure all tiles the entity is overlapping with match the spawn info's spawnable tile types
+      // @Bug: this seems to be a bit brokey... if enabled with cactus sandy dirt, almost no cacti spawn, which should not be the case.
+      // - this may be crippling entity counts that i jhust haven't noticed... or will cripple them in the future. @Investigate
+      if (spawnInfo.doStrictTileTypeCheck && !entityTileTypesAreValid(config, spawnInfo)) {
          return null;
+      }
+
+      if (spawnInfo.doStrictCollisionCheck) {
+         const collidingEntities = getHitboxesCollidingEntities(spawnInfo.layer, transformComponent.hitboxes);
+         if (collidingEntities.length > 0) {
+            return null;
+         }
       }
    }
 
    // Create the entity
-   const entity = createEntityImmediate(config, spawnInfo.layer);
-   addEntityToCensus(entity, config.entityType);
+   for (const config of configs) {
+      const entity = createEntityImmediate(config, spawnInfo.layer);
+      addEntityToCensus(entity, config.entityType);
+   }
 
-   return config;
+   return configs;
 }
 
 const spawnEntities = (spawnInfo: EntitySpawnEvent, spawnOrigin: Point): void => {
@@ -312,8 +316,8 @@ export function runSpawnAttempt(): void {
 export function spawnInitialEntities(): void {
    // @Temporary
    setTimeout(() => {
-      const tukmokConfig = createTukmokConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
-      createEntity(tukmokConfig, surfaceLayer, 0);
+      // const config = createSnobeConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
+      // createEntity(config, surfaceLayer, 0);
 
       // const yetiConfig = createYetiConfig(new Point(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, []);
       // createEntity(yetiConfig, surfaceLayer, 0);

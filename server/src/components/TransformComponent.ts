@@ -20,9 +20,9 @@ import { removeEntityLights, updateEntityLights } from "../lights";
 import { registerDirtyEntity } from "../server/player-clients";
 import { surfaceLayer } from "../layers";
 import { addHitboxDataToPacket, getHitboxDataLength } from "../server/packet-hitboxes";
-import { getHitboxVelocity, Hitbox, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox } from "../hitboxes";
+import { getHitboxVelocity, getRootHitbox, Hitbox, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox } from "../hitboxes";
 import { EntityConfig } from "../components";
-import { destroyTether as destroyTether } from "../tethers";
+import { addEntityTethersToWorld, destroyTether as destroyTether } from "../tethers";
 
 // @Cleanup: move mass/hitbox related stuff out? (Are there any entities which could take advantage of that extraction?)
 
@@ -116,6 +116,7 @@ export function addHitboxToTransformComponent(transformComponent: TransformCompo
    if (hitbox.parent === null) {
       transformComponent.rootHitboxes.push(hitbox);
    } else {
+      assert(!hitbox.parent.children.includes(hitbox));
       hitbox.parent.children.push(hitbox);
    }
 }
@@ -128,6 +129,7 @@ export function addHitboxToEntity(entity: Entity, hitbox: Hitbox): void {
    if (hitbox.parent === null) {
       transformComponent.rootHitboxes.push(hitbox);
    } else {
+      assert(!hitbox.parent.children.includes(hitbox));
       hitbox.parent.children.push(hitbox);
    }
 
@@ -287,6 +289,7 @@ const cleanHitboxTransformIncludingChildren = (hitbox: Hitbox): void => {
    const transformComponent = TransformComponentArray.getComponent(hitbox.entity);
 
    // @SPEED: Pretty sure this is going to override itself many many times!! should only be done 1nce per entity
+   // @CLEANUP: Its kind of implied that the function doesn't do this, jsut does the hitbox stuff!!!!!
    
    // An object only changes their chunks if a hitboxes' bounds change chunks.
    let hitboxChunkBoundsHaveChanged = false;
@@ -365,46 +368,65 @@ TransformComponentArray.onTick = {
 TransformComponentArray.preRemove = preRemove;
 TransformComponentArray.onRemove = onRemove;
 
-const collideWithVerticalWorldBorder = (transformComponent: TransformComponent, tx: number): void => {
-   for (const rootHitbox of transformComponent.hitboxes) {
-      translateHitbox(rootHitbox, transformComponent, new Point(tx, 0));
-      setHitboxVelocityX(rootHitbox, 0);
-   }
-
-   transformComponent.isDirty = true;
+const collideWithVerticalWorldBorder = (hitbox: Hitbox, transformComponent: TransformComponent, tx: number): void => {
+   const rootHitbox = getRootHitbox(hitbox);
+   translateHitbox(rootHitbox, transformComponent, new Point(tx, 0));
+   setHitboxVelocityX(rootHitbox, 0);
 }
 
-const collideWithHorizontalWorldBorder = (transformComponent: TransformComponent, ty: number): void => {
-   for (const rootHitbox of transformComponent.hitboxes) {
-      translateHitbox(rootHitbox, transformComponent, new Point(0, ty));
-      setHitboxVelocityY(rootHitbox, 0);
-   }
-
-   transformComponent.isDirty = true;
+const collideWithHorizontalWorldBorder = (hitbox: Hitbox, transformComponent: TransformComponent, ty: number): void => {
+   const rootHitbox = getRootHitbox(hitbox);
+   translateHitbox(rootHitbox, transformComponent, new Point(0, ty));
+   setHitboxVelocityY(rootHitbox, 0);
 }
 
 export function resolveEntityBorderCollisions(transformComponent: TransformComponent): void {
-   // Left border
-   if (transformComponent.boundingAreaMinX < 0) {
-      collideWithVerticalWorldBorder(transformComponent, -transformComponent.boundingAreaMinX);
-      // Right border
-   } else if (transformComponent.boundingAreaMaxX > Settings.BOARD_UNITS) {
-      collideWithVerticalWorldBorder(transformComponent, Settings.BOARD_UNITS - transformComponent.boundingAreaMaxX);
-   }
+   const EPSILON = 0.0001;
+   
+   for (const hitbox of transformComponent.hitboxes) {
+      let hasCorrected = false;
+      
+      // Left border
+      const minX = hitbox.box.calculateBoundsMinX();
+      if (minX < 0) {
+         collideWithVerticalWorldBorder(hitbox, transformComponent, -minX + EPSILON);
+         hasCorrected = true;
+      }
 
-   // Bottom border
-   if (transformComponent.boundingAreaMinY < 0) {
-      collideWithHorizontalWorldBorder(transformComponent, -transformComponent.boundingAreaMinY);
+      // Right border
+      const maxX = hitbox.box.calculateBoundsMaxX();
+      if (maxX > Settings.BOARD_UNITS) {
+         collideWithVerticalWorldBorder(hitbox, transformComponent, Settings.BOARD_UNITS - maxX - EPSILON);
+         hasCorrected = true;
+      }
+
+      // Bottom border
+      const minY = hitbox.box.calculateBoundsMinY();
+      if (minY < 0) {
+         hasCorrected = true;
+         collideWithHorizontalWorldBorder(hitbox, transformComponent, -minY + EPSILON);
+      }
+
       // Top border
-   } else if (transformComponent.boundingAreaMaxY > Settings.BOARD_UNITS) {
-      collideWithHorizontalWorldBorder(transformComponent, Settings.BOARD_UNITS - transformComponent.boundingAreaMaxY);
+      const maxY = hitbox.box.calculateBoundsMaxY();
+      if (maxY > Settings.BOARD_UNITS) {
+         hasCorrected = true;
+         collideWithHorizontalWorldBorder(hitbox, transformComponent, Settings.BOARD_UNITS - maxY - EPSILON);
+      }
+
+      // We then need to clean the hitbox so that its children have its position updated to reflect the move
+      if (hasCorrected) {
+         // @SPEED if we're doing this then shouldn't we do the root hitbox recursion thing??
+         const rootHitbox = getRootHitbox(hitbox);
+         cleanHitboxTransformIncludingChildren(rootHitbox);
+      }
    }
 
    // If the entity is outside the world border after resolving border collisions, throw an error
    // @Robustness this should be impossible to trigger
    for (const hitbox of transformComponent.hitboxes) {
       if (hitbox.box.position.x < 0 || hitbox.box.position.x >= Settings.BOARD_UNITS || hitbox.box.position.y < 0 || hitbox.box.position.y >= Settings.BOARD_UNITS) {
-         const entity = TransformComponentArray.getEntityFromComponent(transformComponent);
+         const entity = TransformComponentArray.getEntityFromComponentNONOSQUARE(transformComponent);
          throw new Error("Unable to properly resolve border collisions for " + EntityTypeString[getEntityType(entity)] + ".");
       }
    }
@@ -444,6 +466,8 @@ function onJoin(entity: Entity): void {
    }
 
    updateEntityLights(entity);
+
+   addEntityTethersToWorld(transformComponent);
 }
 
 function onTick(entity: Entity): void {
@@ -465,10 +489,7 @@ function preRemove(entity: Entity): void {
 function onRemove(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   // (Iterate backwards as children are removed from this array in the removeAttachedEntity function)
-   for (let i = transformComponent.hitboxes.length - 1; i >= 0; i--) {
-      const hitbox = transformComponent.hitboxes[i];
-
+   for (const hitbox of transformComponent.hitboxes) {
       // Detach any of the entities' hitboxes which are attached to another entities' hitbox
       if (hitbox.parent !== null && hitbox.parent.entity !== entity) {
          detachHitbox(hitbox);
@@ -535,6 +556,7 @@ export function attachHitboxRaw(hitbox: Hitbox, parentHitbox: Hitbox, isPartOfPa
    hitbox.rootEntity = parentHitbox.rootEntity;
    hitbox.parent = parentHitbox;
    hitbox.isPartOfParent = isPartOfParent;
+   assert(!hitbox.parent.children.includes(hitbox));
    hitbox.parent.children.push(hitbox);
    
    registerDirtyEntity(hitbox.entity);
@@ -562,6 +584,8 @@ export function attachHitbox(hitbox: Hitbox, parentHitbox: Hitbox, isPartOfParen
 // @Copynpaste !
 export function attachEntityWithTether(entity: Entity, parent: Entity, parentHitbox: Hitbox | null, idealDistance: number, springConstant: number, damping: number, destroyWhenParentIsDestroyed: boolean): void {
    assert(entity !== parent);
+
+   throw new Error();
    
    // @INCOMPLETE
 
@@ -605,9 +629,6 @@ export function attachEntityWithTether(entity: Entity, parent: Entity, parentHit
 
 /** Detatches a hitbox from its parent. */
 export function detachHitbox(hitbox: Hitbox): void {
-   // const parentTransformComponent = TransformComponentArray.getComponent(parent);
-   // const childTransformComponent = TransformComponentArray.getComponent(child);
-
    if (hitbox.parent === null) {
       return;
    }
@@ -633,15 +654,13 @@ export function detachHitbox(hitbox: Hitbox): void {
    registerDirtyEntity(hitbox.entity);
 
    hitbox.parent = null;
+   propagateRootEntityChange(hitbox, hitbox.entity);
 
+   // @Incomplete?
    // // If the parent has no children left, destroy the parent
    // if (parentTransformComponent.children.length === 0) {
    //    destroyEntity(parent);
    // }
-   
-   // childTransformComponent.parentEntity = 0;
-   
-   propagateRootEntityChange(hitbox, hitbox.entity);
 }
 
 export function getRandomPositionInBox(box: Box): Point {
@@ -664,8 +683,6 @@ export function getRandomPositionInBox(box: Box): Point {
 //    let numHitboxes = 0;
 //    for (const child of transformComponent.children) {
 //       if (entityChildIsEntity(child)) {
-//          const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
-//          numHitboxes += countHitboxes(childTransformComponent);
 //       } else {
 //          numHitboxes++;
 //       }
@@ -677,8 +694,6 @@ export function getRandomPositionInBox(box: Box): Point {
 //    let newI = i;
 //    for (const child of transformComponent.children) {
 //       if (entityChildIsEntity(child)) {
-//          const childTransformComponent = TransformComponentArray.getComponent(child.attachedEntity);
-//          const result = getHeirarchyIndexedHitbox(childTransformComponent, newI, hitboxIdx);
 //          if (typeof result === "number") {
 //             newI = result;
 //          } else {

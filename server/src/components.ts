@@ -97,7 +97,6 @@ import { GlurbSegmentComponent } from "./components/GlurbSegmentComponent";
 import { FleshSwordItemComponent } from "./components/FleshSwordItemComponent";
 import { HitboxAngularTether, Hitbox } from "./hitboxes";
 import { MossComponent } from "./components/MossComponent";
-import { GlurbComponent } from "./components/GlurbComponent";
 import { FloorSignComponent } from "./components/FloorSignComponent";
 import { DesertBushLivelyComponent } from "./components/DesertBushLivelyComponent";
 import { DesertBushSandyComponent } from "./components/DesertBushSandyComponent";
@@ -212,10 +211,9 @@ const ComponentClassRecord = {
    [ServerComponentType.furnace]: () => FurnaceComponent,
    [ServerComponentType.fireTorch]: () => FireTorchComponent,
    [ServerComponentType.spikyBastard]: () => SpikyBastardComponent,
-   [ServerComponentType.glurb]: () => GlurbComponent,
-   [ServerComponentType.glurbSegment]: () => GlurbSegmentComponent,
-   [ServerComponentType.glurbBodySegment]: () => GlurbBodySegmentComponent,
    [ServerComponentType.glurbHeadSegment]: () => GlurbHeadSegmentComponent,
+   [ServerComponentType.glurbBodySegment]: () => GlurbBodySegmentComponent,
+   [ServerComponentType.glurbSegment]: () => GlurbSegmentComponent,
    [ServerComponentType.slurbTorch]: () => SlurbTorchComponent,
    [ServerComponentType.attackingEntities]: () => AttackingEntitiesComponent,
    [ServerComponentType.aiAssignment]: () => AIAssignmentComponent,

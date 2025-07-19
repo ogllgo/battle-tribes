@@ -1,48 +1,20 @@
-import { TransformComponent } from "./components/TransformComponent";
+import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { getHitboxVelocity, Hitbox } from "./hitboxes";
 
 export class HitboxTether {
    public readonly hitbox1: Hitbox;
    public readonly hitbox2: Hitbox;
    
-   // @Robustness: This is so prone to bugs if i accidentally use the wrong transform component for 
-   public readonly transformComponent1: TransformComponent;
-   public readonly transformComponent2: TransformComponent;
-   
    public readonly idealDistance: number;
    public readonly springConstant: number;
    public readonly damping: number;
 
-   constructor(hitbox1: Hitbox, hitbox2: Hitbox, transformComponent1: TransformComponent, transformComponent2: TransformComponent, idealDistance: number, springConstant: number, damping: number) {
+   constructor(hitbox1: Hitbox, hitbox2: Hitbox, idealDistance: number, springConstant: number, damping: number) {
       this.hitbox1 = hitbox1;
       this.hitbox2 = hitbox2;
-      this.transformComponent1 = transformComponent1;
-      this.transformComponent2 = transformComponent2;
       this.idealDistance = idealDistance;
       this.springConstant = springConstant;
       this.damping = damping;
-
-      // @Hack shitass checks until i decouple tethers from transform components
-      let hasFound = false;
-      for (const hitbox of transformComponent1.hitboxes) {
-         if (hitbox === hitbox1) {
-            hasFound = true;
-            break;
-         }
-      }
-      if (!hasFound) {
-         throw new Error();
-      }
-      hasFound = false;
-      for (const hitbox of transformComponent2.hitboxes) {
-         if (hitbox === hitbox2) {
-            hasFound = true;
-            break;
-         }
-      }
-      if (!hasFound) {
-         throw new Error();
-      }
    }
 
    // @Cleanup @Robustness: would be nice to find a way to rework tethers so that this function doesn't need to be called, completely eliminating the potential for an error to be thrown
@@ -59,12 +31,28 @@ export class HitboxTether {
 
 const tethers = new Array<HitboxTether>();
 
-export function tetherHitboxes(hitbox1: Hitbox, hitbox2: Hitbox, transformComponent1: TransformComponent, transformComponent2: TransformComponent, idealDistance: number, springConstant: number, damping: number): void {
-   const tether = new HitboxTether(hitbox1, hitbox2, transformComponent1, transformComponent2, idealDistance, springConstant, damping);
+export function tetherHitboxes(hitbox1: Hitbox, hitbox2: Hitbox, idealDistance: number, springConstant: number, damping: number): void {
+   const tether = new HitboxTether(hitbox1, hitbox2, idealDistance, springConstant, damping);
    
-   tethers.push(tether);
    hitbox1.tethers.push(tether);
    hitbox2.tethers.push(tether);
+
+   // We don't add the tether to the global tethers array here, cuz we wait until it's added to the world
+}
+
+const tetherIsInWorld = (tether: HitboxTether): boolean => {
+   // @SPEED
+   return tethers.indexOf(tether) !== -1;
+}
+
+export function addEntityTethersToWorld(transformComponent: TransformComponent): void {
+   for (const hitbox of transformComponent.hitboxes) {
+      for (const tether of hitbox.tethers) {
+         if (!tetherIsInWorld(tether)) {
+            tethers.push(tether);
+         }
+      }
+   }
 }
 
 export function destroyTether(tether: HitboxTether): void {
@@ -126,8 +114,10 @@ const applyTether = (tether: HitboxTether): void => {
    hitbox2.acceleration.y -= forceY / hitbox2.mass;
 
    // @Speed: Does this need to be done every time?
-   tether.transformComponent1.isDirty = true;
-   tether.transformComponent2.isDirty = true;
+   const transformComponent1 = TransformComponentArray.getComponent(hitbox1.entity);
+   const transformComponent2 = TransformComponentArray.getComponent(hitbox2.entity);
+   transformComponent1.isDirty = true;
+   transformComponent2.isDirty = true;
 }
 
 export function applyTethers(): void {

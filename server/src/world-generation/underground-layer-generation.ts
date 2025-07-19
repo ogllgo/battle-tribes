@@ -332,7 +332,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       spawnDistribution: mossSpawnDistribution,
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
-      createEntity: (pos: Point, angle: number, firstEntityConfig: EntityConfig | null, layer: Layer): EntityConfig | null => {
+      createEntity: (pos: Point, angle: number, firstEntityConfigs: ReadonlyArray<EntityConfig> | null, layer: Layer): [EntityConfig] | null => {
          const humidity = getMossHumidity(layer, pos.x, pos.y);
          const minSize = lerp(0, 1, humidity);
          const maxSize = lerp(0, 3, humidity);
@@ -341,8 +341,8 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
             size = 2;
          }
          
-         const colour = firstEntityConfig === null ?  getMossColour(pos.x, pos.y): firstEntityConfig.components[ServerComponentType.moss]!.colour;
-         return createMossConfig(pos, angle, size, colour);
+         const colour = firstEntityConfigs === null ? getMossColour(pos.x, pos.y): firstEntityConfigs[0].components[ServerComponentType.moss]!.colour;
+         return [createMossConfig(pos, angle, size, colour)];
       }
    });
 
@@ -418,26 +418,25 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       spawnDistribution: createRawSpawnDistribution(16, 0.025),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: true,
-      createEntity: (pos: Point, angle: number): EntityConfig | null => {
-         return createBoulderConfig(pos, angle);
+      createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
+         return [createBoulderConfig(pos, angle)];
       }
    });
-   // @TEMPORARY coz crash
-   // registerNewSpawnInfo({
-   //    entityTypes: [EntityType.glurb],
-   //    layer: undergroundLayer,
-   //    spawnRate: 0.0025,
-   //    biome: Biome.caves,
-   //    tileTypes: [TileType.stone],
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 100,
-   //    spawnDistribution: createRawSpawnDistribution(32, 0.004),
-   //    balanceSpawnDistribution: true,
-   //    doStrictTileTypeCheck: true,
-   //    createEntity: (pos: Point, angle: number): EntityConfig | null => {
-   //       return createGlurbConfig(pos, angle);
-   //    }
-   // });
+   registerNewSpawnInfo({
+      entityTypes: [EntityType.glurbHeadSegment, EntityType.glurbBodySegment, EntityType.glurbTailSegment],
+      layer: undergroundLayer,
+      spawnRate: 0.0025,
+      biome: Biome.caves,
+      tileTypes: [TileType.stone],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 100,
+      spawnDistribution: createRawSpawnDistribution(32, 0.004),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: true,
+      createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
+         return createGlurbConfig(pos, angle);
+      }
+   });
    // @HACK: Just so that mithril ore nodes get registered so tribesman know how to gather them
    registerNewSpawnInfo({
       entityTypes: [EntityType.mithrilOreNode],
@@ -450,7 +449,7 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       spawnDistribution: createRawSpawnDistribution(4, 0),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
-      createEntity: (pos: Point, angle: number): EntityConfig | null => {
+      createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
          return null;
       }
    });

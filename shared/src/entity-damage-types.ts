@@ -315,10 +315,6 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       effectiveDamageTypes: [],
       stoppedDamageTypes: []
    },
-   [EntityType.glurb]: {
-      effectiveDamageTypes: [],
-      stoppedDamageTypes: []
-   },
    [EntityType.glurbBodySegment]: {
       effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []

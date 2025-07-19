@@ -8,6 +8,7 @@ export class GlurbSegmentComponent {
 }
 
 export const GlurbSegmentComponentArray = new ComponentArray<GlurbSegmentComponent>(ServerComponentType.glurbSegment, true, getDataLength, addDataToPacket);
+GlurbSegmentComponentArray.onTakeDamage = onTakeDamage;
 
 function getDataLength(): number {
    return Float32Array.BYTES_PER_ELEMENT;
@@ -16,4 +17,10 @@ function getDataLength(): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const glurbSegmentComponent = GlurbSegmentComponentArray.getComponent(entity);
    packet.addNumber(glurbSegmentComponent.mossBallCompleteness);
+}
+
+function onTakeDamage(entity: Entity): void {
+   // @INCOMPLETE: No longer works since I removed the thing which triggers parent onTakeDamage callbacks when the child takes damage.
+   // const tamingComponent = TamingComponentArray.getComponent(entity);
+   // addSkillLearningProgress(tamingComponent, TamingSkillID.dulledPainReceptors, 1);
 }

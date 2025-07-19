@@ -1,26 +1,26 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
-import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 import { ItemType } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
 import { assert, Point, randAngle } from "../../../shared/src/utils";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { createEntityConfigAttachInfo, EntityConfig } from "../components";
-import { createGlurbBodySegmentConfig } from "../entities/mobs/glurb-body-segment";
-import { createGlurbTailSegmentConfig } from "../entities/mobs/glurb-tail-segment";
 import { Hitbox } from "../hitboxes";
-import { registerEntityTickEvent } from "../server/player-clients";
-import { createEntity, destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
+import { destroyEntity, entityExists, getEntityType } from "../world";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
 import { ComponentArray } from "./ComponentArray";
 import { updateFollowAIComponent, followAISetFollowTarget, FollowAI, entityWantsToFollow } from "../ai/FollowAI";
-import { GlurbComponentArray } from "./GlurbComponent";
-import { GlurbSegmentComponentArray } from "./GlurbSegmentComponent";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
 import { ItemComponentArray } from "./ItemComponent";
 import { TamingComponentArray } from "./TamingComponent";
 import { TransformComponentArray } from "./TransformComponent";
+import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
+import { EntityConfig } from "../components";
+import { createGlurbBodySegmentConfig } from "../entities/mobs/glurb-body-segment";
+import { createGlurbTailSegmentConfig } from "../entities/mobs/glurb-tail-segment";
+import { registerEntityTickEvent } from "../server/player-clients";
+import { GlurbSegmentComponentArray } from "./GlurbSegmentComponent";
+import { tetherGlurbSegments } from "../entities/mobs/glurb";
 
 const enum Vars {
    // @Temporary
@@ -29,7 +29,13 @@ const enum Vars {
 }
 
 export class GlurbHeadSegmentComponent {
+   public readonly maxNumSegments: number;
+   
    public food = 1;
+
+   constructor(maxNumSegments: number) {
+      this.maxNumSegments = maxNumSegments;
+   }
 }
 
 export const GlurbHeadSegmentComponentArray = new ComponentArray<GlurbHeadSegmentComponent>(ServerComponentType.glurbHeadSegment, true, getDataLength, addDataToPacket);
@@ -94,6 +100,48 @@ const getFoodTarget = (glurbHeadHitbox: Hitbox, visibleEntities: ReadonlyArray<E
    return target;
 }
 
+// @Cleanup: shares a bunch of logic with the functions in glurb-head-segment.ts
+const getFinalSegment = (glurbSegment: Entity, foundSegments: Array<Entity>): Entity => {
+   const transformComponent = TransformComponentArray.getComponent(glurbSegment);
+   const hitbox = transformComponent.hitboxes[0];
+
+   let nextSegment: Entity | undefined;
+   for (const tether of hitbox.tethers) {
+      const otherHitbox = tether.getOtherHitbox(hitbox);
+      if (!foundSegments.includes(otherHitbox.entity)) {
+         foundSegments.push(otherHitbox.entity);
+         nextSegment = otherHitbox.entity;
+      }
+   }
+
+   if (typeof nextSegment !== "undefined") {
+      return getFinalSegment(nextSegment, foundSegments);
+   } else {
+      return glurbSegment;
+   }
+}
+
+// @Cleanup: shares a bunch of logic with the functions in glurb-head-segment.ts
+const getNumSegments = (glurbSegment: Entity, foundSegments: Array<Entity>): number => {
+   const transformComponent = TransformComponentArray.getComponent(glurbSegment);
+   const hitbox = transformComponent.hitboxes[0];
+
+   let nextSegment: Entity | undefined;
+   for (const tether of hitbox.tethers) {
+      const otherHitbox = tether.getOtherHitbox(hitbox);
+      if (!foundSegments.includes(otherHitbox.entity)) {
+         foundSegments.push(otherHitbox.entity);
+         nextSegment = otherHitbox.entity;
+      }
+   }
+
+   if (typeof nextSegment !== "undefined") {
+      return 1 + getNumSegments(nextSegment, foundSegments);
+   } else {
+      return 1;
+   }
+}
+
 function onTick(glurbHead: Entity): void {
    const glurbHeadTransformComponent = TransformComponentArray.getComponent(glurbHead);
    const headHitbox = glurbHeadTransformComponent.hitboxes[0];
@@ -153,71 +201,60 @@ function onTick(glurbHead: Entity): void {
    }
 
    // Consoom moss when hungry
-   // @INCOMPLETE after the child->hitbox rework
-   // if (glurbHeadSegmentComponent.food < 0.6) {
-   //    const targetMoss = getFoodTarget(headHitbox, aiHelperComponent.visibleEntities);
-   //    if (targetMoss !== null) {
-   //       moveToEntity(glurbHead, targetMoss);
-   //       if (entitiesAreColliding(glurbHead, targetMoss) !== CollisionVars.NO_COLLISION) {
-   //          destroyEntity(targetMoss);
-   //          glurbHeadSegmentComponent.food += 0.5;
+   if (glurbHeadSegmentComponent.food < 0.6) {
+      const targetMoss = getFoodTarget(headHitbox, aiHelperComponent.visibleEntities);
+      if (targetMoss !== null) {
+         moveToEntity(glurbHead, targetMoss);
+         if (entitiesAreColliding(glurbHead, targetMoss) !== CollisionVars.NO_COLLISION) {
+            destroyEntity(targetMoss);
+            glurbHeadSegmentComponent.food += 0.5;
 
-   //          const tickEvent: EntityTickEvent = {
-   //             entityID: glurbHead,
-   //             // @Hack
-   //             type: EntityTickEventType.cowEat,
-   //             data: 0
-   //          };
-   //          registerEntityTickEvent(glurbHead, tickEvent);
+            const tickEvent: EntityTickEvent = {
+               entityID: glurbHead,
+               // @Hack
+               type: EntityTickEventType.cowEat,
+               data: 0
+            };
+            registerEntityTickEvent(glurbHead, tickEvent);
 
-   //          const glurb = glurbHeadTransformComponent.parentEntity;
-   //          assert(glurb !== glurbHead);
-   //          assert(entityExists(glurb));
+            const finalChild = getFinalSegment(glurbHead, []);
+            if (getEntityType(finalChild) === EntityType.glurbBodySegment) {
+               const glurbSegmentComponent = GlurbSegmentComponentArray.getComponent(finalChild);
+               glurbSegmentComponent.mossBallCompleteness++;
 
-   //          const glurbTransformComponent = TransformComponentArray.getComponent(glurb);
-   //          // @Hack: shite shite shite. what if an entity gets attached to the glurb?
-   //          const finalChildAttachInfo = glurbTransformComponent.children[glurbTransformComponent.children.length - 1] as EntityAttachInfo;
-   //          const finalChild = finalChildAttachInfo.attachedEntity;
-   //          if (getEntityType(finalChild) === EntityType.glurbBodySegment) {
-   //             const glurbSegmentComponent = GlurbSegmentComponentArray.getComponent(finalChild);
-   //             glurbSegmentComponent.mossBallCompleteness++;
+               if (glurbSegmentComponent.mossBallCompleteness === 7) {
+                  // Grow new segment
 
-   //             if (glurbSegmentComponent.mossBallCompleteness === 7) {
-   //                // Grow new segment
+                  glurbSegmentComponent.mossBallCompleteness = 0;
 
-   //                glurbSegmentComponent.mossBallCompleteness = 0;
+                  const numSegments = getNumSegments(glurbHead, []);
+                  assert(numSegments < glurbHeadSegmentComponent.maxNumSegments);
 
-   //                const glurbComponent = GlurbComponentArray.getComponent(glurb);
-   //                // @Hack: it isn't guaranteed that children will only be glurb segments...
-   //                const currentNumComponents = glurbTransformComponent.children.length;
-   //                assert(currentNumComponents < glurbComponent.numSegments);
+                  const finalSegmentTransformComponent = TransformComponentArray.getComponent(finalChild);
+                  const finalSegmentHitbox = finalSegmentTransformComponent.hitboxes[0];
 
-   //                const finalSegmentTransformComponent = TransformComponentArray.getComponent(finalChild);
-   //                const finalSegmentHitbox = finalSegmentTransformComponent.hitboxes[0];
-
-   //                const spawnOffsetDirection = headHitbox.box.position.calculateAngleBetween(finalSegmentHitbox.box.position);
-   //                const spawnOffsetMagnitude = 30;
-   //                const x = finalSegmentHitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
-   //                const y = finalSegmentHitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
+                  const spawnOffsetDirection = headHitbox.box.position.calculateAngleBetween(finalSegmentHitbox.box.position);
+                  const spawnOffsetMagnitude = 30;
+                  const x = finalSegmentHitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
+                  const y = finalSegmentHitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
                   
-   //                let config: EntityConfig;
-   //                if (currentNumComponents + 1 === glurbComponent.numSegments) {
-   //                   // Tail segment
-   //                   config = createGlurbTailSegmentConfig(new Point(x, y), randAngle(), finalSegmentHitbox, finalSegmentTransformComponent);
-   //                } else {
-   //                   // Body segment
-   //                   config = createGlurbBodySegmentConfig(new Point(x, y), randAngle(), finalSegmentHitbox, finalSegmentTransformComponent);
-   //                }
-   //                // @INCOMPLETE CUZ BAD!!
-   //                // const newSegmentHitbox = config.components[ServerComponentType.transform]!.hitboxes[0];
-   //                // config.attachInfo = createEntityConfigAttachInfo(glurb, newSegmentHitbox, null, true);
-   //                // createEntity(config, getEntityLayer(glurb), 0);
-   //             }
-   //          }
-   //       }
-   //       return;
-   //    }
-   // }
+                  let config: EntityConfig;
+                  if (numSegments + 1 === glurbHeadSegmentComponent.maxNumSegments) {
+                     // Tail segment
+                     config = createGlurbTailSegmentConfig(new Point(x, y), randAngle());
+                  } else {
+                     // Body segment
+                     config = createGlurbBodySegmentConfig(new Point(x, y), randAngle());
+                  }
+
+                  const newSegmentHitbox = config.components[ServerComponentType.transform]!.hitboxes[0];
+                  tetherGlurbSegments(newSegmentHitbox, finalSegmentHitbox);
+               }
+            }
+         }
+         return;
+      }
+   }
 
    // Follow AI
    const followAI = aiHelperComponent.getFollowAI();

@@ -47,7 +47,7 @@ export interface EntitySpawnEvent {
    readonly doStrictTileTypeCheck: boolean;
    /** If true, the entity must not be overlapping with any other collideable entities. */
    readonly doStrictCollisionCheck?: boolean;
-   readonly createEntity: (pos: Readonly<Point>, angle: number, firstEntityConfig: EntityConfig | null, layer: Layer) => EntityConfig | null;
+   readonly createEntity: (pos: Readonly<Point>, angle: number, firstEntityConfig: ReadonlyArray<EntityConfig> | null, layer: Layer) => ReadonlyArray<EntityConfig> | null;
    readonly customSpawnIsValidFunc?: (spawnInfo: EntitySpawnEvent, spawnOriginX: number, spawnOriginY: number) => boolean;
 }
 

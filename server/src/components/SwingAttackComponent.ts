@@ -1,4 +1,4 @@
-import { BLOCKING_LIMB_STATE, LimbState, SHIELD_BLOCKING_LIMB_STATE } from "../../../shared/src/attack-patterns";
+import { LimbState } from "../../../shared/src/attack-patterns";
 import { assertBoxIsCircular, HitboxFlag } from "../../../shared/src/boxes/boxes";
 import { HitFlags } from "../../../shared/src/client-server-types";
 import { ServerComponentType } from "../../../shared/src/components";
@@ -8,7 +8,7 @@ import { getItemType, HammerItemType, InventoryName, Item, ITEM_INFO_RECORD, Ite
 import { Settings } from "../../../shared/src/settings";
 import { StatusEffect } from "../../../shared/src/status-effects";
 import { TribesmanTitle } from "../../../shared/src/titles";
-import { lerp, Point, randAngle } from "../../../shared/src/utils";
+import { Point, randAngle } from "../../../shared/src/utils";
 import { HitboxCollisionPair } from "../collision-detection";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { calculateItemKnockback } from "../entities/tribes/limb-use";
@@ -72,7 +72,7 @@ function onTick(swingAttack: Entity): void {
    if (!entityExists(swingAttackComponent.owner)) {
       return;
    }
-   
+
    const isFlipped = limb.associatedInventory.name === InventoryName.offhand;
    const ownerTransformComponent = TransformComponentArray.getComponent(swingAttackComponent.owner);
    setHitboxToLimbState(ownerTransformComponent, swingAttackTransformComponent, limbHitbox, getCurrentLimbState(limb), isFlipped);
@@ -149,7 +149,7 @@ const getPlantGatherAmount = (tribeman: Entity, plant: Entity, gloves: Item | nu
    return amount;
 }
 
-const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void => {
+const gatherPlant = (plant: Entity, attacker: Entity, hitHitbox: Hitbox, gloves: Item | null): void => {
    const plantTransformComponent = TransformComponentArray.getComponent(plant);
    const plantHitbox = plantTransformComponent.hitboxes[0];
    
@@ -159,7 +159,7 @@ const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void
       // As hitting the bush will drop a berry regardless, only drop extra ones here
       for (let i = 0; i < gatherMultiplier - 1; i++) {
          // @HACK: hit position
-         hitEntityWithoutDamage(plant, attacker, new Point(0, 0), 0);
+         hitEntityWithoutDamage(plant, hitHitbox, attacker, new Point(0, 0));
       }
    } else {
       assertBoxIsCircular(plantHitbox.box);
@@ -171,6 +171,8 @@ const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void
    
       const config = createItemEntityConfig(new Point(x, y), randAngle(), ItemType.leaf, 1, null);
       createEntity(config, getEntityLayer(plant), 0);
+
+      hitEntityWithoutDamage(plant, hitHitbox, attacker, new Point(0, 0));
    }
 
    // @Hack
@@ -182,7 +184,7 @@ const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void
    damageEntity(plant, plantHitbox, attacker, 0, 0, AttackEffectiveness.ineffective, collisionPoint, HitFlags.NON_DAMAGING_HIT);
 }
 
-const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>): boolean => {
+const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, hitHitbox: Hitbox, collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>): boolean => {
    const swingAttackComponent = SwingAttackComponentArray.getComponent(swingAttack);
    const attacker = swingAttackComponent.owner;
    const attackingLimb = swingAttackComponent.limb;
@@ -200,7 +202,7 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, collidingHit
          const gloveInventory = getInventory(inventoryComponent, InventoryName.gloveSlot);
          const gloves = gloveInventory.itemSlots[1];
          if (typeof gloves !== "undefined" && (gloves.type === ItemType.gathering_gloves || gloves.type === ItemType.gardening_gloves)) {
-            gatherPlant(victim, attacker, gloves);
+            gatherPlant(victim, attacker, hitHitbox, gloves);
             return true;
          }
       }
@@ -309,7 +311,7 @@ function onEntityCollision(swingAttack: Entity, collidingEntity: Entity, collidi
       return;
    }
 
-   damageEntityFromSwing(swingAttack, collidingEntity, collidingHitboxPairs);
+   damageEntityFromSwing(swingAttack, collidingEntity, collidingHitboxPairs[0][1], collidingHitboxPairs);
 
    destroyEntity(swingAttack);
 }

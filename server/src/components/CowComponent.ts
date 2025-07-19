@@ -497,7 +497,7 @@ function onTick(cow: Entity): void {
                cowComponent.bushShakeTimer++;
                if (cowComponent.bushShakeTimer >= 1.5 * Settings.TPS) {
                   const hitPosition = new Point(eatPositionX, eatPositionY);
-                  hitEntityWithoutDamage(cowComponent.targetBushID, cow, hitPosition, 1);
+                  hitEntityWithoutDamage(cowComponent.targetBushID, targetHitbox, cow, hitPosition);
                   cowComponent.bushShakeTimer = 0;
                   cowComponent.targetBushID = 0;
                }

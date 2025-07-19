@@ -11,6 +11,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { destroyEntity, getEntityComponentTypes, getEntityType } from "../world";
 import { Hitbox } from "../hitboxes";
+import { HitFlags } from "../../../shared/src/client-server-types";
 
 export class HealthComponent {
    public maxHealth: number;
@@ -88,13 +89,6 @@ const callOnDeathCallbacks = (entity: Entity, attackingEntity: Entity | null, da
  * @returns Whether the damage was received
  */
 export function damageEntity(entity: Entity, hitHitbox: Hitbox, attackingEntity: Entity | null, damage: number, damageSource: DamageSource, attackEffectiveness: AttackEffectiveness, hitPosition: Point, hitFlags: number): boolean {
-   // @HACK @INCOMPLETE
-   const damagedEntity = entity;
-   // const damagedEntity = getFirstEntityWithComponent(HealthComponentArray, entity);
-   if (damagedEntity === null) {
-      throw new Error();
-   }
-
    const componentArrayRecord = getComponentArrayRecord();
 
    let damageMultiplier = 1;
@@ -107,7 +101,7 @@ export function damageEntity(entity: Entity, hitHitbox: Hitbox, attackingEntity:
    }
    const damageDealt = damage * damageMultiplier;
 
-   const healthComponent = HealthComponentArray.getComponent(damagedEntity);
+   const healthComponent = HealthComponentArray.getComponent(entity);
 
    if (damageDealt !== 0) {
       const absorbedDamage = damageDealt * clamp(healthComponent.defence, 0, 1);
@@ -121,7 +115,7 @@ export function damageEntity(entity: Entity, hitHitbox: Hitbox, attackingEntity:
 
    // If the entity was killed by the attack, destroy the entity
    if (healthComponent.health <= 0) {
-      destroyEntity(damagedEntity);
+      destroyEntity(entity);
 
       // Call onDeath events for the dead entity
       callOnDeathCallbacks(entity, attackingEntity, damageSource);
@@ -184,8 +178,11 @@ export function damageEntity(entity: Entity, hitHitbox: Hitbox, attackingEntity:
 }
 
 /** Basically every effect of hitEntity, but doesn't reduce the entity's health. */
-export function hitEntityWithoutDamage(entity: Entity, attackingEntity: Entity | null, hitPosition: Point, hitFlags: number): void {
+export function hitEntityWithoutDamage(entity: Entity, hitHitbox: Hitbox, attackingEntity: Entity | null, hitPosition: Point): void {
+   console.log(hitHitbox);
    // @Incomplete
+   // damageEntity(entity, hitHitbox, attackingEntity, 0, 0, AttackEffectiveness.effective, hitPosition, hitFlags);
+   registerEntityHit(entity, hitHitbox, attackingEntity, hitPosition, AttackEffectiveness.effective, 0, HitFlags.NON_DAMAGING_HIT);
 }
 
 export function healEntity(entity: Entity, healAmount: number, healer: Entity): void {

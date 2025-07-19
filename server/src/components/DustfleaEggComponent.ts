@@ -85,8 +85,5 @@ function onHitboxCollision(dustfleaEgg: Entity, collidingEntity: Entity, affecte
       }
    }
 
-   // @Cleanup: this sucks. tethers shouldn't know about transform components (?)
-   const transformComponent1 = TransformComponentArray.getComponent(dustfleaEgg);
-   const transformComponent2 = TransformComponentArray.getComponent(collidingEntity);
-   tetherHitboxes(affectedHitbox, collidingHitbox, transformComponent1, transformComponent2, 20, 10, 1);
+   tetherHitboxes(affectedHitbox, collidingHitbox, 20, 10, 1);
 }

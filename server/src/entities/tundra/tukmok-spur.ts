@@ -1,4 +1,3 @@
-import { createNormalisedPivotPoint } from "../../../../shared/src/boxes/BaseBox";
 import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
@@ -13,10 +12,10 @@ import { addHitboxToTransformComponent, TransformComponent } from "../../compone
 import { TukmokSpurComponent } from "../../components/TukmokSpurComponent";
 import { Hitbox } from "../../hitboxes";
 
-export function createTukmokSpurConfig(position: Point, angle: number, parentHitbox: Hitbox, offset: Point, hitboxFlag: HitboxFlag, isFlipped: boolean): EntityConfig {
+export function createTukmokSpurConfig(position: Point, angle: number, offset: Point, hitboxFlag: HitboxFlag, isFlipped: boolean): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = new Hitbox(transformComponent, parentHitbox, true, new CircularBox(position, offset, angle, 12), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [hitboxFlag]);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, offset, angle, 12), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [hitboxFlag]);
    hitbox.box.flipX = isFlipped;
    // @Hack
    hitbox.box.totalFlipXMultiplier = isFlipped ? -1 : 1;

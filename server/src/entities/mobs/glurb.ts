@@ -1,109 +1,46 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { Point, randAngle, randInt } from "battletribes-shared/utils";
-import { EntityType } from "battletribes-shared/entities";
-import { StatusEffect } from "../../../../shared/src/status-effects";
-import { ChildConfigAttachInfo, EntityConfig } from "../../components";
-import { StatusEffectComponent } from "../../components/StatusEffectComponent";
+import { Point, randInt } from "battletribes-shared/utils";
+import { EntityConfig } from "../../components";
 import { createGlurbHeadSegmentConfig } from "./glurb-head-segment";
 import { createGlurbBodySegmentConfig } from "./glurb-body-segment";
-import { Hitbox } from "../../hitboxes";
-import { TamingComponent } from "../../components/TamingComponent";
-import { registerEntityTamingSpec } from "../../taming-specs";
-import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
-import { ItemType } from "../../../../shared/src/items/items";
-import { TransformComponent } from "../../components/TransformComponent";
-import { Settings } from "../../../../shared/src/settings";
-import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 import { createGlurbTailSegmentConfig } from "./glurb-tail-segment";
-import { GlurbComponent } from "../../components/GlurbComponent";
+import { tetherHitboxes } from "../../tethers";
+import CircularBox from "../../../../shared/src/boxes/CircularBox";
+import { Hitbox } from "../../hitboxes";
 
-registerEntityTamingSpec(EntityType.glurb, {
-   maxTamingTier: 1,
-   skillNodes: [
-      {
-         skill: getTamingSkill(TamingSkillID.follow),
-         x: -13,
-         y: 10,
-         parent: null,
-         requiredTamingTier: 1
-      },
-      {
-         skill: getTamingSkill(TamingSkillID.dulledPainReceptors),
-         x: 13,
-         y: 10,
-         parent: null,
-         requiredTamingTier: 1
-      }
-   ],
-   foodItemType: ItemType.berry,
-   tierFoodRequirements: {
-      0: 0,
-      1: 5
-   }
-});
+// @Cleanup: Shouldn't be globally exported!!!!
+export function tetherGlurbSegments(hitbox1: Hitbox, hitbox2: Hitbox): void {
+   const tetherIdealDistance = (hitbox1.box as CircularBox).radius + (hitbox2.box as CircularBox).radius - 18;
+   tetherHitboxes(hitbox1, hitbox2, tetherIdealDistance, 15, 0.5);
+}
 
-export function createGlurbConfig(position: Point, angle: number): EntityConfig {
-   // @Incomplete: Will always have same offset shape! Straight, going upwards!
-
-   const transformComponent = new TransformComponent();
+export function createGlurbConfig(position: Point, angle: number): ReadonlyArray<EntityConfig> {
+   const configs = new Array<EntityConfig>();
    
-   const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.burning);
-
-   const attackingEntitiesComponent = new AttackingEntitiesComponent(Settings.TPS * 6);
-
-   const tamingComponent = new TamingComponent();
-
    const numSegments = randInt(3, 5);
-   const glurbComponent = new GlurbComponent(numSegments);
    
-   const childConfigs = new Array<ChildConfigAttachInfo>();
-
-   let currentX = position.x;
-   let currentY = position.y;
+   const headConfig = createGlurbHeadSegmentConfig(position, angle, numSegments);
+   configs.push(headConfig);
    
-   let lastHitbox: Hitbox | undefined;
-   let lastTransformComponent: TransformComponent | undefined;
-   for (let i = 0; i < numSegments; i++) {
-      currentY -= 30;
+   let lastHitbox = headConfig.components[ServerComponentType.transform]!.hitboxes[0];
+   let currentPos = position.copy();
+   for (let i = 0; i < numSegments - 1; i++) {
+      const newPos = currentPos.offset(30, angle + Math.PI);
+      currentPos.x = newPos.x;
+      currentPos.y = newPos.y;
       
       let config: EntityConfig;
-      if (i === 0) {
-         config = createGlurbHeadSegmentConfig(new Point(currentX, currentY), randAngle());
-      } else if (i < numSegments - 1) {
-         config = createGlurbBodySegmentConfig(new Point(currentX, currentY), randAngle(), lastHitbox!, lastTransformComponent!);
+      if (i === numSegments - 2) {
+         config = createGlurbTailSegmentConfig(currentPos.copy(), angle);
       } else {
-         config = createGlurbTailSegmentConfig(new Point(currentX, currentY), randAngle(), lastHitbox!, lastTransformComponent!);
+         config = createGlurbBodySegmentConfig(currentPos.copy(), angle);
       }
-      
-      const segmentTransformComponent = config.components[ServerComponentType.transform]!;
-      const segmentHitbox = segmentTransformComponent.hitboxes[0];
+      configs.push(config);
 
-      // @INCOMPLETE this will cause head to no worky
-      if (typeof lastHitbox !== "undefined") {
-         childConfigs.push({
-            entityConfig: config,
-            attachedHitbox: segmentHitbox,
-            parentHitbox: lastHitbox,
-            isPartOfParent: true
-         });
-      }
-
-      lastHitbox = segmentHitbox;
-      lastTransformComponent = segmentTransformComponent;
+      const hitbox = config.components[ServerComponentType.transform]!.hitboxes[0];
+      tetherGlurbSegments(hitbox, lastHitbox);
+      lastHitbox = hitbox;
    }
-   
-   const rootEntityConfig: EntityConfig = {
-      entityType: EntityType.glurb,
-      components: {
-         [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.statusEffect]: statusEffectComponent,
-         [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
-         [ServerComponentType.taming]: tamingComponent,
-         [ServerComponentType.glurb]: glurbComponent
-      },
-      lights: [],
-      childConfigs: childConfigs
-   };
 
-   return rootEntityConfig;
+   return configs;
 }

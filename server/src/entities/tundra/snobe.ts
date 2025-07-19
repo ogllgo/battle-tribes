@@ -92,7 +92,7 @@ export function createSnobeConfig(position: Point, angle: number): EntityConfig 
    const buttHitbox = new Hitbox(transformComponent, null, true, new CircularBox(buttPosition, new Point(0, 0), 0, 12), 0.15, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.SNOBE_BUTT]);
    addHitboxToTransformComponent(transformComponent, buttHitbox);
    
-   tetherHitboxes(buttHitbox, bodyHitbox, transformComponent, transformComponent, idealButtDistance, 25, 1);
+   tetherHitboxes(buttHitbox, bodyHitbox, idealButtDistance, 25, 1);
    // @Hack: method of adding
    buttHitbox.angularTethers.push({
       originHitbox: bodyHitbox,

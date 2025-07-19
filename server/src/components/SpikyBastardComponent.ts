@@ -1,10 +1,10 @@
 import { ServerComponentType } from "../../../shared/src/components";
-import { Entity, EntityType, DamageSource } from "../../../shared/src/entities";
+import { Entity, DamageSource } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Point } from "../../../shared/src/utils";
 import { applyKnockback, Hitbox } from "../hitboxes";
-import { getEntityType } from "../world";
 import { ComponentArray } from "./ComponentArray";
+import { GlurbSegmentComponentArray } from "./GlurbSegmentComponent";
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 
 export class SpikyBastardComponent {}
@@ -19,7 +19,7 @@ function getDataLength(): number {
 function addDataToPacket(): void {}
 
 function onHitboxCollision(bastard: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
-   if (getEntityType(collidingEntity) === EntityType.glurb) {
+   if (GlurbSegmentComponentArray.hasComponent(collidingEntity)) {
       return;
    }
    

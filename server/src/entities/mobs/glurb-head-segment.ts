@@ -11,7 +11,7 @@ import { EntityConfig, LightCreationInfo } from "../../components";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { FollowAI } from "../../ai/FollowAI";
 import { GlurbHeadSegmentComponent, GlurbHeadSegmentComponentArray } from "../../components/GlurbHeadSegmentComponent";
-import { GlurbSegmentComponent, GlurbSegmentComponentArray } from "../../components/GlurbSegmentComponent";
+import { GlurbSegmentComponent } from "../../components/GlurbSegmentComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
@@ -20,11 +20,42 @@ import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../hi
 import Layer from "../../Layer";
 import { createLight } from "../../lights";
 import { getEntityAgeTicks } from "../../world";
+import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
+import { registerEntityTamingSpec } from "../../taming-specs";
+import { TamingComponent } from "../../components/TamingComponent";
+import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
+import { StatusEffectComponent } from "../../components/StatusEffectComponent";
+import { StatusEffect } from "../../../../shared/src/status-effects";
 
 const enum Vars {
    MIN_FOLLOW_COOLDOWN = 10 * Settings.TPS,
    MAX_FOLLOW_COOLDOWN = 20 * Settings.TPS
 }
+
+registerEntityTamingSpec(EntityType.glurbHeadSegment, {
+   maxTamingTier: 1,
+   skillNodes: [
+      {
+         skill: getTamingSkill(TamingSkillID.follow),
+         x: -13,
+         y: 10,
+         parent: null,
+         requiredTamingTier: 1
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.dulledPainReceptors),
+         x: 13,
+         y: 10,
+         parent: null,
+         requiredTamingTier: 1
+      }
+   ],
+   foodItemType: ItemType.berry,
+   tierFoodRequirements: {
+      0: 0,
+      1: 5
+   }
+});
 
 registerEntityLootOnDeath(EntityType.glurbHeadSegment, {
    itemType: ItemType.slurb,
@@ -39,83 +70,48 @@ const getAcceleration = (glurb: Entity): number => {
    const age = getEntityAgeTicks(glurb);
    
    const u = (Math.sin(age * Settings.I_TPS * 6.5) + 1) * 0.5;
-   return lerp(200, 450, u);
+   return lerp(375, 650, u);
+}
+
+const propagateMoveDirective = (glurbSegment: Entity, furtherHitbox: Hitbox | null, pos: Point, foundSegments: Array<Entity>): void => {
+   const transformComponent = TransformComponentArray.getComponent(glurbSegment);
+   const hitbox = transformComponent.hitboxes[0];
+
+   const acceleration = getAcceleration(glurbSegment);
+   
+   let targetDir: number;
+   if (furtherHitbox === null) {
+      targetDir = hitbox.box.position.calculateAngleBetween(pos);
+   } else {
+      targetDir = hitbox.box.position.calculateAngleBetween(furtherHitbox.box.position);
+   }
+   
+   applyAccelerationFromGround(glurbSegment, hitbox, polarVec2(acceleration, targetDir));
+   
+   // Propagate
+   for (const tether of hitbox.tethers) {
+      const otherHitbox = tether.getOtherHitbox(hitbox);
+      if (!foundSegments.includes(otherHitbox.entity)) {
+         foundSegments.push(otherHitbox.entity);
+         propagateMoveDirective(otherHitbox.entity, hitbox, pos, foundSegments);
+      }
+   }
 }
 
 const moveFunc = (head: Entity, pos: Point): void => {
-   const acceleration = getAcceleration(head);
-
-   const headTransformComponent = TransformComponentArray.getComponent(head);
-
-   // @INCOMPLETE
-   
-   // const glurbTransformComponent = TransformComponentArray.getComponent(headTransformComponent.parentEntity);
-
-   // for (let i = 0; i < glurbTransformComponent.children.length; i++) {
-   //    const child = glurbTransformComponent.children[i];
-   //    if (!entityChildIsEntity(child)) {
-   //       continue;
-   //    }
-
-   //    const glurbSegment = child.attachedEntity;
-   //    if (!GlurbSegmentComponentArray.hasComponent(glurbSegment)) {
-   //       continue;
-   //    }
-
-   //    const transformComponent = TransformComponentArray.getComponent(glurbSegment);
-   //    const hitbox = transformComponent.hitboxes[0];
-   
-   //    let targetDir: number;
-      
-   //    if (GlurbHeadSegmentComponentArray.hasComponent(glurbSegment)) {
-   //       targetDir = hitbox.box.position.calculateAngleBetween(pos);
-   //    } else {
-   //       // Move to next hitbox in chain
-
-   //       const lastChild = glurbTransformComponent.children[i - 1];
-   //       if (!entityChildIsEntity(lastChild)) {
-   //          throw new Error();
-   //       }
-   //       const lastSegmentTransformComponent = TransformComponentArray.getComponent(lastChild.attachedEntity);
-   //       const lastSegmentHitbox = lastSegmentTransformComponent.hitboxes[0];
-         
-   //       targetDir = hitbox.box.position.calculateAngleBetween(lastSegmentHitbox.box.position);
-   //    }
-      
-   //    applyAccelerationFromGround(glurbSegment, hitbox, polarVec2(acceleration, targetDir));
-   // }
+   propagateMoveDirective(head, null, pos, []);
 }
 
 const turnFunc = (head: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
-   const headTransformComponent = TransformComponentArray.getComponent(head);
-
-   // @INCOMPLETE
-
-   // const glurbTransformComponent = TransformComponentArray.getComponent(headTransformComponent.parentEntity);
-
-   // for (let i = 0; i < glurbTransformComponent.children.length; i++) {
-   //    const child = glurbTransformComponent.children[i];
-   //    if (!entityChildIsEntity(child)) {
-   //       continue;
-   //    }
-
-   //    const glurbSegment = child.attachedEntity;
-   //    if (!GlurbSegmentComponentArray.hasComponent(glurbSegment)) {
-   //       continue;
-   //    }
-
-   //    const transformComponent = TransformComponentArray.getComponent(glurbSegment);
-   //    const hitbox = transformComponent.hitboxes[0];
+   const transformComponent = TransformComponentArray.getComponent(head);
+   const hitbox = transformComponent.hitboxes[0];
    
-   //    if (GlurbHeadSegmentComponentArray.hasComponent(glurbSegment)) {
-   //       const targetDirection = hitbox.box.position.calculateAngleBetween(pos);
+   const targetDirection = hitbox.box.position.calculateAngleBetween(pos);
 
-   //       turnHitboxToAngle(hitbox, targetDirection, Math.PI, 0.5, false);
-   //    }
-   // }
+   turnHitboxToAngle(hitbox, targetDirection, Math.PI, 0.5, false);
 }
 
-export function createGlurbHeadSegmentConfig(position: Point, rotation: number): EntityConfig {
+export function createGlurbHeadSegmentConfig(position: Point, rotation: number, maxNumSegments: number): EntityConfig {
    const transformComponent = new TransformComponent();
    
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 24), 0.6, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
@@ -124,17 +120,22 @@ export function createGlurbHeadSegmentConfig(position: Point, rotation: number):
    const physicsComponent = new PhysicsComponent();
 
    const healthComponent = new HealthComponent(5);
+
+   const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.burning);
    
    const aiHelperComponent = new AIHelperComponent(hitbox, 350, moveFunc, turnFunc);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, 2 * Math.PI, 0.5, 0.25, positionIsValidCallback);
    aiHelperComponent.ais[AIType.follow] = new FollowAI(Vars.MIN_FOLLOW_COOLDOWN, Vars.MAX_FOLLOW_COOLDOWN, 0.2, 35);
-
-   // @HACK @TEMPORARY
-   const glurbSegmentComponent = new GlurbSegmentComponent();
-
-   const glurbHeadSegmentComponent = new GlurbHeadSegmentComponent();
+   
+   const attackingEntitiesComponent = new AttackingEntitiesComponent(Settings.TPS * 6);
 
    const lootComponent = new LootComponent();
+
+   const tamingComponent = new TamingComponent();
+   
+   const glurbSegmentComponent = new GlurbSegmentComponent();
+   
+   const glurbHeadSegmentComponent = new GlurbHeadSegmentComponent(maxNumSegments);
 
    const light = createLight(new Point(0, 0), 0.35, 0.8, 6, 1, 0.2, 0.9);
    const lights: Array<LightCreationInfo> = [{
@@ -148,10 +149,13 @@ export function createGlurbHeadSegmentConfig(position: Point, rotation: number):
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
+         [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
+         [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
+         [ServerComponentType.loot]: lootComponent,
+         [ServerComponentType.taming]: tamingComponent,
          [ServerComponentType.glurbSegment]: glurbSegmentComponent,
          [ServerComponentType.glurbHeadSegment]: glurbHeadSegmentComponent,
-         [ServerComponentType.loot]: lootComponent
       },
       lights: lights
    };

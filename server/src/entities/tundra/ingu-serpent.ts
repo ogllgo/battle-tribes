@@ -139,7 +139,7 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
    const body1Hitbox = new Hitbox(transformComponent, null, true, new CircularBox(body1Position, body1Offset, angle, 28), 1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.INGU_SERPENT_BODY_1]);
    addHitboxToTransformComponent(transformComponent, body1Hitbox);
    
-   tetherHitboxes(body1Hitbox, headHitbox, transformComponent, transformComponent, idealBody1Dist, 100, 1.2);
+   tetherHitboxes(body1Hitbox, headHitbox, idealBody1Dist, 100, 1.2);
    // @Hack: method of adding
    body1Hitbox.angularTethers.push({
       originHitbox: headHitbox,
@@ -159,7 +159,7 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
    const body2Hitbox = new Hitbox(transformComponent, null, true, new CircularBox(body2Position, body2Offset, angle, 28), 0.65, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.INGU_SERPENT_BODY_2]);
    addHitboxToTransformComponent(transformComponent, body2Hitbox);
 
-   tetherHitboxes(body2Hitbox, body1Hitbox, transformComponent, transformComponent, idealBody2Dist, 100, 1.2);
+   tetherHitboxes(body2Hitbox, body1Hitbox, idealBody2Dist, 100, 1.2);
    // @Hack: method of adding
    body2Hitbox.angularTethers.push({
       originHitbox: body1Hitbox,
@@ -178,7 +178,7 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
    const tailHitbox = new Hitbox(transformComponent, null, true, new CircularBox(tailPosition, tailOffset, angle, 28), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.INGU_SERPENT_TAIL]);
    addHitboxToTransformComponent(transformComponent, tailHitbox);
    
-   tetherHitboxes(tailHitbox, body2Hitbox, transformComponent, transformComponent, idealTailDist, 100, 1.2);
+   tetherHitboxes(tailHitbox, body2Hitbox, idealTailDist, 100, 1.2);
    // @Hack: method of adding
    tailHitbox.angularTethers.push({
       originHitbox: body2Hitbox,

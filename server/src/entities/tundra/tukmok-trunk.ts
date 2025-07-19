@@ -17,22 +17,19 @@ const NUM_SEGMENTS = 8;
 
 const IDEAL_DIST = 6;
 
-export function createTukmokTrunkConfig(position: Point, angle: number, trunkBaseOffset: Point, tukmokHeadHitbox: Hitbox): EntityConfig {
+export function createTukmokTrunkConfig(position: Point, angle: number, trunkBaseOffset: Point): EntityConfig {
    const transformComponent = new TransformComponent();
 
    let lastHitbox: Hitbox | null = null;
    for (let i = 0; i < NUM_SEGMENTS; i++) {
       let hitboxPosition: Point;
-      let parent: Hitbox | null;
       let offset: Point;
       if (lastHitbox === null) {
          hitboxPosition = position;
-         parent = tukmokHeadHitbox;
          offset = trunkBaseOffset;
       } else {
          hitboxPosition = lastHitbox.box.position.copy();
          hitboxPosition.add(polarVec2(IDEAL_DIST, angle));
-         parent = null;
          offset = new Point(0, 0);
       }
 
@@ -46,11 +43,11 @@ export function createTukmokTrunkConfig(position: Point, angle: number, trunkBas
          flags = [HitboxFlag.TUKMOK_TRUNK_HEAD];
       }
 
-      const hitbox = new Hitbox(transformComponent, parent, true, new CircularBox(hitboxPosition, offset, 0, 12), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, flags);
+      const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(hitboxPosition, offset, 0, 12), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, flags);
       addHitboxToTransformComponent(transformComponent, hitbox);
 
       if (lastHitbox !== null) {
-         tetherHitboxes(hitbox, lastHitbox, transformComponent, transformComponent, IDEAL_DIST, 25, 0.5);
+         tetherHitboxes(hitbox, lastHitbox, IDEAL_DIST, 50, 0.5);
          // @Hack: method of adding
          hitbox.angularTethers.push({
             originHitbox: lastHitbox,

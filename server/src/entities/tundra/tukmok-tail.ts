@@ -3,7 +3,7 @@ import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityType } from "../../../../shared/src/entities";
-import { Point, polarVec2 } from "../../../../shared/src/utils";
+import { lerp, Point, polarVec2 } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
@@ -17,22 +17,19 @@ const NUM_SEGMENTS = 12;
 
 const IDEAL_DIST = 5;
 
-export function createTukmokTailConfig(position: Point, angle: number, tailBaseOffset: Point, tukmokBodyHitbox: Hitbox): EntityConfig {
+export function createTukmokTailConfig(position: Point, angle: number, tailBaseOffset: Point): EntityConfig {
    const transformComponent = new TransformComponent();
 
    let lastHitbox: Hitbox | null = null;
    for (let i = 0; i < NUM_SEGMENTS; i++) {
       let hitboxPosition: Point;
-      let parent: Hitbox | null;
       let offset: Point;
       if (lastHitbox === null) {
          hitboxPosition = position;
-         parent = tukmokBodyHitbox;
          offset = tailBaseOffset;
       } else {
          hitboxPosition = lastHitbox.box.position.copy();
          hitboxPosition.add(polarVec2(IDEAL_DIST, angle));
-         parent = null;
          offset = new Point(0, 0);
       }
 
@@ -57,18 +54,20 @@ export function createTukmokTailConfig(position: Point, angle: number, tailBaseO
          flags = [HitboxFlag.TUKMOK_TAIL_CLUB];
       }
       
-      const hitbox = new Hitbox(transformComponent, parent, true, new CircularBox(hitboxPosition, offset, 0, radius), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, flags);
+      const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(hitboxPosition, offset, 0, radius), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, flags);
       addHitboxToTransformComponent(transformComponent, hitbox);
 
       if (lastHitbox !== null) {
-         tetherHitboxes(hitbox, lastHitbox, transformComponent, transformComponent, IDEAL_DIST, 25, 0.5);
+         tetherHitboxes(hitbox, lastHitbox, IDEAL_DIST, 25, 0.5);
+
          // @Hack: method of adding
          hitbox.angularTethers.push({
             originHitbox: lastHitbox,
             idealAngle: Math.PI,
             springConstant: 25,
             damping: 0.5,
-            padding: Math.PI * 0.1,
+            // start off stiff, get softer the further we go
+            padding: lerp(Math.PI * 0.025, Math.PI * 0.08, i / (NUM_SEGMENTS - 1)),
             idealHitboxAngleOffset: Math.PI
          });
       }
