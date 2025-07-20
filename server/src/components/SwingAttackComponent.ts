@@ -8,7 +8,7 @@ import { getItemType, HammerItemType, InventoryName, Item, ITEM_INFO_RECORD, Ite
 import { Settings } from "../../../shared/src/settings";
 import { StatusEffect } from "../../../shared/src/status-effects";
 import { TribesmanTitle } from "../../../shared/src/titles";
-import { Point, randAngle } from "../../../shared/src/utils";
+import { lerp, Point, randAngle } from "../../../shared/src/utils";
 import { HitboxCollisionPair } from "../collision-detection";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { calculateItemKnockback } from "../entities/tribes/limb-use";
@@ -56,7 +56,7 @@ export function setHitboxToLimbState(ownerTransformComponent: TransformComponent
    const box = hitbox.box;
    box.offset.x = offset * Math.sin(limb.direction * flipMultiplier) + limb.extraOffsetX * flipMultiplier;
    box.offset.y = offset * Math.cos(limb.direction * flipMultiplier) + limb.extraOffsetY;
-   box.relativeAngle = limb.angle * flipMultiplier;
+   // box.relativeAngle = limb.angle * flipMultiplier;
 
    hitboxTransformComponent.isDirty = true;
 }
@@ -76,6 +76,12 @@ function onTick(swingAttack: Entity): void {
    const isFlipped = limb.associatedInventory.name === InventoryName.offhand;
    const ownerTransformComponent = TransformComponentArray.getComponent(swingAttackComponent.owner);
    setHitboxToLimbState(ownerTransformComponent, swingAttackTransformComponent, limbHitbox, getCurrentLimbState(limb), isFlipped);
+   
+   const progress = limb.currentActionElapsedTicks / limb.currentActionDurationTicks;
+   // @HACK @INCOMPLETE
+   limbHitbox.box.relativeAngle = lerp(0, -1, progress);
+   // limbHitbox.box.relativeAngle = lerp(limb.currentActionStartLimbState.angle, limb.currentActionEndLimbState.angle, progress);
+   // console.log(lerp(limb.currentActionStartLimbState.angle, limb.currentActionEndLimbState.angle, progress));
 }
 
 function getDataLength(): number {

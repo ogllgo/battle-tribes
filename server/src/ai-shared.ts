@@ -106,18 +106,36 @@ export function moveEntityToEntity(entity: Entity, targetEntity: Entity, acceler
    moveEntityToPosition(entity, targetHitbox.box.position.x, targetHitbox.box.position.y, acceleration, turnSpeed, 1);
 }
 
-export function entityHasReachedPosition(entity: Entity, pos: Point): boolean {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   // @HACK
-   const entityHitbox = transformComponent.hitboxes[0];
-   
-   const relativeX = entityHitbox.box.position.x - pos.x;
-   const relativeY = entityHitbox.box.position.y - pos.y;
+export function hitboxIncludingChildrenHasReachedPosition(hitbox: Hitbox, pos: Point): boolean {
+   const relativeX = hitbox.box.position.x - pos.x;
+   const relativeY = hitbox.box.position.y - pos.y;
 
-   const velocity = getHitboxVelocity(entityHitbox);
+   const velocity = getHitboxVelocity(hitbox);
    const dotProduct = velocity.x * relativeX + velocity.y * relativeY;
    
-   return dotProduct > 0;
+   if (dotProduct > 0) {
+      return true;
+   }
+
+   for (const childHitbox of hitbox.children) {
+      // @INCOMPLETE: tethers??
+      if (childHitbox.isPartOfParent && hitboxIncludingChildrenHasReachedPosition(childHitbox, pos)) {
+         return true;
+      }
+   }
+   
+   return false;
+}
+
+// @HACK: instead of doing this, the hitbox-only function should also account for tethers
+export function entityHasReachedPosition(entity: Entity, pos: Point): boolean {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   for (const rootHitbox of transformComponent.rootHitboxes) {
+      if (hitboxIncludingChildrenHasReachedPosition(rootHitbox, pos)) {
+         return true;
+      }
+   }
+   return false;
 }
 
 // @Cleanup @Robustness: Maybe separate this into 4 different functions? (for separation, alignment, etc.)

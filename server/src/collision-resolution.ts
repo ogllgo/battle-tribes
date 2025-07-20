@@ -9,7 +9,7 @@ import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { getEntityComponentTypes, getEntityType } from "./world";
 import { HitboxCollisionPair } from "./collision-detection";
-import { getHitboxConnectedMass, getHitboxVelocity, Hitbox, addHitboxVelocity, setHitboxVelocity, translateHitbox } from "./hitboxes";
+import { getHitboxConnectedMass, getHitboxVelocity, Hitbox, addHitboxVelocity, setHitboxVelocity, translateHitbox, applyForce } from "./hitboxes";
 
 const hitboxesAreTethered = (transformComponent: TransformComponent, hitbox1: Hitbox, hitbox2: Hitbox): boolean => {
    // @INCOMPLETE!
@@ -64,11 +64,8 @@ const resolveHardCollisionAndFlip = (affectedHitbox: Hitbox, hitboxTransformComp
 }
 
 const resolveSoftCollision = (affectedHitbox: Hitbox, pushingHitbox: Hitbox, pushInfo: CollisionPushInfo): void => {
-   const totalAffectedMass = getHitboxConnectedMass(affectedHitbox);
-   if (totalAffectedMass !== 0) {
-      const pushForce = Settings.ENTITY_PUSH_FORCE * Settings.I_TPS * pushInfo.amountIn * pushingHitbox.mass / totalAffectedMass;
-      addHitboxVelocity(affectedHitbox, polarVec2(pushForce, pushInfo.direction));
-   }
+   const pushForce = Settings.ENTITY_PUSH_FORCE * pushInfo.amountIn * pushingHitbox.mass;
+   applyForce(affectedHitbox, polarVec2(pushForce, pushInfo.direction));
 }
 
 export function collide(affectedEntity: Entity, collidingEntity: Entity, collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>): void {

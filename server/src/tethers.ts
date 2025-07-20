@@ -1,5 +1,6 @@
+import { Point } from "../../shared/src/utils";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
-import { getHitboxVelocity, Hitbox } from "./hitboxes";
+import { applyForce, getHitboxVelocity, Hitbox } from "./hitboxes";
 
 export class HitboxTether {
    public readonly hitbox1: Hitbox;
@@ -107,11 +108,8 @@ const applyTether = (tether: HitboxTether): void => {
    const forceX = springForceX + dampingForceX;
    const forceY = springForceY + dampingForceY;
    
-   // @Incomplete: doesn't account for root hitbox!
-   hitbox1.acceleration.x += forceX / hitbox1.mass;
-   hitbox1.acceleration.y += forceY / hitbox1.mass;
-   hitbox2.acceleration.x -= forceX / hitbox2.mass;
-   hitbox2.acceleration.y -= forceY / hitbox2.mass;
+   applyForce(hitbox1, new Point(forceX, forceY));
+   applyForce(hitbox2, new Point(-forceX, -forceY));
 
    // @Speed: Does this need to be done every time?
    const transformComponent1 = TransformComponentArray.getComponent(hitbox1.entity);

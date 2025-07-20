@@ -10,7 +10,7 @@ import { Packet } from "battletribes-shared/packets";
 import { getEntityLayer, getEntityType } from "../world";
 import { undergroundLayer } from "../layers";
 import { updateEntityLights } from "../lights";
-import { addHitboxAngularAcceleration, applyAcceleration, getHitboxAngularVelocity, getHitboxTile, getHitboxVelocity, getHitboxTotalMassIncludingChildren, Hitbox, hitboxIsInRiver } from "../hitboxes";
+import { addHitboxAngularAcceleration, applyAcceleration, getHitboxAngularVelocity, getHitboxTile, getHitboxVelocity, getHitboxTotalMassIncludingChildren, Hitbox, hitboxIsInRiver, applyForce } from "../hitboxes";
 import { angleToPoint, getAngleDiff, Point, polarVec2 } from "../../../shared/src/utils";
 
 // @Cleanup: Variable names (also is shit generally, shouldn't keep)
@@ -203,13 +203,11 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
          const force = (rotationForce + dampingForce) * 0.1;
 
          // @HACK: the * 4
-         const hitboxAccMag = force / getHitboxTotalMassIncludingChildren(hitbox) * 4;
-         applyAcceleration(hitbox, polarVec2(hitboxAccMag, hitboxAccDir));
+         applyForce(hitbox, polarVec2(force * 4, hitboxAccDir));
 
          // @HACK: the * 4
-         const originHitboxAccMag = force / getHitboxTotalMassIncludingChildren(originHitbox) * 4;
          // @Speed: don't need to call 2nd polarVec2 cuz this is in the exact reverse direction
-         applyAcceleration(originHitbox, polarVec2(originHitboxAccMag, originHitboxAccDir));
+         applyForce(originHitbox, polarVec2(force * 4, originHitboxAccDir));
       }
 
       // Restrict the hitboxes' angle to match its direction

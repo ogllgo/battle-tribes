@@ -121,19 +121,19 @@ export function getRootHitbox(hitbox: Hitbox): Hitbox {
 }
 
 export function addHitboxVelocity(hitbox: Hitbox, addVec: Point): void {
-   const pushedHitbox = getRootHitbox(hitbox);
+   const rootHitbox = getRootHitbox(hitbox);
 
    // Don't add velocity if the hitbox is immovable
-   if (!PhysicsComponentArray.hasComponent(pushedHitbox.entity)) {
+   if (!PhysicsComponentArray.hasComponent(rootHitbox.entity)) {
       return;
    }
-   const physicsComponent = PhysicsComponentArray.getComponent(pushedHitbox.entity);
+   const physicsComponent = PhysicsComponentArray.getComponent(rootHitbox.entity);
    if (physicsComponent.isImmovable) {
       return;
    }
    
-   pushedHitbox.box.position.x += addVec.x / Settings.TPS;
-   pushedHitbox.box.position.y += addVec.y / Settings.TPS;
+   rootHitbox.box.position.x += addVec.x / Settings.TPS;
+   rootHitbox.box.position.y += addVec.y / Settings.TPS;
 }
 
 export function translateHitbox(hitbox: Hitbox, transformComponent: TransformComponent, translation: Point): void {
@@ -218,6 +218,41 @@ export function applyAbsoluteKnockback(entity: Entity, hitbox: Hitbox, knockback
    }
 }
 
+export function applyAcceleration(hitbox: Hitbox, acc: Point): void {
+   const rootHitbox = getRootHitbox(hitbox);
+
+   // @Copynpaste(?) from the addVelocity function
+   if (!PhysicsComponentArray.hasComponent(rootHitbox.entity)) {
+      return;
+   }
+   const physicsComponent = PhysicsComponentArray.getComponent(rootHitbox.entity);
+   if (physicsComponent.isImmovable) {
+      return;
+   }
+
+   rootHitbox.acceleration.x += acc.x;
+   rootHitbox.acceleration.y += acc.y;
+}
+
+export function applyForce(hitbox: Hitbox, force: Point): void {
+   const rootHitbox = getRootHitbox(hitbox);
+
+   // @Copynpaste(?) from the addVelocity function
+   if (!PhysicsComponentArray.hasComponent(rootHitbox.entity)) {
+      return;
+   }
+   const physicsComponent = PhysicsComponentArray.getComponent(rootHitbox.entity);
+   if (physicsComponent.isImmovable) {
+      return;
+   }
+
+   const hitboxConnectedMass = getHitboxTotalMassIncludingChildren(rootHitbox);
+   if (hitboxConnectedMass !== 0) {
+      rootHitbox.acceleration.x += force.x / hitboxConnectedMass;
+      rootHitbox.acceleration.y += force.y / hitboxConnectedMass;
+   }
+}
+
 // @Cleanup: Passing in hitbox really isn't the best, ideally hitbox should self-contain all the necessary info... but is that really good? + memory efficient?
 export function applyAccelerationFromGround(entity: Entity, hitbox: Hitbox, acceleration: Point): void {
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
@@ -243,13 +278,7 @@ export function applyAccelerationFromGround(entity: Entity, hitbox: Hitbox, acce
 
    const currentVelocity = getHitboxVelocity(hitbox);
 
-   hitbox.acceleration.x += (desiredVelocityX - currentVelocity.x) * physicsComponent.traction;
-   hitbox.acceleration.y += (desiredVelocityY - currentVelocity.y) * physicsComponent.traction;
-}
-
-export function applyAcceleration(hitbox: Hitbox, acc: Point): void {
-   hitbox.acceleration.x += acc.x;
-   hitbox.acceleration.y += acc.y;
+   applyAcceleration(hitbox, new Point((desiredVelocityX - currentVelocity.x) * physicsComponent.traction, (desiredVelocityY - currentVelocity.y) * physicsComponent.traction));
 }
 
 /** Makes the hitboxes' angle be that as specified, by only changing its relative angle */

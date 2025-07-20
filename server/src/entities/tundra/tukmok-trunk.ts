@@ -36,10 +36,10 @@ export function createTukmokTrunkConfig(position: Point, angle: number, trunkBas
       let mass: number;
       let flags: Array<HitboxFlag>;
       if (i < NUM_SEGMENTS - 1) {
-         mass = 0.25;
+         mass = 0.2;
          flags = [];
       } else {
-         mass = 0.35;
+         mass = 0.3;
          flags = [HitboxFlag.TUKMOK_TRUNK_HEAD];
       }
 

@@ -165,6 +165,10 @@ const tribesmanGetItemPickupTarget = (tribesman: Entity, visibleItemEntities: Re
       }
 
       const itemEntityHitbox = itemEntityTransformComponent.hitboxes[0];
+      // Only pull free items
+      if (itemEntityHitbox.parent !== null) {
+         continue;
+      }
       
       const distance = tribesmanHitbox.box.position.calculateDistanceBetween(itemEntityHitbox.box.position);
       if (distance < minDistance) {

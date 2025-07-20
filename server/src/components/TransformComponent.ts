@@ -579,6 +579,10 @@ export function attachHitbox(hitbox: Hitbox, parentHitbox: Hitbox, isPartOfParen
 
    const parentVelocity = getHitboxVelocity(parentHitbox);
    setHitboxVelocity(hitbox, parentVelocity.x, parentVelocity.y);
+
+   // Any acceleration applied to this hitbox will instead be applied to the root hitbox
+   hitbox.acceleration.x = 0;
+   hitbox.acceleration.y = 0;
 }
 
 // @Copynpaste !
@@ -633,6 +637,9 @@ export function detachHitbox(hitbox: Hitbox): void {
       return;
    }
 
+   // Make sure that the hitbox hasn't accumulated any acceleration before it's detached
+   assert(hitbox.acceleration.x === 0 && hitbox.acceleration.y === 0)
+
    const idx = hitbox.parent.children.indexOf(hitbox);
    assert(idx !== -1);
    hitbox.parent.children.splice(idx, 1);
@@ -655,12 +662,6 @@ export function detachHitbox(hitbox: Hitbox): void {
 
    hitbox.parent = null;
    propagateRootEntityChange(hitbox, hitbox.entity);
-
-   // @Incomplete?
-   // // If the parent has no children left, destroy the parent
-   // if (parentTransformComponent.children.length === 0) {
-   //    destroyEntity(parent);
-   // }
 }
 
 export function getRandomPositionInBox(box: Box): Point {
