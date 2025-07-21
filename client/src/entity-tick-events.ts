@@ -103,6 +103,10 @@ const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
          playSoundOnHitbox("ingu-serpent-leap.mp3", 0.5, randFloat(0.95, 1.05) * 1.3, entity, hitbox, true);
          break;
       }
+      case EntityTickEventType.tukmokAngry: {
+         playSoundOnHitbox("tukmok-angry-" + randInt(1, 3) + ".mp3", 0.5, randFloat(0.95, 1.05), entity, hitbox, true);
+         break;
+      }
    }
 }
 

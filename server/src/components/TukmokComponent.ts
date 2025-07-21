@@ -33,6 +33,8 @@ export class TukmokComponent {
 
    public trunkStateTicksElapsed = 0;
    public trunkState = TrunkCombatState.passive;
+
+   public ticksToNextAngrySound = randInt(MIN_ANGRY_SOUND_COOLDOWN_TICKS, MAX_ANGRY_SOUND_COOLDOWN_TICKS);
 }
 
 const IDEAL_DIST_FROM_TREE = 120;
@@ -44,6 +46,9 @@ const GRAZE_COOLDOWN_TICKS = secondsToTicks(20);
 
 const TRUNK_ACTIVE_STATE_DURATION = secondsToTicks(0.8);
 const TRUNK_PASSIVE_STATE_DURATION = secondsToTicks(1);
+
+const MIN_ANGRY_SOUND_COOLDOWN_TICKS = secondsToTicks(3);
+const MAX_ANGRY_SOUND_COOLDOWN_TICKS = secondsToTicks(5.5);
 
 export const TukmokComponentArray = new ComponentArray<TukmokComponent>(ServerComponentType.tukmok, true, getDataLength, addDataToPacket);
 TukmokComponentArray.onTick = {
@@ -184,6 +189,19 @@ function onTick(tukmok: Entity): void {
 
       aiHelperComponent.moveFunc(tukmok, targetHitbox.box.position, 400);
       aiHelperComponent.turnFunc(tukmok, targetHitbox.box.position, 1 * Math.PI, 1);
+
+      if (tukmokComponent.ticksToNextAngrySound === 0) {
+         const tickEvent: EntityTickEvent = {
+            entityID: tukmok,
+            type: EntityTickEventType.tukmokAngry,
+            data: 0
+         };
+         registerEntityTickEvent(tukmok, tickEvent);
+
+         tukmokComponent.ticksToNextAngrySound = randInt(MIN_ANGRY_SOUND_COOLDOWN_TICKS, MAX_ANGRY_SOUND_COOLDOWN_TICKS);
+      } else {
+         tukmokComponent.ticksToNextAngrySound--;
+      }
 
       const trunk = getTrunk(transformComponent);
       if (trunk !== null) {
