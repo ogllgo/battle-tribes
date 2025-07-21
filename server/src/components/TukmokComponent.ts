@@ -187,7 +187,7 @@ function onTick(tukmok: Entity): void {
       const targetTransformComponent = TransformComponentArray.getComponent(target);
       const targetHitbox = targetTransformComponent.hitboxes[0];
 
-      aiHelperComponent.moveFunc(tukmok, targetHitbox.box.position, 400);
+      aiHelperComponent.moveFunc(tukmok, targetHitbox.box.position, 380);
       aiHelperComponent.turnFunc(tukmok, targetHitbox.box.position, 1 * Math.PI, 1);
 
       if (tukmokComponent.ticksToNextAngrySound === 0) {

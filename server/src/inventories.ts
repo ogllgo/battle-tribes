@@ -23,7 +23,7 @@ export function addHumanoidInventories(inventoryComponent: InventoryComponent, i
    const hotbarInventory = new Inventory(getTribesmanHotbarSize(entityType), 1, InventoryName.hotbar);
    addInventoryToInventoryComponent(inventoryComponent, hotbarInventory, { acceptsPickedUpItems: true, isDroppedOnDeath: true, isSentToEnemyPlayers: false });
 
-   hotbarInventory.addItem(createItem(ItemType.ivorySpear, 1), 1);
+   hotbarInventory.addItem(createItem(ItemType.stoneSpear, 1), 1);
    hotbarInventory.addItem(createItem(ItemType.snowberry, 20), 2);
    
    inventoryUseComponent.associatedInventoryNames.push(InventoryName.hotbar);

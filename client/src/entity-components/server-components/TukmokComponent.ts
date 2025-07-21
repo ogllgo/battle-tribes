@@ -75,7 +75,7 @@ function padData(): void {}
 function updateFromData(): void {}
 
 function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
-   playSoundOnHitbox("tukmok-hit-flesh-" + randInt(1, 4) + ".mp3", randFloat(0.55, 0.65), randFloat(0.9, 1.1), entity, hitbox, false);
+   playSoundOnHitbox("tukmok-hit-flesh-" + randInt(1, 4) + ".mp3", randFloat(0.8, 1), randFloat(0.9, 1.1), entity, hitbox, false);
 
    // Blood pool particles
    for (let i = 0; i < 2; i++) {
