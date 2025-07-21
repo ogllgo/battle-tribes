@@ -10,10 +10,16 @@ import { applyAcceleration, Hitbox } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
 import { createEntity, destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
+import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
 import { ComponentArray } from "./ComponentArray";
 import { addHungerEnergy, getEntityFullness } from "./EnergyStomachComponent";
 import { hitEntityWithoutDamage } from "./HealthComponent";
 import { attachHitbox, detachHitbox, TransformComponent, TransformComponentArray } from "./TransformComponent";
+
+const enum TrunkCombatState {
+   active,
+   passive
+}
 
 export class TukmokComponent {
    public treeTarget: Entity = 0;
@@ -22,6 +28,11 @@ export class TukmokComponent {
 
    public grazeCooldownTicks = 0;
    public isInGrazingMood = false;
+
+   public target: Entity = 0;
+
+   public trunkStateTicksElapsed = 0;
+   public trunkState = TrunkCombatState.passive;
 }
 
 const IDEAL_DIST_FROM_TREE = 120;
@@ -30,6 +41,9 @@ const MIN_TICKS_TO_GRAB_LEAF = secondsToTicks(0.5);
 const MAX_TICKS_TO_GRAB_LEAF = secondsToTicks(0.85);
 
 const GRAZE_COOLDOWN_TICKS = secondsToTicks(20);
+
+const TRUNK_ACTIVE_STATE_DURATION = secondsToTicks(0.8);
+const TRUNK_PASSIVE_STATE_DURATION = secondsToTicks(1);
 
 export const TukmokComponentArray = new ComponentArray<TukmokComponent>(ServerComponentType.tukmok, true, getDataLength, addDataToPacket);
 TukmokComponentArray.onTick = {
@@ -114,6 +128,38 @@ const treeIsValidTarget = (tree: Entity, aiHelperComponent: AIHelperComponent): 
    return entityExists(tree) && aiHelperComponent.visibleEntities.includes(tree);
 }
 
+const isValidCombatTarget = (tukmok: Entity, entity: Entity): boolean => {
+   const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(tukmok);
+   if (attackingEntitiesComponent.attackingEntities.has(entity)) {
+      return true;
+   }
+
+   return false;
+}
+
+const getTarget = (tukmok: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
+   const transformComponent = TransformComponentArray.getComponent(tukmok);
+   const hitbox = transformComponent.hitboxes[0];
+   
+   let target: Entity | null = null;
+   let minDist = Number.MAX_SAFE_INTEGER;
+   for (const entity of aiHelperComponent.visibleEntities) {
+      if (!isValidCombatTarget(tukmok, entity)) {
+         continue;
+      }
+
+      const entityTransformComponent = TransformComponentArray.getComponent(entity);
+      const targetHitbox = entityTransformComponent.hitboxes[0];
+      const dist = hitbox.box.position.calculateDistanceBetween(targetHitbox.box.position);
+      if (dist < minDist) {
+         minDist = dist;
+         target = entity;
+      }
+   }
+
+   return target;
+}
+
 function onTick(tukmok: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(tukmok);
    const aiHelperComponent = AIHelperComponentArray.getComponent(tukmok);
@@ -122,6 +168,54 @@ function onTick(tukmok: Entity): void {
 
    if (tukmokComponent.grazeCooldownTicks > 0) {
       tukmokComponent.grazeCooldownTicks--;
+   }
+
+   // Look for targets
+   if (!isValidCombatTarget(tukmok, tukmokComponent.target)) {
+      const target = getTarget(tukmok, aiHelperComponent);
+      if (target !== null) {
+         tukmokComponent.target = target;
+      }
+   }
+   const target = tukmokComponent.target;
+   if (isValidCombatTarget(tukmok, tukmokComponent.target)) {
+      const targetTransformComponent = TransformComponentArray.getComponent(target);
+      const targetHitbox = targetTransformComponent.hitboxes[0];
+
+      aiHelperComponent.moveFunc(tukmok, targetHitbox.box.position, 400);
+      aiHelperComponent.turnFunc(tukmok, targetHitbox.box.position, 1 * Math.PI, 1);
+
+      const trunk = getTrunk(transformComponent);
+      if (trunk !== null) {
+         const tukmokHeadHitbox = transformComponent.hitboxes[1];
+
+         // This may be a mistake, but try to keep the trunk in its natural position even while moving
+         const idealPos = tukmokHeadHitbox.box.position.offset(40, tukmokHeadHitbox.box.angle);
+         moveTrunk(trunk, idealPos, 500, false);
+
+         // Trunk behaviour
+         tukmokComponent.trunkStateTicksElapsed++;
+         switch (tukmokComponent.trunkState) {
+            case TrunkCombatState.active: {
+               moveTrunk(trunk, targetHitbox.box.position, 2400, true);
+               
+               if (tukmokComponent.trunkStateTicksElapsed >= TRUNK_ACTIVE_STATE_DURATION) {
+                  tukmokComponent.trunkStateTicksElapsed = 0;
+                  tukmokComponent.trunkState = TrunkCombatState.passive;
+               }
+               break;
+            }
+            case TrunkCombatState.passive: {
+               if (tukmokComponent.trunkStateTicksElapsed >= TRUNK_PASSIVE_STATE_DURATION) {
+                  tukmokComponent.trunkStateTicksElapsed = 0;
+                  tukmokComponent.trunkState = TrunkCombatState.active;
+               }
+               break;
+            }
+         }
+      }
+
+      return;
    }
    
    const trunk = getTrunk(transformComponent);

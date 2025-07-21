@@ -1,7 +1,7 @@
 import { VisibleChunkBounds } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { TribeType } from "battletribes-shared/tribes";
-import { Point, randAngle, randInt } from "battletribes-shared/utils";
+import { Point, randAngle, randFloat, randInt } from "battletribes-shared/utils";
 import { PacketReader, PacketType } from "battletribes-shared/packets";
 import WebSocket, { Server } from "ws";
 import { runSpawnAttempt, spawnInitialEntities } from "../entity-spawning";
@@ -38,6 +38,7 @@ import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
 import { createTribeWarriorConfig } from "../entities/tribes/tribe-warrior";
 import { applyTethers } from "../tethers";
 import { getEntityCount } from "../census";
+import { damageEntity } from "../components/HealthComponent";
 
 /*
 
@@ -208,7 +209,9 @@ class GameServer {
 
             if (packetType === PacketType.initialPlayerData) {
                const username = reader.readString();
-               const tribeType = reader.readNumber() as TribeType;
+               // @Temporary
+               const tribeType2 = reader.readNumber() as TribeType;
+               const tribeType = TribeType.goblins;
                const screenWidth = reader.readNumber();
                const screenHeight = reader.readNumber();
 
@@ -238,10 +241,14 @@ class GameServer {
                setTimeout(() => {
                // // const trib = new Tribe(TribeType.plainspeople, false, spawnPosition.copy());
                
-                  // const pos1 = spawnPosition.copy();
-                  // pos1.x -= 50;
-                  // const t1 = createTribeWorkerConfig(pos1, 0, tribe);
-                  // createEntity(t1, layer, 0);
+                  for (let i = 0; i < 12; i++) {
+                     const pos1 = spawnPosition.copy();
+                     pos1.x -= 50;
+                     pos1.x += randFloat(0, 80);
+                     pos1.y += randFloat(0, 80);
+                     const t1 = createTribeWorkerConfig(pos1, 0, tribe);
+                     createEntity(t1, layer, 0);
+                  }
 
                //    setTimeout(() => {
                //       const pos2 = spawnPosition.copy();

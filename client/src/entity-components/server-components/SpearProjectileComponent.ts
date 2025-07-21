@@ -39,7 +39,8 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
          hitbox,
          0,
          0,
-         getTextureArrayIndex("items/misc/spear.png")
+         // @HACK
+         getTextureArrayIndex("items/misc/ivory-spear.png")
       )
    );
 

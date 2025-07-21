@@ -110,7 +110,8 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
       case EntityType.tombstone: // So that they try to destroy them
       case EntityType.zombie:
       case EntityType.pebblum:
-      case EntityType.okren: {
+      case EntityType.okren:
+      case EntityType.inguSerpent: {
          return EntityRelationship.hostileMob;
       }
       // Golem (hostile mob / neutral)

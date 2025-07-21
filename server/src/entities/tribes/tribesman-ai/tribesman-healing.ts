@@ -48,12 +48,12 @@ export function continueTribesmanHealing(tribesmanID: Entity, healingItemUseInfo
          break;
       }
    }
-   limbInfo.action = action;
    
    // If the food is only just being eaten, reset the food timer so that the food isn't immediately eaten
    if (limbInfo.action !== action) {
       limbInfo.foodEatingTimer = itemInfo.consumeTime;
    }
+   limbInfo.action = action;
    
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesmanID);
    tribesmanAIComponent.currentAIType = TribesmanAIType.eating;

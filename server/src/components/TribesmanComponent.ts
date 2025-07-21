@@ -15,6 +15,7 @@ import { createItem } from "../items";
 import { generateTitle, TITLE_REWARD_CHANCES } from "../tribesman-title-generation";
 import { getEntityType, getGameTicks } from "../world";
 import { ComponentArray } from "./ComponentArray";
+import { HealthComponentArray } from "./HealthComponent";
 import { InventoryComponentArray, getInventory, resizeInventory } from "./InventoryComponent";
 import { LimbInfo, InventoryUseComponentArray } from "./InventoryUseComponent";
 import { PlayerComponentArray } from "./PlayerComponent";
@@ -205,26 +206,32 @@ export function removeTitle(entityID: Entity, title: TribesmanTitle): void {
 }
 
 // @Cleanup: Move to tick function
-const tickInventoryUseInfo = (tribeMember: Entity, inventoryUseInfo: LimbInfo): void => {
-   switch (inventoryUseInfo.action) {
+const tickInventoryUseInfo = (tribeMember: Entity, limb: LimbInfo): void => {
+   switch (limb.action) {
       case LimbAction.eat:
       case LimbAction.useMedicine: {
-         inventoryUseInfo.foodEatingTimer -= Settings.I_TPS;
+         limb.foodEatingTimer -= Settings.I_TPS;
    
-         if (inventoryUseInfo.foodEatingTimer <= 0) {
-            const inventory = inventoryUseInfo.associatedInventory;
+         if (limb.foodEatingTimer <= 0) {
+            const inventory = limb.associatedInventory;
             
-            const selectedItem = inventory.itemSlots[inventoryUseInfo.selectedItemSlot];
+            const selectedItem = inventory.itemSlots[limb.selectedItemSlot];
             if (typeof selectedItem !== "undefined") {
                const itemCategory = ITEM_TYPE_RECORD[selectedItem.type];
                if (itemCategory === "healing") {
-                  useItem(tribeMember, selectedItem, inventory.name, inventoryUseInfo.selectedItemSlot);
+                  useItem(tribeMember, selectedItem, inventory.name, limb.selectedItemSlot);
    
                   const itemInfo = ITEM_INFO_RECORD[selectedItem.type] as ConsumableItemInfo;
-                  inventoryUseInfo.foodEatingTimer = itemInfo.consumeTime;
+                  limb.foodEatingTimer = itemInfo.consumeTime;
 
                   if (TribesmanAIComponentArray.hasComponent(tribeMember) && Math.random() < TITLE_REWARD_CHANCES.BERRYMUNCHER_REWARD_CHANCE) {
                      awardTitle(tribeMember, TribesmanTitle.berrymuncher);
+                  }
+
+                  // @HACK!!! so that they stop eating food when they dont need to
+                  const healthComponent = HealthComponentArray.getComponent(tribeMember);
+                  if (healthComponent.health >= healthComponent.maxHealth) {
+                     limb.action = LimbAction.none;
                   }
                }
             }
@@ -232,16 +239,16 @@ const tickInventoryUseInfo = (tribeMember: Entity, inventoryUseInfo: LimbInfo): 
          break;
       }
       case LimbAction.loadCrossbow: {
-         const loadProgress = inventoryUseInfo.crossbowLoadProgressRecord[inventoryUseInfo.selectedItemSlot];
+         const loadProgress = limb.crossbowLoadProgressRecord[limb.selectedItemSlot];
          if (typeof loadProgress === "undefined") {
-            inventoryUseInfo.crossbowLoadProgressRecord[inventoryUseInfo.selectedItemSlot] = Settings.I_TPS;
+            limb.crossbowLoadProgressRecord[limb.selectedItemSlot] = Settings.I_TPS;
          } else {
-            inventoryUseInfo.crossbowLoadProgressRecord[inventoryUseInfo.selectedItemSlot]! += Settings.I_TPS;
+            limb.crossbowLoadProgressRecord[limb.selectedItemSlot]! += Settings.I_TPS;
          }
          
-         if (inventoryUseInfo.crossbowLoadProgressRecord[inventoryUseInfo.selectedItemSlot]! >= 1) {
-            inventoryUseInfo.crossbowLoadProgressRecord[inventoryUseInfo.selectedItemSlot] = 1;
-            inventoryUseInfo.action = LimbAction.none;
+         if (limb.crossbowLoadProgressRecord[limb.selectedItemSlot]! >= 1) {
+            limb.crossbowLoadProgressRecord[limb.selectedItemSlot] = 1;
+            limb.action = LimbAction.none;
          }
          
          break;

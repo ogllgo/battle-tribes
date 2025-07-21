@@ -62,6 +62,20 @@ const getItemAttackExecuteTimeSeconds = (item: Item): number => {
    return (timings.windupTimeTicks + timings.swingTimeTicks + timings.returnTimeTicks) / Settings.TPS;
 }
 
+export function entityHasWeapon(tribesman: Entity): boolean {
+   const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
+   const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);
+
+   for (const item of hotbarInventory.items) {
+      const itemCategory = ITEM_TYPE_RECORD[item.type];
+      if (itemCategory === "sword" || itemCategory === "spear") {
+         return true;
+      }
+   }
+
+   return false;
+}
+
 const getMostDamagingItemSlot = (tribesman: Entity, huntedEntity: Entity): number => {
    const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
    const hotbarInventory = getInventory(inventoryComponent, InventoryName.hotbar);

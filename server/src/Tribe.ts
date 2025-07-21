@@ -189,7 +189,7 @@ export default class Tribe {
       this.pathfindingGroupID = getPathfindingGroupID();
 
       // @TEMPORARY
-      const assignment = createGatherItemPlanAssignment([], ItemType.mithrilOre, 999);
+      const assignment = createGatherItemPlanAssignment([], ItemType.tukmokFurHide, 999);
       this.rootAssignment.children.push(assignment);
 
       addTribe(this);

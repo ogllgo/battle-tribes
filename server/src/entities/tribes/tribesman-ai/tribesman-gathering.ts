@@ -269,7 +269,7 @@ const isLowOnFood = (entity: Entity): boolean => {
       for (const item of inventory.items) {
          const itemInfo = ITEM_INFO_RECORD[item.type];
          if (itemInfoIsConsumable(item.type, itemInfo)) {
-            totalHealing += itemInfo.healAmount;
+            totalHealing += itemInfo.healAmount * item.count;
          }
       }
    }

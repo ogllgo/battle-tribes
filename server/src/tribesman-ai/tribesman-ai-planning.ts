@@ -8,6 +8,7 @@ import { AIPlanType, assert } from "../../../shared/src/utils";
 import { AIAssignmentComponentArray, clearAssignment } from "../components/AIAssignmentComponent";
 import { getInventory, InventoryComponentArray, inventoryHasItemType } from "../components/InventoryComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
+import { entityHasWeapon } from "../entities/tribes/tribesman-ai/tribesman-combat-ai";
 import { getLightIntensityAtPos } from "../lights";
 import Tribe from "../Tribe";
 import { getEntityType } from "../world";
@@ -585,7 +586,7 @@ export function createPersonalAssignment(entity: Entity, assignment: AIPlanAssig
                   break;
                }
                case "sword": {
-                  if (!inventoryHasItemType(hotbarInventory, ItemType.wooden_sword)) {
+                  if (!entityHasWeapon(entity)) {
                      children.push(
                         planToGetItem(tribeComponent.tribe, ItemType.wooden_sword, 1)
                      );

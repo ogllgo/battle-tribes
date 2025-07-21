@@ -213,13 +213,14 @@ export function continueCurrentPath(tribesman: Entity): boolean {
 
       const tribesmanHitbox = transformComponent.hitboxes[0];
 
-      turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 1, false);
+      turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 2, false);
 
       // If the tribesman is close to the next node, slow down as to not overshoot it
       const distFromNode = getDistanceToNode(transformComponent, nextNode);
-      if (!willStopAtDesiredDistance(tribesmanHitbox, -2, distFromNode)) {
+      if (!willStopAtDesiredDistance(tribesmanHitbox, -16, distFromNode)) {
          const accelerationMagnitude = getTribesmanAcceleration(tribesman);
-         applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(accelerationMagnitude, tribesmanHitbox.box.angle));
+         // applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(accelerationMagnitude, tribesmanHitbox.box.angle));
+         applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(accelerationMagnitude, targetDirection));
       }
 
       // @Speed: only do this if we know the path has a door in it

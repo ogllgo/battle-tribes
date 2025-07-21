@@ -114,7 +114,6 @@ import { WarriorHutComponentArray } from "./client-components/WarriorHutComponen
 import { WoodenArrowComponentArray } from "./client-components/WoodenArrowComponent";
 import { WorkbenchComponentArray } from "./client-components/WorkbenchComponent";
 import { WorkerHutComponentArray } from "./client-components/WorkerHutComponent";
-import { GlurbComponent, GlurbComponentArray, GlurbComponentParams } from "./server-components/GlurbComponent";
 import { FloorSignComponent, FloorSignComponentArray, FloorSignComponentParams } from "./server-components/FloorSignComponent";
 import { DesertBushLivelyComponent, DesertBushLivelyComponentArray, DesertBushLivelyComponentParams } from "./server-components/DesertBushLivelyComponent";
 import { DesertBushSandyComponent, DesertBushSandyComponentArray, DesertBushSandyComponentParams } from "./server-components/DesertBushSandyComponent";
@@ -252,10 +251,9 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.furnace]: FurnaceComponentArray,
    [ServerComponentType.fireTorch]: FireTorchComponentArray,
    [ServerComponentType.spikyBastard]: SpikyBastardComponentArray,
-   [ServerComponentType.glurb]: GlurbComponentArray,
-   [ServerComponentType.glurbSegment]: GlurbSegmentComponentArray,
    [ServerComponentType.glurbBodySegment]: GlurbBodySegmentComponentArray,
    [ServerComponentType.glurbHeadSegment]: GlurbHeadSegmentComponentArray,
+   [ServerComponentType.glurbSegment]: GlurbSegmentComponentArray,
    [ServerComponentType.slurbTorch]: SlurbTorchComponentArray,
    [ServerComponentType.attackingEntities]: AttackingEntitiesComponentArray,
    [ServerComponentType.aiAssignment]: AIAssignmentComponentArray,
@@ -386,10 +384,9 @@ const ServerComponentRecord = {
    [ServerComponentType.furnace]: (): FurnaceComponent => 0 as any,
    [ServerComponentType.fireTorch]: (): FireTorchComponent => 0 as any,
    [ServerComponentType.spikyBastard]: (): SpikyBastardComponent => 0 as any,
-   [ServerComponentType.glurb]: (): GlurbComponent => 0 as any,
-   [ServerComponentType.glurbSegment]: (): GlurbSegmentComponent => 0 as any,
-   [ServerComponentType.glurbBodySegment]: (): GlurbBodySegmentComponent => 0 as any,
    [ServerComponentType.glurbHeadSegment]: (): GlurbHeadSegmentComponent => 0 as any,
+   [ServerComponentType.glurbBodySegment]: (): GlurbBodySegmentComponent => 0 as any,
+   [ServerComponentType.glurbSegment]: (): GlurbSegmentComponent => 0 as any,
    [ServerComponentType.slurbTorch]: (): SlurbTorchComponent => 0 as any,
    [ServerComponentType.attackingEntities]: (): AttackingEntitiesComponent => 0 as any,
    [ServerComponentType.aiAssignment]: (): AIAssignmentComponent => 0 as any,
@@ -522,10 +519,9 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.furnace]: (): FurnaceComponentParams => 0 as any,
    [ServerComponentType.fireTorch]: (): FireTorchComponentParams => 0 as any,
    [ServerComponentType.spikyBastard]: (): SpikyBastardComponentParams => 0 as any,
-   [ServerComponentType.glurb]: (): GlurbComponentParams => 0 as any,
-   [ServerComponentType.glurbSegment]: (): GlurbSegmentComponentParams => 0 as any,
-   [ServerComponentType.glurbBodySegment]: (): GlurbBodySegmentComponentParams => 0 as any,
    [ServerComponentType.glurbHeadSegment]: (): GlurbHeadSegmentComponentParams => 0 as any,
+   [ServerComponentType.glurbBodySegment]: (): GlurbBodySegmentComponentParams => 0 as any,
+   [ServerComponentType.glurbSegment]: (): GlurbSegmentComponentParams => 0 as any,
    [ServerComponentType.slurbTorch]: (): SlurbTorchComponentParams => 0 as any,
    [ServerComponentType.attackingEntities]: (): AttackingEntitiesComponentParams => 0 as any,
    [ServerComponentType.aiAssignment]: (): AIAssignmentComponentParams => 0 as any,

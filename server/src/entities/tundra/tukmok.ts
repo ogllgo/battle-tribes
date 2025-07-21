@@ -7,11 +7,13 @@ import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/col
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
+import { Settings } from "../../../../shared/src/settings";
 import { lerp, Point, polarVec2, randInt, rotatePoint } from "../../../../shared/src/utils";
 import { accelerateEntityToPosition, findAngleAlignment, turnToPosition } from "../../ai-shared";
 import WanderAI from "../../ai/WanderAI";
 import { ChildConfigAttachInfo, EntityConfig } from "../../components";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
+import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 import { EnergyStomachComponent } from "../../components/EnergyStomachComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
@@ -95,11 +97,11 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
    const headOffset = new Point(0, idealHeadDist);
    const headPosition = position.copy();
    headPosition.add(rotatePoint(headOffset, angle));
-   const headHitbox = new Hitbox(transformComponent, null, true, new CircularBox(headPosition, headOffset, 0, 40), 2.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.TUKMOK_HEAD]);
+   const headHitbox = new Hitbox(transformComponent, null, true, new CircularBox(headPosition, headOffset, 0, 40), 3.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.TUKMOK_HEAD]);
    headHitbox.box.pivot = createAbsolutePivotPoint(0, -20);
    addHitboxToTransformComponent(transformComponent, headHitbox);
 
-   tetherHitboxes(headHitbox, bodyHitbox, idealHeadDist, 300, 1.65);
+   tetherHitboxes(headHitbox, bodyHitbox, idealHeadDist, 400, 1.8);
    // @Hack: method of adding
    headHitbox.angularTethers.push({
       originHitbox: bodyHitbox,
@@ -126,7 +128,7 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
       // @Hack
       const _offset = new Point(offset.x * (sideIsFlipped ? -1 : 1), offset.y);
       spurPosition.add(rotatePoint(_offset, angle));
-      const trunkConfig = createTukmokSpurConfig(spurPosition, 0, offset, HitboxFlag.TUKMOK_SPUR_HEAD, sideIsFlipped);
+      const trunkConfig = createTukmokSpurConfig(spurPosition, 0, offset, 0.75, HitboxFlag.TUKMOK_SPUR_HEAD, sideIsFlipped);
       childConfigs.push({
          entityConfig: trunkConfig,
          attachedHitbox: trunkConfig.components[ServerComponentType.transform]!.hitboxes[0],
@@ -138,7 +140,7 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
    const shoulderSpurLeftFrontOffset = new Point(-58, 92);
    const shoulderSpurLeftFrontPosition = position.copy();
    shoulderSpurLeftFrontPosition.add(rotatePoint(shoulderSpurLeftFrontOffset, angle));
-   const shoulderSpurLeftFrontConfig = createTukmokSpurConfig(shoulderSpurLeftFrontPosition, -Math.PI * 0.05, shoulderSpurLeftFrontOffset, HitboxFlag.TUKMOK_SPUR_SHOULDER_LEFT_FRONT, false);
+   const shoulderSpurLeftFrontConfig = createTukmokSpurConfig(shoulderSpurLeftFrontPosition, -Math.PI * 0.05, shoulderSpurLeftFrontOffset, 0.2, HitboxFlag.TUKMOK_SPUR_SHOULDER_LEFT_FRONT, false);
    childConfigs.push({
       entityConfig: shoulderSpurLeftFrontConfig,
       attachedHitbox: shoulderSpurLeftFrontConfig.components[ServerComponentType.transform]!.hitboxes[0],
@@ -149,7 +151,7 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
    const shoulderSpurLeftBackOffset = new Point(-70, 76);
    const shoulderSpurLeftBackPosition = position.copy();
    shoulderSpurLeftBackPosition.add(rotatePoint(shoulderSpurLeftBackOffset, angle));
-   const shoulderSpurLeftBackConfig = createTukmokSpurConfig(shoulderSpurLeftBackPosition, 0, shoulderSpurLeftBackOffset, HitboxFlag.TUKMOK_SPUR_SHOULDER_LEFT_BACK, false);
+   const shoulderSpurLeftBackConfig = createTukmokSpurConfig(shoulderSpurLeftBackPosition, 0, shoulderSpurLeftBackOffset, 0.2, HitboxFlag.TUKMOK_SPUR_SHOULDER_LEFT_BACK, false);
    childConfigs.push({
       entityConfig: shoulderSpurLeftBackConfig,
       attachedHitbox: shoulderSpurLeftBackConfig.components[ServerComponentType.transform]!.hitboxes[0],
@@ -160,7 +162,7 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
    const shoulderSpurRightFrontOffset = new Point(56, 80);
    const shoulderSpurRightFrontPosition = position.copy();
    shoulderSpurLeftFrontPosition.add(rotatePoint(shoulderSpurRightFrontOffset, angle));
-   const shoulderSpurRightFrontConfig = createTukmokSpurConfig(shoulderSpurRightFrontPosition, -Math.PI * 0.04, shoulderSpurRightFrontOffset, HitboxFlag.TUKMOK_SPUR_SHOULDER_RIGHT_FRONT, false);
+   const shoulderSpurRightFrontConfig = createTukmokSpurConfig(shoulderSpurRightFrontPosition, -Math.PI * 0.04, shoulderSpurRightFrontOffset, 0.2, HitboxFlag.TUKMOK_SPUR_SHOULDER_RIGHT_FRONT, false);
    childConfigs.push({
       entityConfig: shoulderSpurRightFrontConfig,
       attachedHitbox: shoulderSpurRightFrontConfig.components[ServerComponentType.transform]!.hitboxes[0],
@@ -171,7 +173,7 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
    const shoulderSpurRightBackOffset = new Point(68, 62);
    const shoulderSpurRightBackPosition = position.copy();
    shoulderSpurRightBackPosition.add(rotatePoint(shoulderSpurRightBackOffset, angle));
-   const shoulderSpurRightBackConfig = createTukmokSpurConfig(shoulderSpurRightBackPosition, Math.PI * 0.08, shoulderSpurRightBackOffset, HitboxFlag.TUKMOK_SPUR_SHOULDER_RIGHT_BACK, false);
+   const shoulderSpurRightBackConfig = createTukmokSpurConfig(shoulderSpurRightBackPosition, Math.PI * 0.08, shoulderSpurRightBackOffset, 0.2, HitboxFlag.TUKMOK_SPUR_SHOULDER_RIGHT_BACK, false);
    childConfigs.push({
       entityConfig: shoulderSpurRightBackConfig,
       attachedHitbox: shoulderSpurRightBackConfig.components[ServerComponentType.transform]!.hitboxes[0],
@@ -210,6 +212,8 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
    const aiHelperComponent = new AIHelperComponent(headHitbox, 666, moveFunc, turnFunc);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(400, 1 * Math.PI, 1, 0.35, wanderPositionIsValid);
    
+   const attackingEntitiesComponent = new AttackingEntitiesComponent(12 * Settings.TPS);
+   
    const energyStomachComponent = new EnergyStomachComponent(800, 4, 5);
    
    const lootComponent = new LootComponent();
@@ -226,6 +230,7 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
+         [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
          [ServerComponentType.energyStomach]: energyStomachComponent,
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.taming]: tamingComponent,

@@ -58,7 +58,7 @@ export function createTukmokTailConfig(position: Point, angle: number, tailBaseO
       addHitboxToTransformComponent(transformComponent, hitbox);
 
       if (lastHitbox !== null) {
-         tetherHitboxes(hitbox, lastHitbox, IDEAL_DIST, 25, 0.5);
+         tetherHitboxes(hitbox, lastHitbox, IDEAL_DIST, 50, 0.5);
 
          // @Hack: method of adding
          hitbox.angularTethers.push({
