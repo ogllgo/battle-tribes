@@ -417,12 +417,14 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
 
          const config = createSpearProjectileConfig(new Point(x, y), tribeMemberHitbox.box.angle, tribeMember, null);
 
-         const spearProjectile = config.components[ServerComponentType.transform]!.hitboxes[0];
+         const spearProjectileHitbox = config.components[ServerComponentType.transform]!.hitboxes[0];
          
+         console.log(getHitboxVelocity(spearProjectileHitbox));
          const tribeMemberVelocity = getHitboxVelocity(tribeMemberHitbox);
          const spearVel = tribeMemberVelocity.copy();
          spearVel.add(polarVec2(velocityMagnitude, tribeMemberHitbox.box.angle));
-         addHitboxVelocity(spearProjectile, spearVel);
+         addHitboxVelocity(spearProjectileHitbox, spearVel);
+         console.log(getHitboxVelocity(spearProjectileHitbox));
 
          createEntity(config, getEntityLayer(tribeMember), 0);
 

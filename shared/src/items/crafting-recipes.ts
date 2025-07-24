@@ -554,6 +554,15 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
       aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
       craftingStation: CraftingStation.frostshaper
    },
+   {
+      product: ItemType.winterskinArmour,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.tukmokFurHide]: 15
+      }),
+      aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
+      craftingStation: CraftingStation.workbench
+   },
 ];
 
 export function getItemRecipe(itemType: ItemType): CraftingRecipe | null {

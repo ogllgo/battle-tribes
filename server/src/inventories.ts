@@ -25,6 +25,9 @@ export function addHumanoidInventories(inventoryComponent: InventoryComponent, i
 
    hotbarInventory.addItem(createItem(ItemType.stoneSpear, 1), 1);
    hotbarInventory.addItem(createItem(ItemType.snowberry, 20), 2);
+   if (Math.random() < 0.8) {
+      hotbarInventory.addItem(createItem(ItemType.frostArmour, 1), 3);
+   }
    
    inventoryUseComponent.associatedInventoryNames.push(InventoryName.hotbar);
    

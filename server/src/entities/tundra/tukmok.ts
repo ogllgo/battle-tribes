@@ -205,7 +205,7 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
 
    const physicsComponent = new PhysicsComponent();
 
-   const healthComponent = new HealthComponent(250 / 2);
+   const healthComponent = new HealthComponent(250);
    
    const statusEffectComponent = new StatusEffectComponent(0);
 

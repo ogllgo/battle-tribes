@@ -171,7 +171,7 @@ const updateArmourRenderPart = (equipmentComponent: EquipmentComponent, entity: 
          
          equipmentComponent.armourRenderPart = new TexturedRenderPart(
             hitbox,
-            3,
+            5,
             0,
             getTextureArrayIndex(textureSource)
          );

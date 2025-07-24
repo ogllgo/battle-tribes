@@ -2,11 +2,12 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 import { ItemType } from "../../../shared/src/items/items";
-import { customTickIntervalHasPassed, getAbsAngleDiff, Point, polarVec2, randAngle, randInt, secondsToTicks } from "../../../shared/src/utils";
+import { Settings } from "../../../shared/src/settings";
+import { customTickIntervalHasPassed, getAbsAngleDiff, Point, polarVec2, randAngle, randFloat, randInt, secondsToTicks } from "../../../shared/src/utils";
 import { getDistanceFromPointToHitbox, willStopAtDesiredDistance } from "../ai-shared";
 import { createEntityConfigAttachInfo } from "../components";
 import { createItemEntityConfig } from "../entities/item-entity";
-import { applyAcceleration, Hitbox } from "../hitboxes";
+import { applyAcceleration, applyForce, Hitbox } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
 import { createEntity, destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
@@ -15,6 +16,7 @@ import { ComponentArray } from "./ComponentArray";
 import { addHungerEnergy, getEntityFullness } from "./EnergyStomachComponent";
 import { hitEntityWithoutDamage } from "./HealthComponent";
 import { attachHitbox, detachHitbox, TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { TribeComponentArray } from "./TribeComponent";
 
 const enum TrunkCombatState {
    active,
@@ -35,6 +37,8 @@ export class TukmokComponent {
    public trunkState = TrunkCombatState.passive;
 
    public ticksToNextAngrySound = randInt(MIN_ANGRY_SOUND_COOLDOWN_TICKS, MAX_ANGRY_SOUND_COOLDOWN_TICKS);
+
+   public tailTargetPos: Point | null = null;
 }
 
 const IDEAL_DIST_FROM_TREE = 120;
@@ -133,10 +137,84 @@ const treeIsValidTarget = (tree: Entity, aiHelperComponent: AIHelperComponent): 
    return entityExists(tree) && aiHelperComponent.visibleEntities.includes(tree);
 }
 
+const getTail = (transformComponent: TransformComponent): Entity | null => {
+   for (const hitbox of transformComponent.hitboxes) {
+      for (const childHitbox of hitbox.children) {
+         if (getEntityType(childHitbox.entity) === EntityType.tukmokTail) {
+            return childHitbox.entity;
+         }
+      }
+   }
+
+   return null;
+}
+
+const getTailBaseHitbox = (tail: Entity): Hitbox => {
+   const tailTransformComponent = TransformComponentArray.getComponent(tail);
+   return tailTransformComponent.hitboxes[0];
+}
+
+const getTailEndHitbox = (tail: Entity): Hitbox => {
+   const tailTransformComponent = TransformComponentArray.getComponent(tail);
+   return tailTransformComponent.hitboxes[tailTransformComponent.hitboxes.length - 1];
+}
+
+const getTailTargetPos = (tukmok: Entity, tail: Entity, aiHelperComponent: AIHelperComponent): Point | null => {
+   const tailBaseHitbox = getTailBaseHitbox(tail);
+
+   // Chance to not pick a target
+   if (Math.random() < 0.3) {
+      return null;
+   }
+
+   const MIN_DIST = 135;
+
+   const potentialTargets = new Array<Entity>();
+   for (const entity of aiHelperComponent.visibleEntities) {
+      if (!isValidCombatTarget(tukmok, entity)) {
+         continue;
+      }
+
+      const entityTransformComponent = TransformComponentArray.getComponent(entity);
+      const targetHitbox = entityTransformComponent.hitboxes[0];
+      const dist = tailBaseHitbox.box.position.calculateDistanceBetween(targetHitbox.box.position);
+      if (dist < MIN_DIST) {
+         potentialTargets.push(entity);
+      }
+   }
+
+   if (potentialTargets.length > 0) {
+      const target = potentialTargets[Math.floor(potentialTargets.length * Math.random())];
+      
+      const targetTransformComponent = TransformComponentArray.getComponent(target);
+      const targetHitbox = targetTransformComponent.hitboxes[0];
+      return targetHitbox.box.position.offset(randFloat(0, 50), randAngle());
+   } else {
+      return null;
+   }
+}
+
 const isValidCombatTarget = (tukmok: Entity, entity: Entity): boolean => {
    const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(tukmok);
    if (attackingEntitiesComponent.attackingEntities.has(entity)) {
       return true;
+   }
+
+   // @HACK @SPEED
+   if (TribeComponentArray.hasComponent(entity)) {
+      const entityTribeComponent = TribeComponentArray.getComponent(entity);
+      const entityTribe = entityTribeComponent.tribe;
+
+      for (const pair of attackingEntitiesComponent.attackingEntities) {
+         const currentEntity = pair[0];
+         if (TribeComponentArray.hasComponent(currentEntity)) {
+            const currentEntityTribeComponent = TribeComponentArray.getComponent(currentEntity);
+            const currentEntityTribe = currentEntityTribeComponent.tribe;
+            if (currentEntityTribe === entityTribe) {
+               return true;
+            }
+         }
+      }
    }
 
    return false;
@@ -233,11 +311,26 @@ function onTick(tukmok: Entity): void {
          }
       }
 
+      // Tail flail
+      const tail = getTail(transformComponent);
+      if (tail !== null) {
+         // Switch tail targets randomly
+         if (Math.random() < 3 / Settings.TPS) {
+            tukmokComponent.tailTargetPos = getTailTargetPos(tukmok, tail, aiHelperComponent);
+         }
+
+         if (tukmokComponent.tailTargetPos !== null) {
+            // Flail to target
+            const tailEndHitbox = getTailEndHitbox(tail);
+            applyForce(tailEndHitbox, polarVec2(400, tailEndHitbox.box.position.calculateAngleBetween(tukmokComponent.tailTargetPos)));
+         }
+      }
+
       return;
    }
    
    const trunk = getTrunk(transformComponent);
-   if (trunk !== null) {
+   if (trunk !== null && 1+1===1) {
       // Grab leaves from trees if hungry
       // @TEMPORARY: make less than 1
       if ((getEntityFullness(tukmok) < 0.9 || tukmokComponent.isInGrazingMood) && tukmokComponent.grazeCooldownTicks === 0) {
