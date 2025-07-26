@@ -56,11 +56,11 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
-function onHitboxCollision(entity: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    // @Hack
-   switch (getEntityType(entity)) {
+   switch (getEntityType(hitbox.entity)) {
       case EntityType.woodenArrow: {
-         onWoodenArrowHitboxCollision(entity, collidingEntity, affectedHitbox, collidingHitbox, collisionPoint);
+         onWoodenArrowHitboxCollision(hitbox.entity, collidingHitbox.entity, hitbox, collidingHitbox, collisionPoint);
          break;
       }
    }

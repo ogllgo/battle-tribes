@@ -59,7 +59,9 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
-function onHitboxCollision(dustfleaEgg: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(affectedHitbox: Hitbox, collidingHitbox: Hitbox): void {
+   const collidingEntity = collidingHitbox.entity;
+   
    // Can't stick to dustfleas
    if (getEntityType(collidingEntity) === EntityType.dustflea) {
       return;

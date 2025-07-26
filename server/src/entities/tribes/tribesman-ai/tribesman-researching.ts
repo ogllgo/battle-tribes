@@ -75,7 +75,7 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
       const targetDir = tribesmanHitbox.box.position.calculateAngleBetween(researchBenchHitbox.box.position);
 
       const slowAcceleration = getTribesmanSlowAcceleration(tribesman);
-      applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(slowAcceleration, targetDir));
+      applyAccelerationFromGround(tribesmanHitbox, polarVec2(slowAcceleration, targetDir));
 
       turnHitboxToAngle(tribesmanHitbox, targetDir, TRIBESMAN_TURN_SPEED, 0.5, false);
       

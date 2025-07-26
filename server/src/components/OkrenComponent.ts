@@ -482,7 +482,7 @@ function onTick(okren: Entity): void {
             aiHelperComponent.moveFunc(okren, targetPos, 350);
             aiHelperComponent.turnFunc(okren, targetPos, 0.5 * Math.PI, 0.6);
          } else {
-            if (getHitboxVelocity(okrenBodyHitbox).length() < 30) {
+            if (getHitboxVelocity(okrenBodyHitbox).magnitude() < 30) {
                // @Copynpaste
                turnHitboxToAngle(okrenBodyHitbox, angleToLayPosition, 0.5 * Math.PI, 0.75, false);
             }
@@ -580,14 +580,16 @@ function addDataToPacket(packet: Packet, okren: Entity): void {
    packet.addNumber(okrenComponent.eyeHardenTimers[1]);
 }
 
-function onHitboxCollision(okren: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntity = collidingHitbox.entity;
+   
    // @HACK so that okrens don't immediately kill the dustflea eggs they create
    if (getEntityType(collidingEntity) === EntityType.dustfleaEgg) {
       return;
    }
    
    // @Hack: mandible attacking
-   if (!affectedHitbox.flags.includes(HitboxFlag.OKREN_MANDIBLE)) {
+   if (!hitbox.flags.includes(HitboxFlag.OKREN_MANDIBLE)) {
       return;
    }
 
@@ -595,7 +597,9 @@ function onHitboxCollision(okren: Entity, collidingEntity: Entity, affectedHitbo
       return;
    }
 
-   const hash = "okrenmandible_" + okren + "_" + affectedHitbox.localID;
+   const okren = hitbox.entity;
+
+   const hash = "okrenmandible_" + okren + "_" + hitbox.localID;
    const healthComponent = HealthComponentArray.getComponent(collidingEntity);
    if (!canDamageEntity(healthComponent, hash)) {
       return;

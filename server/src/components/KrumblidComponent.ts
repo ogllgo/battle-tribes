@@ -85,8 +85,10 @@ const entityIsFollowable = (entity: Entity): boolean => {
       return false;
    }
 
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
-   if (physicsComponent.isImmovable) {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+
+   if (hitbox.isStatic) {
       // So it isn't interested in trees n shit
       // @Incomplete: what about mobs which don't move? those should be interesting
       return false;
@@ -94,8 +96,6 @@ const entityIsFollowable = (entity: Entity): boolean => {
    
    // Not interested in entities outside of the desert
    // @Incomplete: should be interested in entities oustide of the desert, just won't walk out of the desert!
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
    const entityTile = getHitboxTile(hitbox);
    const layer = getEntityLayer(entity);
    if (layer.getTileBiome(entityTile) !== Biome.desert) {
@@ -301,7 +301,7 @@ function onTick(krumblid: Entity): void {
       const hitbox = transformComponent.hitboxes[0];
       
       // @Incomplete: use new move func
-      applyAccelerationFromGround(krumblid, hitbox, polarVec2(200, hitbox.box.angle));
+      applyAccelerationFromGround(hitbox, polarVec2(200, hitbox.box.angle));
       return;
    }
 

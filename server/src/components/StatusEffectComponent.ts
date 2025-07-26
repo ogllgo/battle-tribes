@@ -117,7 +117,7 @@ function onTick(entity: Entity): void {
             // @Hack
             const hitbox = transformComponent.hitboxes[0];
             // If the entity is in a river, clear the fire effect
-            if (hitboxIsInRiver(entity, hitbox)) {
+            if (hitboxIsInRiver(hitbox)) {
                clearStatusEffect(entity, i);
             } else {
                // Fire tick

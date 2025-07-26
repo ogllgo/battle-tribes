@@ -84,7 +84,7 @@ const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
    const displayY = roundNum(hitbox.box.position.y, 0);
 
    const velocity = getHitboxVelocity(hitbox);
-   let displayVelocityMagnitude = roundNum(velocity.length(), 0);
+   let displayVelocityMagnitude = roundNum(velocity.magnitude(), 0);
 
    const chunks = Array.from(transformComponent.chunks).map(chunk => `${chunk.x}-${chunk.y}`);
    const chunkDisplayText = chunks.reduce((previousValue, chunk, idx) => {

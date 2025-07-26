@@ -20,11 +20,11 @@ export function createBattleaxeProjectileConfig(position: Point, rotation: numbe
    const transformComponent = new TransformComponent();
    
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 32), 0.6, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);   
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.isAffectedByGroundFriction = false;
-   physicsComponent.isImmovable = true;
    
    const tribeComponent = new TribeComponent(tribe);
    

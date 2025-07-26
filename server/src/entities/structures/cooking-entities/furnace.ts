@@ -25,6 +25,7 @@ export function createFurnaceConfig(position: Point, rotation: number, tribe: Tr
 
    const box = new RectangularBox(position, new Point(0, 0), rotation, 80, 80);
    const hitbox = new Hitbox(transformComponent, null, true, box, 2, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(25);

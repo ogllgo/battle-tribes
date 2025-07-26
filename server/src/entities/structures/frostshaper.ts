@@ -23,6 +23,7 @@ export function createFrostshaperConfig(position: Point, rotation: number, tribe
 
    const box = new RectangularBox(position, new Point(0, 0), rotation, 120, 80);
    const hitbox = new Hitbox(transformComponent, null, true, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(20);

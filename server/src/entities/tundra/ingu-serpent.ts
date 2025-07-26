@@ -93,7 +93,7 @@ const moveFunc = (serpent: Entity, pos: Point, accelerationMagnitude: number): v
       const dirToTarget = hitbox.box.position.calculateAngleBetween(pos);
       const velToTarget = polarVec2(accelerationMagnitude * (isHeadHitbox ? 1.4 : 0.7) * 0.5, dirToTarget);
 
-      applyAccelerationFromGround(serpent, hitbox, new Point(connectingVel.x + velToTarget.x, connectingVel.y + velToTarget.y));
+      applyAccelerationFromGround(hitbox, new Point(connectingVel.x + velToTarget.x, connectingVel.y + velToTarget.y));
    }
 }
 

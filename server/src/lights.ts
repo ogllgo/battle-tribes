@@ -262,8 +262,8 @@ export function getLightDataLength(): number {
    return 11 * Float32Array.BYTES_PER_ELEMENT;
 }
 
-export function addLightData(packet: Packet, entity: Entity, hitbox: Hitbox, light: Light): void {
-   packet.addNumber(entity);
+export function addLightData(packet: Packet, hitbox: Hitbox, light: Light): void {
+   packet.addNumber(hitbox.entity);
    packet.addNumber(hitbox.localID);
    
    // Light data

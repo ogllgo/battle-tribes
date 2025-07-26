@@ -19,16 +19,21 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
-function onHitboxCollision(tail: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    // Must be the club
-   if (!affectedHitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_CLUB)) {
+   if (!hitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_CLUB)) {
       return;
    }
    
+   const collidingEntity = collidingHitbox.entity;
    
    // @HACK so that the tukmok doesn't kill itself. but this inadvertently means tukmoks can't damage each other
    const entityType = getEntityType(collidingEntity);
    if (entityType === EntityType.tukmok || entityType === EntityType.tukmokSpur || entityType === EntityType.tukmokTrunk || entityType === EntityType.tukmokTail) {
+      return;
+   }
+   // @SQUEAM
+   if (entityType === EntityType.door || entityType === EntityType.wall) {
       return;
    }
 
@@ -41,9 +46,9 @@ function onHitboxCollision(tail: Entity, collidingEntity: Entity, affectedHitbox
       return;
    }
 
-   const hitDir = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDir = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-   damageEntity(collidingEntity, collidingHitbox, tail, 3, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
-   applyAbsoluteKnockback(collidingEntity, collidingHitbox, polarVec2(200, hitDir));
+   damageEntity(collidingEntity, collidingHitbox, hitbox.entity, 3, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
+   applyAbsoluteKnockback(collidingHitbox, polarVec2(200, hitDir));
    addLocalInvulnerabilityHash(collidingEntity, "tukmok-tail", 0.3);
 }

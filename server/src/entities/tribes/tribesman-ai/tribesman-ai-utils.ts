@@ -220,7 +220,7 @@ export function continueCurrentPath(tribesman: Entity): boolean {
       if (!willStopAtDesiredDistance(tribesmanHitbox, -16, distFromNode)) {
          const accelerationMagnitude = getTribesmanAcceleration(tribesman);
          // applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(accelerationMagnitude, tribesmanHitbox.box.angle));
-         applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(accelerationMagnitude, targetDirection));
+         applyAccelerationFromGround(tribesmanHitbox, polarVec2(accelerationMagnitude, targetDirection));
       }
 
       // @Speed: only do this if we know the path has a door in it

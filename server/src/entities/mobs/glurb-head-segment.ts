@@ -86,7 +86,7 @@ const propagateMoveDirective = (glurbSegment: Entity, furtherHitbox: Hitbox | nu
       targetDir = hitbox.box.position.calculateAngleBetween(furtherHitbox.box.position);
    }
    
-   applyAccelerationFromGround(glurbSegment, hitbox, polarVec2(acceleration, targetDir));
+   applyAccelerationFromGround(hitbox, polarVec2(acceleration, targetDir));
    
    // Propagate
    for (const tether of hitbox.tethers) {

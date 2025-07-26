@@ -85,7 +85,7 @@ const moveFunc = (fish: Entity, pos: Point, acceleration: number): void => {
    const tileIndex = getHitboxTile(fishHitbox);
    if (layer.tileTypes[tileIndex] === TileType.water) {
       // Swim on water
-      applyAccelerationFromGround(fish, fishHitbox, polarVec2(acceleration, direction));
+      applyAccelerationFromGround(fishHitbox, polarVec2(acceleration, direction));
    } else {
       // 
       // Lunge on land

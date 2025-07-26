@@ -419,12 +419,10 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
 
          const spearProjectileHitbox = config.components[ServerComponentType.transform]!.hitboxes[0];
          
-         console.log(getHitboxVelocity(spearProjectileHitbox));
          const tribeMemberVelocity = getHitboxVelocity(tribeMemberHitbox);
          const spearVel = tribeMemberVelocity.copy();
          spearVel.add(polarVec2(velocityMagnitude, tribeMemberHitbox.box.angle));
          addHitboxVelocity(spearProjectileHitbox, spearVel);
-         console.log(getHitboxVelocity(spearProjectileHitbox));
 
          createEntity(config, getEntityLayer(tribeMember), 0);
 

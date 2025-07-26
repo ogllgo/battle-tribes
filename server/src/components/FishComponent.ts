@@ -155,7 +155,7 @@ function onTick(fish: Entity): void {
             const collisionPoint = new Point((fishHitbox.box.position.x + targetHitbox.box.position.x) / 2, (fishHitbox.box.position.y + targetHitbox.box.position.y) / 2);
             
             damageEntity(target, targetHitbox, fish, 2, DamageSource.fish, AttackEffectiveness.effective, collisionPoint, 0);
-            applyKnockback(target, targetHitbox, 100, hitDirection);
+            applyKnockback(targetHitbox, 100, hitDirection);
             addLocalInvulnerabilityHash(target, "fish", 0.3);
          }
       }
@@ -195,7 +195,7 @@ function onTick(fish: Entity): void {
    if (herdMembers.length >= 1) {
       runHerdAI(fish, herdMembers, aiHelperComponent.visionRange, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
 
-      applyAccelerationFromGround(fish, fishHitbox, polarVec2(100, fishHitbox.box.angle));
+      applyAccelerationFromGround(fishHitbox, polarVec2(100, fishHitbox.box.angle));
       return;
    }
 

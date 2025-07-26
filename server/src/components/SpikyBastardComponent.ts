@@ -1,5 +1,5 @@
 import { ServerComponentType } from "../../../shared/src/components";
-import { Entity, DamageSource } from "../../../shared/src/entities";
+import { DamageSource } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Point } from "../../../shared/src/utils";
 import { applyKnockback, Hitbox } from "../hitboxes";
@@ -18,7 +18,9 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
-function onHitboxCollision(bastard: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntity = collidingHitbox.entity;
+   
    if (GlurbSegmentComponentArray.hasComponent(collidingEntity)) {
       return;
    }
@@ -32,9 +34,9 @@ function onHitboxCollision(bastard: Entity, collidingEntity: Entity, affectedHit
       return;
    }
 
-   const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-   damageEntity(collidingEntity, collidingHitbox, bastard, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
-   applyKnockback(collidingEntity, collidingHitbox, 100, hitDirection);
+   damageEntity(collidingEntity, collidingHitbox, hitbox.entity, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
+   applyKnockback(collidingHitbox, 100, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, "spikyBastard", 0.3);
 }

@@ -29,7 +29,7 @@ function onTick(fragment: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(fragment);
    const hitbox = transformComponent.hitboxes[0];
 
-   if (getHitboxVelocity(hitbox).length() < 200) {
+   if (getHitboxVelocity(hitbox).magnitude() < 200) {
       destroyEntity(fragment);
    }
 }
@@ -43,10 +43,14 @@ function addDataToPacket(packet: Packet, fragment: Entity): void {
    packet.addNumber(pricklyPearFragmentProjectileComponent.variant);
 }
 
-function onHitboxCollision(fragment: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntity = collidingHitbox.entity;
+   
    if (!HealthComponentArray.hasComponent(collidingEntity)) {
       return;
    }
+
+   const fragment = hitbox.entity;
 
    const pricklyPearFragmentProjectileComponent = PricklyPearFragmentProjectileComponentArray.getComponent(fragment);
    if (collidingEntity === pricklyPearFragmentProjectileComponent.parentCactus) {
@@ -59,9 +63,9 @@ function onHitboxCollision(fragment: Entity, collidingEntity: Entity, affectedHi
       return;
    }
 
-   const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
    damageEntity(collidingEntity, collidingHitbox, fragment, 3, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
-   applyKnockback(collidingEntity, collidingHitbox, 100, hitDirection);
+   applyKnockback(collidingHitbox, 100, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, fragment.toString(), 0.3);
 }

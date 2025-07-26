@@ -22,6 +22,7 @@ export function createWorkerHutConfig(position: Point, rotation: number, tribe: 
 
    const box = new RectangularBox(position, new Point(0, 0), rotation, 88, 88);
    const hitbox = new Hitbox(transformComponent, null, true, box, 1.8, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(50);

@@ -27,6 +27,7 @@ export function createCampfireConfig(position: Point, rotation: number, tribe: T
 
    const box = new CircularBox(position, new Point(0, 0), rotation, 52);
    const hitbox = new Hitbox(transformComponent, null, true, box, 2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(25);

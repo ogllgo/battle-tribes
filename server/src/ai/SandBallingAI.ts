@@ -94,7 +94,7 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
       }
 
       // move forwards
-      applyAccelerationFromGround(entity, entityHitbox, polarVec2(sandBallingAI.acceleration, entityHitbox.box.angle));
+      applyAccelerationFromGround(entityHitbox, polarVec2(sandBallingAI.acceleration, entityHitbox.box.angle));
 
       const sandBallComponent = SandBallComponentArray.getComponent(sandBall);
 

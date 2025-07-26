@@ -539,7 +539,7 @@ function onTick(cow: Entity): void {
       runHerdAI(cow, herdMembers, aiHelperComponent.visionRange, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
 
       // @Incomplete: use new move func
-      applyAccelerationFromGround(cow, cowBodyHitbox, polarVec2(200, cowBodyHitbox.box.angle));
+      applyAccelerationFromGround(cowBodyHitbox, polarVec2(200, cowBodyHitbox.box.angle));
       return;
    }
 
@@ -596,22 +596,20 @@ const stopRamming = (cowComponent: CowComponent): void => {
    cowComponent.ramRestTicks = Vars.RAM_REST_TICKS;
 }
 
-function onHitboxCollision(cow: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const cow = hitbox.entity;
    const cowComponent = CowComponentArray.getComponent(cow);
    if (!cowComponent.isRamming) {
       return;
    }
 
-   // @Hack to get the cow breaking down walls scene working
-   if (getEntityType(collidingEntity) === EntityType.cow) {
-      return;
-   }
+   const collidingEntity = collidingHitbox.entity;
 
    if (!HealthComponentArray.hasComponent(collidingEntity)) {
       return;
    }
 
-   if (getHitboxVelocity(affectedHitbox).length() <= 100) {
+   if (getHitboxVelocity(hitbox).magnitude() <= 100) {
       // If the cow is being blocked, stop the ram
       const ticksSinceRamStart = getGameTicks() - cowComponent.ramStartTicks;
       if (ticksSinceRamStart >= 1 * Settings.TPS) {
@@ -620,10 +618,10 @@ function onHitboxCollision(cow: Entity, collidingEntity: Entity, affectedHitbox:
       return;
    }
 
-   const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
    
    damageEntity(collidingEntity, collidingHitbox, cow, 2, DamageSource.iceSpikes, AttackEffectiveness.effective, collisionPoint, 0);
-   applyKnockback(collidingEntity, collidingHitbox, 180, hitDirection);
+   applyKnockback(collidingHitbox, 180, hitDirection);
 
    stopRamming(cowComponent);
 

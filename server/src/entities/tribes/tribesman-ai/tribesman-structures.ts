@@ -115,7 +115,7 @@ export function goPlaceBuilding(tribesman: Entity, hotbarInventory: Inventory, t
          // 
 
          const acceleration = getTribesmanSlowAcceleration(tribesman);
-         applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, targetDirection + Math.PI));
+         applyAccelerationFromGround(tribesmanHitbox, polarVec2(acceleration, targetDirection + Math.PI));
 
          turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 0.5, false);
          
@@ -192,7 +192,7 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
       // If the tribesman will stop too close to the target, move back a bit
       if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange - 20, distance)) {
          const acceleration = getTribesmanSlowAcceleration(tribesman);
-         applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, tribesmanHitbox.box.angle + Math.PI));
+         applyAccelerationFromGround(tribesmanHitbox, polarVec2(acceleration, tribesmanHitbox.box.angle + Math.PI));
       }
 
       const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(buildingHitbox.box.position);
@@ -259,7 +259,7 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
       // If the tribesman will stop too close to the target, move back a bit
       if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange - 20, distance)) {
          const acceleration = getTribesmanSlowAcceleration(tribesman);
-         applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, tribesmanHitbox.box.angle + Math.PI));
+         applyAccelerationFromGround(tribesmanHitbox, polarVec2(acceleration, tribesmanHitbox.box.angle + Math.PI));
       }
 
       const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(buildingHitbox.box.position);

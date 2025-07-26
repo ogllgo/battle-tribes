@@ -37,13 +37,14 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
-function onHitboxCollision(iceShard: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntity = collidingHitbox.entity;
    if (!HealthComponentArray.hasComponent(collidingEntity)) {
       return;
    }
 
    // Shatter the ice spike
-   destroyEntity(iceShard);
+   destroyEntity(hitbox.entity);
 
    const collidingEntityType = getEntityType(collidingEntity);
    if (collidingEntityType === EntityType.iceSpikes || collidingEntityType === EntityType.iceSpikesPlanted) {
@@ -55,10 +56,10 @@ function onHitboxCollision(iceShard: Entity, collidingEntity: Entity, affectedHi
          return;
       }
 
-      const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+      const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
       damageEntity(collidingEntity, collidingHitbox, null, 2, DamageSource.iceShards, AttackEffectiveness.effective, collisionPoint, 0);
-      applyKnockback(collidingEntity, collidingHitbox, 150, hitDirection);
+      applyKnockback(collidingHitbox, 150, hitDirection);
       addLocalInvulnerabilityHash(collidingEntity, "ice_shards", 0.3);
 
       if (StatusEffectComponentArray.hasComponent(collidingEntity)) {

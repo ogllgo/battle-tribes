@@ -258,7 +258,7 @@ function onTick(golem: Entity): void {
       }
    }
 
-   applyAccelerationFromGround(golem, golemHitbox, polarVec2(350, targetDir));
+   applyAccelerationFromGround(golemHitbox, polarVec2(350, targetDir));
 
    turnHitboxToAngle(golemHitbox, targetDir, Math.PI / 1.5, 0.5, false);
 }
@@ -301,10 +301,13 @@ function onTakeDamage(golem: Entity, _hitHitbox: Hitbox, attackingEntity: Entity
    }
 }
 
-function onHitboxCollision(golem: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntity = collidingHitbox.entity;
    if (!HealthComponentArray.hasComponent(collidingEntity)) {
       return;
    }
+
+   const golem = hitbox.entity;
    
    // Don't hurt entities which aren't attacking the golem
    const golemComponent = GolemComponentArray.getComponent(golem);
@@ -317,10 +320,10 @@ function onHitboxCollision(golem: Entity, collidingEntity: Entity, affectedHitbo
       return;
    }
    
-   const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
    // @Incomplete: Cause of death
    damageEntity(collidingEntity, collidingHitbox, golem, 3, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
-   applyKnockback(collidingEntity, collidingHitbox, 300, hitDirection);
+   applyKnockback(collidingHitbox, 300, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, "golem", 0.3);
 }

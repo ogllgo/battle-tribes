@@ -8,7 +8,6 @@ import { Settings } from "battletribes-shared/settings";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { applyKnockback, getHitboxVelocity, Hitbox } from "../hitboxes";
-import { EntityTickEventType } from "../../../shared/src/entity-events";
 
 export class SnowballComponent {
    public readonly yeti: Entity;
@@ -51,7 +50,10 @@ function onTick(snowball: Entity): void {
    }
 }
 
-function onHitboxCollision(snowball: Entity, collidingEntity: Entity, snowballHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const snowball = hitbox.entity;
+   const collidingEntity = collidingHitbox.entity;
+   
    const collidingEntityType = getEntityType(collidingEntity);
    if (collidingEntityType === EntityType.snowball || collidingEntityType === EntityType.iceSpikes) {
       return;
@@ -75,7 +77,7 @@ function onHitboxCollision(snowball: Entity, collidingEntity: Entity, snowballHi
       return;
    }
    
-   const velocity = getHitboxVelocity(snowballHitbox).length();
+   const velocity = getHitboxVelocity(hitbox).magnitude();
 
    const ageTicks = getEntityAgeTicks(snowball);
    if (velocity < DAMAGE_VELOCITY_THRESHOLD || ageTicks >= 2 * Settings.TPS) {
@@ -85,10 +87,10 @@ function onHitboxCollision(snowball: Entity, collidingEntity: Entity, snowballHi
    if (HealthComponentArray.hasComponent(collidingEntity)) {
       const healthComponent = HealthComponentArray.getComponent(collidingEntity);
       if (canDamageEntity(healthComponent, "snowball")) {
-         const hitDirection = snowballHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+         const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
          damageEntity(collidingEntity, collidingHitbox, null, 4, DamageSource.snowball, AttackEffectiveness.effective, collisionPoint, 0);
-         applyKnockback(collidingEntity, collidingHitbox, 100, hitDirection);
+         applyKnockback(collidingHitbox, 100, hitDirection);
          addLocalInvulnerabilityHash(collidingEntity, "snowball", 0.3);
       }
    }

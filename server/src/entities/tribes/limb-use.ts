@@ -90,7 +90,7 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
 
    // Add extra range for moving attacks
    const velocity = getHitboxVelocity(attackingEntityHitbox);
-   const velocityMagnitude = velocity.length();
+   const velocityMagnitude = velocity.magnitude();
 
    const attackAlignment = (velocity.x * Math.sin(attackingEntityHitbox.box.angle) + velocity.y * Math.cos(attackingEntityHitbox.box.angle)) / velocityMagnitude;
    if (attackAlignment > 0) {

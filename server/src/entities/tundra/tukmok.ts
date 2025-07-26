@@ -8,8 +8,9 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
 import { Settings } from "../../../../shared/src/settings";
+import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { lerp, Point, polarVec2, randInt, rotatePoint } from "../../../../shared/src/utils";
-import { accelerateEntityToPosition, findAngleAlignment, turnToPosition } from "../../ai-shared";
+import { findAngleAlignment } from "../../ai-shared";
 import WanderAI from "../../ai/WanderAI";
 import { ChildConfigAttachInfo, EntityConfig } from "../../components";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
@@ -24,6 +25,7 @@ import { addHitboxToTransformComponent, TransformComponent, TransformComponentAr
 import { TukmokComponent } from "../../components/TukmokComponent";
 import { applyAcceleration, applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../hitboxes";
 import Layer from "../../Layer";
+import { registerEntityTamingSpec } from "../../taming-specs";
 import { tetherHitboxes } from "../../tethers";
 import { createTukmokSpurConfig } from "./tukmok-spur";
 import { createTukmokTailConfig } from "./tukmok-tail";
@@ -42,6 +44,40 @@ registerEntityLootOnDeath(EntityType.tukmok, {
    getAmount: () => Math.random() < 2/3 ? 1 : 0
 });
 
+registerEntityTamingSpec(EntityType.tukmok, {
+   maxTamingTier: 3,
+   skillNodes: [
+      {
+         skill: getTamingSkill(TamingSkillID.follow),
+         x: 0,
+         y: 10,
+         parent: null,
+         requiredTamingTier: 1
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.move),
+         x: 0,
+         y: 30,
+         parent: TamingSkillID.follow,
+         requiredTamingTier: 2
+      },
+      {
+         skill: getTamingSkill(TamingSkillID.attack),
+         x: 0,
+         y: 50,
+         parent: TamingSkillID.move,
+         requiredTamingTier: 3
+      }
+   ],
+   foodItemType: ItemType.leaf,
+   tierFoodRequirements: {
+      0: 0,
+      1: 15,
+      2: 40,
+      3: 100
+   }
+});
+
 const moveFunc = (tukmok: Entity, pos: Point, acceleration: number): void => {
    const transformComponent = TransformComponentArray.getComponent(tukmok);
    const bodyHitbox = transformComponent.hitboxes[0];
@@ -51,7 +87,7 @@ const moveFunc = (tukmok: Entity, pos: Point, acceleration: number): void => {
    // Move whole cow to the target
    const alignmentToTarget = findAngleAlignment(bodyHitbox.box.angle, bodyToTargetDirection);
    const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget);
-   applyAccelerationFromGround(tukmok, bodyHitbox, polarVec2(acceleration * accelerationMultiplier, bodyToTargetDirection));
+   applyAccelerationFromGround(bodyHitbox, polarVec2(acceleration * accelerationMultiplier, bodyToTargetDirection));
    
    // Move head to the target
    const headHitbox = transformComponent.hitboxes[1] as Hitbox;

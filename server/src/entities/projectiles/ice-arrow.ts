@@ -22,11 +22,11 @@ export function createIceArrowConfig(position: Point, rotation: number, tribe: T
    const transformComponent = new TransformComponent();
 
    const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 20, 56), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.isAffectedByGroundFriction = false;
-   physicsComponent.isImmovable = true;
 
    const tribeComponent = new TribeComponent(tribe);
    

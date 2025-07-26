@@ -43,7 +43,7 @@ function onTick(tumbleweed: Entity): void {
       const hitbox = transformComponent.hitboxes[0];
    
       const wind = getWindVector(hitbox.box.position.x, hitbox.box.position.y);
-      applyAccelerationFromGround(tumbleweed, hitbox, wind);
+      applyAccelerationFromGround(hitbox, wind);
 
       tumbleweedDeadComponent.ticksUnrooted++;
 
@@ -60,7 +60,8 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
-function onHitboxCollision(tumbleweed: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntity = collidingHitbox.entity;
    if (getEntityType(collidingEntity) !== EntityType.tumbleweedDead) {
       return;
    }

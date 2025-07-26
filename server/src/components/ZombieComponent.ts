@@ -179,7 +179,7 @@ const doBiteAttack = (zombie: Entity, target: Entity): void => {
    
    // Lunge at the target
    const lungeDir = zombieHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-   applyAbsoluteKnockback(zombie, zombieHitbox, polarVec2(130, lungeDir));
+   applyAbsoluteKnockback(zombieHitbox, polarVec2(130, lungeDir));
 
    // Reset attack cooldown
    const zombieComponent = ZombieComponentArray.getComponent(zombie);
@@ -319,7 +319,7 @@ function onTick(zombie: Entity): void {
       if (herdMembers.length > 1) {
          runHerdAI(zombie, herdMembers, ZombieVars.VISION_RANGE, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
 
-         applyAccelerationFromGround(zombie, zombieHitbox, polarVec2(Vars.ACCELERATION_SLOW, zombieHitbox.box.angle));
+         applyAccelerationFromGround(zombieHitbox, polarVec2(Vars.ACCELERATION_SLOW, zombieHitbox.box.angle));
          return;
       }
    }
@@ -341,7 +341,10 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    packet.addNumber(zombieComponent.zombieType);
 }
 
-function onHitboxCollision(zombie: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const zombie = hitbox.entity;
+   const collidingEntity = collidingHitbox.entity;
+   
    // Pick up item entities
    if (getEntityType(collidingEntity) === EntityType.itemEntity) {
       pickupItemEntity(zombie, collidingEntity);
@@ -357,16 +360,16 @@ function onHitboxCollision(zombie: Entity, collidingEntity: Entity, affectedHitb
       return;
    }
 
-   const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
    // Damage and knock back the player
    damageEntity(collidingEntity, collidingHitbox, zombie, 1, DamageSource.zombie, AttackEffectiveness.effective, collisionPoint, 0);
-   applyKnockback(collidingEntity, collidingHitbox, 150, hitDirection);
+   applyKnockback(collidingHitbox, 150, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, "zombie", 0.3);
 
    // Push the zombie away from the entity
    const flinchDirection = hitDirection + Math.PI;
-   applyAbsoluteKnockback(zombie, affectedHitbox, polarVec2(100, flinchDirection));
+   applyAbsoluteKnockback(hitbox, polarVec2(100, flinchDirection));
 }
 
 function preRemove(zombie: Entity): void {

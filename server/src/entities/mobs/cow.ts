@@ -112,7 +112,7 @@ const moveFunc = (cow: Entity, pos: Point, accelerationMagnitude: number): void 
    // Move whole cow to the target
    const alignmentToTarget = findAngleAlignment(cowBodyHitbox.box.angle, bodyToTargetDirection);
    const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget);
-   applyAccelerationFromGround(cow, cowBodyHitbox, polarVec2(accelerationMagnitude * accelerationMultiplier, bodyToTargetDirection));
+   applyAccelerationFromGround(cowBodyHitbox, polarVec2(accelerationMagnitude * accelerationMultiplier, bodyToTargetDirection));
    
    // Move head to the target
    const headHitbox = transformComponent.hitboxes[1] as Hitbox;

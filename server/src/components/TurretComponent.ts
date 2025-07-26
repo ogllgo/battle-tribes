@@ -57,17 +57,17 @@ const entityIsTargetted = (turret: Entity, entity: Entity): boolean => {
    if (getEntityRelationship(turret, entity) <= EntityRelationship.friendlyBuilding) {
       return false;
    }
+   
+   const turretTransformComponent = TransformComponentArray.getComponent(turret);
+   const turretHitbox = turretTransformComponent.hitboxes[0];
 
    // @Hack: pathfinding group ID
-   if (!entityIsInLineOfSight(turret, entity, 3429723)) {
+   if (!entityIsInLineOfSight(turretHitbox.box.position, entity, turret)) {
       return false;
    }
 
    const turretEntityType = getEntityType(turret) as TurretEntityType;
    const aimArcSize = getAimArcSize(turretEntityType);
-   
-   const turretTransformComponent = TransformComponentArray.getComponent(turret);
-   const turretHitbox = turretTransformComponent.hitboxes[0];
    
    const minAngle = turretHitbox.box.angle - aimArcSize / 2;
    const maxAngle = turretHitbox.box.angle + aimArcSize / 2;

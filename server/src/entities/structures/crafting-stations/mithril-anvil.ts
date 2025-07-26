@@ -26,6 +26,7 @@ export function createMithrilAnvilConfig(position: Point, rotation: number, trib
    {
       const box = new RectangularBox(position, new Point(-16, 0), rotation, 48, 56);
       const hitbox = new Hitbox(transformComponent, null, true, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+      hitbox.isStatic = true;
       addHitboxToTransformComponent(transformComponent, hitbox);
    }
 
@@ -33,6 +34,7 @@ export function createMithrilAnvilConfig(position: Point, rotation: number, trib
    {
       const box = new RectangularBox(position, new Point(-48, 0), rotation, 16, 40);
       const hitbox = new Hitbox(transformComponent, null, true, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+      hitbox.isStatic = true;
       addHitboxToTransformComponent(transformComponent, hitbox);
    }
 
@@ -40,6 +42,7 @@ export function createMithrilAnvilConfig(position: Point, rotation: number, trib
    {
       const box = new RectangularBox(position, new Point(30, 0), rotation, 44, 40);
       const hitbox = new Hitbox(transformComponent, null, true, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+      hitbox.isStatic = true;
       addHitboxToTransformComponent(transformComponent, hitbox);
    }
    

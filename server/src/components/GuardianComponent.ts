@@ -382,13 +382,15 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    packet.addNumber(stageProgress);
 }
 
-function onHitboxCollision(guardian: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    // Only the limbs can damage entities
    // @Temporary?
    // if (!actingHitbox.flags.includes(HitboxFlag.GUARDIAN_LIMB_HITBOX)) {
    //    return;
    // }
 
+   const collidingEntity = collidingHitbox.entity;
+   
    // Don't attack spiky balls or other guardians
    if (GuardianSpikyBallComponentArray.hasComponent(collidingEntity) || GuardianComponentArray.hasComponent(collidingEntity)) {
       return;
@@ -400,10 +402,10 @@ function onHitboxCollision(guardian: Entity, collidingEntity: Entity, affectedHi
          return;
       }
 
-      const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+      const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
       
-      damageEntity(collidingEntity, collidingHitbox, guardian, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
-      applyKnockback(collidingEntity, collidingHitbox, 200, hitDirection);
+      damageEntity(collidingEntity, collidingHitbox, hitbox.entity, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+      applyKnockback(collidingHitbox, 200, hitDirection);
       addLocalInvulnerabilityHash(collidingEntity, "guardianLimb", 0.3);
    }
 }

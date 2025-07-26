@@ -121,10 +121,12 @@ function onTick(okrenClaw: Entity): void {
    }
 }
 
-function onHitboxCollision(okrenClaw: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    if (!affectedHitbox.flags.includes(HitboxFlag.OKREN_ARM_SEGMENT_OF_SLASHING_AND_DESTRUCTION)) {
       return;
    }
+
+   const collidingEntity = collidingHitbox.entity;
 
    // @Hack: should be able to hit other okrens' tongues
    if (getEntityType(collidingEntity) === EntityType.okrenTongue || getEntityType(collidingEntity) === EntityType.okrenTongueTip || getEntityType(collidingEntity) === EntityType.okrenTongueSegment) {
@@ -146,6 +148,8 @@ function onHitboxCollision(okrenClaw: Entity, collidingEntity: Entity, affectedH
       return;
    }
 
+   const okrenClaw = affectedHitbox.entity;
+
    const hash = "okren_" + okrenClaw + "_" + affectedHitbox.localID;
    
    const healthComponent = HealthComponentArray.getComponent(collidingEntity);
@@ -158,6 +162,6 @@ function onHitboxCollision(okrenClaw: Entity, collidingEntity: Entity, affectedH
    const hitDir = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
    damageEntity(collidingEntity, collidingHitbox, okrenClaw, ATTACK_DAMAGES[okrenClawComponent.size], DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
-   applyAbsoluteKnockback(collidingEntity, collidingHitbox, polarVec2(200, hitDir));
+   applyAbsoluteKnockback(collidingHitbox, polarVec2(200, hitDir));
    addLocalInvulnerabilityHash(collidingEntity, hash, 0.3);
 }

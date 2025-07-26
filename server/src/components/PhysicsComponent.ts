@@ -29,19 +29,15 @@ export class PhysicsComponent {
    /** The higher this number is the faster the entity reaches its maximum speed. 1 = normal */
    public traction = 1;
 
-   // @Cleanup: Might be able to be put on the physics component
    public overrideMoveSpeedMultiplier = false;
 
    public isAffectedByAirFriction = true;
    public isAffectedByGroundFriction = true;
-
-   /** If true, the entity will not be pushed around by collisions, but will still call any relevant events. */
-   public isImmovable = false;
 }
 
 export const PhysicsComponentArray = new ComponentArray<PhysicsComponent>(ServerComponentType.physics, true, getDataLength, addDataToPacket);
 
-const tickHitboxAngularPhysics = (entity: Entity, hitbox: Hitbox, transformComponent: TransformComponent): void => {
+const tickHitboxAngularPhysics = (hitbox: Hitbox, transformComponent: TransformComponent): void => {
    if (hitbox.box.relativeAngle === hitbox.previousRelativeAngle && hitbox.angularAcceleration === 0) {
       return;
    }
@@ -58,14 +54,15 @@ const tickHitboxAngularPhysics = (entity: Entity, hitbox: Hitbox, transformCompo
    hitbox.angularAcceleration = 0;
 
    transformComponent.isDirty = true;
-   registerDirtyEntity(entity);
+   registerDirtyEntity(hitbox.entity);
 }
 
-const applyHitboxKinematics = (entity: Entity, hitbox: Hitbox, transformComponent: TransformComponent, physicsComponent: PhysicsComponent): void => {
+const applyHitboxKinematics = (hitbox: Hitbox, transformComponent: TransformComponent, physicsComponent: PhysicsComponent): void => {
    if (isNaN(hitbox.box.position.x) || isNaN(hitbox.box.position.y)) {
       throw new Error();
    }
    
+   const entity = hitbox.entity;
    const layer = getEntityLayer(entity);
    
    const tileIndex = getHitboxTile(hitbox);
@@ -73,7 +70,7 @@ const applyHitboxKinematics = (entity: Entity, hitbox: Hitbox, transformComponen
 
    // If the game object is in a river, push them in the flow direction of the river
    // The tileMoveSpeedMultiplier check is so that game objects on stepping stones aren't pushed
-   if (hitboxIsInRiver(entity, hitbox) && !physicsComponent.overrideMoveSpeedMultiplier && physicsComponent.isAffectedByGroundFriction) {
+   if (hitboxIsInRiver(hitbox) && !physicsComponent.overrideMoveSpeedMultiplier && physicsComponent.isAffectedByGroundFriction) {
       const flowDirectionIdx = layer.riverFlowDirections[tileIndex];
       // @HACK
       applyAcceleration(hitbox, new Point(240 * Settings.I_TPS * a[flowDirectionIdx], 240 * Settings.I_TPS * b[flowDirectionIdx]));
@@ -262,12 +259,12 @@ const tickHitboxPhysics = (hitbox: Hitbox): void => {
    // @CLEANUP
    const transformComponent = TransformComponentArray.getComponent(hitbox.entity);
 
-   tickHitboxAngularPhysics(hitbox.entity, hitbox, transformComponent);
+   tickHitboxAngularPhysics(hitbox, transformComponent);
 
    // @Hack: this physics component check is needed because the applyHitboxKinematics function needs a physics component... for now, perhaps....
    if (hitbox.parent === null && PhysicsComponentArray.hasComponent(hitbox.entity)) {
       const physicsComponent = PhysicsComponentArray.getComponent(hitbox.entity);
-      applyHitboxKinematics(hitbox.entity, hitbox, transformComponent, physicsComponent);
+      applyHitboxKinematics(hitbox, transformComponent, physicsComponent);
    }
    
    applyHitboxTethers(hitbox, transformComponent);

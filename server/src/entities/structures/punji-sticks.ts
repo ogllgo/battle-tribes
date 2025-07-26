@@ -25,6 +25,7 @@ export function createFloorPunjiSticksConfig(position: Point, rotation: number, 
 
    const box = new RectangularBox(position, new Point(0, 0), rotation, 48, 48);
    const hitbox = new Hitbox(transformComponent, null, true, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(10);

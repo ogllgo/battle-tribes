@@ -70,6 +70,9 @@ export class Hitbox {
    public boundsMinY = 0;
    public boundsMaxY = 0;
 
+   /** If true, the entity will not be pushed around by collisions or be able to be moved. */
+   public isStatic = false;
+
    constructor(transformComponent: TransformComponent, parent: Hitbox | null, isPartOfParent: boolean, box: Box, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>) {
       this.localID = transformComponent.nextHitboxLocalID++;
       this.parent = parent;
@@ -122,18 +125,10 @@ export function getRootHitbox(hitbox: Hitbox): Hitbox {
 
 export function addHitboxVelocity(hitbox: Hitbox, addVec: Point): void {
    const rootHitbox = getRootHitbox(hitbox);
-
-   // Don't add velocity if the hitbox is immovable
-   if (!PhysicsComponentArray.hasComponent(rootHitbox.entity)) {
-      return;
+   if (!rootHitbox.isStatic) {
+      rootHitbox.box.position.x += addVec.x / Settings.TPS;
+      rootHitbox.box.position.y += addVec.y / Settings.TPS;
    }
-   const physicsComponent = PhysicsComponentArray.getComponent(rootHitbox.entity);
-   if (physicsComponent.isImmovable) {
-      return;
-   }
-   
-   rootHitbox.box.position.x += addVec.x / Settings.TPS;
-   rootHitbox.box.position.y += addVec.y / Settings.TPS;
 }
 
 export function translateHitbox(hitbox: Hitbox, transformComponent: TransformComponent, translation: Point): void {
@@ -171,90 +166,69 @@ export function getHitboxConnectedMass(hitbox: Hitbox): number {
    return getHitboxTotalMassIncludingChildren(rootHitbox);
 }
 
-export function applyKnockback(entity: Entity, hitbox: Hitbox, knockback: number, knockbackDirection: number): void {
-   if (!PhysicsComponentArray.hasComponent(entity)) {
+export function applyKnockback(hitbox: Hitbox, knockback: number, knockbackDirection: number): void {
+   // @CLEANUP this is literally just addHItboxVelocity, but also registering it to the player.....
+   
+   const rootHitbox = getRootHitbox(hitbox);
+   if (rootHitbox.isStatic) {
       return;
    }
 
    // @Speed: should take in knockback as knockbackX and knockbackY instead of in polar form...
 
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
-   if (physicsComponent.isImmovable) {
+   const totalMass = getHitboxConnectedMass(rootHitbox);
+   if (totalMass === 0) {
       return;
    }
-   
-   const totalMass = getHitboxConnectedMass(hitbox);
-   assert(totalMass !== 0);
    const knockbackForce = knockback / totalMass;
-
-   const rootHitbox = getRootHitbox(hitbox);
    addHitboxVelocity(rootHitbox, polarVec2(knockbackForce, knockbackDirection));
 
    // @Hack?
-   if (getEntityType(entity) === EntityType.player) {
-      registerPlayerKnockback(entity, knockback, knockbackDirection);
+   if (getEntityType(hitbox.entity) === EntityType.player) {
+      registerPlayerKnockback(hitbox.entity, knockback, knockbackDirection);
    }
 }
 
 // @Cleanup: Should be combined with previous function
-export function applyAbsoluteKnockback(entity: Entity, hitbox: Hitbox, knockback: Point): void {
-   if (!PhysicsComponentArray.hasComponent(entity)) {
+export function applyAbsoluteKnockback(hitbox: Hitbox, knockback: Point): void {
+   const rootHitbox = getRootHitbox(hitbox);
+   if (rootHitbox.isStatic) {
       return;
    }
 
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
-   if (physicsComponent.isImmovable) {
-      return;
-   }
-   
-   const rootHitbox = getRootHitbox(hitbox);
    addHitboxVelocity(rootHitbox, knockback);
 
    // @Hack?
-   if (getEntityType(entity) === EntityType.player) {
+   if (getEntityType(hitbox.entity) === EntityType.player) {
       // @Hack
       const polarKnockback = knockback.convertToVector();
-      registerPlayerKnockback(entity, polarKnockback.magnitude, polarKnockback.direction);
+      registerPlayerKnockback(hitbox.entity, polarKnockback.magnitude, polarKnockback.direction);
    }
 }
 
 export function applyAcceleration(hitbox: Hitbox, acc: Point): void {
    const rootHitbox = getRootHitbox(hitbox);
-
-   // @Copynpaste(?) from the addVelocity function
-   if (!PhysicsComponentArray.hasComponent(rootHitbox.entity)) {
-      return;
+   if (!rootHitbox.isStatic) {
+      rootHitbox.acceleration.x += acc.x;
+      rootHitbox.acceleration.y += acc.y;
    }
-   const physicsComponent = PhysicsComponentArray.getComponent(rootHitbox.entity);
-   if (physicsComponent.isImmovable) {
-      return;
-   }
-
-   rootHitbox.acceleration.x += acc.x;
-   rootHitbox.acceleration.y += acc.y;
 }
 
 export function applyForce(hitbox: Hitbox, force: Point): void {
    const rootHitbox = getRootHitbox(hitbox);
-
-   // @Copynpaste(?) from the addVelocity function
-   if (!PhysicsComponentArray.hasComponent(rootHitbox.entity)) {
-      return;
-   }
-   const physicsComponent = PhysicsComponentArray.getComponent(rootHitbox.entity);
-   if (physicsComponent.isImmovable) {
-      return;
-   }
-
-   const hitboxConnectedMass = getHitboxTotalMassIncludingChildren(rootHitbox);
-   if (hitboxConnectedMass !== 0) {
-      rootHitbox.acceleration.x += force.x / hitboxConnectedMass;
-      rootHitbox.acceleration.y += force.y / hitboxConnectedMass;
+   if (!rootHitbox.isStatic) {
+      const hitboxConnectedMass = getHitboxTotalMassIncludingChildren(rootHitbox);
+      if (hitboxConnectedMass !== 0) {
+         rootHitbox.acceleration.x += force.x / hitboxConnectedMass;
+         rootHitbox.acceleration.y += force.y / hitboxConnectedMass;
+      }
    }
 }
 
 // @Cleanup: Passing in hitbox really isn't the best, ideally hitbox should self-contain all the necessary info... but is that really good? + memory efficient?
-export function applyAccelerationFromGround(entity: Entity, hitbox: Hitbox, acceleration: Point): void {
+export function applyAccelerationFromGround(hitbox: Hitbox, acceleration: Point): void {
+   const entity = hitbox.entity;
+   
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
    const tileIndex = getHitboxTile(hitbox);
@@ -265,7 +239,7 @@ export function applyAccelerationFromGround(entity: Entity, hitbox: Hitbox, acce
    let moveSpeedMultiplier: number;
    if (physicsComponent.overrideMoveSpeedMultiplier || !physicsComponent.isAffectedByGroundFriction) {
       moveSpeedMultiplier = 1;
-   } else if (tileType === TileType.water && !hitboxIsInRiver(entity, hitbox)) {
+   } else if (tileType === TileType.water && !hitboxIsInRiver(hitbox)) {
       moveSpeedMultiplier = physicsComponent.moveSpeedMultiplier;
    } else {
       moveSpeedMultiplier = tilePhysicsInfo.moveSpeedMultiplier * physicsComponent.moveSpeedMultiplier;
@@ -347,8 +321,9 @@ export function getHitboxTile(hitbox: Hitbox): TileIndex {
    return getTileIndexIncludingEdges(tileX, tileY);
 }
 
-// @Cleanup: having to pass in entity is SHIT!
-export function hitboxIsInRiver(entity: Entity, hitbox: Hitbox): boolean {
+export function hitboxIsInRiver(hitbox: Hitbox): boolean {
+   const entity = hitbox.entity;
+   
    const tileIndex = getHitboxTile(hitbox);
    const layer = getEntityLayer(entity);
 

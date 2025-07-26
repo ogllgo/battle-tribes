@@ -262,7 +262,7 @@ function onTick(slime: Entity): void {
 
       // @Hack
       const speedMultiplier = SLIME_SPEED_MULTIPLIERS[slimeComponent.size];
-      applyAccelerationFromGround(slime, slimeHitbox, polarVec2(Vars.ACCELERATION * speedMultiplier, slimeHitbox.box.angle));
+      applyAccelerationFromGround(slimeHitbox, polarVec2(Vars.ACCELERATION * speedMultiplier, slimeHitbox.box.angle));
       return;
    }
 
@@ -283,7 +283,7 @@ function onTick(slime: Entity): void {
       slimeComponent.eyeAngle = turnAngle(slimeComponent.eyeAngle, targetDirection, 5 * Math.PI);
 
       const speedMultiplier = SLIME_SPEED_MULTIPLIERS[slimeComponent.size];
-      applyAccelerationFromGround(slime, slimeHitbox, polarVec2(Vars.ACCELERATION * speedMultiplier, slimeHitbox.box.angle));
+      applyAccelerationFromGround(slimeHitbox, polarVec2(Vars.ACCELERATION * speedMultiplier, slimeHitbox.box.angle));
 
       turnHitboxToAngle(slimeHitbox, targetDirection, Vars.TURN_SPEED, 0.5, false);
       return;
@@ -408,7 +408,10 @@ const merge = (slime1: Entity, slime2: Entity): void => {
    destroyEntity(slime2);
 }
 
-function onHitboxCollision(slime: Entity, collidingEntity: Entity, actingHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const slime = hitbox.entity;
+   const collidingEntity = collidingHitbox.entity;
+   
    const collidingEntityType = getEntityType(collidingEntity);
    
    // Merge with slimes

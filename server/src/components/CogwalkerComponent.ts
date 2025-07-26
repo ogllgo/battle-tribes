@@ -74,7 +74,7 @@ function onTick(cogwalker: Entity): void {
       {
          const transformComponent = TransformComponentArray.getComponent(cogwalker);
          const hitbox = transformComponent.hitboxes[0];
-         if (getHitboxVelocity(hitbox).length() > 100) {
+         if (getHitboxVelocity(hitbox).magnitude() > 100) {
             hasAccident = true;
             setHitboxVelocity(hitbox, 0, 0);
          }

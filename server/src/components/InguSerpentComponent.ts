@@ -392,8 +392,8 @@ const addTruce = (serpent: Entity, tribe: Tribe): void => {
    }
 }
 
-function onHitboxCollision(serpent: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
-   if (!affectedHitbox.flags.includes(HitboxFlag.INGU_SERPENT_HEAD)) {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   if (!hitbox.flags.includes(HitboxFlag.INGU_SERPENT_HEAD)) {
       return;
    }
    
@@ -401,6 +401,9 @@ function onHitboxCollision(serpent: Entity, collidingEntity: Entity, affectedHit
    // if (!wraithComponent.isLeaping) {
    //    return;
    // }
+
+   const serpent = hitbox.entity;
+   const collidingEntity = collidingHitbox.entity;
    
    if (!isTarget(serpent, collidingEntity)) {
       return;
@@ -417,10 +420,10 @@ function onHitboxCollision(serpent: Entity, collidingEntity: Entity, affectedHit
       return;
    }
 
-   const hitDir = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDir = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
    damageEntity(collidingEntity, collidingHitbox, serpent, 3, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
-   applyAbsoluteKnockback(collidingEntity, collidingHitbox, polarVec2(200, hitDir));
+   applyAbsoluteKnockback(collidingHitbox, polarVec2(200, hitDir));
    addLocalInvulnerabilityHash(collidingEntity, localInvulnerabilityHash, 0.3);
 
    if (StatusEffectComponentArray.hasComponent(collidingEntity)) {

@@ -46,7 +46,7 @@ export function getClosestAccessibleEntity(entity: Entity, entities: ReadonlyArr
 
 /** Estimates the distance it will take for the hitbox to stop */
 const estimateStopDistance = (hitbox: Hitbox): number => {
-   const totalVelocityMagnitude = getHitboxVelocity(hitbox).length();
+   const totalVelocityMagnitude = getHitboxVelocity(hitbox).magnitude();
    
    // @Incomplete: Hard-coded
    // Estimate time it will take for the entity to stop
@@ -77,7 +77,7 @@ export function accelerateEntityToPosition(entity: Entity, pos: Point, accelerat
 
    const targetDirection = entityHitbox.box.position.calculateAngleBetween(pos);
 
-   applyAccelerationFromGround(entity, entityHitbox, polarVec2(acceleration, targetDirection));
+   applyAccelerationFromGround(entityHitbox, polarVec2(acceleration, targetDirection));
 }
 
 export function moveEntityToPosition(entity: Entity, x: number, y: number, acceleration: number, turnSpeed: number, turnDamping: number): void {
@@ -87,7 +87,7 @@ export function moveEntityToPosition(entity: Entity, x: number, y: number, accel
 
    const targetDirection = angle(x - entityHitbox.box.position.x, y - entityHitbox.box.position.y);
 
-   applyAccelerationFromGround(entity, entityHitbox, polarVec2(acceleration, targetDirection));
+   applyAccelerationFromGround(entityHitbox, polarVec2(acceleration, targetDirection));
 
    turnHitboxToAngle(entityHitbox, targetDirection, turnSpeed, turnDamping, false);
 }
@@ -665,7 +665,7 @@ const lineIntersectsCircularHitbox = (lineX1: number, lineY1: number, lineX2: nu
 
 const hitboxOrChildrenIntersectLineOfSight = (hitbox: Hitbox, rayStartX: number, rayStartY: number, rayEndX: number, rayEndY: number): boolean => {
    const box = hitbox.box;
-
+   
    if (boxIsCircular(box)) {
       if (lineIntersectsCircularHitbox(rayStartX, rayStartY, rayEndX, rayEndY, box)) {
          return true;
@@ -676,8 +676,8 @@ const hitboxOrChildrenIntersectLineOfSight = (hitbox: Hitbox, rayStartX: number,
       }
    }
 
-   for (const child of hitbox.children) {
-      if (child.isPartOfParent && hitboxOrChildrenIntersectLineOfSight(hitbox, rayStartX, rayStartY, rayEndX, rayEndY)) {
+   for (const childHitbox of hitbox.children) {
+      if (childHitbox.isPartOfParent && hitboxOrChildrenIntersectLineOfSight(childHitbox, rayStartX, rayStartY, rayEndX, rayEndY)) {
          return true;
       }
    }
@@ -685,24 +685,23 @@ const hitboxOrChildrenIntersectLineOfSight = (hitbox: Hitbox, rayStartX: number,
    return false;
 }
 
-export function entityIsInLineOfSight(originEntity: Entity, targetEntity: Entity, ignoredPathfindingGroupID: number): boolean {
-   const originEntityTransformComponent = TransformComponentArray.getComponent(originEntity);
-   // @Bug @Hack
-   const originEntityHitbox = originEntityTransformComponent.hitboxes[0];
+export function entityIsInLineOfSight(sightRayStart: Point, targetEntity: Entity, ignoredEntity: Entity, ignoredPathfindingGroupID?: number): boolean {
    // @Bug @Hack
    const targetEntityTransformComponent = TransformComponentArray.getComponent(targetEntity);
    const targetEntityHitbox = targetEntityTransformComponent.hitboxes[0];
 
-   const layer = getEntityLayer(originEntity);
+   const layer = getEntityLayer(targetEntity);
 
-   const rayStartX = originEntityHitbox.box.position.x;
-   const rayStartY = originEntityHitbox.box.position.y;
+   const rayStartX = sightRayStart.x;
+   const rayStartY = sightRayStart.y;
    const rayEndX = targetEntityHitbox.box.position.x;
    const rayEndY = targetEntityHitbox.box.position.y;
 
    // 
    // Check for entity hitboxes in the path between
    // 
+
+   // @Speed: don't check chunks in the full square, check chunks in the line!!
 
    const minX = Math.min(rayStartX, rayEndX);
    const maxX = Math.max(rayStartX, rayEndX);
@@ -721,7 +720,7 @@ export function entityIsInLineOfSight(originEntity: Entity, targetEntity: Entity
          for (let i = 0; i < chunk.entities.length; i++) {
             const entity = chunk.entities[i];
             const pathfindingGroupID = getEntityPathfindingGroupID(entity);
-            if (entity === originEntity || entity === targetEntity || pathfindingGroupID === ignoredPathfindingGroupID || !entityAffectsLineOfSight(entity)) {
+            if (entity === ignoredEntity || entity === targetEntity || pathfindingGroupID === ignoredPathfindingGroupID || !entityAffectsLineOfSight(entity)) {
                continue;
             }
             

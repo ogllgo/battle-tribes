@@ -13,11 +13,11 @@ import { Hitbox } from "../hitboxes";
 export function createGuardianGemQuakeConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 10), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    // @Hack: shouldn't have
    const physicsComponent = new PhysicsComponent();
-   physicsComponent.isImmovable = true;
 
    const guardianGemQuakeComponent = new GuardianGemQuakeComponent();
    

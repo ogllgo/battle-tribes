@@ -69,7 +69,6 @@ function onTick(blockAttack: Entity): void {
 
 const blockSwing = (blockAttack: Entity, swingAttack: Entity, blockingHitbox: Hitbox, swingHitbox: Hitbox): void => {
    const blockAttackComponent = BlockAttackComponentArray.getComponent(blockAttack);
-   const blocker = blockAttackComponent.owner;
 
    const swingAttackComponent = SwingAttackComponentArray.getComponent(swingAttack);
    const attackerLimb = swingAttackComponent.limb;
@@ -88,7 +87,7 @@ const blockSwing = (blockAttack: Entity, swingAttack: Entity, blockingHitbox: Hi
       const pushDirection = swingHitbox.box.position.calculateAngleBetween(blockingHitbox.box.position);
       const attackingItem = getHeldItem(attackerLimb);
       const knockbackAmount = calculateItemKnockback(attackingItem, true);
-      applyKnockback(blocker, blockingHitbox, knockbackAmount, pushDirection);
+      applyKnockback(blockingHitbox, knockbackAmount, pushDirection);
    }
 
    blockAttackComponent.hasBlocked = true;
@@ -102,7 +101,6 @@ const blockSwing = (blockAttack: Entity, swingAttack: Entity, blockingHitbox: Hi
 
 const blockProjectile = (blockAttack: Entity, projectile: Entity, blockingHitbox: Hitbox, projectileHitbox: Hitbox): void => {
    const blockAttackComponent = BlockAttackComponentArray.getComponent(blockAttack);
-   const blocker = blockAttackComponent.owner;
 
    blockAttackComponent.hasBlocked = true;
    // @Copynpaste @Incomplete
@@ -115,7 +113,7 @@ const blockProjectile = (blockAttack: Entity, projectile: Entity, blockingHitbox
       // Push back
       const pushDirection = projectileHitbox.box.position.calculateAngleBetween(blockingHitbox.box.position);
       // @Hack @Hardcoded: knockback amount
-      applyKnockback(blocker, blockingHitbox, 75, pushDirection);
+      applyKnockback(blockingHitbox, 75, pushDirection);
       
       destroyEntity(projectile);
    } else {
@@ -124,16 +122,19 @@ const blockProjectile = (blockAttack: Entity, projectile: Entity, blockingHitbox
    }
 }
 
-function onHitboxCollision(blockAttack: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const blockAttack = hitbox.entity;
+   const collidingEntity = collidingHitbox.entity;
+   
    // Block swings
    if (getEntityType(collidingEntity) === EntityType.swingAttack) {
-      blockSwing(blockAttack, collidingEntity, affectedHitbox, collidingHitbox);
+      blockSwing(blockAttack, collidingEntity, hitbox, collidingHitbox);
       return;
    }
 
    // Block projectiles
    if (ProjectileComponentArray.hasComponent(collidingEntity)) {
-      blockProjectile(blockAttack, collidingEntity, affectedHitbox, collidingHitbox);
+      blockProjectile(blockAttack, collidingEntity, hitbox, collidingHitbox);
    }
 
    // @HACK @Temporary for the Eastern Bowcuck Shield Advance i am putting this here so that the shield wall is useful,

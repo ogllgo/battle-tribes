@@ -25,7 +25,6 @@ export function createWoodenArrowConfig(position: Point, rotation: number, tribe
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.isAffectedByGroundFriction = false;
-   // physicsComponent.isImmovable = true;
 
    const tribeComponent = new TribeComponent(tribe);
 
@@ -92,7 +91,7 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
    }
 
    // Don't damage if the arrow is moving too slow
-   if (getHitboxVelocity(affectedHitbox).length() < 10) {
+   if (getHitboxVelocity(affectedHitbox).magnitude() < 10) {
       return;
    } 
 
@@ -108,7 +107,7 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
       const damage = 2 * (projectileComponent.isBlocked ? 0.5 : 1);
       const knockback = 150 * (projectileComponent.isBlocked ? 0.5 : 1);
       damageEntity(collidingEntity, collidingHitbox, attacker, damage, DamageSource.arrow, AttackEffectiveness.effective, collisionPoint, 0);
-      applyKnockback(collidingEntity, collidingHitbox, knockback, hitDirection);
+      applyKnockback(collidingHitbox, knockback, hitDirection);
       addLocalInvulnerabilityHash(collidingEntity, attackHash, 9);
    
       if (StatusEffectComponentArray.hasComponent(collidingEntity) && ammoInfo.statusEffect !== null) {
@@ -119,7 +118,7 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
    // When the hitbox is pushed to the point that it is no longer travelling in the direction it is facing, attach it to the colliding hitbox
    // Lodge the arrow in the entity when it's slow enough
    const arrowVelocity = getHitboxVelocity(affectedHitbox);
-   if (arrowVelocity.length() < 50 || arrowVelocity.calculateDotProduct(angleToPoint(affectedHitbox.box.angle)) < 0) {
+   if (arrowVelocity.magnitude() < 50 || arrowVelocity.calculateDotProduct(angleToPoint(affectedHitbox.box.angle)) < 0) {
       attachHitbox(affectedHitbox, collidingHitbox, false);
    }
 }

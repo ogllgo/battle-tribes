@@ -317,7 +317,7 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
          for (const pair of hitboxLights) {
             const hitbox = pair[0];
             const light = pair[1];
-            addLightData(packet, entity, hitbox, light);
+            addLightData(packet, hitbox, light);
          }
       }
    }

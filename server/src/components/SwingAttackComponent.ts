@@ -234,7 +234,7 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, hitHitbox: H
    // Register the hit
    const hitFlags = attackingItem !== null && attackingItem.type === ItemType.flesh_sword ? HitFlags.HIT_BY_FLESH_SWORD : 0;
    damageEntity(victim, victimHitbox, attacker, attackDamage, DamageSource.tribeMember, attackEffectiveness, collisionPoint, hitFlags);
-   applyKnockback(victim, victimHitbox, attackKnockback, hitDirection);
+   applyKnockback(victimHitbox, attackKnockback, hitDirection);
 
    if (attackingItem !== null) {
       // @HACK: shouldn't be hard-coded here!!

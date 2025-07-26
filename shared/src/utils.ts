@@ -152,7 +152,7 @@ export class Point {
       return new Point(this.x, this.y);
    }
 
-   public length(): number {
+   public magnitude(): number {
       return Math.sqrt(this.x * this.x + this.y * this.y);
    }
 
@@ -172,7 +172,7 @@ export class Point {
 
    /** Projects the point onto another point */
    public scalarProj(pointB: Point): number {
-      return (this.x * pointB.x + this.y * pointB.y) / pointB.length();
+      return (this.x * pointB.x + this.y * pointB.y) / pointB.magnitude();
    }
 
    public static unpackage(packagedPoint: [number, number]): Point {

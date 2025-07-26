@@ -31,14 +31,18 @@ export function createEmbrasureConfig(position: Point, rotation: number, tribe: 
 
    // Add the two vertical hitboxes (can stop arrows)
    const hitbox1 = new Hitbox(transformComponent, null, true, new RectangularBox(position.copy(), new Point(-(64 - VERTICAL_HITBOX_WIDTH) / 2 + 0.025, 0), rotation, VERTICAL_HITBOX_WIDTH, VERTICAL_HITBOX_HEIGHT), 0.4, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox1.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox1);
    const hitbox2 = new Hitbox(transformComponent, null, true, new RectangularBox(position.copy(), new Point((64 - VERTICAL_HITBOX_WIDTH) / 2 - 0.025, 0), rotation, VERTICAL_HITBOX_WIDTH, VERTICAL_HITBOX_HEIGHT), 0.4, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox2.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox2);
 
    // Add the two horizontal hitboxes (cannot stop arrows)
    const hitbox3 = new Hitbox(transformComponent, null, true, new RectangularBox(position.copy(), new Point(-(64 - HORIZONTAL_HITBOX_WIDTH) / 2 + 0.025, 0), rotation, HORIZONTAL_HITBOX_WIDTH, HORIZONTAL_HITBOX_HEIGHT), 0.4, HitboxCollisionType.hard, CollisionBit.arrowPassable, DEFAULT_COLLISION_MASK, []);
+   hitbox3.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox3);
    const hitbox4 = new Hitbox(transformComponent, null, true, new RectangularBox(position.copy(), new Point((64 - HORIZONTAL_HITBOX_WIDTH) / 2 + 0.025, 0), rotation, HORIZONTAL_HITBOX_WIDTH, HORIZONTAL_HITBOX_HEIGHT), 0.4, HitboxCollisionType.hard, CollisionBit.arrowPassable, DEFAULT_COLLISION_MASK, []);
+   hitbox4.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox4);
    
    const healthComponent = new HealthComponent(HEALTHS[material]);

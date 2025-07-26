@@ -93,7 +93,7 @@ function onTick(scrappy: Entity): void {
          throwItem(scrappy, InventoryName.hotbar, 1, 99, scrappyHitbox.box.angle + randFloat(-0.3, 0.3));
       } else {
          const velocity = getHitboxVelocity(scrappyHitbox);
-         if (velocity.length() > 100) {
+         if (velocity.magnitude() > 100) {
             hasAccident = true;
             setHitboxVelocity(scrappyHitbox, velocity.x * 0.3, velocity.y * 0.3);
          }

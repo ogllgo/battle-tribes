@@ -211,7 +211,7 @@ const throwSnow = (yeti: Entity): void => {
    }
 
    // Kickback
-   applyAbsoluteKnockback(yeti, yetiHitbox, polarVec2(110, throwAngle + Math.PI));
+   applyAbsoluteKnockback(yetiHitbox, polarVec2(110, throwAngle + Math.PI));
 }
 
 const entityIsTargetted = (yeti: Entity, entity: Entity, attackingEntitiesComponent: AttackingEntitiesComponent, yetiComponent: YetiComponent): boolean => {
@@ -439,11 +439,14 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    packet.addNumber(yetiComponent.snowThrowAttackProgress);
 }
 
-function onHitboxCollision(yeti: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    // Body doesn't damage
    if (collidingHitbox.flags.includes(HitboxFlag.YETI_BODY)) {
       return;
    }
+
+   const yeti = hitbox.entity;
+   const collidingEntity = collidingHitbox.entity;
    
    const collidingEntityType = getEntityType(collidingEntity);
    
@@ -475,10 +478,10 @@ function onHitboxCollision(yeti: Entity, collidingEntity: Entity, affectedHitbox
          return;
       }
 
-      const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+      const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
       
       damageEntity(collidingEntity, collidingHitbox, yeti, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
-      applyKnockback(collidingEntity, collidingHitbox, 200, hitDirection);
+      applyKnockback(collidingHitbox, 200, hitDirection);
       addLocalInvulnerabilityHash(collidingEntity, "yeti", 0.3);
    }
 }

@@ -39,6 +39,10 @@ import { createTribeWarriorConfig } from "../entities/tribes/tribe-warrior";
 import { applyTethers } from "../tethers";
 import { getEntityCount } from "../census";
 import { damageEntity } from "../components/HealthComponent";
+import { createWallConfig } from "../entities/structures/wall";
+import { BuildingMaterial } from "../../../shared/src/components";
+import { createDoorConfig } from "../entities/structures/door";
+import { createTukmokConfig } from "../entities/tundra/tukmok";
 
 /*
 
@@ -123,6 +127,8 @@ const estimateVisibleChunkBounds = (spawnPosition: Point, screenWidth: number, s
    return [minChunkX, maxChunkX, minChunkY, maxChunkY];
 }
 
+let a = 0;
+
 // @Cleanup: Remove class, just have functions
 /** Communicates between the server and players */
 class GameServer {
@@ -154,34 +160,34 @@ class GameServer {
       const builtinRandomFunc = Math.random;
       Math.random = () => SRandom.next();
 
-      let a = performance.now();
-      console.log("start",a)
+      let _SHITTYCUMMERY = performance.now();
+      console.log("start",_SHITTYCUMMERY)
 
       // Setup
       sortComponentArrays();
       console.log("Generating terrain...")
       generateLayers();
-      console.log("terrain",performance.now() - a)
-      a = performance.now();
+      console.log("terrain",performance.now() - _SHITTYCUMMERY)
+      _SHITTYCUMMERY = performance.now();
 
-      console.log("resources",performance.now() - a)
-      a = performance.now();
+      console.log("resources",performance.now() - _SHITTYCUMMERY)
+      _SHITTYCUMMERY = performance.now();
       
       generateReeds(surfaceLayer, riverMainTiles);
 
       console.log("Spawning entities...");
       spawnInitialEntities();
-      console.log("initial entities",performance.now() - a)
-      a = performance.now();
+      console.log("initial entities",performance.now() - _SHITTYCUMMERY)
+      _SHITTYCUMMERY = performance.now();
       forceMaxGrowAllIceSpikes();
-      console.log("ice spikes",performance.now() - a)
-      a = performance.now();
+      console.log("ice spikes",performance.now() - _SHITTYCUMMERY)
+      _SHITTYCUMMERY = performance.now();
       generateGrassStrands();
-      console.log("grass",performance.now() - a)
-      a = performance.now();
+      console.log("grass",performance.now() - _SHITTYCUMMERY)
+      _SHITTYCUMMERY = performance.now();
       generateDecorations();
-      console.log("decorations",performance.now() - a)
-      a = performance.now();
+      console.log("decorations",performance.now() - _SHITTYCUMMERY)
+      _SHITTYCUMMERY = performance.now();
       // spawnGuardians();
       // console.log("guardians",performance.now() - a)
       // a = performance.now();
@@ -210,8 +216,8 @@ class GameServer {
             if (packetType === PacketType.initialPlayerData) {
                const username = reader.readString();
                // @Temporary
-               const tribeType2 = reader.readNumber() as TribeType;
-               const tribeType = TribeType.goblins;
+               const tribeType = reader.readNumber() as TribeType;
+               const tribeType2 = TribeType.goblins;
                const screenWidth = reader.readNumber();
                const screenHeight = reader.readNumber();
 
@@ -237,17 +243,80 @@ class GameServer {
                   createEntity(config, layer, 0);
                }
 
-               // @Temporary
-               setTimeout(() => {
-               // // const trib = new Tribe(TribeType.plainspeople, false, spawnPosition.copy());
-               
-                  for (let i = 0; i < 12; i++) {
+               if (++a === 2) {
+                  for (let i = 0; i < 2; i++) {
                      const pos1 = spawnPosition.copy();
                      pos1.x -= 50;
                      pos1.x += randFloat(0, 80);
                      pos1.y += randFloat(0, 80);
                      const t1 = createTribeWorkerConfig(pos1, 0, tribe);
                      createEntity(t1, layer, 0);
+                  }
+               }
+
+               // @Temporary
+               setTimeout(() => {
+                  if (a > 1) {
+                     return;
+                  }
+                  // if(1+1===2)return;
+               // // const trib = new Tribe(TribeType.plainspeople, false, spawnPosition.copy());
+
+                  // create container
+                  for (let i = 0; i < 7; i++) {
+                     const x = 6000;
+                     const y = 3200 - i * 64;
+
+                     if (i === 4 || i === 5 || i === 6) {
+                        continue;
+                     }
+
+                     const config = createWallConfig(new Point(x, y), 0, tribe, BuildingMaterial.stone, [], null);
+                     createEntity(config, layer, 0);
+                  }
+                  // {
+                  //    const x = 6000 + 64;
+                  //    const y = 3200 - 6 * 64;
+                  //    const config = createWallConfig(new Point(x, y), 0, tribe, BuildingMaterial.stone, [], null);
+                  //    createEntity(config, layer, 0);
+                  // }
+                  {
+                     const x = 6000 + 240 - 64;
+                     const y = 3200 - 6 * 64;
+                     const config = createWallConfig(new Point(x, y), 0, tribe, BuildingMaterial.stone, [], null);
+                     createEntity(config, layer, 0);
+                  }
+                  for (let i = 0; i < 7; i++) {
+                     const x = 6000 + 240;
+                     const y = 3200 - i * 64;
+
+                     const config = createWallConfig(new Point(x, y), 0, tribe, BuildingMaterial.stone, [], null);
+                     createEntity(config, layer, 0);
+                  }
+                  {
+                     const x = 6000 + 64;
+                     const y = 3200;
+                     const config = createDoorConfig(new Point(x, y), 0, tribe, BuildingMaterial.stone, [], null);
+                     createEntity(config, layer, 0);
+                  }
+                  {
+                     const x = 6000 + 240 - 64;
+                     const y = 3200;
+                     const config = createDoorConfig(new Point(x, y), Math.PI, tribe, BuildingMaterial.stone, [], null);
+                     createEntity(config, layer, 0);
+                  }
+
+                  {
+                     const x = 6000 + (220 - 64) / 2 + 32;
+                     const y = 3200 - 3 * 64 - 26;
+                     const TUK = createTukmokConfig(new Point(x, y), 0)
+                     createEntity(TUK, layer, 0);
+                  }
+                  {
+                     const x = 6000 + 64 + 48;
+                     const y = 3200 - 64 * 6 - 64;
+                     const config = createWallConfig(new Point(x, y), Math.PI * 0.25, tribe, BuildingMaterial.stone, [], null);
+                     createEntity(config, layer, 0);
                   }
 
                //    setTimeout(() => {

@@ -169,7 +169,7 @@ export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperCompo
 
          // @COPYNPASTE
          // @HACK
-         applyAccelerationFromGround(okren, okrenHitbox, polarVec2(combatAI.acceleration, targetDir));
+         applyAccelerationFromGround(okrenHitbox, polarVec2(combatAI.acceleration, targetDir));
          turnHitboxToAngle(okrenHitbox, idealAngle, combatAI.turnSpeed * 1.5, 1.5 / 1.5, false);
 
          isLeaning = true;

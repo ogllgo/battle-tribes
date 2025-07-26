@@ -26,13 +26,13 @@ export function createDoorConfig(position: Point, rotation: number, tribe: Tribe
    
    const box = new RectangularBox(position, new Point(0, 0), rotation, 64, 16);
    const hitbox = new Hitbox(transformComponent, null, true, box, 0.5, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    // @Hack: Shouldn't need!
    const physicsComponent = new PhysicsComponent();
    physicsComponent.isAffectedByAirFriction = false;
    physicsComponent.isAffectedByGroundFriction = false;
-   physicsComponent.isImmovable = true;
 
    const healthComponent = new HealthComponent(HEALTHS[material]);
 

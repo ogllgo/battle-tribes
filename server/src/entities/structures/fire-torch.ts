@@ -26,6 +26,7 @@ export function createFireTorchConfig(position: Point, rotation: number, tribe: 
 
    const box = new CircularBox(position, new Point(0, 0), rotation, 10);
    const hitbox = new Hitbox(transformComponent, null, true, box, 0.55, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(3);

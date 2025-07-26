@@ -25,9 +25,11 @@ export function createBracingsConfig(position: Point, rotation: number, tribe: T
    const transformComponent = new TransformComponent();
 
    const hitbox1 = new Hitbox(transformComponent, null, true, new RectangularBox(position.copy(), new Point(0, Settings.TILE_SIZE * -0.5), rotation, 16, 16), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
+   hitbox1.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox1);
 
    const hitbox2 = new Hitbox(transformComponent, null, true, new RectangularBox(position.copy(), new Point(0, Settings.TILE_SIZE * 0.5), rotation, 16, 16), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
+   hitbox2.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox2);
    
    const healthComponent = new HealthComponent(HEALTHS[material]);

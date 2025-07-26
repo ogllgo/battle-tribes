@@ -103,14 +103,13 @@ const createFootstepSound = (entity: Entity): void => {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const footprintComponent = FootprintComponentArray.getComponent(entity);
-
-   if (transformComponent.rootEntity === entity) {
-      const hitbox = transformComponent.hitboxes[0];
+   const hitbox = transformComponent.hitboxes[0];
+   if (hitbox.parent === null) {
+      const footprintComponent = FootprintComponentArray.getComponent(entity);
       const velocity = getHitboxVelocity(hitbox);
       
       // Footsteps
-      if (velocity.length() >= 50 && !entityIsInRiver(transformComponent, entity) && Board.tickIntervalHasPassed(footprintComponent.footstepParticleIntervalSeconds)) {
+      if (velocity.magnitude() >= 50 && !entityIsInRiver(transformComponent, entity) && Board.tickIntervalHasPassed(footprintComponent.footstepParticleIntervalSeconds)) {
          if (footprintComponent.doDoubleFootprints) {
             createFootprintParticle(entity, false, footprintComponent.footstepOffset, footprintComponent.footstepSize, footprintComponent.footstepLifetime);
             createFootprintParticle(entity, true, footprintComponent.footstepOffset, footprintComponent.footstepSize, footprintComponent.footstepLifetime);
@@ -119,7 +118,7 @@ function onTick(entity: Entity): void {
          }
          footprintComponent.numFootstepsTaken++;
       }
-      footprintComponent.distanceTracker += velocity.length() / Settings.TPS;
+      footprintComponent.distanceTracker += velocity.magnitude() / Settings.TPS;
       if (footprintComponent.distanceTracker > footprintComponent.footstepSoundIntervalDist) {
          footprintComponent.distanceTracker -= footprintComponent.footstepSoundIntervalDist;
          createFootstepSound(entity);

@@ -61,7 +61,7 @@ export class ComponentArray<T extends object = object, C extends ServerComponent
    /** Groups all collision events with any one colliding entity together.
        Note: Called BEFORE the physics for the collision is applied. */
    public onEntityCollision?(affectedEntity: Entity, collidingEntity: Entity, collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>): void;
-   public onHitboxCollision?(affectedEntity: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void;
+   public onHitboxCollision?(affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void;
    /** Called immediately after an entity is marked for removal. */
    public preRemove?(entity: Entity): void;
    /**

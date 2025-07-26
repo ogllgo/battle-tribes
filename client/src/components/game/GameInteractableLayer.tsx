@@ -307,7 +307,7 @@ export function updatePlayerItems(): void {
          const playerVelocity = getHitboxVelocity(playerHitbox);
 
          // Add extra range for moving attacks
-         const velocityMagnitude = playerVelocity.length();
+         const velocityMagnitude = playerVelocity.magnitude();
          if (velocityMagnitude > 0) {
             const attackAlignment = (playerVelocity.x * Math.sin(playerHitbox.box.angle) + playerVelocity.y * Math.cos(playerHitbox.box.angle)) / velocityMagnitude;
             if (attackAlignment > 0) {

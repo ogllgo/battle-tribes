@@ -46,7 +46,10 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
-function onHitboxCollision(pebblum: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const pebblum = hitbox.entity;
+   const collidingEntity = collidingHitbox.entity;
+   
    const pebblumComponent = PebblumComponentArray.getComponent(pebblum);
    if (collidingEntity !== pebblumComponent.targetEntityID) {
       return;
@@ -57,10 +60,10 @@ function onHitboxCollision(pebblum: Entity, collidingEntity: Entity, affectedHit
       return;
    }
 
-   const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
    // @Incomplete: Cause of death
    damageEntity(collidingEntity, collidingHitbox, pebblum, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
-   applyKnockback(collidingEntity, collidingHitbox, 150, hitDirection);
+   applyKnockback(collidingHitbox, 150, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, "pebblum", 0.3);
 }

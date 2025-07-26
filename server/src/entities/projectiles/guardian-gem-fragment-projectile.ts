@@ -20,7 +20,6 @@ export function createGuardianGemFragmentProjectileConfig(position: Point, rotat
    const physicsComponent = new PhysicsComponent();
    physicsComponent.isAffectedByAirFriction = false;
    physicsComponent.isAffectedByGroundFriction = false;
-   physicsComponent.isImmovable = false;
    
    const projectileComponent = new ProjectileComponent(creator);
    

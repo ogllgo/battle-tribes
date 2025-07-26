@@ -98,29 +98,25 @@ export function collide(affectedEntity: Entity, collidingEntity: Entity, collidi
          const componentArray = componentArrayRecord[componentType];
 
          if (typeof componentArray.onHitboxCollision !== "undefined") {
-            componentArray.onHitboxCollision(affectedEntity, collidingEntity, affectedHitbox, collidingHitbox, collisionPoint);
+            componentArray.onHitboxCollision(affectedHitbox, collidingHitbox, collisionPoint);
          }
       }
       
-      // @Speed: what if there are many many hitbox pairs? will this be slow:?
-      if (PhysicsComponentArray.hasComponent(affectedEntity)) {
-         const physicsComponent = PhysicsComponentArray.getComponent(affectedEntity);
-         if (!physicsComponent.isImmovable) {
-            // @Bug: This isn't right! Should instead keep track of the collision data from the collision detection code, and use it here.
-            // Currently there are issues as one collision pair being resolved can change the push info away from what was used in detection.
-            // Which is extra bad cause sometimes collisions which aren't actually happening can have their push info gotten. previously this has causesd
-            // a nasty to resolve crash, and i put in a hacky solution. would be great to fix
-            const pushInfo = getCollisionPushInfo(affectedHitbox.box, collidingHitbox.box);
+      if (!affectedHitbox.isStatic) {
+         // @Bug: This isn't right! Should instead keep track of the collision data from the collision detection code, and use it here.
+         // Currently there are issues as one collision pair being resolved can change the push info away from what was used in detection.
+         // Which is extra bad cause sometimes collisions which aren't actually happening can have their push info gotten. previously this has causesd
+         // a nasty to resolve crash, and i put in a hacky solution. would be great to fix
+         const pushInfo = getCollisionPushInfo(affectedHitbox.box, collidingHitbox.box);
 
-            if (collidingHitbox.collisionType === HitboxCollisionType.hard) {
-               resolveHardCollision(affectedHitbox, affectedEntityTransformComponent, pushInfo);
-            } else {
-               resolveSoftCollision(affectedHitbox, collidingHitbox, pushInfo);
-            }
-   
-            // @Cleanup: Should we just clean it immediately here?
-            affectedEntityTransformComponent.isDirty = true;
+         if (collidingHitbox.collisionType === HitboxCollisionType.hard) {
+            resolveHardCollision(affectedHitbox, affectedEntityTransformComponent, pushInfo);
+         } else {
+            resolveSoftCollision(affectedHitbox, collidingHitbox, pushInfo);
          }
+
+         // @Cleanup: Should we just clean it immediately here?
+         affectedEntityTransformComponent.isDirty = true;
       }
    }
 
@@ -141,7 +137,6 @@ export function collide(affectedEntity: Entity, collidingEntity: Entity, collidi
    //    case EntityType.ballistaRock: onBallistaRockCollision(entity, pushingEntity, collisionPoint); break;
    //    case EntityType.ballistaSlimeball: onBallistaSlimeballCollision(entity, pushingEntity, collisionPoint); break;
    //    case EntityType.ballistaFrostcicle: onBallistaFrostcicleCollision(entity, pushingEntity, collisionPoint); break;
-   //    case EntityType.spearProjectile: onSpearProjectileCollision(entity, pushingEntity, collisionPoint); break;
    //    case EntityType.spitPoisonArea: onSpitPoisonCollision(entity, pushingEntity, collisionPoint); break;
    //    case EntityType.battleaxeProjectile: onBattleaxeProjectileCollision(entity, pushingEntity, collisionPoint); break;
    //    case EntityType.iceArrow: onIceArrowCollision(entity, pushingEntity); break;
@@ -156,7 +151,7 @@ export function collide(affectedEntity: Entity, collidingEntity: Entity, collidi
 }
 
 /** If no collision is found, does nothing. */
-export function resolveWallCollision(entity: Entity, hitbox: Hitbox, subtileX: number, subtileY: number): void {
+export function resolveWallCollision(hitbox: Hitbox, subtileX: number, subtileY: number): void {
    // @Copynpaste from boxIsCollidingWithSubtile
    // @Speed
    const position = new Point((subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE);
@@ -166,6 +161,7 @@ export function resolveWallCollision(entity: Entity, hitbox: Hitbox, subtileX: n
       return;
    }
 
+   const entity = hitbox.entity;
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    const pushInfo = getCollisionPushInfo(hitbox.box, tileBox);

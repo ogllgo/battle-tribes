@@ -73,7 +73,7 @@ function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.hitboxes[0];
    const velocity = getHitboxVelocity(hitbox);
-   if (velocity.length() > 50) {
+   if (velocity.magnitude() > 50) {
       if (Board.tickIntervalHasPassed(0.05)) {
          createSnowParticle(hitbox.box.position.x, hitbox.box.position.y, randFloat(40, 60));
       }

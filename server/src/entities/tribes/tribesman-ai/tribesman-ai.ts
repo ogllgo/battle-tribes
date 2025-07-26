@@ -435,7 +435,7 @@ export function tickTribesman(tribesman: Entity): void {
          const distance = tribesmanHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
          if (!willStopAtDesiredDistance(tribesmanHitbox, 80, distance)) {
             const accM = getTribesmanAcceleration(tribesman);
-            applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(accM, tribesmanHitbox.box.angle));
+            applyAccelerationFromGround(tribesmanHitbox, polarVec2(accM, tribesmanHitbox.box.angle));
          }
 
          const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(entityHitbox.box.position);
@@ -574,11 +574,11 @@ export function tickTribesman(tribesman: Entity): void {
          if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange - 20, distance)) {
             // If the tribesman will stop too close to the target, move back a bit
             const acceleration = getTribesmanSlowAcceleration(tribesman);
-            applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, tribesmanHitbox.box.angle + Math.PI));
+            applyAccelerationFromGround(tribesmanHitbox, polarVec2(acceleration, tribesmanHitbox.box.angle + Math.PI));
          } else if (!willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange, distance)) {
             // Too far away, move closer
             const acceleration = getTribesmanAcceleration(tribesman);
-            applyAccelerationFromGround(tribesman, tribesmanHitbox, polarVec2(acceleration, targetDir));
+            applyAccelerationFromGround(tribesmanHitbox, polarVec2(acceleration, targetDir));
          }
 
          turnHitboxToAngle(tribesmanHitbox, targetDir, TRIBESMAN_TURN_SPEED, 0.5, false);

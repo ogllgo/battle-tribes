@@ -24,6 +24,7 @@ import { KrumblidCombatAI } from "../ai/KrumblidCombatAI";
 import { KrumblidHibernateAI } from "../ai/KrumblidHibernateAI";
 import { OkrenCombatAI } from "../ai/OkrenCombatAI";
 import { Point } from "../../../shared/src/utils";
+import { entityIsInLineOfSight } from "../ai-shared";
 
 export const enum AIType {
    wander,
@@ -199,7 +200,14 @@ const hitboxWithChildrenIsVisible = (seeingHitbox: Hitbox, hitbox: Hitbox, visio
    return false;
 }
 
-const entityIsVisible = (seeingHitbox: Hitbox, checkEntityTransformComponent: TransformComponent, visionRange: number): boolean => {
+const entityIsVisible = (seeingHitbox: Hitbox, checkEntity: Entity, checkEntityTransformComponent: TransformComponent, visionRange: number): boolean => {
+   // @SQUEAM
+   if (getEntityType(seeingHitbox.entity) === EntityType.tukmok) {
+      if (!entityIsInLineOfSight(seeingHitbox.box.position, checkEntity, seeingHitbox.entity)) {
+         return false;
+      }
+   }
+   
    for (const rootHitbox of checkEntityTransformComponent.rootHitboxes) {
       if (hitboxWithChildrenIsVisible(seeingHitbox, rootHitbox, visionRange)) {
          return true;
@@ -219,7 +227,7 @@ const calculateVisibleEntities = (aiHelperComponent: AIHelperComponent): Array<E
       const currentEntity = potentialVisibleEntities[i];
       const currentEntityTransformComponent = TransformComponentArray.getComponent(currentEntity);
 
-      if (entityIsVisible(aiHelperComponent.seeingHitbox, currentEntityTransformComponent, visionRange)) {
+      if (entityIsVisible(aiHelperComponent.seeingHitbox, currentEntity, currentEntityTransformComponent, visionRange)) {
          visibleEntities.push(currentEntity);
       }
    }

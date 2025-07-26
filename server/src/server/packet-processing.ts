@@ -746,7 +746,7 @@ export function processPickUpEntityPacket(playerClient: PlayerClient, reader: Pa
    const hitbox = transformComponent.hitboxes[0];
    switch (getEntityType(entity)) {
       case EntityType.woodenArrow: {
-         if (getHitboxVelocity(hitbox).length() < 1) {
+         if (getHitboxVelocity(hitbox).magnitude() < 1) {
             destroyEntity(entity);
             
             const inventoryComponent = InventoryComponentArray.getComponent(player);

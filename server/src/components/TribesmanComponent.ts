@@ -3,21 +3,23 @@ import { EntityType, Entity, LimbAction } from "../../../shared/src/entities";
 import { BackpackItemInfo, ConsumableItemInfo, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType } from "../../../shared/src/items/items";
 import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
+import { TileType } from "../../../shared/src/tiles";
 import { TitleGenerationInfo, TRIBESMAN_TITLE_RECORD, TribesmanTitle } from "../../../shared/src/titles";
 import { TribeType } from "../../../shared/src/tribes";
 import { randInt } from "../../../shared/src/utils";
 import { EntityConfig } from "../components";
 import { onFishLeaderHurt } from "../entities/mobs/fish";
 import { useItem } from "../entities/tribes/tribe-member";
-import { getHitboxVelocity, Hitbox } from "../hitboxes";
+import { getHitboxTile, getHitboxVelocity, Hitbox } from "../hitboxes";
 import { addHumanoidInventories } from "../inventories";
 import { createItem } from "../items";
 import { generateTitle, TITLE_REWARD_CHANCES } from "../tribesman-title-generation";
-import { getEntityType, getGameTicks } from "../world";
+import { getEntityLayer, getEntityType, getGameTicks } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray } from "./HealthComponent";
 import { InventoryComponentArray, getInventory, resizeInventory } from "./InventoryComponent";
 import { LimbInfo, InventoryUseComponentArray } from "./InventoryUseComponent";
+import { PhysicsComponentArray } from "./PhysicsComponent";
 import { PlayerComponentArray } from "./PlayerComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { TribeComponentArray } from "./TribeComponent";
@@ -260,7 +262,7 @@ function onTick(tribeMember: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(tribeMember);
    const tribeMemberHitbox = transformComponent.hitboxes[0];
       
-   const chance = TITLE_REWARD_CHANCES.SPRINTER_REWARD_CHANCE_PER_SPEED * getHitboxVelocity(tribeMemberHitbox).length();
+   const chance = TITLE_REWARD_CHANCES.SPRINTER_REWARD_CHANCE_PER_SPEED * getHitboxVelocity(tribeMemberHitbox).magnitude();
    if (Math.random() < chance / Settings.TPS) {
       awardTitle(tribeMember, TribesmanTitle.sprinter);
    }
@@ -287,6 +289,15 @@ function onTick(tribeMember: Entity): void {
    } else {
       resizeInventory(inventoryComponent, InventoryName.backpack, 0, 0);
    }
+
+   const tribeMemberTile = getHitboxTile(tribeMemberHitbox);
+   const tileType = getEntityLayer(tribeMember).getTileType(tribeMemberTile);
+
+   const armourInventory = getInventory(inventoryComponent, InventoryName.armourSlot);
+   const armour = armourInventory.getItem(1);
+   
+   const physicsComponent = PhysicsComponentArray.getComponent(tribeMember);
+   physicsComponent.overrideMoveSpeedMultiplier = tileType === TileType.snow && armour !== null && (armour.type === ItemType.frostArmour || armour.type === ItemType.winterskinArmour);
 }
 
 function onDeath(entity: Entity, attackingEntity: Entity | null): void {

@@ -725,7 +725,7 @@ function onTick(entity: Entity): void {
       const tile = getHitboxTile(layer, entityHitbox);
 
       // If frost armour is equipped, move at normal speed on snow tiles
-      if ((armour.type === ItemType.frostArmour) && tile.type === TileType.snow) {
+      if ((armour.type === ItemType.frostArmour || armour.type === ItemType.winterskinArmour) && tile.type === TileType.snow) {
          physicsComponent.ignoredTileSpeedMultipliers = TUNDRA_IGNORED_TILE_MOVE_SPEEDS;
       // If fishlord suit is equipped, move at normal speed on snow tiles
       } else if (armour.type === ItemType.fishlord_suit && tile.type === TileType.water) {
@@ -735,8 +735,8 @@ function onTick(entity: Entity): void {
 
    // Sprinter particles
    const velocity = getHitboxVelocity(entityHitbox);
-   if (tribesmanHasTitle(tribesmanComponent, TribesmanTitle.sprinter) && velocity.length() > 100) {
-      const sprintParticleSpawnRate = Math.sqrt(velocity.length() * 0.8);
+   if (tribesmanHasTitle(tribesmanComponent, TribesmanTitle.sprinter) && velocity.magnitude() > 100) {
+      const sprintParticleSpawnRate = Math.sqrt(velocity.magnitude() * 0.8);
       if (Math.random() < sprintParticleSpawnRate / Settings.TPS) {
          const offsetMagnitude = 32 * Math.random();
          const offsetDirection = randAngle();

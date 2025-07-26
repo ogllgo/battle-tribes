@@ -40,7 +40,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
          0,
          0,
          // @HACK
-         getTextureArrayIndex("items/misc/stone-spear.png")
+         getTextureArrayIndex("items/misc/ivory-spear.png")
       )
    );
 

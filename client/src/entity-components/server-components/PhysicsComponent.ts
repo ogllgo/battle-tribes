@@ -194,7 +194,7 @@ function onTick(entity: Entity): void {
    
    // Water splash particles
    // @Cleanup: Move to particles file
-   if (entityIsInRiver(transformComponent, entity) && customTickIntervalHasPassed(Board.clientTicks, 0.15) && getHitboxVelocity(hitbox).length() > 0&& getEntityType(entity) !== EntityType.fish) {
+   if (entityIsInRiver(transformComponent, entity) && customTickIntervalHasPassed(Board.clientTicks, 0.15) && getHitboxVelocity(hitbox).magnitude() > 0&& getEntityType(entity) !== EntityType.fish) {
       const lifetime = 2.5;
 
       const particle = new Particle(lifetime);

@@ -31,6 +31,7 @@ export function createHealingTotemConfig(position: Point, rotation: number, trib
 
    const box = new CircularBox(position, new Point(0, 0), rotation, 48);
    const hitbox = new Hitbox(transformComponent, null, true, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(50);

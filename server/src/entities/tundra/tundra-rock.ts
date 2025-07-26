@@ -36,6 +36,7 @@ export function createTundraRockConfig(position: Point, angle: number): EntityCo
    }
 
    const hitbox = new Hitbox(transformComponent, null, true, box, MASSES[variant], HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(HEALTHS[variant]);

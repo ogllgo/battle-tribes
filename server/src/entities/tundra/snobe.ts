@@ -71,7 +71,7 @@ const moveFunc = (snobe: Entity, pos: Point, acceleration: number): void => {
       const direction = hitbox.box.position.calculateAngleBetween(pos);
       // @HACK: so that snobes get affected by freezing from ingu serpents. But this shouldn't have to be thought about here!!
       const physicsComponent = PhysicsComponentArray.getComponent(snobe);
-      applyAbsoluteKnockback(snobe, hitbox, polarVec2(320 / 1600 * acceleration * physicsComponent.moveSpeedMultiplier, direction));
+      applyAbsoluteKnockback(hitbox, polarVec2(320 / 1600 * acceleration * physicsComponent.moveSpeedMultiplier, direction));
    }
 }
 

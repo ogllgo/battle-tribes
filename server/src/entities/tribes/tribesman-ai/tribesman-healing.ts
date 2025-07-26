@@ -34,7 +34,12 @@ export function continueTribesmanHealing(tribesmanID: Entity, healingItemUseInfo
    const limbInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
    limbInfo.selectedItemSlot = healingItemUseInfo.itemSlot;
 
-   const foodItem = healingItemUseInfo.inventory.itemSlots[healingItemUseInfo.itemSlot]!;
+   const foodItem = healingItemUseInfo.inventory.itemSlots[healingItemUseInfo.itemSlot];
+   // @HACK
+   if (typeof foodItem === "undefined") {
+      console.warn("shite.")
+      return;
+   }
    const itemInfo = ITEM_INFO_RECORD[foodItem.type] as ConsumableItemInfo;
 
    let action: LimbAction;

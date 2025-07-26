@@ -111,7 +111,9 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    }
 }
 
-function onHitboxCollision(cactus: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntity = collidingHitbox.entity;
+   
    if (getEntityType(collidingEntity) === EntityType.itemEntity) {
       destroyEntity(collidingEntity);
       return;
@@ -130,9 +132,9 @@ function onHitboxCollision(cactus: Entity, collidingEntity: Entity, affectedHitb
       return;
    }
 
-   const hitDir = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDir = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-   damageEntity(collidingEntity, collidingHitbox, cactus, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
-   applyAbsoluteKnockback(collidingEntity, collidingHitbox, polarVec2(200, hitDir));
+   damageEntity(collidingEntity, collidingHitbox, hitbox.entity, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
+   applyAbsoluteKnockback(collidingHitbox, polarVec2(200, hitDir));
    addLocalInvulnerabilityHash(collidingEntity, "cactus", 0.3);
 }

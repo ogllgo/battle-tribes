@@ -16,11 +16,11 @@ export function createSlingTurretRockConfig(position: Point, rotation: number, o
    const transformComponent = new TransformComponent();
 
    const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 12, 64), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.arrowPassable, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.isAffectedByGroundFriction = false;
-   physicsComponent.isImmovable = true;
    
    const ownerTribeComponent = TribeComponentArray.getComponent(owner);
    const tribeComponent = new TribeComponent(ownerTribeComponent.tribe);

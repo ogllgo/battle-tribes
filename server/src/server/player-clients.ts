@@ -29,6 +29,7 @@ import { surfaceLayer } from "../layers";
 import { createItemsOverEntity } from "../entities/item-entity";
 import { acceptTitleOffer, rejectTitleOffer, forceAddTitle, removeTitle } from "../components/TribesmanComponent";
 import { Hitbox } from "../hitboxes";
+import { PlayerComponentArray } from "../components/PlayerComponent";
 
 // @Cleanup: see if a decorator can be used to cut down on the player entity check copy-n-paste
 
@@ -41,18 +42,6 @@ const dirtyEntities = new Set<Entity>();
 
 export function getPlayerClients(): ReadonlyArray<PlayerClient> {
    return playerClients;
-}
-
-const getPlayerClientFromInstanceID = (instanceID: number): PlayerClient | null => {
-   for (let i = 0; i < playerClients.length; i++) {
-      const playerClient = playerClients[i];
-
-      if (playerClient.instance === instanceID) {
-         return playerClient;
-      }
-   }
-
-   return null;
 }
 
 // @Cleanup: better to be done by the player component array
@@ -85,6 +74,7 @@ export function handlePlayerDisconnect(playerClient: PlayerClient): void {
 
 export function generatePlayerSpawnPosition(tribeType: TribeType): Point {
    // @Temporary
+   return new Point(Settings.BOARD_UNITS * 0.5 - 0 + 700, Settings.BOARD_UNITS * 0.5 - 500 - 320 + 700);
    return new Point(Settings.BOARD_UNITS * 0.5 - 0, Settings.BOARD_UNITS * 0.5 - 500 - 320);
    
    const tribeInfo = TRIBE_INFO_RECORD[tribeType];
@@ -421,16 +411,14 @@ export function registerEntityHit(hitEntity: Entity, hitHitbox: Hitbox, attackin
    }
 }
 
-export function registerPlayerKnockback(playerID: number, knockback: number, knockbackDirection: number): void {
+export function registerPlayerKnockback(player: Entity, knockback: number, knockbackDirection: number): void {
    const knockbackData: PlayerKnockbackData = {
       knockback: knockback,
       knockbackDirection: knockbackDirection
    };
 
-   const playerClient = getPlayerClientFromInstanceID(playerID);
-   if (playerClient !== null) {
-      playerClient.playerKnockbacks.push(knockbackData);
-   }
+   const playerComponent = PlayerComponentArray.getComponent(player);
+   playerComponent.client.playerKnockbacks.push(knockbackData);
 }
 
 export function registerEntityHeal(healedEntity: Entity, healer: Entity, healAmount: number): void {
@@ -495,7 +483,9 @@ export function registerEntityTickEvent(entity: Entity, tickEvent: EntityTickEve
 }
 
 export function registerPlayerDroppedItemPickup(player: Entity): void {
-   const playerClient = getPlayerClientFromInstanceID(player);
+   const playerComponent = PlayerComponentArray.getComponent(player);
+   const playerClient = playerComponent.client;
+   
    if (playerClient !== null) {
       playerClient.hasPickedUpItem = true;
    } else {

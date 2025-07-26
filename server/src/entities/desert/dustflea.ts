@@ -37,7 +37,7 @@ const moveFunc = (dustflea: Entity, pos: Point, acceleration: number): void => {
       const hitbox = transformComponent.hitboxes[0];
       
       const direction = hitbox.box.position.calculateAngleBetween(pos);
-      applyAbsoluteKnockback(dustflea, hitbox, polarVec2(125, direction));
+      applyAbsoluteKnockback(hitbox, polarVec2(125, direction));
    }
 }
 

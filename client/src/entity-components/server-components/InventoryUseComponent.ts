@@ -721,7 +721,7 @@ function onTick(entity: Entity): void {
             const velocityDirection = randAngle();
             const velocityX = velocityMagnitude * Math.sin(velocityDirection) + velocity.x;
             const velocityY = velocityMagnitude * Math.cos(velocityDirection) + velocity.y;
-            velocityMagnitude += velocity.length();
+            velocityMagnitude += velocity.magnitude();
             
             const lifetime = randFloat(0.3, 0.4);
 

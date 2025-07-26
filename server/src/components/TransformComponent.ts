@@ -102,7 +102,7 @@ export class TransformComponent {
             for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
                const subtileIndex = getSubtileIndex(subtileX, subtileY);
                if (layer.subtileIsWall(subtileIndex)) {
-                  resolveWallCollision(entity, hitbox, subtileX, subtileY);
+                  resolveWallCollision(hitbox, subtileX, subtileY);
                }
             }
          }
@@ -499,6 +499,13 @@ function onRemove(entity: Entity): void {
       while (hitbox.tethers.length > 0) {
          const tether = hitbox.tethers[0];
          destroyTether(tether);
+      }
+
+      // Detach any children
+      for (const childHitbox of hitbox.children) {
+         if (childHitbox.entity !== entity) {
+            detachHitbox(childHitbox);
+         }
       }
    }
    

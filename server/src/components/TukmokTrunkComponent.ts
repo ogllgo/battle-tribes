@@ -1,5 +1,5 @@
 import { ServerComponentType } from "../../../shared/src/components";
-import { Entity, EntityType, DamageSource } from "../../../shared/src/entities";
+import { EntityType, DamageSource } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Point, polarVec2 } from "../../../shared/src/utils";
 import { Hitbox, applyAbsoluteKnockback } from "../hitboxes";
@@ -18,10 +18,16 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
-function onHitboxCollision(trunk: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntity = collidingHitbox.entity;
+
    // @HACK so that the tukmok doesn't kill itself. but this inadvertently means tukmoks can't damage each other
    const entityType = getEntityType(collidingEntity);
-   if (entityType === EntityType.tukmok || entityType === EntityType.tukmokSpur || entityType === EntityType.tukmokTrunk || entityType === EntityType.tukmokTail) {
+   if (entityType === EntityType.tukmok || entityType === EntityType.tukmokSpur || entityType === EntityType.tukmokTrunk || entityType === EntityType.tukmokTail || entityType === EntityType.spruceTree || entityType === EntityType.yeti) {
+      return;
+   }
+   // @SQUEAM
+   if (entityType === EntityType.door || entityType === EntityType.wall) {
       return;
    }
 
@@ -34,9 +40,9 @@ function onHitboxCollision(trunk: Entity, collidingEntity: Entity, affectedHitbo
       return;
    }
 
-   const hitDir = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDir = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
-   damageEntity(collidingEntity, collidingHitbox, trunk, 3, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
-   applyAbsoluteKnockback(collidingEntity, collidingHitbox, polarVec2(200, hitDir));
+   damageEntity(collidingEntity, collidingHitbox, hitbox.entity, 3, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
+   applyAbsoluteKnockback(collidingHitbox, polarVec2(200, hitDir));
    addLocalInvulnerabilityHash(collidingEntity, "tukmok-trunk", 0.3);
 }

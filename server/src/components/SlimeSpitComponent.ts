@@ -36,7 +36,7 @@ SlimeSpitComponentArray.preRemove = preRemove;
 function onTick(spit: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(spit);
    const hitbox = transformComponent.hitboxes[0];
-   if (getHitboxVelocity(hitbox).length() <= Vars.BREAK_VELOCITY) {
+   if (getHitboxVelocity(hitbox).magnitude() <= Vars.BREAK_VELOCITY) {
       destroyEntity(spit);
    }
 }
@@ -61,19 +61,23 @@ function preRemove(spit: Entity): void {
    }
 }
 
-function onHitboxCollision(spit: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntity = collidingHitbox.entity;
+   
    const collidingEntityType = getEntityType(collidingEntity);
    if (collidingEntityType === EntityType.slime || collidingEntityType === EntityType.slimewisp || !HealthComponentArray.hasComponent(collidingEntity)) {
       return;
    }
 
+   const spit = hitbox.entity;
+
    const spitComponent = SlimeSpitComponentArray.getComponent(spit);
    const damage = spitComponent.size === 0 ? 2 : 3;
 
-   const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
    damageEntity(collidingEntity, collidingHitbox, spit, damage, DamageSource.poison, AttackEffectiveness.effective, collisionPoint, 0);
-   applyKnockback(collidingEntity, collidingHitbox, 150, hitDirection);
+   applyKnockback(collidingHitbox, 150, hitDirection);
    
    if (StatusEffectComponentArray.hasComponent(collidingEntity)) {
       applyStatusEffect(collidingEntity, StatusEffect.poisoned, 2 * Settings.TPS);

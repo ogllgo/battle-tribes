@@ -18,15 +18,30 @@ const getTribesmanHotbarSize = (entityType: EntityType): number => {
    }
 }
 
+let a = 0;
+
 export function addHumanoidInventories(inventoryComponent: InventoryComponent, inventoryUseComponent: InventoryUseComponent, entityType: EntityType): void {
    // Hotbar
    const hotbarInventory = new Inventory(getTribesmanHotbarSize(entityType), 1, InventoryName.hotbar);
    addInventoryToInventoryComponent(inventoryComponent, hotbarInventory, { acceptsPickedUpItems: true, isDroppedOnDeath: true, isSentToEnemyPlayers: false });
 
-   hotbarInventory.addItem(createItem(ItemType.stoneSpear, 1), 1);
-   hotbarInventory.addItem(createItem(ItemType.snowberry, 20), 2);
-   if (Math.random() < 0.8) {
-      hotbarInventory.addItem(createItem(ItemType.frostArmour, 1), 3);
+   if (a++ === 0) {
+      hotbarInventory.addItem(createItem(ItemType.ivorySpear, 1), 1);
+      hotbarInventory.addItem(createItem(ItemType.cookedTukmokMeat, 8), 2);
+      hotbarInventory.addItem(createItem(ItemType.winterskinArmour, 1), 3);
+      hotbarInventory.addItem(createItem(ItemType.stone_axe, 1), 4);
+      hotbarInventory.addItem(createItem(ItemType.snowberry, 1), 2);
+   } else {
+      if (a === 2) {
+         hotbarInventory.addItem(createItem(ItemType.stone_sword, 1), 1);
+         hotbarInventory.addItem(createItem(ItemType.winterskinArmour, 1), 3);
+      } else {
+         hotbarInventory.addItem(createItem(ItemType.iceWringer, 1), 1);
+         hotbarInventory.addItem(createItem(ItemType.frostArmour, 1), 3);
+      }
+      hotbarInventory.addItem(createItem(ItemType.cookedTukmokMeat, 8), 2);
+      hotbarInventory.addItem(createItem(ItemType.snowberry, 1), 2);
+
    }
    
    inventoryUseComponent.associatedInventoryNames.push(InventoryName.hotbar);

@@ -244,6 +244,9 @@ const getTarget = (tukmok: Entity, aiHelperComponent: AIHelperComponent): Entity
 }
 
 function onTick(tukmok: Entity): void {
+   // @SQUEAM
+   if (1+1===2)return;
+   
    const transformComponent = TransformComponentArray.getComponent(tukmok);
    const aiHelperComponent = AIHelperComponentArray.getComponent(tukmok);
    
@@ -254,12 +257,13 @@ function onTick(tukmok: Entity): void {
    }
 
    // Look for targets
-   if (!isValidCombatTarget(tukmok, tukmokComponent.target)) {
-      const target = getTarget(tukmok, aiHelperComponent);
-      if (target !== null) {
-         tukmokComponent.target = target;
-      }
-   }
+   // @SQUEAM
+   // if (!isValidCombatTarget(tukmok, tukmokComponent.target)) {
+   //    const target = getTarget(tukmok, aiHelperComponent);
+   //    if (target !== null) {
+   //       tukmokComponent.target = target;
+   //    }
+   // }
    const target = tukmokComponent.target;
    if (isValidCombatTarget(tukmok, tukmokComponent.target)) {
       const targetTransformComponent = TransformComponentArray.getComponent(target);
@@ -330,7 +334,7 @@ function onTick(tukmok: Entity): void {
    }
    
    const trunk = getTrunk(transformComponent);
-   if (trunk !== null && 1+1===1) {
+   if (trunk !== null) {
       // Grab leaves from trees if hungry
       // @TEMPORARY: make less than 1
       if ((getEntityFullness(tukmok) < 0.9 || tukmokComponent.isInGrazingMood) && tukmokComponent.grazeCooldownTicks === 0) {
@@ -433,12 +437,13 @@ function onTick(tukmok: Entity): void {
    }
 
    // Wander AI
-   const wanderAI = aiHelperComponent.getWanderAI();
-   wanderAI.update(tukmok);
-   if (wanderAI.targetPosition !== null) {
-      aiHelperComponent.moveFunc(tukmok, wanderAI.targetPosition, wanderAI.acceleration);
-      aiHelperComponent.turnFunc(tukmok, wanderAI.targetPosition, wanderAI.turnSpeed, wanderAI.turnDamping);
-   }
+   // @SQUEAM
+   // const wanderAI = aiHelperComponent.getWanderAI();
+   // wanderAI.update(tukmok);
+   // if (wanderAI.targetPosition !== null) {
+   //    aiHelperComponent.moveFunc(tukmok, wanderAI.targetPosition, wanderAI.acceleration);
+   //    aiHelperComponent.turnFunc(tukmok, wanderAI.targetPosition, wanderAI.turnSpeed, wanderAI.turnDamping);
+   // }
 }
 
 function getDataLength(): number {

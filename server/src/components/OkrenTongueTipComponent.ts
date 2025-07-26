@@ -33,13 +33,13 @@ const entityIsSnaggable = (entity: Entity): boolean => {
       return false;
    }
 
-   const physicsComponent = new PhysicsComponent();
-   if (physicsComponent.isImmovable) {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+
+   if (hitbox.isStatic) {
       return false;
    }
 
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
    const mass = getHitboxTotalMassIncludingChildren(hitbox);
    if (mass > 2) {
       return false;
@@ -53,7 +53,8 @@ const entityIsSnaggable = (entity: Entity): boolean => {
    return true;
 }
 
-function onHitboxCollision(tongueTip: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntity = collidingHitbox.entity;
    if (!entityIsSnaggable(collidingEntity)) {
       return;
    }
@@ -61,7 +62,7 @@ function onHitboxCollision(tongueTip: Entity, collidingEntity: Entity, affectedH
    // Don't snag if the hitbox is already tethered
    for (const tether of collidingHitbox.tethers) {
       const otherHitbox = tether.getOtherHitbox(collidingHitbox);
-      if (otherHitbox === affectedHitbox) {
+      if (otherHitbox === hitbox) {
          return;
       }
    }

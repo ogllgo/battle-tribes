@@ -769,6 +769,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       tileTypes: [TileType.snow],
       onlySpawnsInNight: false,
       minSpawnDistance: 30,
+      // @SQEAM
       // spawnDistribution: createRawSpawnDistribution(32, 0.002),
       spawnDistribution: createRawSpawnDistribution(32, 0),
       balanceSpawnDistribution: true,

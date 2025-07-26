@@ -1,7 +1,8 @@
 import { EntityType } from "battletribes-shared/entities";
-import { DecorationType, ServerComponentType } from "battletribes-shared/components";
+import { BlueprintType, DecorationType, ServerComponentType } from "battletribes-shared/components";
 import { EntityParams } from "./world";
 import { assert } from "../../shared/src/utils";
+import { BlueprintComponentArray } from "./entity-components/server-components/BlueprintComponent";
 
 export enum RenderLayer {
    lowDecorations,
@@ -10,7 +11,7 @@ export enum RenderLayer {
    quakes,
    // Projectiles which need to be rendered below all things which they can be embedded in
    embeddedProjectiles,
-   blueprints,
+   lowBlueprints,
    // @Temporary?
    lowestEntities,
    fish,
@@ -38,6 +39,7 @@ export enum RenderLayer {
    ridingEntities,
    // so they are rendered above players
    dustfleas,
+   highBlueprints,
    mithril,
    projectiles,
    highEntities,
@@ -121,7 +123,16 @@ export function getEntityRenderLayer(entityType: EntityType, entityParams: Entit
       // @Incomplete: Only blueprints which go on existing buildings should be here, all others should be low entities
       // Blueprints
       case EntityType.blueprintEntity: {
-         return RenderLayer.blueprints;
+         const blueprintComponentParams = entityParams.serverComponentParams[ServerComponentType.blueprint]!;
+         switch (blueprintComponentParams.blueprintType) {
+            case BlueprintType.stoneWall:
+            case BlueprintType.stoneDoorUpgrade: {
+               return RenderLayer.highBlueprints;
+            }
+            default: {
+               return RenderLayer.lowBlueprints;
+            }
+         }
       }
       // Floor spikes render below player and wall spikes render above
       case EntityType.floorSpikes:

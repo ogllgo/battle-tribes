@@ -156,7 +156,9 @@ export function createIceShardExplosion(layer: Layer, originX: number, originY: 
    }
 }
 
-function onHitboxCollision(iceSpikes: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntity = collidingHitbox.entity;
+   
    const collidingEntityType = getEntityType(collidingEntity);
    // @Hack
    if (collidingEntityType === EntityType.yeti || collidingEntityType === EntityType.snowball || collidingEntityType === EntityType.inguSerpent || collidingEntityType === EntityType.tukmok || collidingEntityType === EntityType.snobe) {
@@ -166,10 +168,10 @@ function onHitboxCollision(iceSpikes: Entity, collidingEntity: Entity, affectedH
    if (HealthComponentArray.hasComponent(collidingEntity)) {
       const healthComponent = HealthComponentArray.getComponent(collidingEntity);
       if (canDamageEntity(healthComponent, "ice_spikes")) {
-         const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+         const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
          
-         damageEntity(collidingEntity, collidingHitbox, iceSpikes, 1, DamageSource.iceSpikes, AttackEffectiveness.effective, collisionPoint, 0);
-         applyKnockback(collidingEntity, collidingHitbox, 180, hitDirection);
+         damageEntity(collidingEntity, collidingHitbox, hitbox.entity, 1, DamageSource.iceSpikes, AttackEffectiveness.effective, collisionPoint, 0);
+         applyKnockback(collidingHitbox, 180, hitDirection);
          addLocalInvulnerabilityHash(collidingEntity, "ice_spikes", 0.3);
    
          if (StatusEffectComponentArray.hasComponent(collidingEntity)) {

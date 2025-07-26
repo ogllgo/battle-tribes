@@ -558,7 +558,17 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
       product: ItemType.winterskinArmour,
       yield: 1,
       ingredients: createTallyFromRecord({
-         [ItemType.tukmokFurHide]: 15
+         [ItemType.tukmokFurHide]: 10
+      }),
+      aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
+      craftingStation: CraftingStation.workbench
+   },
+   {
+      product: ItemType.ivorySpear,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.ivoryTusk]: 1,
+         [ItemType.wood]: 10
       }),
       aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
       craftingStation: CraftingStation.workbench

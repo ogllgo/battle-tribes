@@ -45,7 +45,10 @@ function onTick(quake: Entity): void {
    }
 }
 
-function onHitboxCollision(guardian: Entity, collidingEntity: Entity, _pushedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const guardian = hitbox.entity;
+   const collidingEntity = collidingHitbox.entity;
+   
    if (HealthComponentArray.hasComponent(collidingEntity)) {
       const healthComponent = HealthComponentArray.getComponent(collidingEntity);
       if (!canDamageEntity(healthComponent, "gemQuake")) {

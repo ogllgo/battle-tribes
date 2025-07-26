@@ -361,7 +361,7 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
    if (entityType === EntityType.woodenArrow) {
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.hitboxes[0];
-      if (getHitboxVelocity(hitbox).length() < 1) {
+      if (getHitboxVelocity(hitbox).magnitude() < 1) {
          return {
             type: InteractActionType.pickUpEntity,
             interactEntity: entity,
