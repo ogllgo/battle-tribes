@@ -129,7 +129,7 @@ import { SnobeMoundComponent } from "./components/SnobeMoundComponent";
 import { TundraRockFrozenComponent } from "./components/TundraRockFrozenComponent";
 import { InguSerpentComponent } from "./components/InguSerpentComponent";
 import { TukmokComponent } from "./components/TukmokComponent";
-import { TukmokTailComponent } from "./components/TukmokTailComponent";
+import { TukmokTailClubComponent } from "./components/TukmokTailClubComponent";
 import { TukmokTrunkComponent } from "./components/TukmokTrunkComponent";
 import { TukmokSpurComponent } from "./components/TukmokSpurComponent";
 
@@ -264,7 +264,7 @@ const ComponentClassRecord = {
    [ServerComponentType.inguSerpent]: () => InguSerpentComponent,
    [ServerComponentType.tukmok]: () => TukmokComponent,
    [ServerComponentType.tukmokTrunk]: () => TukmokTrunkComponent,
-   [ServerComponentType.tukmokTail]: () => TukmokTailComponent,
+   [ServerComponentType.tukmokTailClub]: () => TukmokTailClubComponent,
    [ServerComponentType.tukmokSpur]: () => TukmokSpurComponent,
 } satisfies {
    [T in ServerComponentType]: () => {

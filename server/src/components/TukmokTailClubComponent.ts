@@ -8,10 +8,10 @@ import { getEntityType } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 
-export class TukmokTailComponent {}
+export class TukmokTailClubComponent {}
 
-export const TukmokTailComponentArray = new ComponentArray<TukmokTailComponent>(ServerComponentType.tukmokTail, true, getDataLength, addDataToPacket);
-TukmokTailComponentArray.onHitboxCollision = onHitboxCollision;
+export const TukmokTailClubComponentArray = new ComponentArray<TukmokTailClubComponent>(ServerComponentType.tukmokTailClub, true, getDataLength, addDataToPacket);
+TukmokTailClubComponentArray.onHitboxCollision = onHitboxCollision;
 
 function getDataLength(): number {
    return 0;
@@ -20,20 +20,11 @@ function getDataLength(): number {
 function addDataToPacket(): void {}
 
 function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
-   // Must be the club
-   if (!hitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_CLUB)) {
-      return;
-   }
-   
    const collidingEntity = collidingHitbox.entity;
    
    // @HACK so that the tukmok doesn't kill itself. but this inadvertently means tukmoks can't damage each other
    const entityType = getEntityType(collidingEntity);
-   if (entityType === EntityType.tukmok || entityType === EntityType.tukmokSpur || entityType === EntityType.tukmokTrunk || entityType === EntityType.tukmokTail) {
-      return;
-   }
-   // @SQUEAM
-   if (entityType === EntityType.door || entityType === EntityType.wall) {
+   if (entityType === EntityType.tukmok || entityType === EntityType.tukmokSpur || entityType === EntityType.tukmokTrunk || entityType === EntityType.tukmokTailClub) {
       return;
    }
 
@@ -42,7 +33,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    }
    
    const healthComponent = HealthComponentArray.getComponent(collidingEntity);
-   if (!canDamageEntity(healthComponent, "tukmok-tail")) {
+   if (!canDamageEntity(healthComponent, "tukmok-tail-club")) {
       return;
    }
 
@@ -50,5 +41,5 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
 
    damageEntity(collidingEntity, collidingHitbox, hitbox.entity, 3, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
    applyAbsoluteKnockback(collidingHitbox, polarVec2(200, hitDir));
-   addLocalInvulnerabilityHash(collidingEntity, "tukmok-tail", 0.3);
+   addLocalInvulnerabilityHash(collidingEntity, "tukmok-tail-club", 0.3);
 }

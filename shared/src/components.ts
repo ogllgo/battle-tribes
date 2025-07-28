@@ -144,8 +144,8 @@ export enum ServerComponentType {
    snobeMound,
    inguSerpent,
    tukmok,
-   tukmokTail,
    tukmokTrunk,
+   tukmokTailClub,
    tukmokSpur
 }
 
@@ -283,8 +283,8 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.snobeMound]: "Snobe Mound Component",
    [ServerComponentType.inguSerpent]: "Ingu Serpent Component",
    [ServerComponentType.tukmok]: "Tukmok Component",
-   [ServerComponentType.tukmokTail]: "Tukmok Tail Component",
    [ServerComponentType.tukmokTrunk]: "Tukmok Trunk Component",
+   [ServerComponentType.tukmokTailClub]: "Tukmok Tail Component",
    [ServerComponentType.tukmokSpur]: "Tukmok Spur Component",
 };
 
@@ -408,7 +408,7 @@ export const EntityComponents = {
    [EntityType.snobeMound]: [],
    [EntityType.inguSerpent]: [],
    [EntityType.tukmok]: [],
-   [EntityType.tukmokTail]: [],
+   [EntityType.tukmokTailClub]: [],
    [EntityType.tukmokTrunk]: [],
    [EntityType.tukmokSpur]: [],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;

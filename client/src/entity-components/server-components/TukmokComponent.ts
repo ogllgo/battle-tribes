@@ -36,28 +36,56 @@ function createParamsFromData(): TukmokComponentParams {
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
 
-   for (const hitbox of transformComponentParams.hitboxes) {
+   for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
+      const hitbox = transformComponentParams.hitboxes[i];
+      
       if (hitbox.flags.includes(HitboxFlag.TUKMOK_BODY)) {
          renderInfo.attachRenderPart(
             new TexturedRenderPart(
                hitbox,
-               0,
+               1,
                0,
                getTextureArrayIndex("entities/tukmok/body.png")
+            )
+         );
+      } else if (hitbox.flags.includes(HitboxFlag.TUKMOK_HEAD)) {
+         const renderPart = new TexturedRenderPart(
+            hitbox,
+            2,
+            0,
+            getTextureArrayIndex("entities/tukmok/head.png")
+         );
+         renderPart.addTag("tamingComponent:head");
+         renderInfo.attachRenderPart(renderPart);
+      } else if (hitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_SMALL)) {
+         renderInfo.attachRenderPart(
+            new TexturedRenderPart(
+               hitbox,
+               i * 0.02,
+               0,
+               getTextureArrayIndex("entities/tukmok/tail-segment-small.png")
+            )
+         );
+      } else if (hitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_MEDIUM)) {
+         renderInfo.attachRenderPart(
+            new TexturedRenderPart(
+               hitbox,
+               i * 0.02,
+               0,
+               getTextureArrayIndex("entities/tukmok/tail-segment-medium.png")
             )
          );
       } else {
          renderInfo.attachRenderPart(
             new TexturedRenderPart(
                hitbox,
-               1,
+               i * 0.02,
                0,
-               getTextureArrayIndex("entities/tukmok/head.png")
+               getTextureArrayIndex("entities/tukmok/tail-segment-big.png")
             )
          );
       }
    }
-
 
    return {};
 }
@@ -67,7 +95,9 @@ function createComponent(): TukmokComponent {
 }
 
 function getMaxRenderParts(): number {
-   return 2;
+   // body, hitbox + 11 segments (club not included)
+   // @HACK cuz we can't access the num segments constant defined in the server
+   return 2 + 11;
 }
 
 function padData(): void {}

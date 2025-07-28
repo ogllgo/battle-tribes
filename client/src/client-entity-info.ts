@@ -310,10 +310,6 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Glurb Tail Segment",
       internalName: "glurb-tail-segment"
    },
-   [EntityType.glurb]: {
-      name: "Glurb",
-      internalName: "glurb"
-   },
    [EntityType.slurbTorch]: {
       name: "Slurb Torch",
       internalName: "slurb-torch"
@@ -478,7 +474,7 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Tukmok Trunk",
       internalName: "tukmok-trunk"
    },
-   [EntityType.tukmokTail]: {
+   [EntityType.tukmokTailClub]: {
       name: "Tukmok Tail",
       internalName: "tukmok-tail"
    },

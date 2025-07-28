@@ -129,7 +129,7 @@ const isTarget = (serpent: Entity, entity: Entity): boolean => {
    
    const entityType = getEntityType(entity);
    // @HACK @INCOMPLETE
-   return entityType === EntityType.player || entityType === EntityType.snobe;
+   return entityType === EntityType.player || entityType === EntityType.snobe || entityType === EntityType.tukmok;
 }
 
 const getTarget = (serpent: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
@@ -163,7 +163,16 @@ const attackEntity = (serpent: Entity, target: Entity): void => {
    const headHitbox = transformComponent.hitboxes[0];
 
    const targetTransformComponent = TransformComponentArray.getComponent(target);
-   const targetHitbox = targetTransformComponent.hitboxes[0];
+   let targetHitbox = targetTransformComponent.hitboxes[0];
+   let minDist = headHitbox.box.position.calculateDistanceBetween(targetHitbox.box.position);
+   for (let i = 1; i < targetTransformComponent.hitboxes.length; i++) {
+      const hitbox = targetTransformComponent.hitboxes[i];
+      const dist = hitbox.box.position.calculateDistanceBetween(targetHitbox.box.position);
+      if (dist < minDist) {
+         minDist = dist;
+         targetHitbox = hitbox;
+      }
+   }
 
    const headToTarget = headHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
    const distFromTarget = getDistanceFromPointToHitbox(headHitbox.box.position, targetHitbox);

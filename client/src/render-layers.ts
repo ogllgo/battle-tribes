@@ -2,7 +2,6 @@ import { EntityType } from "battletribes-shared/entities";
 import { BlueprintType, DecorationType, ServerComponentType } from "battletribes-shared/components";
 import { EntityParams } from "./world";
 import { assert } from "../../shared/src/utils";
-import { BlueprintComponentArray } from "./entity-components/server-components/BlueprintComponent";
 
 export enum RenderLayer {
    lowDecorations,
@@ -28,7 +27,7 @@ export enum RenderLayer {
    // so that the limbs are rendered below okrens
    okrenClaw,
    // so that the tail is rendered below tukmoks
-   tukmokTail,
+   tukmokTailClub,
    // so that the trunk is rendered below tukmoks
    tukmokTrunk,
    defaultEntities,
@@ -205,8 +204,8 @@ export function getEntityRenderLayer(entityType: EntityType, entityParams: Entit
       case EntityType.okrenClaw: {
          return RenderLayer.okrenClaw;
       }
-      case EntityType.tukmokTail: {
-         return RenderLayer.tukmokTail;
+      case EntityType.tukmokTailClub: {
+         return RenderLayer.tukmokTailClub;
       }
       case EntityType.tukmokTrunk: {
          return RenderLayer.tukmokTrunk;

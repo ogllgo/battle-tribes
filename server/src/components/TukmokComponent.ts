@@ -1,3 +1,4 @@
+import { HitboxFlag } from "../../../shared/src/boxes/boxes";
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
@@ -15,6 +16,7 @@ import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
 import { ComponentArray } from "./ComponentArray";
 import { addHungerEnergy, getEntityFullness } from "./EnergyStomachComponent";
 import { hitEntityWithoutDamage } from "./HealthComponent";
+import { TamingComponentArray } from "./TamingComponent";
 import { attachHitbox, detachHitbox, TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { TribeComponentArray } from "./TribeComponent";
 
@@ -137,10 +139,10 @@ const treeIsValidTarget = (tree: Entity, aiHelperComponent: AIHelperComponent): 
    return entityExists(tree) && aiHelperComponent.visibleEntities.includes(tree);
 }
 
-const getTail = (transformComponent: TransformComponent): Entity | null => {
+const getTailClub = (transformComponent: TransformComponent): Entity | null => {
    for (const hitbox of transformComponent.hitboxes) {
       for (const childHitbox of hitbox.children) {
-         if (getEntityType(childHitbox.entity) === EntityType.tukmokTail) {
+         if (getEntityType(childHitbox.entity) === EntityType.tukmokTailClub) {
             return childHitbox.entity;
          }
       }
@@ -149,18 +151,18 @@ const getTail = (transformComponent: TransformComponent): Entity | null => {
    return null;
 }
 
-const getTailBaseHitbox = (tail: Entity): Hitbox => {
-   const tailTransformComponent = TransformComponentArray.getComponent(tail);
-   return tailTransformComponent.hitboxes[0];
+const getTailBaseHitbox = (tukmok: Entity): Hitbox => {
+   const transformComponent = TransformComponentArray.getComponent(tukmok);
+   for (const hitbox of transformComponent.hitboxes) {
+      if (hitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_BIG)) {
+         return hitbox;
+      }
+   }
+   throw new Error();
 }
 
-const getTailEndHitbox = (tail: Entity): Hitbox => {
-   const tailTransformComponent = TransformComponentArray.getComponent(tail);
-   return tailTransformComponent.hitboxes[tailTransformComponent.hitboxes.length - 1];
-}
-
-const getTailTargetPos = (tukmok: Entity, tail: Entity, aiHelperComponent: AIHelperComponent): Point | null => {
-   const tailBaseHitbox = getTailBaseHitbox(tail);
+const getTailTargetPos = (tukmok: Entity, aiHelperComponent: AIHelperComponent): Point | null => {
+   const tailBaseHitbox = getTailBaseHitbox(tukmok);
 
    // Chance to not pick a target
    if (Math.random() < 0.3) {
@@ -243,10 +245,78 @@ const getTarget = (tukmok: Entity, aiHelperComponent: AIHelperComponent): Entity
    return target;
 }
 
-function onTick(tukmok: Entity): void {
-   // @SQUEAM
-   if (1+1===2)return;
+const attackEntity = (tukmok: Entity, target: Entity): void => {
+   const transformComponent = TransformComponentArray.getComponent(tukmok);
+   const tukmokComponent = TukmokComponentArray.getComponent(tukmok);
+   const aiHelperComponent = AIHelperComponentArray.getComponent(tukmok);
    
+   const targetTransformComponent = TransformComponentArray.getComponent(target);
+   const targetHitbox = targetTransformComponent.hitboxes[0];
+
+   aiHelperComponent.moveFunc(tukmok, targetHitbox.box.position, 380);
+   aiHelperComponent.turnFunc(tukmok, targetHitbox.box.position, 1 * Math.PI, 1);
+
+   if (tukmokComponent.ticksToNextAngrySound === 0) {
+      const tickEvent: EntityTickEvent = {
+         entityID: tukmok,
+         type: EntityTickEventType.tukmokAngry,
+         data: 0
+      };
+      registerEntityTickEvent(tukmok, tickEvent);
+
+      tukmokComponent.ticksToNextAngrySound = randInt(MIN_ANGRY_SOUND_COOLDOWN_TICKS, MAX_ANGRY_SOUND_COOLDOWN_TICKS);
+   } else {
+      tukmokComponent.ticksToNextAngrySound--;
+   }
+
+   const trunk = getTrunk(transformComponent);
+   if (trunk !== null) {
+      const tukmokHeadHitbox = transformComponent.hitboxes[1];
+
+      // This may be a mistake, but try to keep the trunk in its natural position even while moving
+      const idealPos = tukmokHeadHitbox.box.position.offset(40, tukmokHeadHitbox.box.angle);
+      moveTrunk(trunk, idealPos, 500, false);
+
+      // Trunk behaviour
+      tukmokComponent.trunkStateTicksElapsed++;
+      switch (tukmokComponent.trunkState) {
+         case TrunkCombatState.active: {
+            moveTrunk(trunk, targetHitbox.box.position, 2400, true);
+            
+            if (tukmokComponent.trunkStateTicksElapsed >= TRUNK_ACTIVE_STATE_DURATION) {
+               tukmokComponent.trunkStateTicksElapsed = 0;
+               tukmokComponent.trunkState = TrunkCombatState.passive;
+            }
+            break;
+         }
+         case TrunkCombatState.passive: {
+            if (tukmokComponent.trunkStateTicksElapsed >= TRUNK_PASSIVE_STATE_DURATION) {
+               tukmokComponent.trunkStateTicksElapsed = 0;
+               tukmokComponent.trunkState = TrunkCombatState.active;
+            }
+            break;
+         }
+      }
+   }
+
+   // Tail flail
+   const tailClub = getTailClub(transformComponent);
+   if (tailClub !== null) {
+      // Switch tail targets randomly
+      if (Math.random() < 3 / Settings.TPS) {
+         tukmokComponent.tailTargetPos = getTailTargetPos(tukmok, aiHelperComponent);
+      }
+
+      if (tukmokComponent.tailTargetPos !== null) {
+         // Flail to target
+         const tailClubTransformComponent = TransformComponentArray.getComponent(tailClub);
+         const tailClubHitbox = tailClubTransformComponent.hitboxes[0];
+         applyForce(tailClubHitbox, polarVec2(400, tailClubHitbox.box.position.calculateAngleBetween(tukmokComponent.tailTargetPos)));
+      }
+   }
+}
+
+function onTick(tukmok: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(tukmok);
    const aiHelperComponent = AIHelperComponentArray.getComponent(tukmok);
    
@@ -256,80 +326,26 @@ function onTick(tukmok: Entity): void {
       tukmokComponent.grazeCooldownTicks--;
    }
 
+   const tamingComponent = TamingComponentArray.getComponent(tukmok);
+
+   if (entityExists(tamingComponent.attackTarget)) {
+      attackEntity(tukmok, tamingComponent.attackTarget);
+      return;
+   }
+
    // Look for targets
-   // @SQUEAM
-   // if (!isValidCombatTarget(tukmok, tukmokComponent.target)) {
-   //    const target = getTarget(tukmok, aiHelperComponent);
-   //    if (target !== null) {
-   //       tukmokComponent.target = target;
-   //    }
-   // }
+   if (!isValidCombatTarget(tukmok, tukmokComponent.target)) {
+      const target = getTarget(tukmok, aiHelperComponent);
+      if (target !== null) {
+         tukmokComponent.target = target;
+      }
+   }
    const target = tukmokComponent.target;
    if (isValidCombatTarget(tukmok, tukmokComponent.target)) {
-      const targetTransformComponent = TransformComponentArray.getComponent(target);
-      const targetHitbox = targetTransformComponent.hitboxes[0];
-
-      aiHelperComponent.moveFunc(tukmok, targetHitbox.box.position, 380);
-      aiHelperComponent.turnFunc(tukmok, targetHitbox.box.position, 1 * Math.PI, 1);
-
-      if (tukmokComponent.ticksToNextAngrySound === 0) {
-         const tickEvent: EntityTickEvent = {
-            entityID: tukmok,
-            type: EntityTickEventType.tukmokAngry,
-            data: 0
-         };
-         registerEntityTickEvent(tukmok, tickEvent);
-
-         tukmokComponent.ticksToNextAngrySound = randInt(MIN_ANGRY_SOUND_COOLDOWN_TICKS, MAX_ANGRY_SOUND_COOLDOWN_TICKS);
-      } else {
-         tukmokComponent.ticksToNextAngrySound--;
+      // @SQUEAM
+      if (getEntityType(target) === EntityType.inguSerpent) {
+         attackEntity(tukmok, target);
       }
-
-      const trunk = getTrunk(transformComponent);
-      if (trunk !== null) {
-         const tukmokHeadHitbox = transformComponent.hitboxes[1];
-
-         // This may be a mistake, but try to keep the trunk in its natural position even while moving
-         const idealPos = tukmokHeadHitbox.box.position.offset(40, tukmokHeadHitbox.box.angle);
-         moveTrunk(trunk, idealPos, 500, false);
-
-         // Trunk behaviour
-         tukmokComponent.trunkStateTicksElapsed++;
-         switch (tukmokComponent.trunkState) {
-            case TrunkCombatState.active: {
-               moveTrunk(trunk, targetHitbox.box.position, 2400, true);
-               
-               if (tukmokComponent.trunkStateTicksElapsed >= TRUNK_ACTIVE_STATE_DURATION) {
-                  tukmokComponent.trunkStateTicksElapsed = 0;
-                  tukmokComponent.trunkState = TrunkCombatState.passive;
-               }
-               break;
-            }
-            case TrunkCombatState.passive: {
-               if (tukmokComponent.trunkStateTicksElapsed >= TRUNK_PASSIVE_STATE_DURATION) {
-                  tukmokComponent.trunkStateTicksElapsed = 0;
-                  tukmokComponent.trunkState = TrunkCombatState.active;
-               }
-               break;
-            }
-         }
-      }
-
-      // Tail flail
-      const tail = getTail(transformComponent);
-      if (tail !== null) {
-         // Switch tail targets randomly
-         if (Math.random() < 3 / Settings.TPS) {
-            tukmokComponent.tailTargetPos = getTailTargetPos(tukmok, tail, aiHelperComponent);
-         }
-
-         if (tukmokComponent.tailTargetPos !== null) {
-            // Flail to target
-            const tailEndHitbox = getTailEndHitbox(tail);
-            applyForce(tailEndHitbox, polarVec2(400, tailEndHitbox.box.position.calculateAngleBetween(tukmokComponent.tailTargetPos)));
-         }
-      }
-
       return;
    }
    
@@ -437,13 +453,12 @@ function onTick(tukmok: Entity): void {
    }
 
    // Wander AI
-   // @SQUEAM
-   // const wanderAI = aiHelperComponent.getWanderAI();
-   // wanderAI.update(tukmok);
-   // if (wanderAI.targetPosition !== null) {
-   //    aiHelperComponent.moveFunc(tukmok, wanderAI.targetPosition, wanderAI.acceleration);
-   //    aiHelperComponent.turnFunc(tukmok, wanderAI.targetPosition, wanderAI.turnSpeed, wanderAI.turnDamping);
-   // }
+   const wanderAI = aiHelperComponent.getWanderAI();
+   wanderAI.update(tukmok);
+   if (wanderAI.targetPosition !== null) {
+      aiHelperComponent.moveFunc(tukmok, wanderAI.targetPosition, wanderAI.acceleration);
+      aiHelperComponent.turnFunc(tukmok, wanderAI.targetPosition, wanderAI.turnSpeed, wanderAI.turnDamping);
+   }
 }
 
 function getDataLength(): number {

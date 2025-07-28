@@ -491,7 +491,7 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
    },
-   [EntityType.tukmokTail]: {
+   [EntityType.tukmokTailClub]: {
       effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
    },

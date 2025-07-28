@@ -30,9 +30,8 @@ export function addHumanoidInventories(inventoryComponent: InventoryComponent, i
       hotbarInventory.addItem(createItem(ItemType.cookedTukmokMeat, 8), 2);
       hotbarInventory.addItem(createItem(ItemType.winterskinArmour, 1), 3);
       hotbarInventory.addItem(createItem(ItemType.stone_axe, 1), 4);
-      hotbarInventory.addItem(createItem(ItemType.snowberry, 1), 2);
    } else {
-      if (a === 2) {
+      if (a % 3 === 0) {
          hotbarInventory.addItem(createItem(ItemType.stone_sword, 1), 1);
          hotbarInventory.addItem(createItem(ItemType.winterskinArmour, 1), 3);
       } else {

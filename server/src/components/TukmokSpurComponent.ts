@@ -23,11 +23,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    
    // @HACK so that the tukmok doesn't kill itself. but this inadvertently means tukmoks can't damage each other
    const entityType = getEntityType(collidingEntity);
-   if (entityType === EntityType.tukmok || entityType === EntityType.tukmokSpur || entityType === EntityType.tukmokTrunk || entityType === EntityType.tukmokTail || entityType === EntityType.spruceTree || entityType === EntityType.yeti) {
-      return;
-   }
-   // @SQUEAM
-   if (entityType === EntityType.door || entityType === EntityType.wall) {
+   if (entityType === EntityType.tukmok || entityType === EntityType.tukmokSpur || entityType === EntityType.tukmokTrunk || entityType === EntityType.tukmokTailClub || entityType === EntityType.spruceTree || entityType === EntityType.yeti) {
       return;
    }
 

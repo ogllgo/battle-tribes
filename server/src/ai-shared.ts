@@ -844,3 +844,33 @@ export function predictHitboxPos(hitbox: Hitbox, predictionTime: number): Point 
    const y = hitbox.box.position.y + vel.y * predictionTime;
    return new Point(x, y);
 }
+
+const getClosestHitboxIncludingChildren = (hitbox: Hitbox, position: Point): Hitbox => {
+   let minDist = position.calculateDistanceBetween(hitbox.box.position);
+   let closestHitbox = hitbox;
+
+   // Check direct children
+   for (const childHitbox of hitbox.children) {
+      if (childHitbox.isPartOfParent) {
+         const childClosestHitbox = getClosestHitboxIncludingChildren(childHitbox, position);
+         const dist = childClosestHitbox.box.position.calculateDistanceBetween(position);
+         if (dist < minDist) {
+            minDist = dist;
+            closestHitbox = childHitbox;
+         }
+      }
+   }
+
+   // Check tethers
+
+   return closestHitbox;
+}
+
+// Target the closest hitbox. @HACK why isnt' this done everywhere in AI logic
+export function getEntityClosestHitbox(entity: Entity, position: Point): Hitbox {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   
+   for (const rootHitbox of transformComponent.rootHitboxes) {
+
+   }
+}

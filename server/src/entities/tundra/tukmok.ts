@@ -28,8 +28,10 @@ import Layer from "../../Layer";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { tetherHitboxes } from "../../tethers";
 import { createTukmokSpurConfig } from "./tukmok-spur";
-import { createTukmokTailConfig } from "./tukmok-tail";
+import { createTukmokTailClubConfig } from "./tukmok-tail-club";
 import { createTukmokTrunkConfig } from "./tukmok-trunk";
+
+const NUM_TAIL_SEGMENTS = 12;
 
 registerEntityLootOnDeath(EntityType.tukmok, {
    itemType: ItemType.rawTukmokMeat,
@@ -122,7 +124,9 @@ function wanderPositionIsValid(tukmok: Entity, layer: Layer, x: number, y: numbe
    return biome === Biome.tundra;
 }
 
-export function createTukmokConfig(position: Point, angle: number): EntityConfig {
+export function createTukmokConfig(position: Point, angle: number): ReadonlyArray<EntityConfig> {
+   const entityConfigs = new Array<EntityConfig>();
+   
    const transformComponent = new TransformComponent();
 
    const bodyHitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), angle, 104, 176), 8, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.TUKMOK_BODY]);
@@ -228,16 +232,75 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
       isPartOfParent: true
    });
 
-   const tailOffset = new Point(0, -102);
-   const tailPosition = position.copy();
-   tailPosition.add(rotatePoint(tailOffset, angle));
-   const tailConfig = createTukmokTailConfig(tailPosition, angle, tailOffset);
-   childConfigs.push({
-      entityConfig: tailConfig,
-      attachedHitbox: tailConfig.components[ServerComponentType.transform]!.hitboxes[0],
-      parentHitbox: bodyHitbox,
-      isPartOfParent: true
-   });
+   
+   // Tail
+   const IDEAL_TAIL_SEGMENT_SEPARATION = 5;
+   let lastHitbox: Hitbox | null = null;
+   for (let i = 0; i < NUM_TAIL_SEGMENTS; i++) {
+      let hitboxPosition: Point;
+      let offset: Point;
+      let parent: Hitbox | null;
+      if (lastHitbox === null) {
+         offset = new Point(0, -102);
+         hitboxPosition = position.copy();
+         hitboxPosition.add(polarVec2(102, Math.PI));
+         parent = bodyHitbox;
+      } else {
+         offset = new Point(0, 0);
+         hitboxPosition = lastHitbox.box.position.copy();
+         hitboxPosition.add(polarVec2(IDEAL_TAIL_SEGMENT_SEPARATION, angle + Math.PI));
+         parent = null;
+      }
+
+      let radius: number;
+      let mass: number;
+      let flags: Array<HitboxFlag>;
+      if (i <= (NUM_TAIL_SEGMENTS - 1) / 3) {
+         radius = 12;
+         mass = 0.1;
+         flags = [HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_BIG];
+      } else if (i <= (NUM_TAIL_SEGMENTS - 1) / 3 * 2) {
+         radius = 10;
+         mass = 0.075;
+         flags = [HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_MEDIUM];
+      } else if (i < NUM_TAIL_SEGMENTS - 1) {
+         radius = 8;
+         mass = 0.05;
+         flags = [HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_SMALL];
+      } else {
+         radius = 18;
+         mass = 0.28;
+         flags = [HitboxFlag.TUKMOK_TAIL_CLUB];
+      }
+      
+      // The club segment gets its own entity, all others go directly on the tukmok
+      let hitbox: Hitbox;
+      if (i === NUM_TAIL_SEGMENTS - 1) {
+         const config = createTukmokTailClubConfig(hitboxPosition, 0, offset);
+         hitbox = config.components[ServerComponentType.transform]!.hitboxes[0];
+         entityConfigs.push(config);
+      } else {
+         hitbox = new Hitbox(transformComponent, parent, true, new CircularBox(hitboxPosition, offset, 0, radius), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, flags);
+         addHitboxToTransformComponent(transformComponent, hitbox);
+      }
+
+      if (lastHitbox !== null) {
+         tetherHitboxes(hitbox, lastHitbox, IDEAL_TAIL_SEGMENT_SEPARATION, 50, 0.3);
+
+         // @Hack: method of adding
+         hitbox.angularTethers.push({
+            originHitbox: lastHitbox,
+            idealAngle: Math.PI,
+            springConstant: 25,
+            damping: 0.5,
+            // start off stiff, get softer the further we go
+            padding: lerp(Math.PI * 0.025, Math.PI * 0.08, i / (NUM_TAIL_SEGMENTS - 1)),
+            idealHitboxAngleOffset: Math.PI
+         });
+      }
+
+      lastHitbox = hitbox;
+   }
 
    const physicsComponent = new PhysicsComponent();
 
@@ -258,7 +321,7 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
 
    const tukmokComponent = new TukmokComponent();
    
-   return {
+   entityConfigs.push({
       entityType: EntityType.tukmok,
       components: {
          [ServerComponentType.transform]: transformComponent,
@@ -274,5 +337,6 @@ export function createTukmokConfig(position: Point, angle: number): EntityConfig
       },
       lights: [],
       childConfigs: childConfigs
-   };
+   });
+   return entityConfigs;
 }

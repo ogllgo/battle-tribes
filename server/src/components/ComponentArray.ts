@@ -427,7 +427,7 @@ export function sortComponentArrays(): void {
       [ServerComponentType.inguSerpent]: ComponentArrayPriority.medium,
       [ServerComponentType.tukmok]: ComponentArrayPriority.medium,
       [ServerComponentType.tukmokTrunk]: ComponentArrayPriority.medium,
-      [ServerComponentType.tukmokTail]: ComponentArrayPriority.medium,
+      [ServerComponentType.tukmokTailClub]: ComponentArrayPriority.medium,
       [ServerComponentType.tukmokSpur]: ComponentArrayPriority.medium,
       [ServerComponentType.health]: ComponentArrayPriority.high,
       // The physics component ticking must be done at the end so there is time for the positionIsDirty and hitboxesAreDirty flags to collect

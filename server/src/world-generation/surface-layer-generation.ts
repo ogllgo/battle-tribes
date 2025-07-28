@@ -776,7 +776,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       doStrictTileTypeCheck: false,
       doStrictCollisionCheck: true,
       createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
-         return [createTukmokConfig(pos, angle)];
+         return createTukmokConfig(pos, angle);
       }
    });
 

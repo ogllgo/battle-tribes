@@ -167,7 +167,7 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.inguSerpent]: CollisionGroup.default,
    [EntityType.tukmok]: CollisionGroup.default,
    [EntityType.tukmokTrunk]: CollisionGroup.default,
-   [EntityType.tukmokTail]: CollisionGroup.default,
+   [EntityType.tukmokTailClub]: CollisionGroup.default,
    [EntityType.tukmokSpur]: CollisionGroup.default,
 };
 

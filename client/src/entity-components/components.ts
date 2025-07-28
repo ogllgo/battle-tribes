@@ -147,7 +147,7 @@ import { TundraRockFrozenComponent, TundraRockFrozenComponentArray, TundraRockFr
 import { InguSerpentComponent, InguSerpentComponentArray, InguSerpentComponentParams } from "./server-components/InguSerpentComponent";
 import { TukmokComponent, TukmokComponentArray, TukmokComponentParams } from "./server-components/TukmokComponent";
 import { TukmokTrunkComponent, TukmokTrunkComponentArray, TukmokTrunkComponentParams } from "./server-components/TukmokTrunkComponent";
-import { TukmokTailComponent, TukmokTailComponentArray, TukmokTailComponentParams } from "./server-components/TukmokTailComponent";
+import { TukmokTailClubComponent, TukmokTailClubComponentArray, TukmokTailClubComponentParams } from "./server-components/TukmokTailClubComponent";
 import { TukmokSpurComponent, TukmokSpurComponentArray, TukmokSpurComponentParams } from "./server-components/TukmokSpurComponent";
 
 // @cleanup: same as below
@@ -304,7 +304,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.inguSerpent]: InguSerpentComponentArray,
    [ServerComponentType.tukmok]: TukmokComponentArray,
    [ServerComponentType.tukmokTrunk]: TukmokTrunkComponentArray,
-   [ServerComponentType.tukmokTail]: TukmokTailComponentArray,
+   [ServerComponentType.tukmokTailClub]: TukmokTailClubComponentArray,
    [ServerComponentType.tukmokSpur]: TukmokSpurComponentArray,
 };
 
@@ -437,7 +437,7 @@ const ServerComponentRecord = {
    [ServerComponentType.inguSerpent]: (): InguSerpentComponent => 0 as any,
    [ServerComponentType.tukmok]: (): TukmokComponent => 0 as any,
    [ServerComponentType.tukmokTrunk]: (): TukmokTrunkComponent => 0 as any,
-   [ServerComponentType.tukmokTail]: (): TukmokTailComponent => 0 as any,
+   [ServerComponentType.tukmokTailClub]: (): TukmokTailClubComponent => 0 as any,
    [ServerComponentType.tukmokSpur]: (): TukmokSpurComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
 
@@ -572,7 +572,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.inguSerpent]: (): InguSerpentComponentParams => 0 as any,
    [ServerComponentType.tukmok]: (): TukmokComponentParams => 0 as any,
    [ServerComponentType.tukmokTrunk]: (): TukmokTrunkComponentParams => 0 as any,
-   [ServerComponentType.tukmokTail]: (): TukmokTailComponentParams => 0 as any,
+   [ServerComponentType.tukmokTailClub]: (): TukmokTailClubComponentParams => 0 as any,
    [ServerComponentType.tukmokSpur]: (): TukmokSpurComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 

@@ -135,8 +135,8 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.snobeMound]: {},
    [ServerComponentType.inguSerpent]: {},
    [ServerComponentType.tukmok]: {},
-   [ServerComponentType.tukmokTail]: {},
    [ServerComponentType.tukmokTrunk]: {},
+   [ServerComponentType.tukmokTailClub]: {},
    [ServerComponentType.tukmokSpur]: {},
 } satisfies Record<ServerComponentType, object>;
 

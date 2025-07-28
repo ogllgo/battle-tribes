@@ -119,7 +119,7 @@ export const enum EntityType {
    inguSerpent,
    tukmok,
    tukmokTrunk,
-   tukmokTail,
+   tukmokTailClub,
    tukmokSpur
 }
 
@@ -241,7 +241,7 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.inguSerpent]: "Ingu Serpent",
    [EntityType.tukmok]: "Tukmok",
    [EntityType.tukmokTrunk]: "Tukmok Trunk",
-   [EntityType.tukmokTail]: "Tukmok Tail",
+   [EntityType.tukmokTailClub]: "Tukmok Tail Club",
    [EntityType.tukmokSpur]: "Tukmok Spur",
 };
 

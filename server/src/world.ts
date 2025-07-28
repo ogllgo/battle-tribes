@@ -18,7 +18,7 @@ import { attachLightToHitbox } from "./lights";
 import { attachEntityWithTether, attachHitboxRaw } from "./components/TransformComponent";
 
 const enum Vars {
-   START_TIME = 8
+   START_TIME = 20
 }
 
 interface EntityJoinInfo {
@@ -130,7 +130,8 @@ export function isNight(): boolean {
 
 export function tickGameTime(): void {
    ticks++;
-   time += Settings.TIME_PASS_RATE / Settings.TPS / 3600;
+   // @SQUEAM
+   // time += Settings.TIME_PASS_RATE / Settings.TPS / 3600;
    if (time >= 24) {
       time -= 24;
    }

@@ -2,6 +2,7 @@ import { AttackPatternInfo, AttackTimingsInfo, AXE_ATTACK_TIMINGS, UNARMED_ATTAC
 import { EntityType } from "../entities";
 import { Settings } from "../settings";
 import { StructureType } from "../structures";
+import { assert } from "../utils";
 
 export const enum ItemType {
    wood,
@@ -1201,9 +1202,15 @@ export class Inventory {
       this.name = name;
    }
 
-   public addItem(item: Item, itemSlot: number): void {
+   /** @returns Whether the item was added (if there was space) or not. */
+   public addItem(item: Item, itemSlot: number): boolean {
+      if (typeof this.itemSlots[itemSlot] !== "undefined") {
+         return false;
+      }
+   
       this.itemSlots[itemSlot] = item;
       this.items.push(item);
+      return true;
    }
 
    public getItem(itemSlot: number): Item | null {

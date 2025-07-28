@@ -1,7 +1,7 @@
 import { VisibleChunkBounds } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { TribeType } from "battletribes-shared/tribes";
-import { Point, randAngle, randFloat, randInt } from "battletribes-shared/utils";
+import { Point, randAngle, randFloat } from "battletribes-shared/utils";
 import { PacketReader, PacketType } from "battletribes-shared/packets";
 import WebSocket, { Server } from "ws";
 import { runSpawnAttempt, spawnInitialEntities } from "../entity-spawning";
@@ -22,7 +22,7 @@ import { TransformComponentArray } from "../components/TransformComponent";
 import { generateDecorations } from "../world-generation/decoration-generation";
 import { forceMaxGrowAllIceSpikes } from "../components/IceSpikesComponent";
 import { sortComponentArrays } from "../components/ComponentArray";
-import { destroyFlaggedEntities, entityExists, getEntityLayer, pushEntityJoinBuffer, tickGameTime, tickEntities, generateLayers, getEntityType, preDestroyFlaggedEntities, getGameTicks, createEntity } from "../world";
+import { destroyFlaggedEntities, entityExists, getEntityLayer, pushEntityJoinBuffer, tickGameTime, tickEntities, generateLayers, getEntityType, preDestroyFlaggedEntities, getGameTicks, createEntity, destroyEntity, createEntityImmediate } from "../world";
 import { resolveEntityCollisions } from "../collision-detection";
 import { runCollapses } from "../collapses";
 import { updateTribes } from "../tribes";
@@ -43,6 +43,7 @@ import { createWallConfig } from "../entities/structures/wall";
 import { BuildingMaterial } from "../../../shared/src/components";
 import { createDoorConfig } from "../entities/structures/door";
 import { createTukmokConfig } from "../entities/tundra/tukmok";
+import { createInguSerpentConfig } from "../entities/tundra/ingu-serpent";
 
 /*
 
@@ -126,8 +127,6 @@ const estimateVisibleChunkBounds = (spawnPosition: Point, screenWidth: number, s
 
    return [minChunkX, maxChunkX, minChunkY, maxChunkY];
 }
-
-let a = 0;
 
 // @Cleanup: Remove class, just have functions
 /** Communicates between the server and players */
@@ -243,8 +242,32 @@ class GameServer {
                   createEntity(config, layer, 0);
                }
 
-               if (++a === 2) {
-                  for (let i = 0; i < 2; i++) {
+               const minX = 5640;
+               const minY = 2150;
+               const maxX = 6100;
+               const maxY = 2500;
+               const minChunkX = Math.floor(minX / Settings.CHUNK_UNITS);
+               const minChunkY = Math.floor(minY / Settings.CHUNK_UNITS);
+               const maxChunkX = Math.floor(maxX / Settings.CHUNK_UNITS);
+               const maxChunkY = Math.floor(maxY / Settings.CHUNK_UNITS);
+               for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+                  for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
+                     const chunk = layer.getChunk(chunkX, chunkY);
+                     for (const entity of chunk.entities) {
+                        if (getEntityType(entity) !== EntityType.player) {                           
+                           destroyEntity(entity);
+                        }
+                     }
+                  }
+               }
+
+               // @SQUEAM
+               setTimeout(() => {
+                  // if(1+1===2)return;
+               // // const trib = new Tribe(TribeType.plainspeople, false, spawnPosition.copy());
+               
+               // @SQUEAM
+                  for (let i = 0; i < 4; i++) {
                      const pos1 = spawnPosition.copy();
                      pos1.x -= 50;
                      pos1.x += randFloat(0, 80);
@@ -252,72 +275,18 @@ class GameServer {
                      const t1 = createTribeWorkerConfig(pos1, 0, tribe);
                      createEntity(t1, layer, 0);
                   }
-               }
 
-               // @Temporary
-               setTimeout(() => {
-                  if (a > 1) {
-                     return;
-                  }
-                  // if(1+1===2)return;
-               // // const trib = new Tribe(TribeType.plainspeople, false, spawnPosition.copy());
-
-                  // create container
-                  for (let i = 0; i < 7; i++) {
-                     const x = 6000;
-                     const y = 3200 - i * 64;
-
-                     if (i === 4 || i === 5 || i === 6) {
-                        continue;
-                     }
-
-                     const config = createWallConfig(new Point(x, y), 0, tribe, BuildingMaterial.stone, [], null);
-                     createEntity(config, layer, 0);
-                  }
-                  // {
-                  //    const x = 6000 + 64;
-                  //    const y = 3200 - 6 * 64;
-                  //    const config = createWallConfig(new Point(x, y), 0, tribe, BuildingMaterial.stone, [], null);
-                  //    createEntity(config, layer, 0);
-                  // }
-                  {
-                     const x = 6000 + 240 - 64;
-                     const y = 3200 - 6 * 64;
-                     const config = createWallConfig(new Point(x, y), 0, tribe, BuildingMaterial.stone, [], null);
-                     createEntity(config, layer, 0);
-                  }
-                  for (let i = 0; i < 7; i++) {
-                     const x = 6000 + 240;
-                     const y = 3200 - i * 64;
-
-                     const config = createWallConfig(new Point(x, y), 0, tribe, BuildingMaterial.stone, [], null);
-                     createEntity(config, layer, 0);
-                  }
-                  {
-                     const x = 6000 + 64;
-                     const y = 3200;
-                     const config = createDoorConfig(new Point(x, y), 0, tribe, BuildingMaterial.stone, [], null);
-                     createEntity(config, layer, 0);
-                  }
-                  {
-                     const x = 6000 + 240 - 64;
-                     const y = 3200;
-                     const config = createDoorConfig(new Point(x, y), Math.PI, tribe, BuildingMaterial.stone, [], null);
-                     createEntity(config, layer, 0);
+                  const tukConfig = createTukmokConfig(new Point(spawnPosition.x, spawnPosition.y - 200), Math.PI * 0.5);
+                  for (const c of tukConfig) {
+                     createEntity(c, layer, 0);
                   }
 
-                  {
-                     const x = 6000 + (220 - 64) / 2 + 32;
-                     const y = 3200 - 3 * 64 - 26;
-                     const TUK = createTukmokConfig(new Point(x, y), 0)
-                     createEntity(TUK, layer, 0);
-                  }
-                  {
-                     const x = 6000 + 64 + 48;
-                     const y = 3200 - 64 * 6 - 64;
-                     const config = createWallConfig(new Point(x, y), Math.PI * 0.25, tribe, BuildingMaterial.stone, [], null);
-                     createEntity(config, layer, 0);
-                  }
+                  const snake1Config = createInguSerpentConfig(new Point(spawnPosition.x + 400, spawnPosition.y - 400), randAngle());
+                  createEntity(snake1Config, layer, 0);
+                  const snake2Config = createInguSerpentConfig(new Point(spawnPosition.x + 200, spawnPosition.y - 650), randAngle());
+                  createEntity(snake2Config, layer, 0);
+                  const snake3Config = createInguSerpentConfig(new Point(spawnPosition.x + 200, spawnPosition.y - 750), randAngle());
+                  createEntity(snake3Config, layer, 0);
 
                //    setTimeout(() => {
                //       const pos2 = spawnPosition.copy();
