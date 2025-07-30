@@ -48,7 +48,9 @@ SnobeComponentArray.onTick = {
 }
 
 const entityIsFollowable = (entity: Entity): boolean => {
-   return getEntityType(entity) === EntityType.player;
+   // @SQUEAM for the shot of snobes following a tuk
+   // return getEntityType(entity) === EntityType.player;
+   return getEntityType(entity) === EntityType.tukmok;
 }
 
 const getEarHitbox = (transformComponent: TransformComponent, i: number): Hitbox => {

@@ -175,7 +175,7 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
    
    const rideableComponent = new RideableComponent();
-   rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, 0, -14, 48, 0));
+   rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, new Point(0, -14), new Point(48, 0)));
    
    const lootComponent = new LootComponent();
    

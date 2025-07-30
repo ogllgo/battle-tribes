@@ -94,7 +94,10 @@ export function getHitboxByLocalID(hitboxes: ReadonlyArray<Hitbox>, localID: num
    return null;
 }
 
-const findEntityHitbox = (entity: Entity, localID: number): Hitbox | null => {
+export function findEntityHitbox(entity: Entity, localID: number): Hitbox | null {
+   if (!TransformComponentArray.hasComponent(entity)) {
+      return null;
+   }
    const transformComponent = TransformComponentArray.getComponent(entity);
    return getHitboxByLocalID(transformComponent.hitboxes, localID);
 }
@@ -446,7 +449,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    }
 }
 
-const updatePlayerHitboxFromData = (hitbox: Hitbox, parentEntity: Entity, reader: PacketReader): void => {
+const updatePlayerHitboxFromData = (hitbox: Hitbox, reader: PacketReader): void => {
    // @Garbage
    const dataBox = readBoxFromData(reader);
 
@@ -479,7 +482,7 @@ const updatePlayerHitboxFromData = (hitbox: Hitbox, parentEntity: Entity, reader
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT) // entity
    hitbox.rootEntity = reader.readNumber();
 
-   // @HACK @INCOMPLETE
+   const parentEntity = reader.readNumber();
    const parentLocalID = reader.readNumber();
    if (parentLocalID === -1) {
       hitbox.parent = null;
@@ -505,8 +508,6 @@ function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): voi
    }
 
    const transformComponent = TransformComponentArray.getComponent(playerInstance!);
-   const playerHitbox = transformComponent.hitboxes[0];
-   const parentEntity = playerHitbox.parent !== null ? playerHitbox.parent.entity : 0;
    
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 
@@ -516,7 +517,7 @@ function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): voi
       const hitbox = transformComponent.hitboxMap.get(localID);
       assert(typeof hitbox !== "undefined");
 
-      updatePlayerHitboxFromData(hitbox, parentEntity, reader);
+      updatePlayerHitboxFromData(hitbox, reader);
    }
 }
 

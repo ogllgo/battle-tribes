@@ -1,7 +1,7 @@
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import { angle, curveWeight, Point, lerp, rotateXAroundPoint, rotateYAroundPoint, distance, distBetweenPointAndRectangle, TileIndex, getTileIndexIncludingEdges, assert, polarVec2 } from "battletribes-shared/utils";
+import { angle, curveWeight, Point, lerp, rotateXAroundPoint, rotateYAroundPoint, distance, distBetweenPointAndRectangle, TileIndex, getTileIndexIncludingEdges, assert, polarVec2, clamp } from "battletribes-shared/utils";
 import Layer from "./Layer";
 import { getEntityPathfindingGroupID } from "./pathfinding";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
@@ -708,10 +708,10 @@ export function entityIsInLineOfSight(sightRayStart: Point, targetEntity: Entity
    const minY = Math.min(rayStartY, rayEndY);
    const maxY = Math.max(rayStartY, rayEndY);
 
-   const minChunkX = Math.floor(minX / Settings.CHUNK_UNITS);
-   const maxChunkX = Math.floor(maxX / Settings.CHUNK_UNITS);
-   const minChunkY = Math.floor(minY / Settings.CHUNK_UNITS);
-   const maxChunkY = Math.floor(maxY / Settings.CHUNK_UNITS);
+   const minChunkX = clamp(Math.floor(minX / Settings.CHUNK_UNITS), 0, Settings.BOARD_SIZE - 1);
+   const maxChunkX = clamp(Math.floor(maxX / Settings.CHUNK_UNITS), 0, Settings.BOARD_SIZE - 1);
+   const minChunkY = clamp(Math.floor(minY / Settings.CHUNK_UNITS), 0, Settings.BOARD_SIZE - 1);
+   const maxChunkY = clamp(Math.floor(maxY / Settings.CHUNK_UNITS), 0, Settings.BOARD_SIZE - 1);
 
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
@@ -843,34 +843,4 @@ export function predictHitboxPos(hitbox: Hitbox, predictionTime: number): Point 
    const x = hitbox.box.position.x + vel.x * predictionTime;
    const y = hitbox.box.position.y + vel.y * predictionTime;
    return new Point(x, y);
-}
-
-const getClosestHitboxIncludingChildren = (hitbox: Hitbox, position: Point): Hitbox => {
-   let minDist = position.calculateDistanceBetween(hitbox.box.position);
-   let closestHitbox = hitbox;
-
-   // Check direct children
-   for (const childHitbox of hitbox.children) {
-      if (childHitbox.isPartOfParent) {
-         const childClosestHitbox = getClosestHitboxIncludingChildren(childHitbox, position);
-         const dist = childClosestHitbox.box.position.calculateDistanceBetween(position);
-         if (dist < minDist) {
-            minDist = dist;
-            closestHitbox = childHitbox;
-         }
-      }
-   }
-
-   // Check tethers
-
-   return closestHitbox;
-}
-
-// Target the closest hitbox. @HACK why isnt' this done everywhere in AI logic
-export function getEntityClosestHitbox(entity: Entity, position: Point): Hitbox {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   
-   for (const rootHitbox of transformComponent.rootHitboxes) {
-
-   }
 }

@@ -5,7 +5,7 @@ import RectangularBox from "../../../shared/src/boxes/RectangularBox";
 import { PacketReader } from "../../../shared/src/packets";
 import { Point } from "../../../shared/src/utils";
 import Board from "../Board";
-import { getHitboxByLocalID } from "../entity-components/server-components/TransformComponent";
+import { findEntityHitbox, getHitboxByLocalID } from "../entity-components/server-components/TransformComponent";
 import { createHitbox, Hitbox, HitboxTether } from "../hitboxes";
 
 const readCircularBoxFromData = (reader: PacketReader): CircularBox => {
@@ -129,9 +129,9 @@ export function readHitboxFromData(reader: PacketReader, localID: number, hitbox
    const entity = reader.readNumber();
    const rootEntity = reader.readNumber();
 
+   const parentEntity = reader.readNumber();
    const parentHitboxLocalID = reader.readNumber();
-   // @INCOMPLETE @BUG: can't get from other transform components!
-   const parentHitbox = getHitboxByLocalID(hitboxes, parentHitboxLocalID);
+   const parentHitbox = findEntityHitbox(parentEntity, parentHitboxLocalID);
 
    const isPartOfParent = reader.readBoolean();
    reader.padOffset(3);
@@ -160,7 +160,7 @@ export function padHitboxDataExceptLocalID(reader: PacketReader): void {
 
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT); // entity and rootEntity
 
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT); // parent hitbox entity and local id
 
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT); // isPartOfParent
 }
@@ -252,6 +252,7 @@ export function updateHitboxExceptLocalIDFromData(hitbox: Hitbox, reader: Packet
    hitbox.rootEntity = reader.readNumber();
    
    // @HACK @INCOMPLETE
+   const parentEntity = reader.readNumber();
    const parentLocalID = reader.readNumber();
 
    hitbox.isPartOfParent = reader.readBoolean();

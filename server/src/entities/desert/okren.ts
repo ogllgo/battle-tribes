@@ -214,9 +214,9 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
    const energyStomachComponent = new EnergyStomachComponent(1000, 4, 5);
    
    const rideableComponent = new RideableComponent();
-   rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, 0, -40, 72, 0));
-   rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, 30, 20, 72, 0));
-   rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, -30, 20, 72, 0));
+   rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, new Point(0, -40), new Point(72, 0)));
+   rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, new Point(30, 20), new Point(72, 0)));
+   rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, new Point(-30, 20), new Point(72, 0)));
    
    const lootComponent = new LootComponent();
    

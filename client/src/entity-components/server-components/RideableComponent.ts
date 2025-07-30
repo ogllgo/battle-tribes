@@ -1,8 +1,7 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
-import { rotateXAroundOrigin, rotateYAroundOrigin } from "../../../../shared/src/utils";
-import { Hitbox } from "../../hitboxes";
+import { assert, rotateXAroundOrigin, rotateYAroundOrigin } from "../../../../shared/src/utils";
 import { playerInstance } from "../../player";
 import { playSound } from "../../sound";
 import { entityExists, EntityParams, getEntityLayer, getEntityType } from "../../world";
@@ -11,6 +10,7 @@ import { TransformComponentArray } from "./TransformComponent";
 
 interface CarrySlot {
    occupiedEntity: Entity;
+   readonly hitboxLocalID: number;
    readonly offsetX: number;
    readonly offsetY: number;
    readonly dismountOffsetX: number;
@@ -46,6 +46,8 @@ function createParamsFromData(reader: PacketReader): RideableComponentParams {
    for (let i = 0; i < numCarrySlots; i++) {
       const occupiedEntity = reader.readNumber();
 
+      const hitboxLocalID = reader.readNumber();
+
       const offsetX = reader.readNumber();
       const offsetY = reader.readNumber();
 
@@ -54,6 +56,7 @@ function createParamsFromData(reader: PacketReader): RideableComponentParams {
 
       const carrySlot: CarrySlot = {
          occupiedEntity: occupiedEntity,
+         hitboxLocalID: hitboxLocalID,
          offsetX: offsetX,
          offsetY: offsetY,
          dismountOffsetX: dismountOffsetX,
@@ -81,7 +84,7 @@ function padData(reader: PacketReader): void {
    for (let i = 0; i < numCarrySlots; i++) {
       // (so that i find this when i remove the need to pad by 3 for bools)
       // reader.padOffset(3);
-      reader.padOffset(5 * Float32Array.BYTES_PER_ELEMENT);
+      reader.padOffset(6 * Float32Array.BYTES_PER_ELEMENT);
    }
 }
 
@@ -97,8 +100,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
       if (occupiedEntity !== carrySlot.occupiedEntity) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         // @Hack
-         const mountHitbox = transformComponent.hitboxes[0];
+         const mountHitbox = transformComponent.hitboxMap.get(carrySlot.hitboxLocalID);
+         assert(typeof mountHitbox !== "undefined");
          const layer = getEntityLayer(entity);
          
          if (entityExists(occupiedEntity)) {
@@ -131,6 +134,6 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       
       carrySlot.occupiedEntity = occupiedEntity;
 
-      reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT);
+      reader.padOffset(5 * Float32Array.BYTES_PER_ELEMENT);
    }
 }

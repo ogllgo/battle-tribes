@@ -1,5 +1,5 @@
 import { Entity, EntityType, PlantedEntityType } from "battletribes-shared/entities";
-import { distance, Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { assert, distance, Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { TunnelDoorSide } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import Game from "./Game";
@@ -20,7 +20,7 @@ import { TunnelComponentArray } from "./entity-components/server-components/Tunn
 import { PlanterBoxComponentArray } from "./entity-components/server-components/PlanterBoxComponent";
 import { CraftingStationComponentArray } from "./entity-components/server-components/CraftingStationComponent";
 import { getLimbByInventoryName, InventoryUseComponentArray } from "./entity-components/server-components/InventoryUseComponent";
-import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { TransformComponent, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { TribeComponentArray } from "./entity-components/server-components/TribeComponent";
 import { playerTribe } from "./tribes";
 import { sendMountCarrySlotPacket, sendPickUpEntityPacket, sendStructureInteractPacket, sendModifyBuildingPacket, sendSetCarryTargetPacket, sendSetAttackTargetPacket } from "./networking/packet-creation";
@@ -422,15 +422,17 @@ const createInteractRenderInfo = (interactAction: InteractAction): EntityRenderI
       }
       case InteractActionType.mountCarrySlot: {
          const transformComponent = TransformComponentArray.getComponent(interactAction.interactEntity);
-         const interactEntityHitbox = transformComponent.hitboxes[0];
          
          const renderInfo = new EntityRenderInfo(0, 0, 0, 1);
 
          const rideableComponent = RideableComponentArray.getComponent(interactAction.interactEntity);
          const carrySlot = rideableComponent.carrySlots[interactAction.carrySlotIdx];
 
+         const carryingHitbox = transformComponent.hitboxMap.get(carrySlot.hitboxLocalID);
+         assert(typeof carryingHitbox !== "undefined");
+
          // @HACK
-         const box = new CircularBox(interactEntityHitbox.box.position.copy(), new Point(0, 0), interactEntityHitbox.box.angle, 0);
+         const box = new CircularBox(carryingHitbox.box.position.copy(), new Point(0, 0), carryingHitbox.box.angle, 0);
          const hitbox = createHitboxQuick(0, null, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
 
          const renderPart = new TexturedRenderPart(

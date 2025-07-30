@@ -40,6 +40,9 @@ export default class WanderAI {
    }
 
    private shouldTryAndWander(hitbox: Hitbox): boolean {
+      // @SQUEAM cuz tukmoks aren't wandering thanks to their clubs pushing them around and making them be in constant motion
+      return Math.random() < this.wanderRate / Settings.TPS;
+      
       const velocity = getHitboxVelocity(hitbox);
       // We check for < 1 instead of == 0 here as sometimtes the velocity can be an infinitessimal
       return Math.abs(velocity.x) < 1 && Math.abs(velocity.y) < 1 && Math.random() < this.wanderRate / Settings.TPS;

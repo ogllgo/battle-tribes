@@ -131,7 +131,9 @@ export function createSnobeConfig(position: Point, angle: number): EntityConfig 
    const aiHelperComponent = new AIHelperComponent(bodyHitbox, 360, moveFunc, turnFunc);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(1000, 6 * Math.PI, 1, 0.5, wanderPositionIsValid);
    aiHelperComponent.ais[AIType.escape] = new EscapeAI(1600, 6 * Math.PI, 1, 5);
-   aiHelperComponent.ais[AIType.follow] = new FollowAI(8 * Settings.TPS, 16 * Settings.TPS, 0.1, 34);
+   // @SQUEAM
+   // aiHelperComponent.ais[AIType.follow] = new FollowAI(8 * Settings.TPS, 16 * Settings.TPS, 0.1, 34);
+   aiHelperComponent.ais[AIType.follow] = new FollowAI(8 * Settings.TPS, 16 * Settings.TPS, 1, 150);
 
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
    

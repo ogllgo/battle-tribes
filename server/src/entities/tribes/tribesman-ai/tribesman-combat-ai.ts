@@ -378,7 +378,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
             }
 
             const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
-            turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
+            turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 2, false);
 
             if (isMuchTooClose) {
                // @SPEED

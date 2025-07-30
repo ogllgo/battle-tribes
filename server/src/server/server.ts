@@ -44,6 +44,8 @@ import { BuildingMaterial } from "../../../shared/src/components";
 import { createDoorConfig } from "../entities/structures/door";
 import { createTukmokConfig } from "../entities/tundra/tukmok";
 import { createInguSerpentConfig } from "../entities/tundra/ingu-serpent";
+import { createBarrelConfig } from "../entities/structures/barrel";
+import { mountCarrySlot, RideableComponentArray } from "../components/RideableComponent";
 
 /*
 
@@ -242,57 +244,17 @@ class GameServer {
                   createEntity(config, layer, 0);
                }
 
-               const minX = 5640;
-               const minY = 2150;
-               const maxX = 6100;
-               const maxY = 2500;
-               const minChunkX = Math.floor(minX / Settings.CHUNK_UNITS);
-               const minChunkY = Math.floor(minY / Settings.CHUNK_UNITS);
-               const maxChunkX = Math.floor(maxX / Settings.CHUNK_UNITS);
-               const maxChunkY = Math.floor(maxY / Settings.CHUNK_UNITS);
-               for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-                  for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-                     const chunk = layer.getChunk(chunkX, chunkY);
-                     for (const entity of chunk.entities) {
-                        if (getEntityType(entity) !== EntityType.player) {                           
-                           destroyEntity(entity);
-                        }
-                     }
-                  }
-               }
-
                // @SQUEAM
                setTimeout(() => {
-                  // if(1+1===2)return;
+                  if(1+1===2)return;
                // // const trib = new Tribe(TribeType.plainspeople, false, spawnPosition.copy());
-               
-               // @SQUEAM
-                  for (let i = 0; i < 4; i++) {
-                     const pos1 = spawnPosition.copy();
-                     pos1.x -= 50;
-                     pos1.x += randFloat(0, 80);
-                     pos1.y += randFloat(0, 80);
-                     const t1 = createTribeWorkerConfig(pos1, 0, tribe);
-                     createEntity(t1, layer, 0);
-                  }
 
-                  const tukConfig = createTukmokConfig(new Point(spawnPosition.x, spawnPosition.y - 200), Math.PI * 0.5);
+                  const tukConfig = createTukmokConfig(new Point(spawnPosition.x + 150, spawnPosition.y - 50), Math.PI * 0.5);
                   for (const c of tukConfig) {
                      createEntity(c, layer, 0);
                   }
 
-                  const snake1Config = createInguSerpentConfig(new Point(spawnPosition.x + 400, spawnPosition.y - 400), randAngle());
-                  createEntity(snake1Config, layer, 0);
-                  const snake2Config = createInguSerpentConfig(new Point(spawnPosition.x + 200, spawnPosition.y - 650), randAngle());
-                  createEntity(snake2Config, layer, 0);
-                  const snake3Config = createInguSerpentConfig(new Point(spawnPosition.x + 200, spawnPosition.y - 750), randAngle());
-                  createEntity(snake3Config, layer, 0);
-
                //    setTimeout(() => {
-               //       const pos2 = spawnPosition.copy();
-               //       pos2.x -= 100;
-               //       const t2 = createTribeWorkerConfig(pos2, 0, tribe);
-               //       createEntity(t2, layer, 0);
                //    }, 100)
 
                //    setTimeout(() => {
@@ -308,6 +270,18 @@ class GameServer {
                //       const t4 = createTribeWorkerConfig(pos4, 0, tribe);
                //       createEntity(t4, layer, 0);
                //    }, 602)
+
+                  setTimeout(() => {
+                     const p = spawnPosition.copy();
+                     p.y -= 500;
+                     const tribe = new Tribe(TribeType.barbarians, false, p);
+                     
+                     const pos2 = p.copy();
+                     pos2.x -= 100;
+                     pos2.y += randFloat(-30, 30);
+                     const t2 = createTribeWorkerConfig(pos2, 0, tribe);
+                     createEntity(t2, layer, 0);
+                  }, 1000);
                }, 6000);
                
                addPlayerClient(playerClient, surfaceLayer, spawnPosition);

@@ -645,7 +645,8 @@ export function detachHitbox(hitbox: Hitbox): void {
    }
 
    // Make sure that the hitbox hasn't accumulated any acceleration before it's detached
-   assert(hitbox.acceleration.x === 0 && hitbox.acceleration.y === 0)
+   // becuase if it has then it'll appear glitchy in the clientside
+   assert(hitbox.acceleration.x === 0 && hitbox.acceleration.y === 0);
 
    const idx = hitbox.parent.children.indexOf(hitbox);
    assert(idx !== -1);

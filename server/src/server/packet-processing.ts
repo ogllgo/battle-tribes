@@ -41,11 +41,6 @@ import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
 import { FloorSignComponentArray } from "../components/FloorSignComponent";
 import { BLOCKING_LIMB_STATE, copyLimbState, SHIELD_BLOCKING_LIMB_STATE } from "../../../shared/src/attack-patterns";
 
-/** How far away from the entity the attack is done */
-const ATTACK_OFFSET = 50;
-/** Max distance from the attack position that the attack will be registered from */
-const ATTACK_RADIUS = 50;
-
 // @Cleanup: Messy as fuck
 export function processPlayerDataPacket(playerClient: PlayerClient, reader: PacketReader): void {
    const player = playerClient.instance;
@@ -64,8 +59,13 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
 
    playerHitbox.previousPosition.x = reader.readNumber();
    playerHitbox.previousPosition.y = reader.readNumber();
-   playerHitbox.acceleration.x = reader.readNumber();
-   playerHitbox.acceleration.y = reader.readNumber();
+   // Cuz i've got a thing going on where if a hitbox is carried, then it can't have any acceleration. and if it does then the game will crash when it tries to detach from its parent.
+   if (playerHitbox.parent === null) {
+      playerHitbox.acceleration.x = reader.readNumber();
+      playerHitbox.acceleration.y = reader.readNumber();
+   } else {
+      reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
+   }
 
    playerComponent.movementIntention.x = reader.readNumber();
    playerComponent.movementIntention.y = reader.readNumber();

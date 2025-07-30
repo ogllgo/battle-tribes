@@ -4,8 +4,10 @@ import { Entity, EntityType } from "../../../shared/src/entities";
 import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 import { ItemType } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
+import { TribeType } from "../../../shared/src/tribes";
 import { customTickIntervalHasPassed, getAbsAngleDiff, Point, polarVec2, randAngle, randFloat, randInt, secondsToTicks } from "../../../shared/src/utils";
 import { getDistanceFromPointToHitbox, willStopAtDesiredDistance } from "../ai-shared";
+import { entitiesAreColliding, CollisionVars } from "../collision-detection";
 import { createEntityConfigAttachInfo } from "../components";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { applyAcceleration, applyForce, Hitbox } from "../hitboxes";
@@ -16,7 +18,9 @@ import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
 import { ComponentArray } from "./ComponentArray";
 import { addHungerEnergy, getEntityFullness } from "./EnergyStomachComponent";
 import { hitEntityWithoutDamage } from "./HealthComponent";
-import { TamingComponentArray } from "./TamingComponent";
+import { ItemComponentArray } from "./ItemComponent";
+import { getAvailableCarrySlot, mountCarrySlot, RideableComponentArray } from "./RideableComponent";
+import { getRiderTargetPosition, TamingComponentArray } from "./TamingComponent";
 import { attachHitbox, detachHitbox, TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { TribeComponentArray } from "./TribeComponent";
 
@@ -135,6 +139,35 @@ const getTargetTree = (tukmok: Entity, aiHelperComponent: AIHelperComponent): En
    return closestTree;
 }
 
+const getTargetLeafItem = (tukmok: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
+   const transformComponent = TransformComponentArray.getComponent(tukmok);
+   const hitbox = transformComponent.hitboxes[0];
+   
+   let minDist = Number.MAX_SAFE_INTEGER;
+   let closestLeafItem: Entity | null = null;
+   for (const entity of aiHelperComponent.visibleEntities) {
+      if (getEntityType(entity) !== EntityType.itemEntity) {
+         continue;
+      }
+
+      const itemComponent = ItemComponentArray.getComponent(entity);
+      if (itemComponent.itemType !== ItemType.leaf) {
+         continue;
+      }
+
+      const entityTransformComponent = TransformComponentArray.getComponent(entity);
+      const entityHitbox = entityTransformComponent.hitboxes[0];
+
+      const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+      if (dist < minDist) {
+         closestLeafItem = entity;
+         minDist = dist;
+      }
+   }
+
+   return closestLeafItem;
+}
+
 const treeIsValidTarget = (tree: Entity, aiHelperComponent: AIHelperComponent): boolean => {
    return entityExists(tree) && aiHelperComponent.visibleEntities.includes(tree);
 }
@@ -197,9 +230,21 @@ const getTailTargetPos = (tukmok: Entity, aiHelperComponent: AIHelperComponent):
 }
 
 const isValidCombatTarget = (tukmok: Entity, entity: Entity): boolean => {
+   if (!entityExists(entity)) {
+      return false;
+   }
+   
    const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(tukmok);
    if (attackingEntitiesComponent.attackingEntities.has(entity)) {
       return true;
+   }
+
+   // @SQUEAM
+   if (getEntityType(entity) === EntityType.tribeWorker) {
+      const tribeComponent = TribeComponentArray.getComponent(entity);
+      if (tribeComponent.tribe.tribeType === TribeType.barbarians) {
+         return true;
+      }
    }
 
    // @HACK @SPEED
@@ -327,6 +372,48 @@ function onTick(tukmok: Entity): void {
    }
 
    const tamingComponent = TamingComponentArray.getComponent(tukmok);
+   
+   // @COPYNPASTE from cow
+   // - Copying the carried entities' acceleration is actually inaccurate in some cases if the carried
+   //   entity isn't exactly on the thing being accelerated.
+   // When something is riding the cow, that entity controls the cow's movement
+   const rideableComponent = RideableComponentArray.getComponent(tukmok);
+   const rider = rideableComponent.carrySlots[0].occupiedEntity;
+   if (entityExists(rider)) {
+      const targetPosition = getRiderTargetPosition(rider);
+      if (targetPosition !== null) {
+         aiHelperComponent.moveFunc(tukmok, targetPosition, 380);
+         aiHelperComponent.turnFunc(tukmok, targetPosition, Math.PI, 1);
+         return;
+      }
+   }
+   
+   // @Hack @Copynpaste
+   // @SCREE WELL AKSHALLY we do something special with the trunk here
+   // Pick up carry target
+   if (entityExists(tamingComponent.carryTarget)) {
+      const carrySlot = getAvailableCarrySlot(rideableComponent);
+      if (carrySlot !== null) {
+         const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.carryTarget);
+         const targetHitbox = targetTransformComponent.hitboxes[0];
+         
+         aiHelperComponent.moveFunc(tukmok, targetHitbox.box.position, 380);
+         aiHelperComponent.turnFunc(tukmok, targetHitbox.box.position, Math.PI, 1);
+
+         const trunk = getTrunk(transformComponent);
+         if (trunk !== null) {
+            moveTrunk(trunk, targetHitbox.box.position, 350, false);
+            
+            // Force carry if trunk is colliding
+            if (entitiesAreColliding(trunk, tamingComponent.carryTarget) !== CollisionVars.NO_COLLISION) {
+               mountCarrySlot(tamingComponent.carryTarget, carrySlot);
+               tamingComponent.carryTarget = 0;
+            }
+         }
+
+         return;
+      }
+   }
 
    if (entityExists(tamingComponent.attackTarget)) {
       attackEntity(tukmok, tamingComponent.attackTarget);
@@ -343,7 +430,7 @@ function onTick(tukmok: Entity): void {
    const target = tukmokComponent.target;
    if (isValidCombatTarget(tukmok, tukmokComponent.target)) {
       // @SQUEAM
-      if (getEntityType(target) === EntityType.inguSerpent) {
+      if (1+1===1) {
          attackEntity(tukmok, target);
       }
       return;
@@ -353,111 +440,138 @@ function onTick(tukmok: Entity): void {
    if (trunk !== null) {
       // Grab leaves from trees if hungry
       // @TEMPORARY: make less than 1
-      if ((getEntityFullness(tukmok) < 0.9 || tukmokComponent.isInGrazingMood) && tukmokComponent.grazeCooldownTicks === 0) {
+      // @SQUEAM
+      // if ((getEntityFullness(tukmok) < 0.9 || tukmokComponent.isInGrazingMood) && tukmokComponent.grazeCooldownTicks === 0) {
+      if (1+1===2) {
          tukmokComponent.isInGrazingMood = true;
          
-         if (!treeIsValidTarget(tukmokComponent.treeTarget, aiHelperComponent)) {
-            const target = getTargetTree(tukmok, aiHelperComponent);
-            if (target !== null) {
-               tukmokComponent.treeTarget = target;
-            }
-         }
+         const tukmokBodyHitbox = transformComponent.hitboxes[0];
+         const tukmokHeadHitbox = transformComponent.hitboxes[1];
 
-         const target = tukmokComponent.treeTarget;
-         if (treeIsValidTarget(target, aiHelperComponent)) {
-            const tukmokBodyHitbox = transformComponent.hitboxes[0];
-            const tukmokHeadHitbox = transformComponent.hitboxes[1];
+         const trunkHeadHitbox = getTrunkHeadHitbox(trunk);
+         const trunkLeafHitbox = getTrunkLeaf(trunk);
+         if (trunkLeafHitbox !== null) {
+            const baseHitbox = getTrunkBaseHitbox(trunk);
+
+            const mouthPosition = baseHitbox.box.position.offset(20, tukmokHeadHitbox.box.angle + Math.PI);
+            moveTrunk(trunk, mouthPosition, 350, true);
+
+            if (trunkHeadHitbox.box.isColliding(tukmokHeadHitbox.box)) {
+               const leaf = trunkLeafHitbox.entity;
+               destroyEntity(leaf);
             
-            const targetTransformComponent = TransformComponentArray.getComponent(target);
-            const targetHitbox = targetTransformComponent.hitboxes[0];
-         
-            const dist = getDistanceFromPointToHitbox(targetHitbox.box.position, tukmokHeadHitbox);
-            if (willStopAtDesiredDistance(tukmokHeadHitbox, IDEAL_DIST_FROM_TREE, dist)) {
-               // Close enough to grab
+               const tickEvent: EntityTickEvent = {
+                  entityID: leaf,
+                  type: EntityTickEventType.cowEat,
+                  data: 0
+               };
+               registerEntityTickEvent(leaf, tickEvent);
 
-               // Too close, move back a bit
-               if (willStopAtDesiredDistance(tukmokHeadHitbox, IDEAL_DIST_FROM_TREE - 8, dist)) {
-                  const awayFromTarget = targetHitbox.box.position.calculateAngleBetween(tukmokBodyHitbox.box.position);
-                  const awayPos = tukmokBodyHitbox.box.position.offset(999, awayFromTarget);
-                  aiHelperComponent.moveFunc(tukmok, awayPos, 240);
+               addHungerEnergy(tukmok, 30);
+
+               if (getEntityFullness(tukmok) >= 0.95) {
+                  tukmokComponent.grazeCooldownTicks = GRAZE_COOLDOWN_TICKS;
+                  tukmokComponent.isInGrazingMood = false;
                }
-
+            }
+         } else {
+            const targetItemEntity = getTargetLeafItem(tukmok, aiHelperComponent);
+            if (targetItemEntity !== null) {
+               const targetTransformComponent = TransformComponentArray.getComponent(targetItemEntity);
+               const targetHitbox = targetTransformComponent.hitboxes[0];
+               
                aiHelperComponent.turnFunc(tukmok, targetHitbox.box.position, 1 * Math.PI, 1);
 
-               const trunkHeadHitbox = getTrunkHeadHitbox(trunk);
-               const trunkLeafHitbox = getTrunkLeaf(trunk);
-               if (trunkLeafHitbox !== null) {
-                  const baseHitbox = getTrunkBaseHitbox(trunk);
+               moveTrunk(trunk, targetHitbox.box.position, 550, false);
 
-                  const mouthPosition = baseHitbox.box.position.offset(20, tukmokHeadHitbox.box.angle + Math.PI);
-                  moveTrunk(trunk, mouthPosition, 350, true);
+               if (trunkHeadHitbox.box.isColliding(targetHitbox.box)) {
+                  // Grab leaf
+                  attachHitbox(targetHitbox, trunkHeadHitbox, false);
+               }
+               return;
+            }
 
-                  if (trunkHeadHitbox.box.isColliding(tukmokHeadHitbox.box)) {
-                     const leaf = trunkLeafHitbox.entity;
-                     destroyEntity(leaf);
-                  
-                     const tickEvent: EntityTickEvent = {
-                        entityID: leaf,
-                        type: EntityTickEventType.cowEat,
-                        data: 0
-                     };
-                     registerEntityTickEvent(leaf, tickEvent);
+            // 
+            // Look for tree to grab leaf from
+            // 
+            
+            // @SQUEAM
+            // if (!treeIsValidTarget(tukmokComponent.treeTarget, aiHelperComponent)) {
+            //    const target = getTargetTree(tukmok, aiHelperComponent);
+            //    if (target !== null) {
+            //       tukmokComponent.treeTarget = target;
+            //    }
+            // }
 
-                     addHungerEnergy(tukmok, 30);
+            const treeTarget = tukmokComponent.treeTarget;
+            if (treeIsValidTarget(treeTarget, aiHelperComponent)) {
+               const targetTransformComponent = TransformComponentArray.getComponent(treeTarget);
+               const targetHitbox = targetTransformComponent.hitboxes[0];
+            
+               const dist = getDistanceFromPointToHitbox(targetHitbox.box.position, tukmokHeadHitbox);
+               if (willStopAtDesiredDistance(tukmokHeadHitbox, IDEAL_DIST_FROM_TREE, dist)) {
 
-                     if (getEntityFullness(tukmok) >= 0.95) {
-                        tukmokComponent.grazeCooldownTicks = GRAZE_COOLDOWN_TICKS;
-                        tukmokComponent.isInGrazingMood = false;
+                  // Too close, move back a bit
+                  if (willStopAtDesiredDistance(tukmokHeadHitbox, IDEAL_DIST_FROM_TREE - 8, dist)) {
+                     const awayFromTarget = targetHitbox.box.position.calculateAngleBetween(tukmokBodyHitbox.box.position);
+                     const awayPos = tukmokBodyHitbox.box.position.offset(999, awayFromTarget);
+                     aiHelperComponent.moveFunc(tukmok, awayPos, 240);
+                  }
+
+                  aiHelperComponent.turnFunc(tukmok, targetHitbox.box.position, 1 * Math.PI, 1);
+
+                  if (trunkHeadHitbox.parent !== targetHitbox) {
+                     moveTrunk(trunk, targetHitbox.box.position, 550, false);
+                     
+                     const trunkHeadToTree = trunkHeadHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+                     // First attach to the tree
+                     if (getAbsAngleDiff(trunkHeadHitbox.box.angle, trunkHeadToTree) < Math.PI * 0.5 && trunkHeadHitbox.box.isColliding(targetHitbox.box)) {
+                        attachHitbox(trunkHeadHitbox, targetHitbox, false);
+
+                        tukmokComponent.currentGrabElapsedTicks = 0;
+                        tukmokComponent.currentGrabDurationTicks = randInt(MIN_TICKS_TO_GRAB_LEAF, MAX_TICKS_TO_GRAB_LEAF);
+                     }
+                  } else {
+                     tukmokComponent.currentGrabElapsedTicks++;
+                     if (customTickIntervalHasPassed(tukmokComponent.currentGrabElapsedTicks, 0.2)) {
+                        hitEntityWithoutDamage(treeTarget, targetHitbox, tukmok, targetHitbox.box.position.copy());
+                     }
+
+                     if (tukmokComponent.currentGrabElapsedTicks >= tukmokComponent.currentGrabDurationTicks) {
+                        // Grab leaf and detach
+
+                        const leafPosition = trunkHeadHitbox.box.position.offset(20, trunkHeadHitbox.box.angle);
+
+                        const leafItemConfig = createItemEntityConfig(leafPosition, randAngle(), ItemType.leaf, 1, null);
+                        const leafHitbox = leafItemConfig.components[ServerComponentType.transform]!.hitboxes[0];
+                        leafItemConfig.attachInfo = createEntityConfigAttachInfo(leafHitbox, trunkHeadHitbox, false);
+                        createEntity(leafItemConfig, getEntityLayer(tukmok), 0);
+
+                        detachHitbox(trunkHeadHitbox);
                      }
                   }
-               } else if (trunkHeadHitbox.parent !== targetHitbox) {
-                  moveTrunk(trunk, targetHitbox.box.position, 550, false);
-                  
-                  const trunkHeadToTree = trunkHeadHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-                  // First attach to the tree
-                  if (getAbsAngleDiff(trunkHeadHitbox.box.angle, trunkHeadToTree) < Math.PI * 0.5 && trunkHeadHitbox.box.isColliding(targetHitbox.box)) {
-                     attachHitbox(trunkHeadHitbox, targetHitbox, false);
-
-                     tukmokComponent.currentGrabElapsedTicks = 0;
-                     tukmokComponent.currentGrabDurationTicks = randInt(MIN_TICKS_TO_GRAB_LEAF, MAX_TICKS_TO_GRAB_LEAF);
-                  }
                } else {
-                  tukmokComponent.currentGrabElapsedTicks++;
-                  if (customTickIntervalHasPassed(tukmokComponent.currentGrabElapsedTicks, 0.2)) {
-                     hitEntityWithoutDamage(target, targetHitbox, tukmok, targetHitbox.box.position.copy());
-                  }
+                  // Not close enough to grab, move closer
 
-                  if (tukmokComponent.currentGrabElapsedTicks >= tukmokComponent.currentGrabDurationTicks) {
-                     // Grab leaf and detach
-
-                     const leafPosition = trunkHeadHitbox.box.position.offset(20, trunkHeadHitbox.box.angle);
-
-                     const leafItemConfig = createItemEntityConfig(leafPosition, randAngle(), ItemType.leaf, 1, null);
-                     const leafHitbox = leafItemConfig.components[ServerComponentType.transform]!.hitboxes[0];
-                     leafItemConfig.attachInfo = createEntityConfigAttachInfo(leafHitbox, trunkHeadHitbox, false);
-                     createEntity(leafItemConfig, getEntityLayer(tukmok), 0);
-
-                     detachHitbox(trunkHeadHitbox);
-                  }
+                  aiHelperComponent.moveFunc(tukmok, targetHitbox.box.position, 200);
+                  aiHelperComponent.turnFunc(tukmok, targetHitbox.box.position, 1 * Math.PI, 1);
                }
-            } else {
-               // Not close enough to grab, move closer
 
-               aiHelperComponent.moveFunc(tukmok, targetHitbox.box.position, 200);
-               aiHelperComponent.turnFunc(tukmok, targetHitbox.box.position, 1 * Math.PI, 1);
+               return;
             }
-
-            return;
          }
       }
    }
 
    // Wander AI
-   const wanderAI = aiHelperComponent.getWanderAI();
-   wanderAI.update(tukmok);
-   if (wanderAI.targetPosition !== null) {
-      aiHelperComponent.moveFunc(tukmok, wanderAI.targetPosition, wanderAI.acceleration);
-      aiHelperComponent.turnFunc(tukmok, wanderAI.targetPosition, wanderAI.turnSpeed, wanderAI.turnDamping);
+   // @SQUEAM
+   if (1+1===1) {
+      const wanderAI = aiHelperComponent.getWanderAI();
+      wanderAI.update(tukmok);
+      if (wanderAI.targetPosition !== null) {
+         aiHelperComponent.moveFunc(tukmok, wanderAI.targetPosition, wanderAI.acceleration);
+         aiHelperComponent.turnFunc(tukmok, wanderAI.targetPosition, wanderAI.turnSpeed, wanderAI.turnDamping);
+      }
    }
 }
 

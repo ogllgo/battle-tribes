@@ -19,6 +19,7 @@ import { EnergyStomachComponent } from "../../components/EnergyStomachComponent"
 import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
+import { createCarrySlot, RideableComponent } from "../../components/RideableComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { TamingComponent } from "../../components/TamingComponent";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
@@ -64,8 +65,15 @@ registerEntityTamingSpec(EntityType.tukmok, {
          requiredTamingTier: 2
       },
       {
+         skill: getTamingSkill(TamingSkillID.carry),
+         x: 18,
+         y: 50,
+         parent: TamingSkillID.move,
+         requiredTamingTier: 3
+      },
+      {
          skill: getTamingSkill(TamingSkillID.attack),
-         x: 0,
+         x: -18,
          y: 50,
          parent: TamingSkillID.move,
          requiredTamingTier: 3
@@ -309,11 +317,21 @@ export function createTukmokConfig(position: Point, angle: number): ReadonlyArra
    const statusEffectComponent = new StatusEffectComponent(0);
 
    const aiHelperComponent = new AIHelperComponent(headHitbox, 666, moveFunc, turnFunc);
-   aiHelperComponent.ais[AIType.wander] = new WanderAI(400, 1 * Math.PI, 1, 0.35, wanderPositionIsValid);
+   // @SQUEAM
+   // aiHelperComponent.ais[AIType.wander] = new WanderAI(400, 1 * Math.PI, 1, 0.35, wanderPositionIsValid);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(400, 1 * Math.PI, 1, 2, wanderPositionIsValid);
    
    const attackingEntitiesComponent = new AttackingEntitiesComponent(12 * Settings.TPS);
    
    const energyStomachComponent = new EnergyStomachComponent(800, 4, 5);
+   
+   const rideableComponent = new RideableComponent();
+   // head carry
+   rideableComponent.carrySlots.push(createCarrySlot(headHitbox, new Point(0, -22), new Point(72, 0)));
+   // body front carry
+   rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, new Point(0, 28), new Point(84, 0)));
+   // body back carry
+   rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, new Point(0, -36), new Point(84, 0)));
    
    const lootComponent = new LootComponent();
 
@@ -331,6 +349,7 @@ export function createTukmokConfig(position: Point, angle: number): ReadonlyArra
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.attackingEntities]: attackingEntitiesComponent,
          [ServerComponentType.energyStomach]: energyStomachComponent,
+         [ServerComponentType.rideable]: rideableComponent,
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.taming]: tamingComponent,
          [ServerComponentType.tukmok]: tukmokComponent

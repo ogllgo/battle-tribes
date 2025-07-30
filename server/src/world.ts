@@ -18,7 +18,7 @@ import { attachLightToHitbox } from "./lights";
 import { attachEntityWithTether, attachHitboxRaw } from "./components/TransformComponent";
 
 const enum Vars {
-   START_TIME = 20
+   START_TIME = 8
 }
 
 interface EntityJoinInfo {

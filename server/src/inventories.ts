@@ -26,21 +26,17 @@ export function addHumanoidInventories(inventoryComponent: InventoryComponent, i
    addInventoryToInventoryComponent(inventoryComponent, hotbarInventory, { acceptsPickedUpItems: true, isDroppedOnDeath: true, isSentToEnemyPlayers: false });
 
    if (a++ === 0) {
-      hotbarInventory.addItem(createItem(ItemType.ivorySpear, 1), 1);
-      hotbarInventory.addItem(createItem(ItemType.cookedTukmokMeat, 8), 2);
+      hotbarInventory.addItem(createItem(ItemType.ivoryTusk, 1), 1);
       hotbarInventory.addItem(createItem(ItemType.winterskinArmour, 1), 3);
       hotbarInventory.addItem(createItem(ItemType.stone_axe, 1), 4);
    } else {
-      if (a % 3 === 0) {
-         hotbarInventory.addItem(createItem(ItemType.stone_sword, 1), 1);
+      hotbarInventory.addItem(createItem(ItemType.stone_sword, 1), 1);
+      hotbarInventory.addItem(createItem(ItemType.snowberry, 16), 2);
+      if (a <= 3) {
          hotbarInventory.addItem(createItem(ItemType.winterskinArmour, 1), 3);
       } else {
-         hotbarInventory.addItem(createItem(ItemType.iceWringer, 1), 1);
          hotbarInventory.addItem(createItem(ItemType.frostArmour, 1), 3);
       }
-      hotbarInventory.addItem(createItem(ItemType.cookedTukmokMeat, 8), 2);
-      hotbarInventory.addItem(createItem(ItemType.snowberry, 1), 2);
-
    }
    
    inventoryUseComponent.associatedInventoryNames.push(InventoryName.hotbar);

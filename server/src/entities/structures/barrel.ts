@@ -1,6 +1,6 @@
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { Inventory, InventoryName } from "battletribes-shared/items/items";
+import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/items";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { addInventoryToInventoryComponent, InventoryComponent } from "../../components/InventoryComponent";
@@ -18,6 +18,7 @@ import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { Hitbox } from "../../hitboxes";
 import { StructureConnection } from "../../structure-placement";
+import { createItem } from "../../items";
 
 export function createBarrelConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent();
@@ -38,6 +39,8 @@ export function createBarrelConfig(position: Point, rotation: number, tribe: Tri
    const inventoryComponent = new InventoryComponent();
 
    const inventory = new Inventory(3, 3, InventoryName.inventory);
+   inventory.addItem(createItem(ItemType.snowberry, 27), 1);
+   inventory.addItem(createItem(ItemType.cookedTukmokMeat, 20), 2);
    addInventoryToInventoryComponent(inventoryComponent, inventory, { acceptsPickedUpItems: false, isDroppedOnDeath: true, isSentToEnemyPlayers: false });
    
    const barrelComponent = new BarrelComponent();

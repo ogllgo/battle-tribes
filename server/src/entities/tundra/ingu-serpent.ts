@@ -193,7 +193,7 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.freezing);
    
-   const healthComponent = new HealthComponent(25);
+   const healthComponent = new HealthComponent(35);
 
    const aiHelperComponent = new AIHelperComponent(headHitbox, 550, moveFunc, turnFunc);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(750, 4.5 * Math.PI, 1.8, 0.35, wanderPositionIsValid);
