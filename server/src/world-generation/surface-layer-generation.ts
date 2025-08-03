@@ -770,8 +770,8 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       onlySpawnsInNight: false,
       minSpawnDistance: 30,
       // @SQEAM
-      spawnDistribution: createRawSpawnDistribution(32, 0.002),
-      // spawnDistribution: createRawSpawnDistribution(32, 0),
+      // spawnDistribution: createRawSpawnDistribution(32, 0.002),
+      spawnDistribution: createRawSpawnDistribution(32, 0),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
       doStrictCollisionCheck: true,

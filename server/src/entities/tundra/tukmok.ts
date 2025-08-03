@@ -295,14 +295,15 @@ export function createTukmokConfig(position: Point, angle: number): ReadonlyArra
       if (lastHitbox !== null) {
          tetherHitboxes(hitbox, lastHitbox, IDEAL_TAIL_SEGMENT_SEPARATION, 50, 0.3);
 
+         const ip = i / (NUM_TAIL_SEGMENTS - 1);
          // @Hack: method of adding
          hitbox.angularTethers.push({
             originHitbox: lastHitbox,
             idealAngle: Math.PI,
-            springConstant: 25,
+            springConstant: lerp(100, 35, ip),
             damping: 0.5,
             // start off stiff, get softer the further we go
-            padding: lerp(Math.PI * 0.025, Math.PI * 0.08, i / (NUM_TAIL_SEGMENTS - 1)),
+            padding: lerp(Math.PI * 0.012, Math.PI * 0.04, ip),
             idealHitboxAngleOffset: Math.PI
          });
       }

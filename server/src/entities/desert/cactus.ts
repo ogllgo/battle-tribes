@@ -92,16 +92,13 @@ export function createCactusConfig(position: Point, rotation: number): EntityCon
 
    const childConfigs = new Array<ChildConfigAttachInfo>();
    if (Math.random() < 0.4) {
-      const offsetDirection = randAngle();
-      const cactusRadius = (rootHitbox.box as CircularBox).radius;
-      const offsetX = cactusRadius * Math.sin(offsetDirection);
-      const offsetY = cactusRadius * Math.cos(offsetDirection);
+      const offset = polarVec2((rootHitbox.box as CircularBox).radius, randAngle());
 
-      const x = rootHitbox.box.position.x + offsetX;
-      const y = rootHitbox.box.position.y + offsetY;
+      const x = rootHitbox.box.position.x + offset.x;
+      const y = rootHitbox.box.position.y + offset.y;
       const position = new Point(x, y);
       
-      const config = createPricklyPearConfig(position, randAngle());
+      const config = createPricklyPearConfig(position, offset, randAngle());
       childConfigs.push({
          entityConfig: config,
          attachedHitbox: config.components[ServerComponentType.transform]!.hitboxes[0],

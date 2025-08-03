@@ -67,15 +67,13 @@ function onTick(cactus: Entity): void {
             const cactusHitbox = transformComponent.hitboxes[0];
             const cactusRadius = (cactusHitbox.box as CircularBox).radius;
       
-            const offsetDirection = randAngle();
-            const offsetX = cactusRadius * Math.sin(offsetDirection);
-            const offsetY = cactusRadius * Math.cos(offsetDirection);
+            const offset = polarVec2(cactusRadius, randAngle());
       
-            const x = cactusHitbox.box.position.x + offsetX;
-            const y = cactusHitbox.box.position.y + offsetY;
+            const x = cactusHitbox.box.position.x + offset.x;
+            const y = cactusHitbox.box.position.y + offset.y;
             const position = new Point(x, y);
             
-            const fruitConfig = createPricklyPearConfig(position, randAngle());
+            const fruitConfig = createPricklyPearConfig(position, offset, randAngle());
 
             const fruitTransformComponent = fruitConfig.components[ServerComponentType.transform]!;
             const fruitHitbox = fruitTransformComponent.hitboxes[0];

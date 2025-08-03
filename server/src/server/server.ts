@@ -1,7 +1,7 @@
 import { VisibleChunkBounds } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { TribeType } from "battletribes-shared/tribes";
-import { Point, randAngle, randFloat } from "battletribes-shared/utils";
+import { Point, randAngle, randFloat, randInt } from "battletribes-shared/utils";
 import { PacketReader, PacketType } from "battletribes-shared/packets";
 import WebSocket, { Server } from "ws";
 import { runSpawnAttempt, spawnInitialEntities } from "../entity-spawning";
@@ -153,10 +153,10 @@ class GameServer {
       // } else {
       //    SRandom.seed(randInt(0, 9999999999));
       // }
+      // @Squeam for the pear shot
+      SRandom.seed(6951300825);
       // : the one with the tundra colliding the top and bottom world borders
       // SRandom.seed(5128141131);
-      // : pretty gud but thing at the top
-      SRandom.seed(7329485081);
 
       const builtinRandomFunc = Math.random;
       Math.random = () => SRandom.next();
@@ -246,10 +246,11 @@ class GameServer {
 
                // @SQUEAM
                setTimeout(() => {
-                  if(1+1===2)return;
+                  if (1+1===2)return;
+                  
                // // const trib = new Tribe(TribeType.plainspeople, false, spawnPosition.copy());
 
-                  const tukConfig = createTukmokConfig(new Point(spawnPosition.x + 150, spawnPosition.y - 50), Math.PI * 0.5);
+                  const tukConfig = createTukmokConfig(new Point(spawnPosition.x + 150, spawnPosition.y - 50), Math.PI * 1.25);
                   for (const c of tukConfig) {
                      createEntity(c, layer, 0);
                   }
@@ -273,7 +274,7 @@ class GameServer {
 
                   setTimeout(() => {
                      const p = spawnPosition.copy();
-                     p.y -= 500;
+                     p.y -= 300;
                      const tribe = new Tribe(TribeType.barbarians, false, p);
                      
                      const pos2 = p.copy();
@@ -281,7 +282,16 @@ class GameServer {
                      pos2.y += randFloat(-30, 30);
                      const t2 = createTribeWorkerConfig(pos2, 0, tribe);
                      createEntity(t2, layer, 0);
-                  }, 1000);
+
+                     setTimeout(() => {
+                        const pos3 = p.copy();
+                        pos3.x += 375;
+                        pos3.y -= 80;
+                        pos3.y -= randFloat(-30, 30);
+                        const t3 = createTribeWorkerConfig(pos3, 0, tribe);
+                        createEntity(t3, layer, 0);
+                     }, 4000)
+                  }, 5000);
                }, 6000);
                
                addPlayerClient(playerClient, surfaceLayer, spawnPosition);

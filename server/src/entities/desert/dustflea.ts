@@ -10,6 +10,7 @@ import { turnToPosition } from "../../ai-shared";
 import { DustfleaHibernateAI } from "../../ai/DustfleaHibernateAI";
 import { EscapeAI } from "../../ai/EscapeAI";
 import { FollowAI } from "../../ai/FollowAI";
+import { PatrolAI } from "../../ai/PatrolAI";
 import WanderAI from "../../ai/WanderAI";
 import { EntityConfig } from "../../components";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";

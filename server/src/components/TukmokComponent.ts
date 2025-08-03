@@ -12,7 +12,7 @@ import { createEntityConfigAttachInfo } from "../components";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { applyAcceleration, applyForce, Hitbox } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
-import { createEntity, destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
+import { createEntity, destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
 import { ComponentArray } from "./ComponentArray";
@@ -44,7 +44,7 @@ export class TukmokComponent {
 
    public ticksToNextAngrySound = randInt(MIN_ANGRY_SOUND_COOLDOWN_TICKS, MAX_ANGRY_SOUND_COOLDOWN_TICKS);
 
-   public tailTargetPos: Point | null = null;
+   public tailFailStrength = 0;
 }
 
 const IDEAL_DIST_FROM_TREE = 120;
@@ -59,6 +59,8 @@ const TRUNK_PASSIVE_STATE_DURATION = secondsToTicks(1);
 
 const MIN_ANGRY_SOUND_COOLDOWN_TICKS = secondsToTicks(3);
 const MAX_ANGRY_SOUND_COOLDOWN_TICKS = secondsToTicks(5.5);
+
+const TAIL_FLAIL_STRENGTH_LOSS_PER_SECOND = 0.2;
 
 export const TukmokComponentArray = new ComponentArray<TukmokComponent>(ServerComponentType.tukmok, true, getDataLength, addDataToPacket);
 TukmokComponentArray.onTick = {
@@ -174,9 +176,10 @@ const treeIsValidTarget = (tree: Entity, aiHelperComponent: AIHelperComponent): 
 
 const getTailClub = (transformComponent: TransformComponent): Entity | null => {
    for (const hitbox of transformComponent.hitboxes) {
-      for (const childHitbox of hitbox.children) {
-         if (getEntityType(childHitbox.entity) === EntityType.tukmokTailClub) {
-            return childHitbox.entity;
+      for (const tether of hitbox.tethers) {
+         const otherHitbox = tether.getOtherHitbox(hitbox);
+         if (getEntityType(otherHitbox.entity) === EntityType.tukmokTailClub) {
+            return otherHitbox.entity;
          }
       }
    }
@@ -194,17 +197,11 @@ const getTailBaseHitbox = (tukmok: Entity): Hitbox => {
    throw new Error();
 }
 
-const getTailTargetPos = (tukmok: Entity, aiHelperComponent: AIHelperComponent): Point | null => {
+const tailHasTargetInRange = (tukmok: Entity, aiHelperComponent: AIHelperComponent): boolean => {
    const tailBaseHitbox = getTailBaseHitbox(tukmok);
 
-   // Chance to not pick a target
-   if (Math.random() < 0.3) {
-      return null;
-   }
+   const MIN_DIST = 200;
 
-   const MIN_DIST = 135;
-
-   const potentialTargets = new Array<Entity>();
    for (const entity of aiHelperComponent.visibleEntities) {
       if (!isValidCombatTarget(tukmok, entity)) {
          continue;
@@ -214,19 +211,11 @@ const getTailTargetPos = (tukmok: Entity, aiHelperComponent: AIHelperComponent):
       const targetHitbox = entityTransformComponent.hitboxes[0];
       const dist = tailBaseHitbox.box.position.calculateDistanceBetween(targetHitbox.box.position);
       if (dist < MIN_DIST) {
-         potentialTargets.push(entity);
+         return true;
       }
    }
 
-   if (potentialTargets.length > 0) {
-      const target = potentialTargets[Math.floor(potentialTargets.length * Math.random())];
-      
-      const targetTransformComponent = TransformComponentArray.getComponent(target);
-      const targetHitbox = targetTransformComponent.hitboxes[0];
-      return targetHitbox.box.position.offset(randFloat(0, 50), randAngle());
-   } else {
-      return null;
-   }
+   return false;
 }
 
 const isValidCombatTarget = (tukmok: Entity, entity: Entity): boolean => {
@@ -298,7 +287,9 @@ const attackEntity = (tukmok: Entity, target: Entity): void => {
    const targetTransformComponent = TransformComponentArray.getComponent(target);
    const targetHitbox = targetTransformComponent.hitboxes[0];
 
-   aiHelperComponent.moveFunc(tukmok, targetHitbox.box.position, 380);
+   // @SQUEAM
+   // aiHelperComponent.moveFunc(tukmok, targetHitbox.box.position, 380);
+   aiHelperComponent.moveFunc(tukmok, targetHitbox.box.position, 260);
    aiHelperComponent.turnFunc(tukmok, targetHitbox.box.position, 1 * Math.PI, 1);
 
    if (tukmokComponent.ticksToNextAngrySound === 0) {
@@ -346,17 +337,36 @@ const attackEntity = (tukmok: Entity, target: Entity): void => {
 
    // Tail flail
    const tailClub = getTailClub(transformComponent);
-   if (tailClub !== null) {
-      // Switch tail targets randomly
-      if (Math.random() < 3 / Settings.TPS) {
-         tukmokComponent.tailTargetPos = getTailTargetPos(tukmok, aiHelperComponent);
+   if (tailClub !== null && tailHasTargetInRange(tukmok, aiHelperComponent)) {
+      // Build up strength
+      tukmokComponent.tailFailStrength += 0.4 / Settings.TPS;
+      // Counteract the detraction done every tick
+      tukmokComponent.tailFailStrength += TAIL_FLAIL_STRENGTH_LOSS_PER_SECOND / Settings.TPS;
+      if (tukmokComponent.tailFailStrength > 1) {
+         tukmokComponent.tailFailStrength = 1;
       }
+      
+      const flailForce = 420 * tukmokComponent.tailFailStrength;
+      
+      const tailClubTransformComponent = TransformComponentArray.getComponent(tailClub);
+      const tailBaseHitbox = getTailBaseHitbox(tukmok);
+      const tailClubHitbox = tailClubTransformComponent.hitboxes[0];
 
-      if (tukmokComponent.tailTargetPos !== null) {
-         // Flail to target
-         const tailClubTransformComponent = TransformComponentArray.getComponent(tailClub);
-         const tailClubHitbox = tailClubTransformComponent.hitboxes[0];
-         applyForce(tailClubHitbox, polarVec2(400, tailClubHitbox.box.position.calculateAngleBetween(tukmokComponent.tailTargetPos)));
+      // Flail to target
+      const flailDirection = tailBaseHitbox.box.position.calculateAngleBetween(tailClubHitbox.box.position) + Math.PI * 0.5;
+      const forceAmount = flailForce * 0.5 * Math.sin(getEntityAgeTicks(tukmok) / Settings.TPS * 4);
+      applyForce(tailClubHitbox, polarVec2(forceAmount, flailDirection));
+
+      for (const hitbox of transformComponent.hitboxes) {
+         if (hitbox === tailBaseHitbox) {
+            continue;
+         }
+         
+         if (hitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_BIG) || hitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_MEDIUM) || hitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_SMALL)) {
+            const flailDirection = tailBaseHitbox.box.position.calculateAngleBetween(hitbox.box.position) + Math.PI * 0.5;
+            const forceAmount = flailForce * 0.27 * Math.sin(getEntityAgeTicks(tukmok) / Settings.TPS * 4);
+            applyForce(hitbox, polarVec2(forceAmount, flailDirection));
+         }
       }
    }
 }
@@ -369,6 +379,11 @@ function onTick(tukmok: Entity): void {
 
    if (tukmokComponent.grazeCooldownTicks > 0) {
       tukmokComponent.grazeCooldownTicks--;
+   }
+
+   tukmokComponent.tailFailStrength -= TAIL_FLAIL_STRENGTH_LOSS_PER_SECOND / Settings.TPS;
+   if (tukmokComponent.tailFailStrength < 0) {
+      tukmokComponent.tailFailStrength = 0;
    }
 
    const tamingComponent = TamingComponentArray.getComponent(tukmok);
@@ -429,20 +444,14 @@ function onTick(tukmok: Entity): void {
    }
    const target = tukmokComponent.target;
    if (isValidCombatTarget(tukmok, tukmokComponent.target)) {
-      // @SQUEAM
-      if (1+1===1) {
-         attackEntity(tukmok, target);
-      }
+      attackEntity(tukmok, target);
       return;
    }
    
    const trunk = getTrunk(transformComponent);
    if (trunk !== null) {
       // Grab leaves from trees if hungry
-      // @TEMPORARY: make less than 1
-      // @SQUEAM
-      // if ((getEntityFullness(tukmok) < 0.9 || tukmokComponent.isInGrazingMood) && tukmokComponent.grazeCooldownTicks === 0) {
-      if (1+1===2) {
+      if ((getEntityFullness(tukmok) < 0.9 || tukmokComponent.isInGrazingMood) && tukmokComponent.grazeCooldownTicks === 0) {
          tukmokComponent.isInGrazingMood = true;
          
          const tukmokBodyHitbox = transformComponent.hitboxes[0];

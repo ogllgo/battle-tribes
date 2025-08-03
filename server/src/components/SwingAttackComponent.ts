@@ -234,7 +234,12 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, hitHitbox: H
    // Register the hit
    const hitFlags = attackingItem !== null && attackingItem.type === ItemType.flesh_sword ? HitFlags.HIT_BY_FLESH_SWORD : 0;
    damageEntity(victim, victimHitbox, attacker, attackDamage, DamageSource.tribeMember, attackEffectiveness, collisionPoint, hitFlags);
-   applyKnockback(victimHitbox, attackKnockback, hitDirection);
+   // @SQUEAM
+   if (getEntityType(victimHitbox.entity) === EntityType.tukmokTailClub || victimHitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_MEDIUM) || victimHitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_BIG) || victimHitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_SMALL)) {
+
+   } else {
+      applyKnockback(victimHitbox, attackKnockback, hitDirection);
+   }
 
    if (attackingItem !== null) {
       // @HACK: shouldn't be hard-coded here!!

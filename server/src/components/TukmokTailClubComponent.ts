@@ -1,10 +1,9 @@
-import { HitboxFlag } from "../../../shared/src/boxes/boxes";
 import { ServerComponentType } from "../../../shared/src/components";
-import { Entity, EntityType, DamageSource } from "../../../shared/src/entities";
+import { EntityType, DamageSource } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Point, polarVec2 } from "../../../shared/src/utils";
 import { Hitbox, applyAbsoluteKnockback } from "../hitboxes";
-import { getEntityType } from "../world";
+import { destroyEntity, getEntityType } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 
@@ -24,10 +23,6 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    
    // @HACK so that the tukmok doesn't kill itself. but this inadvertently means tukmoks can't damage each other
    const entityType = getEntityType(collidingEntity);
-   // @SQUEAM
-   if (entityType === EntityType.wall || entityType === EntityType.player) {
-      return;
-   }
    if (entityType === EntityType.tukmok || entityType === EntityType.tukmokSpur || entityType === EntityType.tukmokTrunk || entityType === EntityType.tukmokTailClub) {
       return;
    }
@@ -44,6 +39,13 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    const hitDir = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
 
    damageEntity(collidingEntity, collidingHitbox, hitbox.entity, 3, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
-   applyAbsoluteKnockback(collidingHitbox, polarVec2(200, hitDir));
+   applyAbsoluteKnockback(collidingHitbox, polarVec2(400, hitDir));
    addLocalInvulnerabilityHash(collidingEntity, "tukmok-tail-club", 0.3);
+
+   // @SQUEAM
+   if (getEntityType(collidingEntity) === EntityType.tribeWorker) {
+      setTimeout(() => {
+         destroyEntity(collidingEntity);
+      }, 400);
+   }
 }

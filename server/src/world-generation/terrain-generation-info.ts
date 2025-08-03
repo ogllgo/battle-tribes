@@ -149,24 +149,25 @@ const BIOME_GENERATION_INFO: ReadonlyArray<BiomeGenerationInfo> = [
          }
       ]
    },
-   {
-      biome: Biome.desertOasis,
-      spawnRequirements: {
-         minTemperature: 0.95,
-      },
-      floorTiles: [
-         {
-            tileType: TileType.water,
-            requirements: {
-               minDist: 3
-            }
-         },
-         {
-            tileType: TileType.sandyDirt
-         }
-      ],
-      wallTiles: []
-   },
+   // @SQUEAM
+   // {
+   //    biome: Biome.desertOasis,
+   //    spawnRequirements: {
+   //       minTemperature: 0.95,
+   //    },
+   //    floorTiles: [
+   //       {
+   //          tileType: TileType.water,
+   //          requirements: {
+   //             minDist: 3
+   //          }
+   //       },
+   //       {
+   //          tileType: TileType.sandyDirt
+   //       }
+   //    ],
+   //    wallTiles: []
+   // },
    {
       biome: Biome.desert,
       spawnRequirements: {

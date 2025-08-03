@@ -1,9 +1,8 @@
 import { EntityType } from "../../shared/src/entities";
-import { Inventory, InventoryName, ItemType } from "../../shared/src/items/items";
+import { Inventory, InventoryName } from "../../shared/src/items/items";
 import { Settings } from "../../shared/src/settings";
 import { addInventoryToInventoryComponent, InventoryComponent } from "./components/InventoryComponent";
 import { InventoryUseComponent } from "./components/InventoryUseComponent";
-import { createItem } from "./items";
 
 const getTribesmanHotbarSize = (entityType: EntityType): number => {
    switch (entityType) {
@@ -18,27 +17,11 @@ const getTribesmanHotbarSize = (entityType: EntityType): number => {
    }
 }
 
-let a = 0;
-
 export function addHumanoidInventories(inventoryComponent: InventoryComponent, inventoryUseComponent: InventoryUseComponent, entityType: EntityType): void {
    // Hotbar
    const hotbarInventory = new Inventory(getTribesmanHotbarSize(entityType), 1, InventoryName.hotbar);
    addInventoryToInventoryComponent(inventoryComponent, hotbarInventory, { acceptsPickedUpItems: true, isDroppedOnDeath: true, isSentToEnemyPlayers: false });
 
-   if (a++ === 0) {
-      hotbarInventory.addItem(createItem(ItemType.ivoryTusk, 1), 1);
-      hotbarInventory.addItem(createItem(ItemType.winterskinArmour, 1), 3);
-      hotbarInventory.addItem(createItem(ItemType.stone_axe, 1), 4);
-   } else {
-      hotbarInventory.addItem(createItem(ItemType.stone_sword, 1), 1);
-      hotbarInventory.addItem(createItem(ItemType.snowberry, 16), 2);
-      if (a <= 3) {
-         hotbarInventory.addItem(createItem(ItemType.winterskinArmour, 1), 3);
-      } else {
-         hotbarInventory.addItem(createItem(ItemType.frostArmour, 1), 3);
-      }
-   }
-   
    inventoryUseComponent.associatedInventoryNames.push(InventoryName.hotbar);
    
    if (entityType !== EntityType.scrappy) {

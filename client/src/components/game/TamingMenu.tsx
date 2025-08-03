@@ -126,6 +126,8 @@ const TamingMenu = () => {
       } else {
          sendCompleteTamingTierPacket(entity);
       }
+
+      playSound("taming-tier-complete.mp3", 1, 1, Camera.position.copy(), getCurrentLayer());
    }
 
    const onSkillClick = (skill: TamingSkill): void => {

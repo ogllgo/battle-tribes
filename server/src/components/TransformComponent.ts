@@ -4,7 +4,7 @@ import { getEntityCollisionGroup } from "battletribes-shared/collision-groups";
 import { assert, Point, randAngle, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import Chunk from "../Chunk";
-import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { AIHelperComponentArray, entityIsNoticedByAI } from "./AIHelperComponent";
@@ -587,7 +587,7 @@ export function attachHitbox(hitbox: Hitbox, parentHitbox: Hitbox, isPartOfParen
    const parentVelocity = getHitboxVelocity(parentHitbox);
    setHitboxVelocity(hitbox, parentVelocity.x, parentVelocity.y);
 
-   // Any acceleration applied to this hitbox will instead be applied to the root hitbox
+   // Clear acceleration. From this point any acceleration applied to this hitbox should instead be applied to the root hitbox
    hitbox.acceleration.x = 0;
    hitbox.acceleration.y = 0;
 }
