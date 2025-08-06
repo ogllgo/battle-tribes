@@ -744,23 +744,22 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          return [createSnobeConfig(pos, angle)];
       }
    });
-   // @SQUEAM
-   // registerNewSpawnInfo({
-   //    entityTypes: [EntityType.inguSerpent],
-   //    layer: surfaceLayer,
-   //    spawnRate: 0.01,
-   //    biome: Biome.tundra,
-   //    tileTypes: [TileType.permafrost],
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 30,
-   //    spawnDistribution: createRawSpawnDistribution(32, 0.0055),
-   //    balanceSpawnDistribution: true,
-   //    doStrictTileTypeCheck: false,
-   //    doStrictCollisionCheck: true,
-   //    createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
-   //       return [createInguSerpentConfig(pos, angle)];
-   //    }
-   // });
+   registerNewSpawnInfo({
+      entityTypes: [EntityType.inguSerpent],
+      layer: surfaceLayer,
+      spawnRate: 0.01,
+      biome: Biome.tundra,
+      tileTypes: [TileType.permafrost],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 30,
+      spawnDistribution: createRawSpawnDistribution(32, 0.0055),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: false,
+      doStrictCollisionCheck: true,
+      createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
+         return [createInguSerpentConfig(pos, angle)];
+      }
+   });
    registerNewSpawnInfo({
       entityTypes: [EntityType.tukmok],
       layer: surfaceLayer,
@@ -770,8 +769,8 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       onlySpawnsInNight: false,
       minSpawnDistance: 30,
       // @SQEAM
-      // spawnDistribution: createRawSpawnDistribution(32, 0.002),
-      spawnDistribution: createRawSpawnDistribution(32, 0),
+      spawnDistribution: createRawSpawnDistribution(32, 0.002),
+      // spawnDistribution: createRawSpawnDistribution(32, 0),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
       doStrictCollisionCheck: true,
