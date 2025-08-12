@@ -142,26 +142,27 @@ function onTick(dustflea: Entity): void {
    }
 
    // If attached, suck
-   if (dustfleaHitbox.parent !== null && entityIsSuckTarget(dustfleaHitbox.parent.entity)) {
-      // wriggle around
-      const ageTicks = getEntityAgeTicks(dustflea);
-      addHitboxAngularAcceleration(dustfleaHitbox, 8 * Math.sin((ageTicks / Settings.TPS) * 40));
+   // @TEMPORARY @HACK @Incomplete cuz this crashing rn????????
+   // if (dustfleaHitbox.parent !== null && entityIsSuckTarget(dustfleaHitbox.parent.entity)) {
+   //    // wriggle around
+   //    const ageTicks = getEntityAgeTicks(dustflea);
+   //    addHitboxAngularAcceleration(dustfleaHitbox, 8 * Math.sin((ageTicks / Settings.TPS) * 40));
       
-      // Suck
-      const dustfleaComponent = DustfleaComponentArray.getComponent(dustflea);
-      const ticksSinceLatch = ageTicks - dustfleaComponent.latchTicks;
-      if (ticksSinceLatch % (Settings.TPS * 2) === 0) {
-         damageEntity(dustfleaHitbox.parent.entity, dustfleaHitbox, dustflea, 1, 0, AttackEffectiveness.effective, dustfleaHitbox.box.position.copy(), 0)
-         addHungerEnergy(dustflea, 10);
-      }
+   //    // Suck
+   //    const dustfleaComponent = DustfleaComponentArray.getComponent(dustflea);
+   //    const ticksSinceLatch = ageTicks - dustfleaComponent.latchTicks;
+   //    if (ticksSinceLatch % (Settings.TPS * 2) === 0) {
+   //       damageEntity(dustfleaHitbox.parent.entity, dustfleaHitbox, dustflea, 1, 0, AttackEffectiveness.effective, dustfleaHitbox.box.position.copy(), 0)
+   //       addHungerEnergy(dustflea, 10);
+   //    }
       
-      // Unlatch when full
-      if (getEntityFullness(dustflea) > 0.8) {
-         detachHitbox(dustfleaHitbox);
-      }
+   //    // Unlatch when full
+   //    if (getEntityFullness(dustflea) > 0.8) {
+   //       detachHitbox(dustfleaHitbox);
+   //    }
 
-      return;
-   }
+   //    return;
+   // }
    
 
    const dustfleaComponent = DustfleaComponentArray.getComponent(dustflea);

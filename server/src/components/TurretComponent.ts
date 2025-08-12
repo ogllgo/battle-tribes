@@ -193,6 +193,9 @@ const fire = (turret: Entity, ammoType: TurretAmmoType): void => {
 }
 
 function onTick(turret: Entity): void {
+   // @SQUEAM
+   if(1+1===2)return;
+   
    const aiHelperComponent = AIHelperComponentArray.getComponent(turret);
    const turretComponent = TurretComponentArray.getComponent(turret);
 

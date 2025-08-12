@@ -133,8 +133,6 @@ export enum ServerComponentType {
    sandBall,
    krumblidMorphCocoon,
    okrenTongue,
-   okrenTongueSegment,
-   okrenTongueTip,
    dustfleaEgg,
    spruceTree,
    tundraRock,
@@ -146,7 +144,8 @@ export enum ServerComponentType {
    tukmok,
    tukmokTrunk,
    tukmokTailClub,
-   tukmokSpur
+   tukmokSpur,
+   inguYetuksnoglurblidokflea
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -272,8 +271,6 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.sandBall]: "Sand Ball Component",
    [ServerComponentType.krumblidMorphCocoon]: "Krumblid Morph Cocoon Component",
    [ServerComponentType.okrenTongue]: "Okren Tongue Component",
-   [ServerComponentType.okrenTongueSegment]: "Okren Tongue Segment Component",
-   [ServerComponentType.okrenTongueTip]: "Okren Tongue Tip Component",
    [ServerComponentType.dustfleaEgg]: "Dustflea Egg Component",
    [ServerComponentType.spruceTree]: "Spruce Tree Component",
    [ServerComponentType.tundraRock]: "Tundra Rock Component",
@@ -286,6 +283,7 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.tukmokTrunk]: "Tukmok Trunk Component",
    [ServerComponentType.tukmokTailClub]: "Tukmok Tail Component",
    [ServerComponentType.tukmokSpur]: "Tukmok Spur Component",
+   [ServerComponentType.inguYetuksnoglurblidokflea]: "Ingu-Yetuksnoglurblidokflea Component"
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;
@@ -397,8 +395,6 @@ export const EntityComponents = {
    [EntityType.sandBall]: [],
    [EntityType.krumblidMorphCocoon]: [],
    [EntityType.okrenTongue]: [],
-   [EntityType.okrenTongueSegment]: [],
-   [EntityType.okrenTongueTip]: [],
    [EntityType.dustfleaEgg]: [],
    [EntityType.spruceTree]: [],
    [EntityType.tundraRock]: [],
@@ -411,6 +407,7 @@ export const EntityComponents = {
    [EntityType.tukmokTailClub]: [],
    [EntityType.tukmokTrunk]: [],
    [EntityType.tukmokSpur]: [],
+   [EntityType.inguYetuksnoglurblidokflea]: [],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;
 
 export type EntityComponentTypes<T extends EntityType> = typeof EntityComponents[T];

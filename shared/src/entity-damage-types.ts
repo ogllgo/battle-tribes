@@ -443,14 +443,6 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       effectiveDamageTypes: [DamageType.weapon, DamageType.axe, DamageType.pickaxe],
       stoppedDamageTypes: []
    },
-   [EntityType.okrenTongueSegment]: {
-      effectiveDamageTypes: [DamageType.weapon, DamageType.axe, DamageType.pickaxe],
-      stoppedDamageTypes: []
-   },
-   [EntityType.okrenTongueTip]: {
-      effectiveDamageTypes: [DamageType.weapon, DamageType.axe, DamageType.pickaxe],
-      stoppedDamageTypes: []
-   },
    [EntityType.dustfleaEgg]: {
       effectiveDamageTypes: [DamageType.weapon, DamageType.axe, DamageType.pickaxe],
       stoppedDamageTypes: []
@@ -499,6 +491,10 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
    },
+   [EntityType.inguYetuksnoglurblidokflea]: {
+      effectiveDamageTypes: [DamageType.weapon],
+      stoppedDamageTypes: []
+   }
 };
 
 const getItemDamageTypes = (item: Item | null): ReadonlyArray<DamageType> => {

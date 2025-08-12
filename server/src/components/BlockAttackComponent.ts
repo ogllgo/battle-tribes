@@ -140,7 +140,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    // @HACK @Temporary for the Eastern Bowcuck Shield Advance i am putting this here so that the shield wall is useful,
    // but this might be good behaviour anyways - maybe. probably not. want to encourage people to
    // use their swords to deflect the tongue. yeah remove after.
-   if (getEntityType(collidingEntity) === EntityType.okrenTongueTip) {
+   if (getEntityType(collidingEntity) === EntityType.okrenTongue) {
       // @INCOMPLETE
       
       // const tongueTip = collidingEntity;

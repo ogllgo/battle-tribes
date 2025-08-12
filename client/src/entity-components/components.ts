@@ -133,8 +133,6 @@ import { OkrenComponent, OkrenComponentArray, OkrenComponentParams } from "./ser
 import { DustfleaMorphCocoonComponent, DustfleaMorphCocoonComponentArray, DustfleaMorphCocoonComponentParams } from "./server-components/DustfleaMorphCocoonComponent";
 import { SandBallComponent, SandBallComponentArray, SandBallComponentParams } from "./server-components/SandBallComponent";
 import { KrumblidMorphCocoonComponent, KrumblidMorphCocoonComponentArray, KrumblidMorphCocoonComponentParams } from "./server-components/KrumblidMorphCocoonComponent";
-import { OkrenTongueSegmentComponent, OkrenTongueSegmentComponentArray, OkrenTongueSegmentComponentParams } from "./server-components/OkrenTongueSegmentComponent";
-import { OkrenTongueTipComponent, OkrenTongueTipComponentArray, OkrenTongueTipComponentParams } from "./server-components/OkrenTongueTipComponent";
 import { OkrenTongueComponent, OkrenTongueComponentArray, OkrenTongueComponentParams } from "./server-components/OkrenTongueComponent";
 import { DustfleaEggComponent, DustfleaEggComponentArray, DustfleaEggComponentParams } from "./server-components/DustfleaEggComponent";
 import { OkrenClawComponent, OkrenClawComponentArray, OkrenClawComponentParams } from "./server-components/OkrenClawComponent";
@@ -149,6 +147,7 @@ import { TukmokComponent, TukmokComponentArray, TukmokComponentParams } from "./
 import { TukmokTrunkComponent, TukmokTrunkComponentArray, TukmokTrunkComponentParams } from "./server-components/TukmokTrunkComponent";
 import { TukmokTailClubComponent, TukmokTailClubComponentArray, TukmokTailClubComponentParams } from "./server-components/TukmokTailClubComponent";
 import { TukmokSpurComponent, TukmokSpurComponentArray, TukmokSpurComponentParams } from "./server-components/TukmokSpurComponent";
+import { InguYetuksnoglurblidokfleaComponent, InguYetuksnoglurblidokfleaComponentArray, InguYetuksnoglurblidokfleaComponentParams } from "./server-components/InguYetuksnoglurblidokfleaComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -292,8 +291,6 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.sandBall]: SandBallComponentArray,
    [ServerComponentType.krumblidMorphCocoon]: KrumblidMorphCocoonComponentArray,
    [ServerComponentType.okrenTongue]: OkrenTongueComponentArray,
-   [ServerComponentType.okrenTongueSegment]: OkrenTongueSegmentComponentArray,
-   [ServerComponentType.okrenTongueTip]: OkrenTongueTipComponentArray,
    [ServerComponentType.dustfleaEgg]: DustfleaEggComponentArray,
    [ServerComponentType.spruceTree]: SpruceTreeComponentArray,
    [ServerComponentType.tundraRock]: TundraRockComponentArray,
@@ -306,6 +303,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.tukmokTrunk]: TukmokTrunkComponentArray,
    [ServerComponentType.tukmokTailClub]: TukmokTailClubComponentArray,
    [ServerComponentType.tukmokSpur]: TukmokSpurComponentArray,
+   [ServerComponentType.inguYetuksnoglurblidokflea]: InguYetuksnoglurblidokfleaComponentArray,
 };
 
 const ServerComponentRecord = {
@@ -425,8 +423,6 @@ const ServerComponentRecord = {
    [ServerComponentType.sandBall]: (): SandBallComponent => 0 as any,
    [ServerComponentType.krumblidMorphCocoon]: (): KrumblidMorphCocoonComponent => 0 as any,
    [ServerComponentType.okrenTongue]: (): OkrenTongueComponent => 0 as any,
-   [ServerComponentType.okrenTongueSegment]: (): OkrenTongueSegmentComponent => 0 as any,
-   [ServerComponentType.okrenTongueTip]: (): OkrenTongueTipComponent => 0 as any,
    [ServerComponentType.dustfleaEgg]: (): DustfleaEggComponent => 0 as any,
    [ServerComponentType.spruceTree]: (): SpruceTreeComponent => 0 as any,
    [ServerComponentType.tundraRock]: (): TundraRockComponent => 0 as any,
@@ -439,6 +435,7 @@ const ServerComponentRecord = {
    [ServerComponentType.tukmokTrunk]: (): TukmokTrunkComponent => 0 as any,
    [ServerComponentType.tukmokTailClub]: (): TukmokTailClubComponent => 0 as any,
    [ServerComponentType.tukmokSpur]: (): TukmokSpurComponent => 0 as any,
+   [ServerComponentType.inguYetuksnoglurblidokflea]: (): InguYetuksnoglurblidokfleaComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
 
 export type ServerComponent<T extends ServerComponentType> = ReturnType<typeof ServerComponentRecord[T]>;
@@ -560,8 +557,6 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.sandBall]: (): SandBallComponentParams => 0 as any,
    [ServerComponentType.krumblidMorphCocoon]: (): KrumblidMorphCocoonComponentParams => 0 as any,
    [ServerComponentType.okrenTongue]: (): OkrenTongueComponentParams => 0 as any,
-   [ServerComponentType.okrenTongueSegment]: (): OkrenTongueSegmentComponentParams => 0 as any,
-   [ServerComponentType.okrenTongueTip]: (): OkrenTongueTipComponentParams => 0 as any,
    [ServerComponentType.dustfleaEgg]: (): DustfleaEggComponentParams => 0 as any,
    [ServerComponentType.spruceTree]: (): SpruceTreeComponentParams => 0 as any,
    [ServerComponentType.tundraRock]: (): TundraRockComponentParams => 0 as any,
@@ -574,6 +569,7 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.tukmokTrunk]: (): TukmokTrunkComponentParams => 0 as any,
    [ServerComponentType.tukmokTailClub]: (): TukmokTailClubComponentParams => 0 as any,
    [ServerComponentType.tukmokSpur]: (): TukmokSpurComponentParams => 0 as any,
+   [ServerComponentType.inguYetuksnoglurblidokflea]: (): InguYetuksnoglurblidokfleaComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

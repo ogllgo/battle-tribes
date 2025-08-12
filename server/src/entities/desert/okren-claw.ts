@@ -120,7 +120,7 @@ export function getOkrenClawSlashingArmSegmentOffset(size: OkrenAgeStage, growth
    }
 }
 
-export function createOkrenClawConfig(position: Point, angle: number, size: OkrenAgeStage, growthStage: OkrenClawGrowthStage, sideIsFlipped: boolean, parentHitbox: Hitbox): EntityConfig {
+export function createOkrenClawConfig(position: Point, angle: number, size: OkrenAgeStage, growthStage: OkrenClawGrowthStage, sideIsFlipped: boolean): EntityConfig {
    const transformComponent = new TransformComponent();
 
    const bigArmSegmentSize = getOkrenClawBigArmSegmentSize(size, growthStage);
@@ -128,7 +128,7 @@ export function createOkrenClawConfig(position: Point, angle: number, size: Okre
    
    const bigArmSegmentPosition = position.copy();
    bigArmSegmentPosition.add(bigArmSegmentOffset);
-   const bigArmSegmentHitbox = new Hitbox(transformComponent, parentHitbox, true, new RectangularBox(bigArmSegmentPosition, bigArmSegmentOffset, Math.PI * 0.3, bigArmSegmentSize.x, bigArmSegmentSize.y), 2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_BIG_ARM_SEGMENT]);
+   const bigArmSegmentHitbox = new Hitbox(transformComponent, null, true, new RectangularBox(bigArmSegmentPosition, bigArmSegmentOffset, Math.PI * 0.3, bigArmSegmentSize.x, bigArmSegmentSize.y), 2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_BIG_ARM_SEGMENT]);
    bigArmSegmentHitbox.box.flipX = sideIsFlipped;
    // @Hack
    bigArmSegmentHitbox.box.totalFlipXMultiplier = sideIsFlipped ? -1 : 1;

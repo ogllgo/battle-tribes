@@ -326,6 +326,12 @@ export function createEntity<ComponentTypes extends ServerComponentType>(entityC
       }
    }
 
+   if (typeof entityConfig.attachInfo !== "undefined") {
+      if (typeof entityConfig.attachInfo.attachedHitbox === "undefined") {
+         throw new Error();
+      }
+   }
+
    return entity;
 }
 

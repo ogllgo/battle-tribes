@@ -304,7 +304,7 @@ function onTick(okren: Entity): void {
       if (!hasClaw(okrenTransformComponent, side)) {
          if (okrenComponent.limbRegrowTimes[side] === 0) {
             const sideIsFlipped = side === OkrenSide.left ? true : false;
-            const clawConfig = createOkrenClawConfig(okrenBodyHitbox.box.position.copy(), 0, okrenComponent.size, OkrenClawGrowthStage.ONE, sideIsFlipped, okrenBodyHitbox);
+            const clawConfig = createOkrenClawConfig(okrenBodyHitbox.box.position.copy(), 0, okrenComponent.size, OkrenClawGrowthStage.ONE, sideIsFlipped);
             const clawRootHitbox = clawConfig.components[ServerComponentType.transform]!.hitboxes[0];
             clawConfig.attachInfo = createEntityConfigAttachInfo(clawRootHitbox, okrenBodyHitbox, true);
             createEntity(clawConfig, getEntityLayer(okren), 0);
@@ -442,100 +442,102 @@ function onTick(okren: Entity): void {
       return;
    }
 
-   if (okrenComponent.numEggsReady >= 5 && !okrenComponent.isLayingEggs) {
-      // Wait until the okren finds a good spot to lay eggs
-      if (getEntityAgeTicks(okren) % Math.floor(Settings.TPS / 4) === 0) {
-         const potentialPosition = getRandomNearbyPosition(okren);
-         if (isValidEggLayPosition(okren, potentialPosition)) {
-            okrenComponent.eggLayPosition = potentialPosition;
-            okrenComponent.isLayingEggs = true;
-         }
-      }
-   }
-   
-   if (okrenComponent.isProtectingEggs) {
-      // Turn to face teh egg lay position
-      const angleToLayPosition = okrenBodyHitbox.box.position.calculateAngleBetween(okrenComponent.eggLayPosition);
-      const distance = getDistanceFromPointToHitbox(okrenComponent.eggLayPosition, okrenBodyHitbox);
-      
-      if (getAbsAngleDiff(okrenBodyHitbox.box.angle, angleToLayPosition) < 0.2 && Math.abs(getHitboxAngularVelocity(okrenBodyHitbox)) < 0.2) {
-         // Is facing correct angle to ball up sand
+   // @TEMPORARY cuz eggs crash the game rn following the hitboxes rework O_O_O
 
-         if (willStopAtDesiredDistance(okrenBodyHitbox, 40, distance)) {
-            // @Copynpaste
-            turnHitboxToAngle(okrenBodyHitbox, angleToLayPosition, 0.5 * Math.PI, 0.75, false);
+   // if (okrenComponent.numEggsReady >= 5 && !okrenComponent.isLayingEggs) {
+   //    // Wait until the okren finds a good spot to lay eggs
+   //    if (getEntityAgeTicks(okren) % Math.floor(Settings.TPS / 4) === 0) {
+   //       const potentialPosition = getRandomNearbyPosition(okren);
+   //       if (isValidEggLayPosition(okren, potentialPosition)) {
+   //          okrenComponent.eggLayPosition = potentialPosition;
+   //          okrenComponent.isLayingEggs = true;
+   //       }
+   //    }
+   // }
    
-            const sandBallingAI = aiHelperComponent.getSandBallingAI();
-            updateSandBallingAI(sandBallingAI);
-            runSandBallingAI(okren, aiHelperComponent, sandBallingAI);
-         } else {
-            aiHelperComponent.moveFunc(okren, okrenComponent.eggLayPosition, 350);
-            aiHelperComponent.turnFunc(okren, okrenComponent.eggLayPosition, 0.5 * Math.PI, 0.6);
-         }
-      } else {
-         // Isn't facing correct angle to ball up sand
+   // if (okrenComponent.isProtectingEggs) {
+   //    // Turn to face teh egg lay position
+   //    const angleToLayPosition = okrenBodyHitbox.box.position.calculateAngleBetween(okrenComponent.eggLayPosition);
+   //    const distance = getDistanceFromPointToHitbox(okrenComponent.eggLayPosition, okrenBodyHitbox);
+      
+   //    if (getAbsAngleDiff(okrenBodyHitbox.box.angle, angleToLayPosition) < 0.2 && Math.abs(getHitboxAngularVelocity(okrenBodyHitbox)) < 0.2) {
+   //       // Is facing correct angle to ball up sand
+
+   //       if (willStopAtDesiredDistance(okrenBodyHitbox, 40, distance)) {
+   //          // @Copynpaste
+   //          turnHitboxToAngle(okrenBodyHitbox, angleToLayPosition, 0.5 * Math.PI, 0.75, false);
+   
+   //          const sandBallingAI = aiHelperComponent.getSandBallingAI();
+   //          updateSandBallingAI(sandBallingAI);
+   //          runSandBallingAI(okren, aiHelperComponent, sandBallingAI);
+   //       } else {
+   //          aiHelperComponent.moveFunc(okren, okrenComponent.eggLayPosition, 350);
+   //          aiHelperComponent.turnFunc(okren, okrenComponent.eggLayPosition, 0.5 * Math.PI, 0.6);
+   //       }
+   //    } else {
+   //       // Isn't facing correct angle to ball up sand
          
-         // If the okren is too close to turn around without scattering the eggs, move back
-         if (willStopAtDesiredDistance(okrenBodyHitbox, 75, distance)) {
-            const targetPos = okrenBodyHitbox.box.position.offset(1, angleToLayPosition + Math.PI);
+   //       // If the okren is too close to turn around without scattering the eggs, move back
+   //       if (willStopAtDesiredDistance(okrenBodyHitbox, 75, distance)) {
+   //          const targetPos = okrenBodyHitbox.box.position.offset(1, angleToLayPosition + Math.PI);
             
-            aiHelperComponent.moveFunc(okren, targetPos, 350);
-            aiHelperComponent.turnFunc(okren, targetPos, 0.5 * Math.PI, 0.6);
-         } else {
-            if (getHitboxVelocity(okrenBodyHitbox).magnitude() < 30) {
-               // @Copynpaste
-               turnHitboxToAngle(okrenBodyHitbox, angleToLayPosition, 0.5 * Math.PI, 0.75, false);
-            }
-         }
-      }
-      return;
-   } else if (okrenComponent.isLayingEggs) {
-      const distance = getDistanceFromPointToHitbox(okrenComponent.eggLayPosition, okrenBodyHitbox);
-      if (willStopAtDesiredDistance(okrenBodyHitbox, 60, distance)) {
-         // Once in range, turn to face away from the lay position
-         const targetAngle = okrenBodyHitbox.box.position.calculateAngleBetween(okrenComponent.eggLayPosition) + Math.PI;
-         turnHitboxToAngle(okrenBodyHitbox, targetAngle, 0.5 * Math.PI, 0.75, false);
+   //          aiHelperComponent.moveFunc(okren, targetPos, 350);
+   //          aiHelperComponent.turnFunc(okren, targetPos, 0.5 * Math.PI, 0.6);
+   //       } else {
+   //          if (getHitboxVelocity(okrenBodyHitbox).magnitude() < 30) {
+   //             // @Copynpaste
+   //             turnHitboxToAngle(okrenBodyHitbox, angleToLayPosition, 0.5 * Math.PI, 0.75, false);
+   //          }
+   //       }
+   //    }
+   //    return;
+   // } else if (okrenComponent.isLayingEggs) {
+   //    const distance = getDistanceFromPointToHitbox(okrenComponent.eggLayPosition, okrenBodyHitbox);
+   //    if (willStopAtDesiredDistance(okrenBodyHitbox, 60, distance)) {
+   //       // Once in range, turn to face away from the lay position
+   //       const targetAngle = okrenBodyHitbox.box.position.calculateAngleBetween(okrenComponent.eggLayPosition) + Math.PI;
+   //       turnHitboxToAngle(okrenBodyHitbox, targetAngle, 0.5 * Math.PI, 0.75, false);
 
-         if (getAbsAngleDiff(okrenBodyHitbox.box.angle, targetAngle) < 0.2 && Math.abs(getHitboxAngularVelocity(okrenBodyHitbox)) < 0.2) {
-            for (const side of OKREN_SIDES) {
-               setOkrenHitboxIdealAngles(okren, side, layingIdealAngles, 1.2 * Math.PI, 3 * Math.PI, 3 * Math.PI);
-            }
+   //       if (getAbsAngleDiff(okrenBodyHitbox.box.angle, targetAngle) < 0.2 && Math.abs(getHitboxAngularVelocity(okrenBodyHitbox)) < 0.2) {
+   //          for (const side of OKREN_SIDES) {
+   //             setOkrenHitboxIdealAngles(okren, side, layingIdealAngles, 1.2 * Math.PI, 3 * Math.PI, 3 * Math.PI);
+   //          }
 
-            if (++okrenComponent.eggLayTimer >= DUSTFLEA_EGG_LAY_TIME_TICKS) {
-               assert(okrenComponent.numEggsReady > 0);
+   //          if (++okrenComponent.eggLayTimer >= DUSTFLEA_EGG_LAY_TIME_TICKS) {
+   //             assert(okrenComponent.numEggsReady > 0);
       
-               const hitboxRadius = (okrenBodyHitbox.box as CircularBox).radius;
+   //             const hitboxRadius = (okrenBodyHitbox.box as CircularBox).radius;
                
-               const eggPosition = okrenBodyHitbox.box.position.offset(hitboxRadius + 2, Math.PI + okrenBodyHitbox.box.angle + randFloat(-0.15, 0.15));
+   //             const eggPosition = okrenBodyHitbox.box.position.offset(hitboxRadius + 2, Math.PI + okrenBodyHitbox.box.angle + randFloat(-0.15, 0.15));
       
-               const eggConfig = createDustfleaEggConfig(eggPosition, randAngle(), okren);
-               createEntity(eggConfig, getEntityLayer(okren), 0);
+   //             const eggConfig = createDustfleaEggConfig(eggPosition, randAngle(), okren);
+   //             createEntity(eggConfig, getEntityLayer(okren), 0);
                
-               okrenComponent.eggLayTimer = 0;
-               okrenComponent.numEggsReady--;
+   //             okrenComponent.eggLayTimer = 0;
+   //             okrenComponent.numEggsReady--;
       
-               // @Hack: entity is the okren because the dustflea egg isn't created yet so the function can't get the transform component of it
-               const tickEvent: EntityTickEvent = {
-                  type: EntityTickEventType.dustfleaEggPop,
-                  entityID: okren,
-                  data: 0
-               };
-               registerEntityTickEvent(okren, tickEvent);
-            }
-         }
-      } else {
-         // @Hack @Cleanup: really bad place to define the acceleration and turn speed
-         aiHelperComponent.moveFunc(okren, okrenComponent.eggLayPosition, 350);
-         aiHelperComponent.turnFunc(okren, okrenComponent.eggLayPosition, 1.6 * Math.PI, 0.6);
-      }
+   //             // @Hack: entity is the okren because the dustflea egg isn't created yet so the function can't get the transform component of it
+   //             const tickEvent: EntityTickEvent = {
+   //                type: EntityTickEventType.dustfleaEggPop,
+   //                entityID: okren,
+   //                data: 0
+   //             };
+   //             registerEntityTickEvent(okren, tickEvent);
+   //          }
+   //       }
+   //    } else {
+   //       // @Hack @Cleanup: really bad place to define the acceleration and turn speed
+   //       aiHelperComponent.moveFunc(okren, okrenComponent.eggLayPosition, 350);
+   //       aiHelperComponent.turnFunc(okren, okrenComponent.eggLayPosition, 1.6 * Math.PI, 0.6);
+   //    }
          
-      if (okrenComponent.numEggsReady === 0) {
-         // Once all eggs are laid, switch to balling up sand around them to protect them
-         okrenComponent.isProtectingEggs = true;
-      }
+   //    if (okrenComponent.numEggsReady === 0) {
+   //       // Once all eggs are laid, switch to balling up sand around them to protect them
+   //       okrenComponent.isProtectingEggs = true;
+   //    }
 
-      return;
-   }
+   //    return;
+   // }
 
    if (getEntityFullness(okren) < 0.5) {
       const preyTarget = getOkrenPreyTarget(okren, aiHelperComponent);

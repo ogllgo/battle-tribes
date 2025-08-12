@@ -129,7 +129,7 @@ function onHitboxCollision(affectedHitbox: Hitbox, collidingHitbox: Hitbox, coll
    const collidingEntity = collidingHitbox.entity;
 
    // @Hack: should be able to hit other okrens' tongues
-   if (getEntityType(collidingEntity) === EntityType.okrenTongue || getEntityType(collidingEntity) === EntityType.okrenTongueTip || getEntityType(collidingEntity) === EntityType.okrenTongueSegment) {
+   if (getEntityType(collidingEntity) === EntityType.okrenTongue) {
       return;
    }
 

@@ -540,6 +540,10 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/tukmok-spur/spur-shoulder-left-back.png",
    "entities/tukmok-spur/spur-shoulder-right-front.png",
    "entities/tukmok-spur/spur-shoulder-right-back.png",
+   "entities/ingu-yetuksnoglurblidokflea/body-1.png",
+   "entities/ingu-yetuksnoglurblidokflea/body-2.png",
+   "entities/ingu-yetuksnoglurblidokflea/body-3.png",
+   "entities/ingu-yetuksnoglurblidokflea/body-4.png",
 ];
 
 export function registerTextureSource(textureSource: string): void {

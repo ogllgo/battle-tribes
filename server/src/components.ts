@@ -116,8 +116,6 @@ import { OkrenComponent } from "./components/OkrenComponent";
 import { DustfleaMorphCocoonComponent } from "./components/DustfleaMorphCocoonComponent";
 import { SandBallComponent } from "./components/SandBallComponent";
 import { KrumblidMorphCocoonComponent } from "./components/KrumblidMorphCocoonComponent";
-import { OkrenTongueSegmentComponent } from "./components/OkrenTongueSegmentComponent";
-import { OkrenTongueTipComponent } from "./components/OkrenTongueTipComponent";
 import { OkrenTongueComponent } from "./components/OkrenTongueComponent";
 import { DustfleaEggComponent } from "./components/DustfleaEggComponent";
 import { OkrenClawComponent } from "./components/OkrenClawComponent";
@@ -132,6 +130,7 @@ import { TukmokComponent } from "./components/TukmokComponent";
 import { TukmokTailClubComponent } from "./components/TukmokTailClubComponent";
 import { TukmokTrunkComponent } from "./components/TukmokTrunkComponent";
 import { TukmokSpurComponent } from "./components/TukmokSpurComponent";
+import { InguYetuksnoglurblidokfleaComponent } from "./components/InguYetuksnoglurblidokfleaComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -252,8 +251,6 @@ const ComponentClassRecord = {
    [ServerComponentType.sandBall]: () => SandBallComponent,
    [ServerComponentType.krumblidMorphCocoon]: () => KrumblidMorphCocoonComponent,
    [ServerComponentType.okrenTongue]: () => OkrenTongueComponent,
-   [ServerComponentType.okrenTongueSegment]: () => OkrenTongueSegmentComponent,
-   [ServerComponentType.okrenTongueTip]: () => OkrenTongueTipComponent,
    [ServerComponentType.dustfleaEgg]: () => DustfleaEggComponent,
    [ServerComponentType.spruceTree]: () => SpruceTreeComponent,
    [ServerComponentType.tundraRock]: () => TundraRockComponent,
@@ -266,6 +263,7 @@ const ComponentClassRecord = {
    [ServerComponentType.tukmokTrunk]: () => TukmokTrunkComponent,
    [ServerComponentType.tukmokTailClub]: () => TukmokTailClubComponent,
    [ServerComponentType.tukmokSpur]: () => TukmokSpurComponent,
+   [ServerComponentType.inguYetuksnoglurblidokflea]: () => InguYetuksnoglurblidokfleaComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

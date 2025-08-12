@@ -415,8 +415,6 @@ export function sortComponentArrays(): void {
       [ServerComponentType.sandBall]: ComponentArrayPriority.medium,
       [ServerComponentType.krumblidMorphCocoon]: ComponentArrayPriority.medium,
       [ServerComponentType.okrenTongue]: ComponentArrayPriority.medium,
-      [ServerComponentType.okrenTongueSegment]: ComponentArrayPriority.medium,
-      [ServerComponentType.okrenTongueTip]: ComponentArrayPriority.medium,
       [ServerComponentType.dustfleaEgg]: ComponentArrayPriority.medium,
       [ServerComponentType.spruceTree]: ComponentArrayPriority.medium,
       [ServerComponentType.tundraRock]: ComponentArrayPriority.medium,
@@ -429,6 +427,7 @@ export function sortComponentArrays(): void {
       [ServerComponentType.tukmokTrunk]: ComponentArrayPriority.medium,
       [ServerComponentType.tukmokTailClub]: ComponentArrayPriority.medium,
       [ServerComponentType.tukmokSpur]: ComponentArrayPriority.medium,
+      [ServerComponentType.inguYetuksnoglurblidokflea]: ComponentArrayPriority.medium,
       [ServerComponentType.health]: ComponentArrayPriority.high,
       // The physics component ticking must be done at the end so there is time for the positionIsDirty and hitboxesAreDirty flags to collect
       [ServerComponentType.physics]: ComponentArrayPriority.high
