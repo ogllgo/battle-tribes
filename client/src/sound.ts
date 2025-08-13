@@ -331,7 +331,8 @@ export async function loadSoundEffects(): Promise<void> {
       "tukmok-angry-2.mp3",
       "tukmok-angry-3.mp3",
       "tukmok-death.mp3",
-      "taming-tier-complete.mp3"
+      "taming-tier-complete.mp3",
+      "lazur.mp3"
    ];
 
    const tempAudioBuffers: Partial<Record<string, AudioBuffer>> = {};

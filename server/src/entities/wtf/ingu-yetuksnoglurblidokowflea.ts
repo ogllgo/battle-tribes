@@ -132,7 +132,7 @@ export function createInguYetuksnoglurblidokowfleaConfig(position: Point, angle:
       const seekerOffset = new Point(52, 52);
       const trunkPosition = body2Hitbox.box.position.copy();
       trunkPosition.add(rotatePoint(seekerOffset, angle));
-      const seekerHeadConfig = createInguYetuksnoglurblidokowfleaSeekerHeadConfig(trunkPosition, angle, seekerOffset);
+      const seekerHeadConfig = createInguYetuksnoglurblidokowfleaSeekerHeadConfig(trunkPosition, angle, seekerOffset, true, 26);
       childConfigs.push({
          entityConfig: seekerHeadConfig,
          attachedHitbox: seekerHeadConfig.components[ServerComponentType.transform]!.hitboxes[0],
@@ -146,6 +146,20 @@ export function createInguYetuksnoglurblidokowfleaConfig(position: Point, angle:
    body3Position.add(rotatePoint(body3Offset, angle));
    const body3Hitbox = new Hitbox(transformComponent, null, true, new CircularBox(body3Position, new Point(0, 0), 0, 60), 6, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.YETUK_BODY_3]);
    addHitboxToTransformComponent(transformComponent, body3Hitbox);
+
+   // Tukmok's seeker head
+   {
+      const seekerOffset = new Point(-52, 52);
+      const trunkPosition = body3Hitbox.box.position.copy();
+      trunkPosition.add(rotatePoint(seekerOffset, angle));
+      const tukmokHeadConfig = createInguYetuksnoglurblidokowfleaSeekerHeadConfig(trunkPosition, angle, seekerOffset, false, 44);
+      childConfigs.push({
+         entityConfig: tukmokHeadConfig,
+         attachedHitbox: tukmokHeadConfig.components[ServerComponentType.transform]!.hitboxes[0],
+         parentHitbox: body3Hitbox,
+         isPartOfParent: true
+      });
+   }
    
    const body4Offset = new Point(0, -BODY_SEGMENT_SEPARATION);
    const body4Position = body3Position.copy();
@@ -214,7 +228,7 @@ export function createInguYetuksnoglurblidokowfleaConfig(position: Point, angle:
 
    const statusEffectComponent = new StatusEffectComponent(0);
 
-   const aiHelperComponent = new AIHelperComponent(body1Hitbox, 600, moveFunc, turnFunc);
+   const aiHelperComponent = new AIHelperComponent(body1Hitbox, 900, moveFunc, turnFunc);
 
    const inguYetuksnoglurblidokowfleaComponent = new InguYetuksnoglurblidokowfleaComponent();
    

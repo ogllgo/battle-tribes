@@ -322,9 +322,6 @@ export function spawnInitialEntities(): void {
       // const config = createTukmokConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140 + 2000, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100 - 1000), 0);
       // createEntity(config, surfaceLayer, 0);
 
-      const config = createInguYetuksnoglurblidokowfleaConfig(new Point(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
-      createEntity(config, surfaceLayer, 0);
-
       // const dustfleaConfig = createDustfleaConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
       // createEntity(dustfleaConfig, surfaceLayer, 0);
       // setTimeout(() => {

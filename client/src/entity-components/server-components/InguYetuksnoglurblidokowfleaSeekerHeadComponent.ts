@@ -58,6 +58,30 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
             getTextureArrayIndex("entities/cow/cow-head-1.png")
          );
          renderInfo.attachRenderPart(renderPart);
+      } else if (hitbox.flags.includes(HitboxFlag.TUKMOK_HEAD)) {
+         const renderPart = new TexturedRenderPart(
+            hitbox,
+            4.7,
+            0,
+            getTextureArrayIndex("entities/tukmok/head.png")
+         );
+         renderInfo.attachRenderPart(renderPart);
+      } else if (hitbox.flags.includes(HitboxFlag.YETUK_MANDIBLE_BIG)) {
+         const renderPart = new TexturedRenderPart(
+            hitbox,
+            4.6,
+            0,
+            getTextureArrayIndex("entities/okren/adult/mandible.png")
+         );
+         renderInfo.attachRenderPart(renderPart);
+      } else if (hitbox.flags.includes(HitboxFlag.YETUK_MANDIBLE_MEDIUM)) {
+         const renderPart = new TexturedRenderPart(
+            hitbox,
+            4.6,
+            0,
+            getTextureArrayIndex("entities/okren/juvenile/mandible.png")
+         );
+         renderInfo.attachRenderPart(renderPart);
       }
    }
 

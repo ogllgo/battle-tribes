@@ -498,6 +498,10 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
    [EntityType.inguYetuksnoglurblidokowfleaSeekerHead]: {
       effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
+   },
+   [EntityType.inguYetukLaser]: {
+      effectiveDamageTypes: [DamageType.weapon],
+      stoppedDamageTypes: []
    }
 };
 

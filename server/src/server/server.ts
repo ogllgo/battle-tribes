@@ -46,6 +46,7 @@ import { createTukmokConfig } from "../entities/tundra/tukmok";
 import { createInguSerpentConfig } from "../entities/tundra/ingu-serpent";
 import { createBarrelConfig } from "../entities/structures/barrel";
 import { mountCarrySlot, RideableComponentArray } from "../components/RideableComponent";
+import { createInguYetuksnoglurblidokowfleaConfig } from "../entities/wtf/ingu-yetuksnoglurblidokowflea";
 
 /*
 
@@ -244,6 +245,12 @@ class GameServer {
 
                // @SQUEAM
                setTimeout(() => {
+
+
+
+                  const config = createInguYetuksnoglurblidokowfleaConfig(new Point(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
+                  createEntity(config, surfaceLayer, 0);
+
                   if (1+1===2)return;
                   
                // // const trib = new Tribe(TribeType.plainspeople, false, spawnPosition.copy());

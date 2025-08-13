@@ -1,12 +1,14 @@
 import { HitboxFlag } from "../../../shared/src/boxes/boxes";
 import { ServerComponentType } from "../../../shared/src/components";
-import { DamageSource, Entity } from "../../../shared/src/entities";
+import { DamageSource, Entity, EntityType } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Point, polarVec2 } from "../../../shared/src/utils";
 import { Hitbox, applyAbsoluteKnockback } from "../hitboxes";
+import { getEntityType } from "../world";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { moveSeekerHeadToTarget } from "./InguYetuksnoglurblidokowfleaSeekerHeadComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { TribeMemberComponentArray } from "./TribeMemberComponent";
 
@@ -62,6 +64,15 @@ function onTick(inguYetu: Entity): void {
       if (hitbox.flags.includes(HitboxFlag.YETUK_BODY_1) || hitbox.flags.includes(HitboxFlag.YETUK_BODY_2) || hitbox.flags.includes(HitboxFlag.YETUK_BODY_3) || hitbox.flags.includes(HitboxFlag.YETUK_BODY_4)) {
          aiHelperComponent.moveFunc(inguYetu, targetHitbox.box.position, 650);
          aiHelperComponent.turnFunc(inguYetu, targetHitbox.box.position, Math.PI, 1.5);
+      }
+   }
+
+   for (const hitbox of transformComponent.hitboxes) {
+      for (const childHitbox of hitbox.children) {
+         if (getEntityType(childHitbox.entity) === EntityType.inguYetuksnoglurblidokowfleaSeekerHead) {
+            const seekerHead = childHitbox.entity;
+            moveSeekerHeadToTarget(seekerHead, target);
+         }
       }
    }
 }

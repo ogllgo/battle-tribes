@@ -482,6 +482,10 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Ingu-Yetuksnoglurblidokowflea Seeker Head",
       internalName: "ingu-yetuksnoglurblidokowflea-seeker-head"
    },
+   [EntityType.inguYetukLaser]: {
+      name: "Ingu-Yetuk Laser",
+      internalName: "ingu-yetuk-laser"
+   },
 };
 
 export default CLIENT_ENTITY_INFO_RECORD;

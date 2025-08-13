@@ -544,6 +544,7 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/ingu-yetuksnoglurblidokowflea/body-2.png",
    "entities/ingu-yetuksnoglurblidokowflea/body-3.png",
    "entities/ingu-yetuksnoglurblidokowflea/body-4.png",
+   "entities/ingu-yetuk-laser/laser.png",
 ];
 
 export function registerTextureSource(textureSource: string): void {

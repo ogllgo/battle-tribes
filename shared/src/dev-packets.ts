@@ -138,6 +138,7 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.tukmokSpur]: {},
    [ServerComponentType.inguYetuksnoglurblidokowflea]: {},
    [ServerComponentType.inguYetuksnoglurblidokowfleaSeekerHead]: {},
+   [ServerComponentType.inguYetukLaser]: {},
 } satisfies Record<ServerComponentType, object>;
 
 export type ComponentSummonData<T extends ServerComponentType> = typeof SUMMON_DATA_RECORD[T];

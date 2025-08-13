@@ -132,6 +132,7 @@ import { TukmokTrunkComponent } from "./components/TukmokTrunkComponent";
 import { TukmokSpurComponent } from "./components/TukmokSpurComponent";
 import { InguYetuksnoglurblidokowfleaComponent } from "./components/InguYetuksnoglurblidokowfleaComponent";
 import { InguYetuksnoglurblidokowfleaSeekerHeadComponent } from "./components/InguYetuksnoglurblidokowfleaSeekerHeadComponent";
+import { InguYetukLaserComponent } from "./components/InguYetukLaserComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -266,6 +267,7 @@ const ComponentClassRecord = {
    [ServerComponentType.tukmokSpur]: () => TukmokSpurComponent,
    [ServerComponentType.inguYetuksnoglurblidokowflea]: () => InguYetuksnoglurblidokowfleaComponent,
    [ServerComponentType.inguYetuksnoglurblidokowfleaSeekerHead]: () => InguYetuksnoglurblidokowfleaSeekerHeadComponent,
+   [ServerComponentType.inguYetukLaser]: () => InguYetukLaserComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;
