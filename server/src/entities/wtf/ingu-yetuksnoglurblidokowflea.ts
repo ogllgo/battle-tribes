@@ -10,7 +10,7 @@ import { getAbsAngleDiff, Point, polarVec2, rotatePoint } from "../../../../shar
 import { ChildConfigAttachInfo, EntityConfig } from "../../components";
 import { AIHelperComponent } from "../../components/AIHelperComponent";
 import { HealthComponent } from "../../components/HealthComponent";
-import { InguYetuksnoglurblidokfleaComponent } from "../../components/InguYetuksnoglurblidokfleaComponent";
+import { InguYetuksnoglurblidokowfleaComponent } from "../../components/InguYetuksnoglurblidokowfleaComponent";
 import { OkrenClawGrowthStage } from "../../components/OkrenClawComponent";
 import { OkrenAgeStage } from "../../components/OkrenComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
@@ -20,7 +20,7 @@ import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../hi
 import { tetherHitboxes } from "../../tethers";
 import { getEntityAgeTicks } from "../../world";
 import { createOkrenClawConfig } from "../desert/okren-claw";
-import { createTukmokTrunkConfig } from "../tundra/tukmok-trunk";
+import { createInguYetuksnoglurblidokowfleaSeekerHeadConfig } from "./ingu-yetuksnoglurblidokowflea-seeker-head";
 
 const moveFunc = (inguYetu: Entity, pos: Point, accelerationMagnitude: number): void => {
    // @HACKKK!!!!
@@ -76,7 +76,7 @@ const turnFunc = (inguYetu: Entity, _pos: Point, turnSpeed: number, turnDamping:
    turnHitboxToAngle(headHitbox, idealAngle, turnSpeed, turnDamping, false);
 }
 
-export function createInguYetuksnoglurblidokfleaConfig(position: Point, angle: number): EntityConfig {
+export function createInguYetuksnoglurblidokowfleaConfig(position: Point, angle: number): EntityConfig {
    const BODY_SEGMENT_SEPARATION = 140;
 
    const childConfigs = new Array<ChildConfigAttachInfo>();
@@ -127,25 +127,18 @@ export function createInguYetuksnoglurblidokfleaConfig(position: Point, angle: n
    const body2Hitbox = new Hitbox(transformComponent, null, true, new CircularBox(body2Position, new Point(0, 0), 0, 60), 6, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.YETUK_BODY_2]);
    addHitboxToTransformComponent(transformComponent, body2Hitbox);
 
-   // Cow's head seeker
+   // Cow's seeker head
    {
-      const trunkOffset = new Point(52, 52);
+      const seekerOffset = new Point(52, 52);
       const trunkPosition = body2Hitbox.box.position.copy();
-      trunkPosition.add(rotatePoint(trunkOffset, angle));
-      const trunkConfig = createTukmokTrunkConfig(trunkPosition, angle, trunkOffset);
+      trunkPosition.add(rotatePoint(seekerOffset, angle));
+      const seekerHeadConfig = createInguYetuksnoglurblidokowfleaSeekerHeadConfig(trunkPosition, angle, seekerOffset);
       childConfigs.push({
-         entityConfig: trunkConfig,
-         attachedHitbox: trunkConfig.components[ServerComponentType.transform]!.hitboxes[0],
+         entityConfig: seekerHeadConfig,
+         attachedHitbox: seekerHeadConfig.components[ServerComponentType.transform]!.hitboxes[0],
          parentHitbox: body2Hitbox,
          isPartOfParent: true
       });
-
-      const offset = polarVec2(32, angle);
-      const headPosition = position.copy();
-      headPosition.add(offset);
-      const cowSeekerHitbox = new Hitbox(transformComponent, null, true, new CircularBox(headPosition, offset, 0, 30), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
-      cowSeekerHitbox.box.pivot = createNormalisedPivotPoint(0, -0.5);
-      addHitboxToTransformComponent(transformComponent, cowSeekerHitbox);
    }
    
    const body3Offset = new Point(0, -BODY_SEGMENT_SEPARATION);
@@ -223,17 +216,17 @@ export function createInguYetuksnoglurblidokfleaConfig(position: Point, angle: n
 
    const aiHelperComponent = new AIHelperComponent(body1Hitbox, 600, moveFunc, turnFunc);
 
-   const inguYetuksnoglurblidokfleaComponent = new InguYetuksnoglurblidokfleaComponent();
+   const inguYetuksnoglurblidokowfleaComponent = new InguYetuksnoglurblidokowfleaComponent();
    
    return {
-      entityType: EntityType.inguYetuksnoglurblidokflea,
+      entityType: EntityType.inguYetuksnoglurblidokowflea,
       components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
-         [ServerComponentType.inguYetuksnoglurblidokflea]: inguYetuksnoglurblidokfleaComponent
+         [ServerComponentType.inguYetuksnoglurblidokowflea]: inguYetuksnoglurblidokowfleaComponent
       },
       lights: [],
       childConfigs: childConfigs

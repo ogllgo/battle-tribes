@@ -474,9 +474,13 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Tukmok Spur",
       internalName: "tukmok-spur"
    },
-   [EntityType.inguYetuksnoglurblidokflea]: {
-      name: "Ingu-Yetuksnoglurblidokflea",
-      internalName: "ingu-yetuksnoglurblidokflea"
+   [EntityType.inguYetuksnoglurblidokowflea]: {
+      name: "Ingu-Yetuksnoglurblidokowflea",
+      internalName: "ingu-yetuksnoglurblidokowflea"
+   },
+   [EntityType.inguYetuksnoglurblidokowfleaSeekerHead]: {
+      name: "Ingu-Yetuksnoglurblidokowflea Seeker Head",
+      internalName: "ingu-yetuksnoglurblidokowflea-seeker-head"
    },
 };
 

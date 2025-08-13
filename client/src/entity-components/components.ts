@@ -147,7 +147,8 @@ import { TukmokComponent, TukmokComponentArray, TukmokComponentParams } from "./
 import { TukmokTrunkComponent, TukmokTrunkComponentArray, TukmokTrunkComponentParams } from "./server-components/TukmokTrunkComponent";
 import { TukmokTailClubComponent, TukmokTailClubComponentArray, TukmokTailClubComponentParams } from "./server-components/TukmokTailClubComponent";
 import { TukmokSpurComponent, TukmokSpurComponentArray, TukmokSpurComponentParams } from "./server-components/TukmokSpurComponent";
-import { InguYetuksnoglurblidokfleaComponent, InguYetuksnoglurblidokfleaComponentArray, InguYetuksnoglurblidokfleaComponentParams } from "./server-components/InguYetuksnoglurblidokfleaComponent";
+import { InguYetuksnoglurblidokowfleaComponent, InguYetuksnoglurblidokowfleaComponentArray, InguYetuksnoglurblidokowfleaComponentParams } from "./server-components/InguYetuksnoglurblidokowfleaComponent";
+import { InguYetuksnoglurblidokowfleaSeekerHeadComponent, InguYetuksnoglurblidokowfleaSeekerHeadComponentArray, InguYetuksnoglurblidokowfleaSeekerHeadComponentParams } from "./server-components/InguYetuksnoglurblidokowfleaSeekerHeadComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -303,7 +304,8 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.tukmokTrunk]: TukmokTrunkComponentArray,
    [ServerComponentType.tukmokTailClub]: TukmokTailClubComponentArray,
    [ServerComponentType.tukmokSpur]: TukmokSpurComponentArray,
-   [ServerComponentType.inguYetuksnoglurblidokflea]: InguYetuksnoglurblidokfleaComponentArray,
+   [ServerComponentType.inguYetuksnoglurblidokowflea]: InguYetuksnoglurblidokowfleaComponentArray,
+   [ServerComponentType.inguYetuksnoglurblidokowfleaSeekerHead]: InguYetuksnoglurblidokowfleaSeekerHeadComponentArray,
 };
 
 const ServerComponentRecord = {
@@ -435,7 +437,8 @@ const ServerComponentRecord = {
    [ServerComponentType.tukmokTrunk]: (): TukmokTrunkComponent => 0 as any,
    [ServerComponentType.tukmokTailClub]: (): TukmokTailClubComponent => 0 as any,
    [ServerComponentType.tukmokSpur]: (): TukmokSpurComponent => 0 as any,
-   [ServerComponentType.inguYetuksnoglurblidokflea]: (): InguYetuksnoglurblidokfleaComponent => 0 as any,
+   [ServerComponentType.inguYetuksnoglurblidokowflea]: (): InguYetuksnoglurblidokowfleaComponent => 0 as any,
+   [ServerComponentType.inguYetuksnoglurblidokowfleaSeekerHead]: (): InguYetuksnoglurblidokowfleaSeekerHeadComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
 
 export type ServerComponent<T extends ServerComponentType> = ReturnType<typeof ServerComponentRecord[T]>;
@@ -569,7 +572,8 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.tukmokTrunk]: (): TukmokTrunkComponentParams => 0 as any,
    [ServerComponentType.tukmokTailClub]: (): TukmokTailClubComponentParams => 0 as any,
    [ServerComponentType.tukmokSpur]: (): TukmokSpurComponentParams => 0 as any,
-   [ServerComponentType.inguYetuksnoglurblidokflea]: (): InguYetuksnoglurblidokfleaComponentParams => 0 as any,
+   [ServerComponentType.inguYetuksnoglurblidokowflea]: (): InguYetuksnoglurblidokowfleaComponentParams => 0 as any,
+   [ServerComponentType.inguYetuksnoglurblidokowfleaSeekerHead]: (): InguYetuksnoglurblidokowfleaSeekerHeadComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

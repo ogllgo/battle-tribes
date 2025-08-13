@@ -1,20 +1,23 @@
 import { HitboxFlag } from "../../../shared/src/boxes/boxes";
 import { ServerComponentType } from "../../../shared/src/components";
-import { Entity } from "../../../shared/src/entities";
-import { polarVec2 } from "../../../shared/src/utils";
-import { applyAccelerationFromGround } from "../hitboxes";
+import { DamageSource, Entity } from "../../../shared/src/entities";
+import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
+import { Point, polarVec2 } from "../../../shared/src/utils";
+import { Hitbox, applyAbsoluteKnockback } from "../hitboxes";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
+import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { TribeMemberComponentArray } from "./TribeMemberComponent";
 
-export class InguYetuksnoglurblidokfleaComponent {}
+export class InguYetuksnoglurblidokowfleaComponent {}
 
-export const InguYetuksnoglurblidokfleaComponentArray = new ComponentArray<InguYetuksnoglurblidokfleaComponent>(ServerComponentType.inguYetuksnoglurblidokflea, true, getDataLength, addDataToPacket);
-InguYetuksnoglurblidokfleaComponentArray.onTick = {
+export const InguYetuksnoglurblidokowfleaComponentArray = new ComponentArray<InguYetuksnoglurblidokowfleaComponent>(ServerComponentType.inguYetuksnoglurblidokowflea, true, getDataLength, addDataToPacket);
+InguYetuksnoglurblidokowfleaComponentArray.onTick = {
    func: onTick,
    tickInterval: 1
 };
+InguYetuksnoglurblidokowfleaComponentArray.onHitboxCollision = onHitboxCollision;
 
 const isTarget = (entity: Entity): boolean => {
    return TribeMemberComponentArray.hasComponent(entity);
@@ -68,3 +71,22 @@ function getDataLength(): number {
 }
 
 function addDataToPacket(): void {}
+
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntity = collidingHitbox.entity;
+   
+   if (!HealthComponentArray.hasComponent(collidingEntity)) {
+      return;
+   }
+   
+   const healthComponent = HealthComponentArray.getComponent(collidingEntity);
+   if (!canDamageEntity(healthComponent, "yetukshit")) {
+      return;
+   }
+
+   const hitDir = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+
+   damageEntity(collidingEntity, collidingHitbox, hitbox.entity, 2, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
+   applyAbsoluteKnockback(collidingHitbox, polarVec2(400, hitDir));
+   addLocalInvulnerabilityHash(collidingEntity, "yetukshit", 0.25);
+}

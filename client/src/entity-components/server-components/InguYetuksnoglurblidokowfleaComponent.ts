@@ -6,13 +6,13 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityParams } from "../../world";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 
-export interface InguYetuksnoglurblidokfleaComponentParams {}
+export interface InguYetuksnoglurblidokowfleaComponentParams {}
 
 interface IntermediateInfo {}
 
-export interface InguYetuksnoglurblidokfleaComponent {}
+export interface InguYetuksnoglurblidokowfleaComponent {}
 
-export const InguYetuksnoglurblidokfleaComponentArray = new ServerComponentArray<InguYetuksnoglurblidokfleaComponent, InguYetuksnoglurblidokfleaComponentParams, IntermediateInfo>(ServerComponentType.inguYetuksnoglurblidokflea, true, {
+export const InguYetuksnoglurblidokowfleaComponentArray = new ServerComponentArray<InguYetuksnoglurblidokowfleaComponent, InguYetuksnoglurblidokowfleaComponentParams, IntermediateInfo>(ServerComponentType.inguYetuksnoglurblidokowflea, true, {
    createParamsFromData: createParamsFromData,
    populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
@@ -21,12 +21,12 @@ export const InguYetuksnoglurblidokfleaComponentArray = new ServerComponentArray
    updateFromData: updateFromData
 });
 
-export function createInguYetuksnoglurblidokfleaComponentParams(): InguYetuksnoglurblidokfleaComponentParams {
+export function createInguYetuksnoglurblidokowfleaComponentParams(): InguYetuksnoglurblidokowfleaComponentParams {
    return {};
 }
 
-function createParamsFromData(): InguYetuksnoglurblidokfleaComponentParams {
-   return createInguYetuksnoglurblidokfleaComponentParams();
+function createParamsFromData(): InguYetuksnoglurblidokowfleaComponentParams {
+   return createInguYetuksnoglurblidokowfleaComponentParams();
 }
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
@@ -38,7 +38,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
             hitbox,
             4,
             0,
-            getTextureArrayIndex("entities/ingu-yetuksnoglurblidokflea/body-1.png")
+            getTextureArrayIndex("entities/ingu-yetuksnoglurblidokowflea/body-1.png")
          );
          renderInfo.attachRenderPart(renderPart);
       } else if (hitbox.flags.includes(HitboxFlag.YETUK_BODY_2)) {
@@ -46,7 +46,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
             hitbox,
             3,
             0,
-            getTextureArrayIndex("entities/ingu-yetuksnoglurblidokflea/body-2.png")
+            getTextureArrayIndex("entities/ingu-yetuksnoglurblidokowflea/body-2.png")
          );
          renderInfo.attachRenderPart(renderPart);
       } else if (hitbox.flags.includes(HitboxFlag.YETUK_BODY_3)) {
@@ -54,7 +54,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
             hitbox,
             2,
             0,
-            getTextureArrayIndex("entities/ingu-yetuksnoglurblidokflea/body-3.png")
+            getTextureArrayIndex("entities/ingu-yetuksnoglurblidokowflea/body-3.png")
          );
          renderInfo.attachRenderPart(renderPart);
       } else if (hitbox.flags.includes(HitboxFlag.YETUK_BODY_4)) {
@@ -62,7 +62,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
             hitbox,
             1,
             0,
-            getTextureArrayIndex("entities/ingu-yetuksnoglurblidokflea/body-4.png")
+            getTextureArrayIndex("entities/ingu-yetuksnoglurblidokowflea/body-4.png")
          );
          renderInfo.attachRenderPart(renderPart);
       } else if (hitbox.flags.includes(HitboxFlag.YETUK_GLURB_SEGMENT)) {
@@ -103,12 +103,12 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    return {};
 }
 
-function createComponent(): InguYetuksnoglurblidokfleaComponent {
+function createComponent(): InguYetuksnoglurblidokowfleaComponent {
    return {};
 }
 
 function getMaxRenderParts(): number {
-   return 12;
+   return 50;
 }
 
 function padData(): void {}

@@ -21,7 +21,7 @@ import { getHitboxesCollidingEntities } from "./collision-detection";
 import { createTukmokConfig } from "./entities/tundra/tukmok";
 import { createSnobeConfig } from "./entities/tundra/snobe";
 import { createOkrenConfig } from "./entities/desert/okren";
-import { createInguYetuksnoglurblidokfleaConfig } from "./entities/wtf/ingu-yetuksnoglurblidokowflea";
+import { createInguYetuksnoglurblidokowfleaConfig } from "./entities/wtf/ingu-yetuksnoglurblidokowflea";
 
 const spawnConditionsAreMet = (spawnInfo: EntitySpawnEvent): boolean => {
    // Make sure there is a block which lacks density
@@ -322,7 +322,7 @@ export function spawnInitialEntities(): void {
       // const config = createTukmokConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140 + 2000, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100 - 1000), 0);
       // createEntity(config, surfaceLayer, 0);
 
-      const config = createInguYetuksnoglurblidokfleaConfig(new Point(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
+      const config = createInguYetuksnoglurblidokowfleaConfig(new Point(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
       createEntity(config, surfaceLayer, 0);
 
       // const dustfleaConfig = createDustfleaConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);

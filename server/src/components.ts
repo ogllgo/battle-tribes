@@ -130,7 +130,8 @@ import { TukmokComponent } from "./components/TukmokComponent";
 import { TukmokTailClubComponent } from "./components/TukmokTailClubComponent";
 import { TukmokTrunkComponent } from "./components/TukmokTrunkComponent";
 import { TukmokSpurComponent } from "./components/TukmokSpurComponent";
-import { InguYetuksnoglurblidokfleaComponent } from "./components/InguYetuksnoglurblidokfleaComponent";
+import { InguYetuksnoglurblidokowfleaComponent } from "./components/InguYetuksnoglurblidokowfleaComponent";
+import { InguYetuksnoglurblidokowfleaSeekerHeadComponent } from "./components/InguYetuksnoglurblidokowfleaSeekerHeadComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -263,7 +264,8 @@ const ComponentClassRecord = {
    [ServerComponentType.tukmokTrunk]: () => TukmokTrunkComponent,
    [ServerComponentType.tukmokTailClub]: () => TukmokTailClubComponent,
    [ServerComponentType.tukmokSpur]: () => TukmokSpurComponent,
-   [ServerComponentType.inguYetuksnoglurblidokflea]: () => InguYetuksnoglurblidokfleaComponent,
+   [ServerComponentType.inguYetuksnoglurblidokowflea]: () => InguYetuksnoglurblidokowfleaComponent,
+   [ServerComponentType.inguYetuksnoglurblidokowfleaSeekerHead]: () => InguYetuksnoglurblidokowfleaSeekerHeadComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;

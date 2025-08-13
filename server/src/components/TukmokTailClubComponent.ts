@@ -3,7 +3,7 @@ import { EntityType, DamageSource } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Point, polarVec2 } from "../../../shared/src/utils";
 import { Hitbox, applyAbsoluteKnockback } from "../hitboxes";
-import { destroyEntity, getEntityType } from "../world";
+import { getEntityType } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 
@@ -41,11 +41,4 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    damageEntity(collidingEntity, collidingHitbox, hitbox.entity, 3, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
    applyAbsoluteKnockback(collidingHitbox, polarVec2(400, hitDir));
    addLocalInvulnerabilityHash(collidingEntity, "tukmok-tail-club", 0.3);
-
-   // @SQUEAM
-   if (getEntityType(collidingEntity) === EntityType.tribeWorker) {
-      setTimeout(() => {
-         destroyEntity(collidingEntity);
-      }, 400);
-   }
 }

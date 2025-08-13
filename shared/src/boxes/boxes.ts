@@ -50,6 +50,8 @@ export const enum HitboxFlag {
    YETUK_GLURB_SEGMENT,
    YETUK_MANDIBLE_BIG,
    YETUK_MANDIBLE_MEDIUM,
+   YETUK_TRUNK_HEAD,
+   YETUK_TRUNK_MIDDLE,
 }
 
 export const enum HitboxCollisionType {
