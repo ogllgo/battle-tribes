@@ -274,7 +274,13 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
 
          if (placeInfo.isValid) {
             const tribeComponent = TribeComponentArray.getComponent(tribeMember);
-            const entityConfig = createStructureConfig(tribeComponent.tribe, placeInfo.entityType, placeInfo.position, placeInfo.angle, placeInfo.connections);
+            // @SQUEAM
+            let entityConfig: EntityConfig;
+            if (placeInfo.entityType === EntityType.slingTurret) {
+               entityConfig = createBlueprintEntityConfig(placeInfo.position, placeInfo.angle, tribeComponent.tribe, BlueprintType.slingTurret, 0, null);
+            } else {
+               entityConfig = createStructureConfig(tribeComponent.tribe, placeInfo.entityType, placeInfo.position, placeInfo.angle, placeInfo.connections);
+            }
             createEntity(entityConfig, getEntityLayer(tribeMember), 0);
 
             const inventory = getInventory(inventoryComponent, InventoryName.hotbar);

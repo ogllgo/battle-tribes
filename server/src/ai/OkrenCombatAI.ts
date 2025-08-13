@@ -115,8 +115,8 @@ const deployTongue = (okren: Entity, okrenHitbox: Hitbox, target: Entity): void 
    const position = getTonguePosition(okrenHitbox, TONGUE_INITIAL_OFFSET);
    
    const tongueConfig = createOkrenTongueConfig(position, okrenHitbox.box.angle, okrenHitbox, target);
-   const tongueHitbox = tongueConfig.components[ServerComponentType.transform]!.hitboxes[0];
-   tongueConfig.attachInfo = createEntityConfigAttachInfo(tongueHitbox, okrenHitbox, true);
+   const tongueTipHitbox = tongueConfig.components[ServerComponentType.transform]!.hitboxes[0];
+   tongueConfig.attachInfo = createEntityConfigAttachInfo(tongueTipHitbox, okrenHitbox, true);
    createEntity(tongueConfig, getEntityLayer(okren), 0);
 
    const tickEvent: EntityTickEvent = {
@@ -142,7 +142,8 @@ export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperCompo
          combatAI.tongueCooldownTicks--;
       }
       if (combatAI.tongueCooldownTicks === 0) {
-         deployTongue(okren, okrenHitbox, desiredTarget);
+         // @TEMPORARY cuz the tongue is completely broken right now after the big hitboxes rework
+         // deployTongue(okren, okrenHitbox, desiredTarget);
       }
 
       target = desiredTarget;

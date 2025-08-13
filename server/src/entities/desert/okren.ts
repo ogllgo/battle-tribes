@@ -189,7 +189,7 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
       mandibleHitbox.box.pivot = createNormalisedPivotPoint(-0.5, -0.5);
       addHitboxToTransformComponent(transformComponent, mandibleHitbox);
 
-      const clawConfig = createOkrenClawConfig(bodyHitbox.box.position.copy(), 0, size, OkrenClawGrowthStage.FOUR, sideIsFlipped, bodyHitbox);
+      const clawConfig = createOkrenClawConfig(bodyHitbox.box.position.copy(), 0, size, OkrenClawGrowthStage.FOUR, sideIsFlipped);
       childConfigs.push({
          entityConfig: clawConfig,
          attachedHitbox: clawConfig.components[ServerComponentType.transform]!.hitboxes[0],

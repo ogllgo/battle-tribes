@@ -51,6 +51,9 @@ import { createSnobeConfig } from "../entities/tundra/snobe";
 import { createTundraRockFrozenConfig } from "../entities/tundra/tundra-rock-frozen";
 import { createInguSerpentConfig } from "../entities/tundra/ingu-serpent";
 import { createTukmokConfig } from "../entities/tundra/tukmok";
+import { createDustfleaConfig } from "../entities/desert/dustflea";
+import { createKrumblidConfig } from "../entities/mobs/krumblid";
+import { createOkrenConfig } from "../entities/desert/okren";
 
 const enum Vars {
    TRIBESMAN_SPAWN_EXCLUSION_RANGE = 1200
@@ -490,7 +493,6 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       generateCaveEntrances(surfaceLayer);
    }
 
-   // @Temporary so that they stop MOOING IN MY EARS
    // registerNewSpawnInfo({
    //    entityTypes: [EntityType.cow],
    //    layer: surfaceLayer,
@@ -506,9 +508,9 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    //    spawnDistribution: createRawSpawnDistribution(16, 0.003),
    //    balanceSpawnDistribution: false,
    //    doStrictTileTypeCheck: false,
-   //    createEntity: (pos: Point, angle: number, firstEntityConfig: EntityConfig | null): EntityConfig | null => {
-   //       const species = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig.components[ServerComponentType.cow]!.species;
-   //       return createCowConfig(pos, angle, species);
+   //    createEntity: (pos: Point, angle: number, firstEntityConfig: ReadonlyArray<EntityConfig> | null): ReadonlyArray<EntityConfig> | null => {
+   //       const species = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig[0].components[ServerComponentType.cow]!.species;
+   //       return [createCowConfig(pos, angle, species)];
    //    }
    // });
    registerNewSpawnInfo({
@@ -744,23 +746,22 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          return [createSnobeConfig(pos, angle)];
       }
    });
-   // @SQUEAM
-   // registerNewSpawnInfo({
-   //    entityTypes: [EntityType.inguSerpent],
-   //    layer: surfaceLayer,
-   //    spawnRate: 0.01,
-   //    biome: Biome.tundra,
-   //    tileTypes: [TileType.permafrost],
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 30,
-   //    spawnDistribution: createRawSpawnDistribution(32, 0.0055),
-   //    balanceSpawnDistribution: true,
-   //    doStrictTileTypeCheck: false,
-   //    doStrictCollisionCheck: true,
-   //    createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
-   //       return [createInguSerpentConfig(pos, angle)];
-   //    }
-   // });
+   registerNewSpawnInfo({
+      entityTypes: [EntityType.inguSerpent],
+      layer: surfaceLayer,
+      spawnRate: 0.01,
+      biome: Biome.tundra,
+      tileTypes: [TileType.permafrost],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 30,
+      spawnDistribution: createRawSpawnDistribution(32, 0.0055),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: false,
+      doStrictCollisionCheck: true,
+      createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
+         return [createInguSerpentConfig(pos, angle)];
+      }
+   });
    registerNewSpawnInfo({
       entityTypes: [EntityType.tukmok],
       layer: surfaceLayer,
@@ -770,8 +771,8 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       onlySpawnsInNight: false,
       minSpawnDistance: 30,
       // @SQEAM
-      // spawnDistribution: createRawSpawnDistribution(32, 0.002),
-      spawnDistribution: createRawSpawnDistribution(32, 0),
+      spawnDistribution: createRawSpawnDistribution(32, 0.002),
+      // spawnDistribution: createRawSpawnDistribution(32, 0),
       balanceSpawnDistribution: true,
       doStrictTileTypeCheck: false,
       doStrictCollisionCheck: true,
@@ -813,23 +814,23 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       }
    });
 
+   registerNewSpawnInfo({
+      entityTypes: [EntityType.dustflea],
+      layer: surfaceLayer,
+      spawnRate: 0,
+      biome: Biome.desert,
+      tileTypes: [TileType.sand],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150,
+      spawnDistribution: createRawSpawnDistribution(4, 0.013),
+      balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
+      createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
+         return [createDustfleaConfig(pos, angle)];
+      }
+   });
    // registerNewSpawnInfo({
-   //    entityType: EntityType.dustflea,
-   //    layer: surfaceLayer,
-   //    spawnRate: 0,
-   //    biome: Biome.desert,
-   //    tileTypes: [TileType.sand],
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 150,
-   //    spawnDistribution: createRawSpawnDistribution(4, 0.013),
-   //    balanceSpawnDistribution: false,
-   //    doStrictTileTypeCheck: true,
-   //    createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-   //       return createDustfleaConfig(new Point(x, y), angle);
-   //    }
-   // });
-   // registerNewSpawnInfo({
-   //    entityType: EntityType.krumblid,
+   //    entityTypes: [EntityType.krumblid],
    //    layer: surfaceLayer,
    //    spawnRate: 0,
    //    biome: Biome.desert,
@@ -839,12 +840,13 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    //    spawnDistribution: createRawSpawnDistribution(4, 0.003),
    //    balanceSpawnDistribution: false,
    //    doStrictTileTypeCheck: true,
-   //    createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-   //       return createKrumblidConfig(new Point(x, y), angle);
+   //    createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
+   //       return [createKrumblidConfig(pos, angle)];
    //    }
    // });
+   // @TEMPORARY cuz they are wandering out of the desert and messing stuff up
    // registerNewSpawnInfo({
-   //    entityType: EntityType.okren,
+   //    entityTypes: [EntityType.okren],
    //    layer: surfaceLayer,
    //    spawnRate: 0,
    //    biome: Biome.desert,
@@ -854,8 +856,8 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    //    spawnDistribution: createRawSpawnDistribution(4, 0.0007),
    //    balanceSpawnDistribution: false,
    //    doStrictTileTypeCheck: true,
-   //    createEntity: (x: number, y: number, angle: number): EntityConfig | null => {
-   //       return createOkrenConfig(new Point(x, y), angle, 4);
+   //    createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
+   //       return [createOkrenConfig(pos, angle, 4)];
    //    }
    // });
    

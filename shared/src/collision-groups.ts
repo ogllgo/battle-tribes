@@ -155,8 +155,6 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.sandBall]: CollisionGroup.default,
    [EntityType.krumblidMorphCocoon]: CollisionGroup.boring,
    [EntityType.okrenTongue]: CollisionGroup.default,
-   [EntityType.okrenTongueSegment]: CollisionGroup.default,
-   [EntityType.okrenTongueTip]: CollisionGroup.default,
    [EntityType.dustfleaEgg]: CollisionGroup.default,
    [EntityType.spruceTree]: CollisionGroup.boring,
    [EntityType.tundraRock]: CollisionGroup.boring,
@@ -169,6 +167,8 @@ const ENTITY_COLLISION_GROUP_RECORD: Record<EntityType, CollisionGroup> = {
    [EntityType.tukmokTrunk]: CollisionGroup.default,
    [EntityType.tukmokTailClub]: CollisionGroup.default,
    [EntityType.tukmokSpur]: CollisionGroup.default,
+   [EntityType.inguYetuksnoglurblidokowflea]: CollisionGroup.default,
+   [EntityType.inguYetuksnoglurblidokowfleaSeekerHead]: CollisionGroup.default,
 };
 
 export function getEntityCollisionGroup(entityType: EntityType): CollisionGroup {

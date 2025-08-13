@@ -112,7 +112,9 @@ export class TransformComponent {
 
 /** Should only be called during entity creation */
 export function addHitboxToTransformComponent(transformComponent: TransformComponent, hitbox: Hitbox): void {
+   assert(!transformComponent.hitboxes.includes(hitbox));
    transformComponent.hitboxes.push(hitbox);
+   
    if (hitbox.parent === null) {
       transformComponent.rootHitboxes.push(hitbox);
    } else {
@@ -559,11 +561,11 @@ const propagateRootEntityChange = (hitbox: Hitbox, rootEntity: Entity): void => 
 
 export function attachHitboxRaw(hitbox: Hitbox, parentHitbox: Hitbox, isPartOfParent: boolean): void {
    assert(hitbox.rootEntity !== parentHitbox.rootEntity);
+   assert(!parentHitbox.children.includes(hitbox));
    
    hitbox.rootEntity = parentHitbox.rootEntity;
    hitbox.parent = parentHitbox;
    hitbox.isPartOfParent = isPartOfParent;
-   assert(!hitbox.parent.children.includes(hitbox));
    hitbox.parent.children.push(hitbox);
    
    registerDirtyEntity(hitbox.entity);

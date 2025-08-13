@@ -124,8 +124,6 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.sandBall]: {},
    [ServerComponentType.krumblidMorphCocoon]: {},
    [ServerComponentType.okrenTongue]: {},
-   [ServerComponentType.okrenTongueSegment]: {},
-   [ServerComponentType.okrenTongueTip]: {},
    [ServerComponentType.dustfleaEgg]: {},
    [ServerComponentType.spruceTree]: {},
    [ServerComponentType.tundraRock]: {},
@@ -138,6 +136,8 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.tukmokTrunk]: {},
    [ServerComponentType.tukmokTailClub]: {},
    [ServerComponentType.tukmokSpur]: {},
+   [ServerComponentType.inguYetuksnoglurblidokowflea]: {},
+   [ServerComponentType.inguYetuksnoglurblidokowfleaSeekerHead]: {},
 } satisfies Record<ServerComponentType, object>;
 
 export type ComponentSummonData<T extends ServerComponentType> = typeof SUMMON_DATA_RECORD[T];

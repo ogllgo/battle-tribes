@@ -107,8 +107,6 @@ export const enum EntityType {
    sandBall,
    krumblidMorphCocoon,
    okrenTongue,
-   okrenTongueSegment,
-   okrenTongueTip,
    dustfleaEgg,
    spruceTree,
    tundraRock,
@@ -120,7 +118,9 @@ export const enum EntityType {
    tukmok,
    tukmokTrunk,
    tukmokTailClub,
-   tukmokSpur
+   tukmokSpur,
+   inguYetuksnoglurblidokowflea,
+   inguYetuksnoglurblidokowfleaSeekerHead
 }
 
 export const EntityTypeString: Record<EntityType, string> = {
@@ -229,8 +229,6 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.sandBall]: "Sand Ball",
    [EntityType.krumblidMorphCocoon]: "Krumblid Morph Cocoon",
    [EntityType.okrenTongue]: "Okren Tongue",
-   [EntityType.okrenTongueSegment]: "Okren Tongue Segment",
-   [EntityType.okrenTongueTip]: "Okren Tongue Tip",
    [EntityType.dustfleaEgg]: "Dustflea Egg",
    [EntityType.spruceTree]: "Spruce Tree",
    [EntityType.tundraRock]: "Tundra Rock",
@@ -243,6 +241,8 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.tukmokTrunk]: "Tukmok Trunk",
    [EntityType.tukmokTailClub]: "Tukmok Tail Club",
    [EntityType.tukmokSpur]: "Tukmok Spur",
+   [EntityType.inguYetuksnoglurblidokowflea]: "Ingu-Yetuksnoglurblidokowflea",
+   [EntityType.inguYetuksnoglurblidokowfleaSeekerHead]: "Ingu-Yetuksnoglurblidokowflea Seeker Head",
 };
 
 export const NUM_ENTITY_TYPES = Object.keys(EntityTypeString).length;

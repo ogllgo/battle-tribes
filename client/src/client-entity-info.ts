@@ -426,14 +426,6 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Okren Tongue",
       internalName: "okren-tongue"
    },
-   [EntityType.okrenTongueSegment]: {
-      name: "Okren Tongue Segment",
-      internalName: "okren-tongue-segment"
-   },
-   [EntityType.okrenTongueTip]: {
-      name: "Okren Tongue Tip",
-      internalName: "okren-tongue-tip"
-   },
    [EntityType.dustfleaEgg]: {
       name: "Dustflea Egg",
       internalName: "dustflea-egg"
@@ -481,6 +473,14 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
    [EntityType.tukmokSpur]: {
       name: "Tukmok Spur",
       internalName: "tukmok-spur"
+   },
+   [EntityType.inguYetuksnoglurblidokowflea]: {
+      name: "Ingu-Yetuksnoglurblidokowflea",
+      internalName: "ingu-yetuksnoglurblidokowflea"
+   },
+   [EntityType.inguYetuksnoglurblidokowfleaSeekerHead]: {
+      name: "Ingu-Yetuksnoglurblidokowflea Seeker Head",
+      internalName: "ingu-yetuksnoglurblidokowflea-seeker-head"
    },
 };
 
