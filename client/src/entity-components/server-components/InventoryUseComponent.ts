@@ -1258,7 +1258,10 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
             if (textureIdx >= textureSourceArray.length) {
                textureIdx = textureSourceArray.length - 1;
             }
-            inventoryUseComponent.activeItemRenderParts[limbIdx].switchTextureSource(textureSourceArray[textureIdx]);
+            // @HACK
+            if (typeof inventoryUseComponent.activeItemRenderParts[limbIdx] !== "undefined") {
+               inventoryUseComponent.activeItemRenderParts[limbIdx].switchTextureSource(textureSourceArray[textureIdx]);
+            }
          } else if (limb.action === LimbAction.mainArrowReleased) {
             // @Cleanup @Hack @Robustness
             let textureSourceArray: ReadonlyArray<string>;
