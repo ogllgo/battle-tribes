@@ -237,7 +237,7 @@ function onTick(slime: Entity): void {
       const angerTargetTransformComponent = TransformComponentArray.getComponent(angerTarget);
       const targetHitbox = angerTargetTransformComponent.hitboxes[0];
       
-      const targetDirection = slimeHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+      const targetDirection = slimeHitbox.box.position.angleTo(targetHitbox.box.position);
       slimeComponent.eyeAngle = turnAngle(slimeComponent.eyeAngle, targetDirection, 5 * Math.PI);
 
       turnHitboxToAngle(slimeHitbox, targetDirection, Vars.TURN_SPEED, 0.5, false);
@@ -279,7 +279,7 @@ function onTick(slime: Entity): void {
       const chaseTargetTransformComponent = TransformComponentArray.getComponent(chaseTarget);
       const targetHitbox = chaseTargetTransformComponent.hitboxes[0];
       
-      const targetDirection = slimeHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+      const targetDirection = slimeHitbox.box.position.angleTo(targetHitbox.box.position);
       slimeComponent.eyeAngle = turnAngle(slimeComponent.eyeAngle, targetDirection, 5 * Math.PI);
 
       const speedMultiplier = SLIME_SPEED_MULTIPLIERS[slimeComponent.size];
@@ -493,7 +493,7 @@ const propagateAnger = (slime: Entity, angeredEntity: Entity, amount: number, pr
          const entityTransformComponent = TransformComponentArray.getComponent(entity);
          const entityHitbox = entityTransformComponent.hitboxes[0];
          
-         const distance = seeingHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+         const distance = seeingHitbox.box.position.distanceTo(entityHitbox.box.position);
          const distanceFactor = distance / visionRange;
 
          propagationInfo.propagatedEntityIDs.add(slime);

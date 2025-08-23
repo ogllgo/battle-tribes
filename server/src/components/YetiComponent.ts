@@ -320,7 +320,7 @@ function onTick(yeti: Entity): void {
                   yetiComponent.snowThrowHoldTimer = 0;
                }
 
-               const targetAngle = yetiBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+               const targetAngle = yetiBodyHitbox.box.position.angleTo(targetHitbox.box.position);
                turnHitboxToAngle(yetiBodyHitbox, targetAngle, Vars.SLOW_TURN_SPEED, 0.5, false);
                return;
             }
@@ -330,7 +330,7 @@ function onTick(yeti: Entity): void {
                   yetiComponent.snowThrowStage = SnowThrowStage.return;
                }
 
-               const targetAngle = yetiBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+               const targetAngle = yetiBodyHitbox.box.position.angleTo(targetHitbox.box.position);
                turnHitboxToAngle(yetiBodyHitbox, targetAngle, Vars.SLOW_TURN_SPEED, 0.5, false);
                return;
             }
@@ -382,7 +382,7 @@ function onTick(yeti: Entity): void {
             const entityTransformComponent = TransformComponentArray.getComponent(entity);
             const entityHitbox = entityTransformComponent.hitboxes[0];
             
-            const distance = yetiBodyHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+            const distance = yetiBodyHitbox.box.position.distanceTo(entityHitbox.box.position);
             if (distance < minDist) {
                minDist = distance;
                closestFoodItem = entity;
@@ -478,7 +478,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
          return;
       }
 
-      const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+      const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
       
       damageEntity(collidingEntity, collidingHitbox, yeti, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingHitbox, 200, hitDirection);

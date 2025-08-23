@@ -169,7 +169,7 @@ export function runKrumblidHibernateAI(krumblid: Entity, aiHelperComponent: AIHe
       aiHelperComponent.moveFunc(krumblid, hibernateAI.hibernateTargetPosition, hibernateAI.acceleration);
       aiHelperComponent.turnFunc(krumblid, hibernateAI.hibernateTargetPosition, hibernateAI.turnSpeed, hibernateAI.turnDamping);
 
-      if (krumblidHitbox.box.position.calculateDistanceBetween(hibernateAI.hibernateTargetPosition) < 1) {
+      if (krumblidHitbox.box.position.distanceTo(hibernateAI.hibernateTargetPosition) < 1) {
          destroyEntity(krumblid);
 
          // If the krumblid has the imprint skill, then it retains its tame tribe

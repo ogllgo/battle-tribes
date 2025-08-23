@@ -161,7 +161,8 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
          springConstant: 10,
          damping: 0.4,
          padding: 0,
-         idealHitboxAngleOffset: 0
+         idealHitboxAngleOffset: 0,
+         useLeverage: false
       };
       ballHitbox.angularTethers.push(angularTether);
 

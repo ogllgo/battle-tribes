@@ -118,7 +118,7 @@ function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
    }
 
    for (let i = 0; i < 10; i++) {
-      let offsetDirection = hitbox.box.position.calculateAngleBetween(hitPosition);
+      let offsetDirection = hitbox.box.position.angleTo(hitPosition);
       offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
 
       const spawnPositionX = hitbox.box.position.x + 32 * Math.sin(offsetDirection);
@@ -143,7 +143,7 @@ function onDie(entity: Entity): void {
          const entityTransformComponent = TransformComponentArray.getComponent(entity);
          const entityHitbox = entityTransformComponent.hitboxes[0];
 
-         const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+         const dist = hitbox.box.position.distanceTo(entityHitbox.box.position);
          if (dist < 1) {
             return;
          }

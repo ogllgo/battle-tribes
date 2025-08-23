@@ -100,7 +100,7 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
    if (canDamageEntity(healthComponent, attackHash)) {
       const ammoInfo = AMMO_INFO_RECORD[ItemType.wood];
    
-      const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+      const hitDirection = affectedHitbox.box.position.angleTo(collidingHitbox.box.position);
       
       const attacker = entityExists(projectileComponent.creator) ? projectileComponent.creator : arrow;
 

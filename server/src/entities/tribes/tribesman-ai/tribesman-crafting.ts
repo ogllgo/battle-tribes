@@ -40,7 +40,7 @@ const getClosestCraftingStation = (tribesman: Entity, tribe: Tribe, craftingStat
          const buildingTransformComponent = TransformComponentArray.getComponent(building);
          const buildingHitbox = buildingTransformComponent.hitboxes[0];
          
-         const dist = tribesmanHitbox.box.position.calculateDistanceBetween(buildingHitbox.box.position);
+         const dist = tribesmanHitbox.box.position.distanceTo(buildingHitbox.box.position);
          if (dist < minDist) {
             minDist = dist;
             closestStation = building;

@@ -54,7 +54,8 @@ export function createInguYetuksnoglurblidokowfleaSeekerHeadConfig(position: Poi
             springConstant: 25,
             damping: 0.5,
             padding: Math.PI * 0.1,
-            idealHitboxAngleOffset: 0
+            idealHitboxAngleOffset: 0,
+            useLeverage: false
          });
       }
 

@@ -195,7 +195,7 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
          applyAccelerationFromGround(tribesmanHitbox, polarVec2(acceleration, tribesmanHitbox.box.angle + Math.PI));
       }
 
-      const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(buildingHitbox.box.position);
+      const targetAngle = tribesmanHitbox.box.position.angleTo(buildingHitbox.box.position);
       turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
 
       if (Math.abs(getAngleDiff(tribesmanHitbox.box.angle, targetAngle)) < 0.1) {
@@ -233,7 +233,7 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
 
       // @Incomplete: Skip buildings which there isn't a path to
 
-      const distance = tribesmanHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+      const distance = tribesmanHitbox.box.position.distanceTo(entityHitbox.box.position);
       if (distance < minDistance) {
          closestDamagedBuilding = entity;
          minDistance = distance;
@@ -262,7 +262,7 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
          applyAccelerationFromGround(tribesmanHitbox, polarVec2(acceleration, tribesmanHitbox.box.angle + Math.PI));
       }
 
-      const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(buildingHitbox.box.position);
+      const targetAngle = tribesmanHitbox.box.position.angleTo(buildingHitbox.box.position);
       turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
 
       if (getAbsAngleDiff(tribesmanHitbox.box.angle, targetAngle) < 0.1) {

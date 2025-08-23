@@ -4,7 +4,7 @@ import { CollisionBit } from "../../shared/src/collision";
 import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { TILE_PHYSICS_INFO_RECORD, TileType } from "../../shared/src/tiles";
-import { assert, getAngleDiff, getTileIndexIncludingEdges, Point, polarVec2, TileIndex } from "../../shared/src/utils";
+import { getAngleDiff, getTileIndexIncludingEdges, Point, polarVec2, TileIndex } from "../../shared/src/utils";
 import { PhysicsComponentArray } from "./components/PhysicsComponent";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { registerPlayerKnockback } from "./server/player-clients";
@@ -21,6 +21,9 @@ export interface HitboxAngularTether {
 
    // @HACK: haven't fully thought this through; it's extremely unclear what this is
    readonly idealHitboxAngleOffset: number;
+
+   /** If true, then the tether will be as effective at maintaining the restriction at long distances as it is at short distances. If false then the force used to correct the restriction will be the same regardless of distance between the hitboxes. */
+   readonly useLeverage: boolean;
 }
 
 /** Puts an angular spring on the hitbox's relative angle. */
@@ -260,6 +263,19 @@ export function setHitboxAngle(hitbox: Hitbox, angle: number): void {
    const add = angle - hitbox.box.angle;
    hitbox.box.relativeAngle += add;
    hitbox.previousRelativeAngle += add;
+
+   const transformComponent = TransformComponentArray.getComponent(hitbox.entity);
+   transformComponent.isDirty = true;
+}
+
+/** Makes the hitboxes' angle be that as specified, by only changing its relative angle */
+export function setHitboxRelativeAngle(hitbox: Hitbox, angle: number): void {
+   const add = angle - hitbox.box.relativeAngle;
+   hitbox.box.relativeAngle += add;
+   hitbox.previousRelativeAngle += add;
+
+   const transformComponent = TransformComponentArray.getComponent(hitbox.entity);
+   transformComponent.isDirty = true;
 }
 
 const cleanAngle = (hitbox: Hitbox): void => {

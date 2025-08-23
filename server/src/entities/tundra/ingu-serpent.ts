@@ -82,15 +82,15 @@ const moveFunc = (serpent: Entity, pos: Point, accelerationMagnitude: number): v
                                                                   // Here was the devil
       } else {
          const previousHitbox = transformComponent.hitboxes[i - 1] as Hitbox;
-         moveDir = hitbox.box.position.calculateAngleBetween(previousHitbox.box.position);
+         moveDir = hitbox.box.position.angleTo(previousHitbox.box.position);
       }
       
       const isHeadHitbox = hitbox.flags.includes(HitboxFlag.INGU_SERPENT_HEAD);
       const acc = accelerationMagnitude * (isHeadHitbox ? 1.4 : 0.7) * 0.5;
       const connectingVel = polarVec2(acc, moveDir);
 
-      // const dirToTarget = hitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-      const dirToTarget = hitbox.box.position.calculateAngleBetween(pos);
+      // const dirToTarget = hitbox.box.position.angleTo(targetHitbox.box.position);
+      const dirToTarget = hitbox.box.position.angleTo(pos);
       const velToTarget = polarVec2(accelerationMagnitude * (isHeadHitbox ? 1.4 : 0.7) * 0.5, dirToTarget);
 
       applyAccelerationFromGround(hitbox, new Point(connectingVel.x + velToTarget.x, connectingVel.y + velToTarget.y));
@@ -109,7 +109,7 @@ const turnFunc = (serpent: Entity, _pos: Point, turnSpeed: number, turnDamping: 
    const transformComponent = TransformComponentArray.getComponent(serpent);
    const headHitbox = transformComponent.rootHitboxes[0];
 
-   const targetDirection = headHitbox.box.position.calculateAngleBetween(pos);
+   const targetDirection = headHitbox.box.position.angleTo(pos);
 
    const absDiff = getAbsAngleDiff(headHitbox.box.angle, targetDirection);
    const angleDiffStopWiggle = 0.85;
@@ -147,7 +147,8 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
       springConstant: 61,
       damping: 0.85,
       padding: Math.PI * 0.1,
-      idealHitboxAngleOffset: Math.PI
+      idealHitboxAngleOffset: Math.PI,
+      useLeverage: false
    });
 
    const idealBody2Dist = 46;
@@ -167,7 +168,8 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
       springConstant: 61,
       damping: 0.85,
       padding: Math.PI * 0.1,
-      idealHitboxAngleOffset: Math.PI
+      idealHitboxAngleOffset: Math.PI,
+      useLeverage: false
    });
 
    const idealTailDist = 44;
@@ -186,7 +188,8 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
       springConstant: 61,
       damping: 0.85,
       padding: Math.PI * 0.1,
-      idealHitboxAngleOffset: Math.PI
+      idealHitboxAngleOffset: Math.PI,
+      useLeverage: false
    });
 
    const physicsComponent = new PhysicsComponent();

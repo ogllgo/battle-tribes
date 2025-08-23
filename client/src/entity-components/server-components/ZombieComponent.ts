@@ -130,7 +130,7 @@ function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
    
    // Blood particles
    for (let i = 0; i < 10; i++) {
-      let offsetDirection = hitbox.box.position.calculateAngleBetween(hitPosition);
+      let offsetDirection = hitbox.box.position.angleTo(hitPosition);
       offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
 
       const spawnPositionX = hitbox.box.position.x + RADIUS * Math.sin(offsetDirection);

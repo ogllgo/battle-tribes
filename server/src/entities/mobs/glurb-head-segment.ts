@@ -81,9 +81,9 @@ const propagateMoveDirective = (glurbSegment: Entity, furtherHitbox: Hitbox | nu
    
    let targetDir: number;
    if (furtherHitbox === null) {
-      targetDir = hitbox.box.position.calculateAngleBetween(pos);
+      targetDir = hitbox.box.position.angleTo(pos);
    } else {
-      targetDir = hitbox.box.position.calculateAngleBetween(furtherHitbox.box.position);
+      targetDir = hitbox.box.position.angleTo(furtherHitbox.box.position);
    }
    
    applyAccelerationFromGround(hitbox, polarVec2(acceleration, targetDir));
@@ -106,7 +106,7 @@ const turnFunc = (head: Entity, pos: Point, turnSpeed: number, turnDamping: numb
    const transformComponent = TransformComponentArray.getComponent(head);
    const hitbox = transformComponent.hitboxes[0];
    
-   const targetDirection = hitbox.box.position.calculateAngleBetween(pos);
+   const targetDirection = hitbox.box.position.angleTo(pos);
 
    turnHitboxToAngle(hitbox, targetDirection, Math.PI, 0.5, false);
 }

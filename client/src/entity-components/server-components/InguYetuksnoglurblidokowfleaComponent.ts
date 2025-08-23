@@ -38,7 +38,8 @@ function createParamsFromData(): InguYetuksnoglurblidokowfleaComponentParams {
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
 
-   for (const hitbox of transformComponentParams.hitboxes) {
+   for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
+      const hitbox = transformComponentParams.hitboxes[i];
       if (hitbox.flags.includes(HitboxFlag.YETUK_BODY_1)) {
          const renderPart = new TexturedRenderPart(
             hitbox,
@@ -69,6 +70,14 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
             1,
             0,
             getTextureArrayIndex("entities/ingu-yetuksnoglurblidokowflea/body-4.png")
+         );
+         renderInfo.attachRenderPart(renderPart);
+      } else if (hitbox.flags.includes(HitboxFlag.YETUK_SNOBE_TAIL)) {
+         const renderPart = new TexturedRenderPart(
+            hitbox,
+            1.1,
+            0,
+            getTextureArrayIndex("entities/ingu-yetuksnoglurblidokowflea/snobe-tail.png")
          );
          renderInfo.attachRenderPart(renderPart);
       } else if (hitbox.flags.includes(HitboxFlag.YETUK_GLURB_SEGMENT)) {
@@ -103,6 +112,41 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
             getTextureArrayIndex("entities/okren/juvenile/mandible.png")
          );
          renderInfo.attachRenderPart(renderPart);
+      } else if (hitbox.flags.includes(HitboxFlag.YETUK_DUSTFLEA_DISPENSION_PORT)) {
+         const renderPart = new TexturedRenderPart(
+            hitbox,
+            4.1,
+            0,
+            getTextureArrayIndex("entities/ingu-yetuksnoglurblidokowflea/dustflea-dispension-port.png")
+         );
+         renderInfo.attachRenderPart(renderPart);
+      } else if (hitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_SMALL)) {
+         renderInfo.attachRenderPart(
+            new TexturedRenderPart(
+               hitbox,
+               i * 0.02,
+               0,
+               getTextureArrayIndex("entities/tukmok/tail-segment-small.png")
+            )
+         );
+      } else if (hitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_MEDIUM)) {
+         renderInfo.attachRenderPart(
+            new TexturedRenderPart(
+               hitbox,
+               i * 0.02,
+               0,
+               getTextureArrayIndex("entities/tukmok/tail-segment-medium.png")
+            )
+         );
+      } else {
+         renderInfo.attachRenderPart(
+            new TexturedRenderPart(
+               hitbox,
+               i * 0.02,
+               0,
+               getTextureArrayIndex("entities/tukmok/tail-segment-big.png")
+            )
+         );
       }
    }
 
@@ -112,93 +156,94 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
 function onTick(inguYetuk: Entity): void {
    // @HACK!!!
 
-   if (Math.random() < 0.6 / Settings.TPS) {
+   const mult = 1.5;
+
+   if (Math.random() < 0.6 * mult / Settings.TPS) {
       playSound("cow-ambient-" + randInt(1, 3) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 0.4 / Settings.TPS) {
+   if (Math.random() < 0.4 * mult / Settings.TPS) {
       playSound("cow-hurt-" + randInt(1, 3) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 0.3 / Settings.TPS) {
+   if (Math.random() < 0.3 * mult / Settings.TPS) {
       playSound("cow-die-1.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 
-
-   if (Math.random() < 0.6 / Settings.TPS) {
+   if (Math.random() < 0.6 * mult / Settings.TPS) {
       playSound("yeti-ambient-" + randInt(1, 6) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 0.6 / Settings.TPS) {
+   if (Math.random() < 0.6 * mult / Settings.TPS) {
       playSound("yeti-angry-" + randInt(1, 5) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 0.5 / Settings.TPS) {
+   if (Math.random() < 0.5 * mult / Settings.TPS) {
       playSound("yeti-hurt-" + randInt(1, 5) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 0.3 / Settings.TPS) {
+   if (Math.random() < 0.3 * mult / Settings.TPS) {
       playSound("yeti-death-" + randInt(1, 2) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 
-   if (Math.random() < 2 / Settings.TPS) {
+   if (Math.random() < 2 * mult / Settings.TPS) {
       playSound("glurb-hit.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 1 / Settings.TPS) {
+   if (Math.random() < 1 * mult / Settings.TPS) {
       playSound("glurb-death.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 
-   if (Math.random() < 0.8 / Settings.TPS) {
+   if (Math.random() < 0.8 * mult / Settings.TPS) {
       playSound("tukmok-bone-hit.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 1.2 / Settings.TPS) {
+   if (Math.random() < 1.2 * mult / Settings.TPS) {
       playSound("tukmok-hit-flesh-" + randInt(1, 4) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 1.2 / Settings.TPS) {
+   if (Math.random() < 1.2 * mult / Settings.TPS) {
       playSound("tukmok-angry-" + randInt(1, 3) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 0.5 / Settings.TPS) {
+   if (Math.random() < 0.5 * mult / Settings.TPS) {
       playSound("tukmok-death.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 
-   if (Math.random() < 0.65 / Settings.TPS) {
+   if (Math.random() < 0.65 * mult / Settings.TPS) {
       playSound("ingu-serpent-hit.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 0.5 / Settings.TPS) {
+   if (Math.random() < 0.5 * mult / Settings.TPS) {
       playSound("ingu-serpent-death.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 1 / Settings.TPS) {
+   if (Math.random() < 1 * mult / Settings.TPS) {
       playSound("ingu-serpent-angry-" + randInt(1, 2) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 1.2 / Settings.TPS) {
+   if (Math.random() < 1.2 * mult / Settings.TPS) {
       playSound("ingu-serpent-leap.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 
 
-   if (Math.random() < 1.2 / Settings.TPS) {
+   if (Math.random() < 1.2 * mult / Settings.TPS) {
       playSound("snobe-hit-" + randInt(1, 3) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 1.2 / Settings.TPS) {
+   if (Math.random() < 1.2 * mult / Settings.TPS) {
       playSound("snobe-death-" + randInt(1,3) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 1.5 / Settings.TPS) {
+   if (Math.random() < 1.5 * mult / Settings.TPS) {
       playSound("snobe-ambient-" + randInt(1,4) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 
-   if (Math.random() < 1 / Settings.TPS) {
+   if (Math.random() < 1 * mult / Settings.TPS) {
       playSound("krumblid-death.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 1 / Settings.TPS) {
+   if (Math.random() < 1 * mult / Settings.TPS) {
       playSound("krumblid-hit-flesh-" + randInt(1, 2) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 1 / Settings.TPS) {
+   if (Math.random() < 1 * mult / Settings.TPS) {
       playSound("krumblid-hit-shell.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 
-   if (Math.random() < 0.7 / Settings.TPS) {
+   if (Math.random() < 0.7 * mult / Settings.TPS) {
       playSound("okren-eye-hit.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 
-   if (Math.random() < 1 / Settings.TPS) {
+   if (Math.random() < 1 * mult / Settings.TPS) {
       playSound("dustflea-hit.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 
-   if (Math.random() < 2.5 / Settings.TPS) {
+   if (Math.random() < 2.5 * mult / Settings.TPS) {
       playSound("dustflea-egg-pop.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 }
@@ -208,7 +253,7 @@ function createComponent(): InguYetuksnoglurblidokowfleaComponent {
 }
 
 function getMaxRenderParts(): number {
-   return 50;
+   return 60;
 }
 
 function padData(): void {}

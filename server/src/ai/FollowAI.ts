@@ -91,7 +91,7 @@ export function continueFollowingEntity(entity: Entity, followAI: FollowAI, foll
 
       aiHelperComponent.turnFunc(entity, followTargetHitbox.box.position, turnSpeed, turnDamping)
 
-      const awayDirection = followTargetHitbox.box.position.calculateAngleBetween(entityHitbox.box.position);
+      const awayDirection = followTargetHitbox.box.position.angleTo(entityHitbox.box.position);
       const moveTargetX = entityHitbox.box.position.x + 500 * Math.sin(awayDirection);
       const moveTargetY = entityHitbox.box.position.y + 500 * Math.cos(awayDirection);
       aiHelperComponent.moveFunc(entity, new Point(moveTargetX, moveTargetY), acceleration * 0.5);

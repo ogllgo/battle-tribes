@@ -69,7 +69,7 @@ export function createBattleaxeProjectileConfig(position: Point, rotation: numbe
 //       // Damage the entity
 //       const battleaxeTransformComponent = TransformComponentArray.getComponent(battleaxe);
 //       const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-//       const direction = battleaxeTransformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
+//       const direction = battleaxeTransformComponent.position.angleTo(collidingEntityTransformComponent.position);
 
 //       // @Incomplete cause of death
 //       damageEntity(collidingEntity, tribeMember, 4, DamageSource.spear, AttackEffectiveness.effective, collisionPoint, 0);

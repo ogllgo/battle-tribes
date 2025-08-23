@@ -145,9 +145,8 @@ function createComponent(entityParams: EntityParams, intermediateInfo: Intermedi
 }
 
 function getMaxRenderParts(entityParams: EntityParams): number {
-   const bannerComponentParams = entityParams.serverComponentParams[ServerComponentType.totemBanner]!;
-   // @Garbage
-   return 1 + Object.keys(bannerComponentParams.banners).length;
+   // @HACK: over time the number of banners can increase so we can't use the number of banners at the start as anything...
+   return 20;
 }
 
 function padData(reader: PacketReader): void {

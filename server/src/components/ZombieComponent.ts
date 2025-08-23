@@ -122,7 +122,7 @@ const getTarget = (zombie: Entity, aiHelperComponent: AIHelperComponent): Entity
          const entityTransformComponent = TransformComponentArray.getComponent(entity);
          const entityHitbox = entityTransformComponent.hitboxes[0];
          
-         const distance = zombieHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+         const distance = zombieHitbox.box.position.distanceTo(entityHitbox.box.position);
          if (distance < minDist) {
             minDist = distance;
             target = entity;
@@ -178,7 +178,7 @@ const doBiteAttack = (zombie: Entity, target: Entity): void => {
    const targetHitbox = targetTransformComponent.hitboxes[0];
    
    // Lunge at the target
-   const lungeDir = zombieHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+   const lungeDir = zombieHitbox.box.position.angleTo(targetHitbox.box.position);
    applyAbsoluteKnockback(zombieHitbox, polarVec2(130, lungeDir));
 
    // Reset attack cooldown
@@ -279,7 +279,7 @@ function onTick(zombie: Entity): void {
             const entityTransformComponent = TransformComponentArray.getComponent(entity);
             const entityHitbox = entityTransformComponent.hitboxes[0];
             
-            const distance = zombieHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+            const distance = zombieHitbox.box.position.distanceTo(entityHitbox.box.position);
             if (distance < minDist) {
                minDist = distance;
                closestFoodItem = entity;
@@ -360,7 +360,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
       return;
    }
 
-   const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
 
    // Damage and knock back the player
    damageEntity(collidingEntity, collidingHitbox, zombie, 1, DamageSource.zombie, AttackEffectiveness.effective, collisionPoint, 0);

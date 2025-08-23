@@ -100,7 +100,7 @@ const extraEscapeCondition = (krumblid: Entity, escapeTarget: Entity): boolean =
    const escapeTargetTransformComponent = TransformComponentArray.getComponent(escapeTarget);
    const escapeTargetHitbox = escapeTargetTransformComponent.hitboxes[0];
 
-   const angleFromEscapeTarget = escapeTargetHitbox.box.position.calculateAngleBetween(krumblidHitbox.box.position);
+   const angleFromEscapeTarget = escapeTargetHitbox.box.position.angleTo(krumblidHitbox.box.position);
    const positionFromEscapeTarget = new Point(krumblidHitbox.box.position.x - escapeTargetHitbox.box.position.x, krumblidHitbox.box.position.y - escapeTargetHitbox.box.position.y);
 
    const escapeTargetVelocity = getHitboxVelocity(escapeTargetHitbox);

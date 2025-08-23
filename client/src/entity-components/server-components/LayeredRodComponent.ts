@@ -266,7 +266,7 @@ function onCollision(entity: Entity, collidingEntity: Entity, affectedHitbox: Hi
    const layeredRodComponent = LayeredRodComponentArray.getComponent(entity);
    LayeredRodComponentArray.activateComponent(layeredRodComponent, entity);
    
-   const directionFromCollidingEntity = collidingHitbox.box.position.calculateAngleBetween(affectedHitbox.box.position);
+   const directionFromCollidingEntity = collidingHitbox.box.position.angleTo(affectedHitbox.box.position);
 
    let existingPushX = bendToPushAmount(layeredRodComponent.bendX);
    let existingPushY = bendToPushAmount(layeredRodComponent.bendY);

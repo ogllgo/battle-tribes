@@ -74,7 +74,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    const spitComponent = SlimeSpitComponentArray.getComponent(spit);
    const damage = spitComponent.size === 0 ? 2 : 3;
 
-   const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
 
    damageEntity(collidingEntity, collidingHitbox, spit, damage, DamageSource.poison, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingHitbox, 150, hitDirection);

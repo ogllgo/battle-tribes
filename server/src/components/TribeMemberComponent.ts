@@ -74,13 +74,13 @@ function onTick(tribeMember: Entity): void {
             const itemEntityTransformComponent = TransformComponentArray.getComponent(itemEntity);
             const itemEntityHitbox = itemEntityTransformComponent.hitboxes[0];
             
-            const distance = tribeMemberHitbox.box.position.calculateDistanceBetween(itemEntityHitbox.box.position);
+            const distance = tribeMemberHitbox.box.position.distanceTo(itemEntityHitbox.box.position);
             if (distance <= VACUUM_RANGE) {
                // @Temporary
                let forceMult = 1 - distance / VACUUM_RANGE;
                forceMult = lerp(0.5, 1, forceMult);
 
-               const vacuumDirection = itemEntityHitbox.box.position.calculateAngleBetween(tribeMemberHitbox.box.position);
+               const vacuumDirection = itemEntityHitbox.box.position.angleTo(tribeMemberHitbox.box.position);
                addHitboxVelocity(itemEntityHitbox, polarVec2(Vars.VACUUM_STRENGTH * forceMult, vacuumDirection));
             }
          }

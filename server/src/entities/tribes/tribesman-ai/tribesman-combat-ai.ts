@@ -189,7 +189,7 @@ const getClosestEmbrasureUsePoint = (tribesman: Entity, usePoints: ReadonlyArray
    for (let i = 0; i < usePoints.length; i++) {
       const point = usePoints[i];
 
-      const dist = tribesmanHitbox.box.position.calculateDistanceBetween(point);
+      const dist = tribesmanHitbox.box.position.distanceTo(point);
       if (dist < minDist) {
          minDist = dist;
          closestPoint = point;
@@ -214,7 +214,7 @@ const getFriendlyProximityDirection = (tribesman: Entity, aiHelperComponent: AIH
       const friendlyTransformComponent = TransformComponentArray.getComponent(friendly);
       const friendlyHitbox = friendlyTransformComponent.hitboxes[0];
       
-      const dist = tribesmanHitbox.box.position.calculateDistanceBetween(friendlyHitbox.box.position);
+      const dist = tribesmanHitbox.box.position.distanceTo(friendlyHitbox.box.position);
       if (dist === 0) {
          continue;
       }
@@ -227,7 +227,7 @@ const getFriendlyProximityDirection = (tribesman: Entity, aiHelperComponent: AIH
       return null;
    } else {
       // @Speed
-      return new Point(0, 0).calculateAngleBetween(dir);
+      return new Point(0, 0).angleTo(dir);
    }
 }
 
@@ -241,7 +241,7 @@ const adjustMoveDirectionForFriendlyProximity = (tribesman: Entity, rawMoveDirec
    }
 
    // @Speed @Cleanup
-   const moveDirection = new Point(0, 0).calculateAngleBetween(moveVec);
+   const moveDirection = new Point(0, 0).angleTo(moveVec);
    return moveDirection;
 }
 
@@ -283,7 +283,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
       // Throw spears if there is multiple
       if (weaponCategory === "spear" && selectedItem.count > 1) {
          // Rotate to face the target
-         const targetDir = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
+         const targetDir = tribesmanHitbox.box.position.angleTo(huntedHitbox.box.position);
          turnHitboxToAngle(tribesmanHitbox, targetDir, TRIBESMAN_TURN_SPEED, 0.5, false);
 
          const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, huntedEntityTransformComponent) - getHumanoidRadius(transformComponent);
@@ -346,7 +346,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
                // Move to the closest one
                const targetUsePoint = getClosestEmbrasureUsePoint(tribesman, nearbyEmbrasureUsePoints);
                
-               const usePointDirection = tribesmanHitbox.box.position.calculateAngleBetween(targetUsePoint);
+               const usePointDirection = tribesmanHitbox.box.position.angleTo(targetUsePoint);
                const moveDir = adjustMoveDirectionForFriendlyProximity(tribesman, usePointDirection);
                
                const acceleration = getTribesmanSlowAcceleration(tribesman);
@@ -354,7 +354,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
             } else if (willStopAtDesiredDistance(tribesmanHitbox, muchTooCloseDistance, distance)) {
                // much too close, stop charging bow all-together and just run back
 
-               const awayDirection = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position) + Math.PI;
+               const awayDirection = tribesmanHitbox.box.position.angleTo(huntedHitbox.box.position) + Math.PI;
                const moveDir = adjustMoveDirectionForFriendlyProximity(tribesman, awayDirection);
                
                const acceleration = getTribesmanAcceleration(tribesman);
@@ -377,7 +377,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
                applyAccelerationFromGround(tribesmanHitbox, polarVec2(acceleration, moveDir));
             }
 
-            const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
+            const targetAngle = tribesmanHitbox.box.position.angleTo(huntedHitbox.box.position);
             turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 2, false);
 
             if (isMuchTooClose) {
@@ -451,7 +451,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
 
             // If reached goal, turn towards the enemy
             if (isFinished) {
-               const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
+               const targetAngle = tribesmanHitbox.box.position.angleTo(huntedHitbox.box.position);
                turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
             }
          }
@@ -467,7 +467,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
                hotbarLimb.lastBattleaxeChargeTicks = getGameTicks();
             }
 
-            const targetDir = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
+            const targetDir = tribesmanHitbox.box.position.angleTo(huntedHitbox.box.position);
             turnHitboxToAngle(tribesmanHitbox, targetDir, TRIBESMAN_TURN_SPEED, 0.5, false);
 
             if (distance > Vars.BATTLEAXE_IDEAL_USE_RANGE + 10) {
@@ -513,7 +513,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
                applyAccelerationFromGround(tribesmanHitbox, polarVec2(acceleration, moveDir));
             }
 
-            const targetDir = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
+            const targetDir = tribesmanHitbox.box.position.angleTo(huntedHitbox.box.position);
             turnHitboxToAngle(tribesmanHitbox, targetDir, TRIBESMAN_TURN_SPEED, 0.5, false);
          
             // If not blocking already, start blocking
@@ -538,7 +538,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
 
             clearTribesmanPath(tribesman);
          } else {
-            const pointDistance = tribesmanHitbox.box.position.calculateDistanceBetween(huntedHitbox.box.position);
+            const pointDistance = tribesmanHitbox.box.position.distanceTo(huntedHitbox.box.position);
             const targetDirectRadius = pointDistance - distance;
 
             const goalRadius = Math.floor((blockRange + targetDirectRadius) / PathfindingSettings.NODE_SEPARATION);
@@ -588,7 +588,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
          applyAccelerationFromGround(tribesmanHitbox, polarVec2(acceleration, tribesmanHitbox.box.angle + Math.PI));
       }
 
-      const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(huntedHitbox.box.position);
+      const targetAngle = tribesmanHitbox.box.position.angleTo(huntedHitbox.box.position);
       turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
    
       // If in melee range, try to do a melee attack
@@ -596,7 +596,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
 
       clearTribesmanPath(tribesman);
    } else {
-      const pointDistance = tribesmanHitbox.box.position.calculateDistanceBetween(huntedHitbox.box.position);
+      const pointDistance = tribesmanHitbox.box.position.distanceTo(huntedHitbox.box.position);
       const targetDirectRadius = pointDistance - distance;
 
       const goalRadius = Math.floor((desiredAttackRange + targetDirectRadius) / PathfindingSettings.NODE_SEPARATION);

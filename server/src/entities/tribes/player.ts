@@ -149,7 +149,7 @@ const modifyTunnel = (player: Entity, tunnel: Entity): void => {
          const tunnelHitbox = tunnelTransformComponent.hitboxes[0];
          
          // Place the door blueprint on whichever side is closest to the player
-         const dirToPlayer = tunnelHitbox.box.position.calculateAngleBetween(playerHitbox.box.position);
+         const dirToPlayer = tunnelHitbox.box.position.angleTo(playerHitbox.box.position);
          const dot = Math.sin(tunnelHitbox.box.angle) * Math.sin(dirToPlayer) + Math.cos(tunnelHitbox.box.relativeAngle) * Math.cos(dirToPlayer);
 
          if (dot > 0) {

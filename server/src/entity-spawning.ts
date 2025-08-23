@@ -6,22 +6,18 @@ import { addEntityToCensus, getEntityCount } from "./census";
 import OPTIONS from "./options";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
-import { createEntity, createEntityImmediate, getEntityType, isNight } from "./world";
+import { createEntityImmediate, getEntityType, isNight } from "./world";
 import { EntityConfig } from "./components";
 import { EntitySpawnEvent, SPAWN_INFOS } from "./entity-spawn-info";
 import { HitboxFlag } from "../../shared/src/boxes/boxes";
 import { getSubtileIndex } from "../../shared/src/subtiles";
-import { surfaceLayer, undergroundLayer } from "./layers";
+import { undergroundLayer } from "./layers";
 import { generateMithrilOre } from "./world-generation/mithril-ore-generation";
 import { boxIsCollidingWithSubtile, boxIsCollidingWithTile } from "../../shared/src/collision";
 import { CollisionGroup, getEntityCollisionGroup } from "../../shared/src/collision-groups";
 import { Hitbox } from "./hitboxes";
 import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
 import { getHitboxesCollidingEntities } from "./collision-detection";
-import { createTukmokConfig } from "./entities/tundra/tukmok";
-import { createSnobeConfig } from "./entities/tundra/snobe";
-import { createOkrenConfig } from "./entities/desert/okren";
-import { createInguYetuksnoglurblidokowfleaConfig } from "./entities/wtf/ingu-yetuksnoglurblidokowflea";
 
 const spawnConditionsAreMet = (spawnInfo: EntitySpawnEvent): boolean => {
    // Make sure there is a block which lacks density
@@ -318,7 +314,7 @@ export function runSpawnAttempt(): void {
 export function spawnInitialEntities(): void {
    // @Temporary
    setTimeout(() => {
-      // const config = createTukmokConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
+      // const config = createCowConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 0);
       // const config = createTukmokConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140 + 2000, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100 - 1000), 0);
       // createEntity(config, surfaceLayer, 0);
 

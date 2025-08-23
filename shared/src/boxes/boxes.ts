@@ -52,6 +52,10 @@ export const enum HitboxFlag {
    YETUK_MANDIBLE_MEDIUM,
    YETUK_TRUNK_HEAD,
    YETUK_TRUNK_MIDDLE,
+   YETUK_DUSTFLEA_DISPENSION_PORT,
+   YETUK_SNOBE_TAIL,
+   FENCE_GATE_DOOR,
+   FENCE_GATE_SIDE,
 }
 
 export const enum HitboxCollisionType {

@@ -60,7 +60,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
       return;
    }
 
-   const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
 
    // @Incomplete: Cause of death
    damageEntity(collidingEntity, collidingHitbox, pebblum, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);

@@ -53,7 +53,7 @@ const getTargetPricklyPear = (krumblid: Entity, aiHelperComponent: AIHelperCompo
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
       const entityHitbox = entityTransformComponent.hitboxes[0];
 
-      const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+      const dist = hitbox.box.position.distanceTo(entityHitbox.box.position);
       if (dist < minDist) {
          minDist = dist;
          target = entity;

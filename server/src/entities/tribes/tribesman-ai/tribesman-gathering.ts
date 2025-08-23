@@ -99,7 +99,7 @@ const getGatherTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entit
       const resourceTransformComponent = TransformComponentArray.getComponent(resource);
       const resourceHitbox = resourceTransformComponent.hitboxes[0];
       
-      const dist = tribesmanHitbox.box.position.calculateDistanceBetween(resourceHitbox.box.position);
+      const dist = tribesmanHitbox.box.position.distanceTo(resourceHitbox.box.position);
       if (dist < minDist) {
          closestResource = resource;
          minDist = dist;
@@ -123,7 +123,7 @@ const getFoodTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entity>
       const resourceTransformComponent = TransformComponentArray.getComponent(entity);
       const resourceHitbox = resourceTransformComponent.hitboxes[0];
 
-      const dist = tribesmanHitbox.box.position.calculateDistanceBetween(resourceHitbox.box.position);
+      const dist = tribesmanHitbox.box.position.distanceTo(resourceHitbox.box.position);
       if (dist < minDist) {
          target = entity;
          minDist = dist;
@@ -170,7 +170,7 @@ const tribesmanGetItemPickupTarget = (tribesman: Entity, visibleItemEntities: Re
          continue;
       }
       
-      const distance = tribesmanHitbox.box.position.calculateDistanceBetween(itemEntityHitbox.box.position);
+      const distance = tribesmanHitbox.box.position.distanceTo(itemEntityHitbox.box.position);
       if (distance < minDistance) {
          closestDroppedItem = itemEntity;
          minDistance = distance;

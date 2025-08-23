@@ -277,7 +277,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
             // @SQUEAM
             let entityConfig: EntityConfig;
             if (placeInfo.entityType === EntityType.slingTurret) {
-               entityConfig = createBlueprintEntityConfig(placeInfo.position, placeInfo.angle, tribeComponent.tribe, BlueprintType.slingTurret, 0, null);
+               entityConfig = createBlueprintEntityConfig(placeInfo.position, placeInfo.angle, tribeComponent.tribe, BlueprintType.slingTurret, 0, null, []);
             } else {
                entityConfig = createStructureConfig(tribeComponent.tribe, placeInfo.entityType, placeInfo.position, placeInfo.angle, placeInfo.connections);
             }
@@ -582,7 +582,7 @@ const getFenceGatePlaceDirection = (fence: Entity): number => {
    const connectingFenceTransformComponent = TransformComponentArray.getComponent(connection.entity);
    const connectedFenceHitbox = connectingFenceTransformComponent.hitboxes[0];
 
-   let direction = fenceHitbox.box.position.calculateAngleBetween(connectedFenceHitbox.box.position);
+   let direction = fenceHitbox.box.position.angleTo(connectedFenceHitbox.box.position);
    return direction + Math.PI * 0.5;
 }
 
@@ -610,7 +610,7 @@ export function placeBlueprint(tribeMember: Entity, structure: Entity, blueprint
          
          const tribeComponent = TribeComponentArray.getComponent(tribeMember);
 
-         const config = createBlueprintEntityConfig(position, dynamicRotation, tribeComponent.tribe, blueprintType, 0, null);
+         const config = createBlueprintEntityConfig(position, dynamicRotation, tribeComponent.tribe, blueprintType, 0, null, []);
          createEntity(config, getEntityLayer(tribeMember), 0);
          
          destroyEntity(structure);
@@ -635,10 +635,13 @@ export function placeBlueprint(tribeMember: Entity, structure: Entity, blueprint
 
          const tribeComponent = TribeComponentArray.getComponent(tribeMember);
 
-         const config = createBlueprintEntityConfig(structureHitbox.box.position.copy(), structureHitbox.box.angle, tribeComponent.tribe, blueprintType, structure, null);
+         const config = createBlueprintEntityConfig(structureHitbox.box.position.copy(), structureHitbox.box.angle, tribeComponent.tribe, blueprintType, 0, null, []);
          createEntity(config, getEntityLayer(tribeMember), 0);
          
          consumeItemType(tribeMember, inventoryComponent, upgradeMaterialItemType, 5);
+
+         destroyEntity(structure);
+
          break;
       }
       case BlueprintType.warriorHutUpgrade: {
@@ -653,7 +656,7 @@ export function placeBlueprint(tribeMember: Entity, structure: Entity, blueprint
 
          const tribeComponent = TribeComponentArray.getComponent(tribeMember);
 
-         const config = createBlueprintEntityConfig(structureHitbox.box.position.copy(), structureHitbox.box.angle, tribeComponent.tribe, blueprintType, structure, null);
+         const config = createBlueprintEntityConfig(structureHitbox.box.position.copy(), structureHitbox.box.angle, tribeComponent.tribe, blueprintType, structure, null, []);
          createEntity(config, getEntityLayer(tribeMember), 0);
 
          consumeItemType(tribeMember, inventoryComponent, ItemType.rock, 25);
@@ -675,13 +678,17 @@ export function placeBlueprint(tribeMember: Entity, structure: Entity, blueprint
          if (dotAngles(rotation, tribeMemberHitbox.box.angle) < 0) {
             rotation = rotation + Math.PI;
          }
+
+         const structureComponent = StructureComponentArray.getComponent(structure);
          
          const tribeComponent = TribeComponentArray.getComponent(tribeMember);
 
-         const config = createBlueprintEntityConfig(structureHitbox.box.position.copy(), rotation, tribeComponent.tribe, blueprintType, structure, null);
+         const config = createBlueprintEntityConfig(structureHitbox.box.position.copy(), rotation, tribeComponent.tribe, blueprintType, 0, null, structureComponent.connections);
          createEntity(config, getEntityLayer(tribeMember), 0);
 
          consumeItemType(tribeMember, inventoryComponent, ItemType.wood, 5);
+
+         destroyEntity(structure);
       }
    }
 }
@@ -706,7 +713,7 @@ export function getAvailableCraftingStations(tribeMember: Entity): ReadonlyArray
             const entityTransformComponent = TransformComponentArray.getComponent(entity);
             const entityHitbox = entityTransformComponent.hitboxes[0];
             
-            const distance = tribeMemberHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+            const distance = tribeMemberHitbox.box.position.distanceTo(entityHitbox.box.position);
             if (distance > Settings.MAX_CRAFTING_STATION_USE_DISTANCE) {
                continue;
             }

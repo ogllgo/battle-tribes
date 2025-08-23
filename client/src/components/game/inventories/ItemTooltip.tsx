@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AnimalStaffItemInfo, ArmourItemInfo, Item, ITEM_INFO_RECORD, ITEM_TYPE_RECORD } from "../../../../../shared/src/items/items";
+import { AnimalStaffItemInfo, ArmourItemInfo, Item, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType } from "../../../../../shared/src/items/items";
 import CLIENT_ITEM_INFO_RECORD from "../../../client-item-info";
 
 export let ItemTooltip_setItem: (item: Item | null) => void = () => {};
@@ -44,6 +44,16 @@ export const ItemTooltip = () => {
 
       {itemCategory === "armour" && (
          <p>Defence: {(itemInfo as ArmourItemInfo).defence * 100}%</p>
+      )}
+
+{/* @SQUEAM */}
+      {/* @HACK */}
+      {item.type === ItemType.yuriMinecraft && (
+         <p className="flavour-text">Alex's thoughts keep drifting back to that encounter in the woodland mansion, as much as she wills herself not to. She can't put the cold shivers out of her mind, the cold shivers which make her feel so warm. Perhaps the Illager's intentions weren't hostile...</p>
+      )}
+      {/* @HACK */}
+      {item.type === ItemType.yuriSonichu && (
+         <p className="flavour-text">Stuck alone and pent up in the woods for a week, Sonichu has an affliction only Shrekke's gentle yet controlling hands can cure.</p>
       )}
 
       {typeof clientItemInfo.flavourText !== "undefined" ? (

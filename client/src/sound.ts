@@ -351,7 +351,7 @@ export async function loadSoundEffects(): Promise<void> {
 
 const calculateSoundVolume = (volume: number, position: Point): number => {
    // Calculate final volume accounting for distance
-   let distanceFromPlayer = Camera.position.calculateDistanceBetween(position);
+   let distanceFromPlayer = Camera.position.distanceTo(position);
    distanceFromPlayer /= 150;
    if (distanceFromPlayer < 1) {
       distanceFromPlayer = 1;

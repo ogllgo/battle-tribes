@@ -459,7 +459,7 @@ const snapRotationToPlayer = (player: Entity, placePosition: Point, rotation: nu
    const transformComponent = TransformComponentArray.getComponent(player);
    const playerHitbox = transformComponent.hitboxes[0];
    
-   const playerDirection = playerHitbox.box.position.calculateAngleBetween(placePosition);
+   const playerDirection = playerHitbox.box.position.angleTo(placePosition);
    let snapRotation = playerDirection - rotation;
 
    // Snap to nearest PI/2 interval

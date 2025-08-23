@@ -453,7 +453,7 @@ export function destroyEntity(entity: Entity): void {
    // @Temporary
    const entityType = getEntityType(entity);
    if (typeof entityType === "undefined") {
-      throw new Error("Tried to remove an entity before it was added to the board.");
+      throw new Error("Tried to remove an entity which doesn't exist.");
    }
    
    // Don't try to remove if already being/is removed
@@ -463,6 +463,7 @@ export function destroyEntity(entity: Entity): void {
 
    // Add the entity to the remove buffer
    entityRemoveBuffer.push(entity);
+
    // Remove the entity from the join buffer
    // @Speed ?
    for (let i = 0; i < entityJoinBuffer.length; i++) {

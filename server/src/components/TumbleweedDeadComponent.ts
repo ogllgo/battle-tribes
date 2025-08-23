@@ -77,7 +77,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    //    if (transformComponent.rootEntity !== otherTransformComponent.rootEntity) {
    //       const hitbox = transformComponent.hitboxes[0];
    //       const otherHitbox = otherTransformComponent.hitboxes[0];
-   //       const dist = hitbox.box.position.calculateDistanceBetween(otherHitbox.box.position);
+   //       const dist = hitbox.box.position.distanceTo(otherHitbox.box.position);
    //       // @Hack: what if i change their radius?
    //       if (dist < 70) {
    //          attachHitbox(hitbox, collidingHitbox, tumbleweed, collidingEntity, false);

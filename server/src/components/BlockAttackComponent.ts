@@ -84,7 +84,7 @@ const blockSwing = (blockAttack: Entity, swingAttack: Entity, blockingHitbox: Hi
       destroyEntity(swingAttack);
 
       // Push back
-      const pushDirection = swingHitbox.box.position.calculateAngleBetween(blockingHitbox.box.position);
+      const pushDirection = swingHitbox.box.position.angleTo(blockingHitbox.box.position);
       const attackingItem = getHeldItem(attackerLimb);
       const knockbackAmount = calculateItemKnockback(attackingItem, true);
       applyKnockback(blockingHitbox, knockbackAmount, pushDirection);
@@ -111,7 +111,7 @@ const blockProjectile = (blockAttack: Entity, projectile: Entity, blockingHitbox
 
    if (blockAttackComponent.blockType === BlockType.shieldBlock) {
       // Push back
-      const pushDirection = projectileHitbox.box.position.calculateAngleBetween(blockingHitbox.box.position);
+      const pushDirection = projectileHitbox.box.position.angleTo(blockingHitbox.box.position);
       // @Hack @Hardcoded: knockback amount
       applyKnockback(blockingHitbox, 75, pushDirection);
       

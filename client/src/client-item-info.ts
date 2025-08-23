@@ -872,7 +872,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       entityTextureSource: "items/small/ivory-tusk.png",
       textureSource: "items/large/ivory-tusk.png",
       toolTextureSource: "items/misc/ivory-tusk.png",
-      name: "Ivory Tusk",
+      name: "Timolothy's pocket quarter",
       namePlural: "Ivory Tusk",
       description: ""
    },
@@ -880,7 +880,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       entityTextureSource: "items/small/ivory-spear.png",
       textureSource: "items/large/ivory-spear.png",
       toolTextureSource: "items/misc/ivory-spear.png",
-      name: "Ivory Spear",
+      name: "Timolothy's pocket penny",
       namePlural: "Ivory Spear",
       description: ""
    },

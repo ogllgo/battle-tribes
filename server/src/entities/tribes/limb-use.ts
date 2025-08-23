@@ -127,7 +127,7 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
 
 //       const targetEntityTransformComponent = TransformComponentArray.getComponent(targetEntity);
 
-//       const dist = transformComponent.position.calculateDistanceBetween(targetEntityTransformComponent.position);
+//       const dist = transformComponent.position.distanceTo(targetEntityTransformComponent.position);
 //       if (dist < minDistance) {
 //          closestEntity = targetEntity;
 //          minDistance = dist;

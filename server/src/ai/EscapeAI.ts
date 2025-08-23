@@ -56,7 +56,7 @@ const getEscapeTarget = (entity: Entity, escapeAI: EscapeAI): Entity | null => {
       // @Hack
       const attackingEntityHitbox = attackingEntityTransformComponent.hitboxes[0];
       
-      const distance = entityHitbox.box.position.calculateDistanceBetween(attackingEntityHitbox.box.position);
+      const distance = entityHitbox.box.position.distanceTo(attackingEntityHitbox.box.position);
       if (distance < minDistance) {
          minDistance = distance;
          escapeEntity = attackingEntity;
@@ -73,7 +73,7 @@ const getEscapeTarget = (entity: Entity, escapeAI: EscapeAI): Entity | null => {
          // @Hack
          const escapeTargetHitbox = escapeTargetTransformComponent.hitboxes[0];
          
-         const distance = entityHitbox.box.position.calculateDistanceBetween(escapeTargetHitbox.box.position);
+         const distance = entityHitbox.box.position.distanceTo(escapeTargetHitbox.box.position);
          if (distance < minDistance) {
             minDistance = distance;
             escapeEntity = escapeTarget;

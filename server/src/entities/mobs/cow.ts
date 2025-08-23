@@ -107,7 +107,7 @@ const moveFunc = (cow: Entity, pos: Point, accelerationMagnitude: number): void 
    const transformComponent = TransformComponentArray.getComponent(cow);
    const cowBodyHitbox = transformComponent.rootHitboxes[0];
 
-   const bodyToTargetDirection = cowBodyHitbox.box.position.calculateAngleBetween(pos);
+   const bodyToTargetDirection = cowBodyHitbox.box.position.angleTo(pos);
 
    // Move whole cow to the target
    const alignmentToTarget = findAngleAlignment(cowBodyHitbox.box.angle, bodyToTargetDirection);
@@ -115,10 +115,10 @@ const moveFunc = (cow: Entity, pos: Point, accelerationMagnitude: number): void 
    applyAccelerationFromGround(cowBodyHitbox, polarVec2(accelerationMagnitude * accelerationMultiplier, bodyToTargetDirection));
    
    // Move head to the target
-   const headHitbox = transformComponent.hitboxes[1] as Hitbox;
-   const headToTargetDirection = headHitbox.box.position.calculateAngleBetween(pos);
+   const headHitbox = transformComponent.hitboxes[1];
+   const headToTargetDirection = headHitbox.box.position.angleTo(pos);
    // @Hack?
-   const headForce = accelerationMagnitude * 0.8;
+   const headForce = accelerationMagnitude * 1.6;
    applyAcceleration(headHitbox, polarVec2(headForce, headToTargetDirection));
 }
 
@@ -126,13 +126,15 @@ const turnFunc = (cow: Entity, pos: Point, turnSpeed: number, turnDamping: numbe
    const transformComponent = TransformComponentArray.getComponent(cow);
    const cowBodyHitbox = transformComponent.rootHitboxes[0];
 
-   const bodyToTargetDirection = cowBodyHitbox.box.position.calculateAngleBetween(pos);
-   turnHitboxToAngle(cowBodyHitbox, bodyToTargetDirection, turnSpeed, turnDamping, false);
+   const bodyToTargetDirection = cowBodyHitbox.box.position.angleTo(pos);
+   // @HACK
+   const turnSpeed2 = turnSpeed * 0.6;
+   turnHitboxToAngle(cowBodyHitbox, bodyToTargetDirection, turnSpeed2, turnDamping, false);
    
    // Turn the head to face the target
-   const headHitbox = transformComponent.hitboxes[1] as Hitbox;
-   const headToTargetDirection = headHitbox.box.position.calculateAngleBetween(pos);
-   turnHitboxToAngle(headHitbox, headToTargetDirection, 1.5 * Math.PI, 0.5, false);
+   const headHitbox = transformComponent.hitboxes[1];
+   const headToTargetDirection = headHitbox.box.position.angleTo(pos);
+   turnHitboxToAngle(headHitbox, headToTargetDirection, 5 * Math.PI, 2.5, false);
 }
 
 export function createCowConfig(position: Point, angle: number, species: CowSpecies): EntityConfig {
@@ -143,22 +145,23 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
    addHitboxToTransformComponent(transformComponent, bodyHitbox);
  
    const idealHeadDist = 50;
-   
+
    // Head hitbox
    const headPosition = position.offset(idealHeadDist, angle);
-   const headHitbox = new Hitbox(transformComponent, null, true, new CircularBox(headPosition, new Point(0, idealHeadDist), 0, 30), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
+   const headHitbox = new Hitbox(transformComponent, null, true, new CircularBox(headPosition, new Point(0, 0), 0, 30), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
    headHitbox.box.pivot = createNormalisedPivotPoint(0, -0.5);
    addHitboxToTransformComponent(transformComponent, headHitbox);
 
-   tetherHitboxes(headHitbox, bodyHitbox, idealHeadDist, 25, 1);
+   tetherHitboxes(headHitbox, bodyHitbox, idealHeadDist, 35, 1);
    // @Hack: method of adding
    headHitbox.angularTethers.push({
       originHitbox: bodyHitbox,
       idealAngle: 0,
-      springConstant: 18,
+      springConstant: 50,
       damping: 0,
-      padding: Math.PI * 0.08,
-      idealHitboxAngleOffset: 0
+      padding: Math.PI * 0.05,
+      idealHitboxAngleOffset: 0,
+      useLeverage: true
    });
 
    const physicsComponent = new PhysicsComponent();

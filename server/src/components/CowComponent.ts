@@ -132,7 +132,7 @@ const getTargetGrass = (cow: Entity): Entity | null => {
             const grassTransformComponent = TransformComponentArray.getComponent(entity);
             const grassHitbox = grassTransformComponent.hitboxes[0];
             
-            const dist = rootHitbox.box.position.calculateDistanceBetween(grassHitbox.box.position);
+            const dist = rootHitbox.box.position.distanceTo(grassHitbox.box.position);
             if (dist >= 50) {
                continue;
             }
@@ -157,11 +157,11 @@ const graze = (cow: Entity, cowComponent: CowComponent, targetGrass: Entity): vo
    const grassHitbox = grassTransformComponent.hitboxes[0];
    // const targetX = grassTransformComponent.position.x;
    // const targetY = grassTransformComponent.position.y;
-   // const targetDirection = cowTransformComponent.position.calculateAngleBetween(grassTransformComponent.position);
+   // const targetDirection = cowTransformComponent.position.angleTo(grassTransformComponent.position);
    
    // moveCow(cow, targetX, targetY, targetDirection, Vars.SLOW_ACCELERATION);
 
-   // const dist = cowTransformComponent.position.calculateDistanceBetween(grassTransformComponent.position);
+   // const dist = cowTransformComponent.position.distanceTo(grassTransformComponent.position);
    // if (dist < 50) {
       if (++cowComponent.grazeProgressTicks >= Vars.GRAZE_TIME_TICKS) {
          // 
@@ -343,7 +343,7 @@ function onTick(cow: Entity): void {
          aiHelperComponent.moveFunc(cow, targetHitbox.box.position, Vars.MEDIUM_ACCELERATION);
          aiHelperComponent.turnFunc(cow, targetHitbox.box.position, Math.PI, 0.4);
 
-         const targetDirection = cowBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+         const targetDirection = cowBodyHitbox.box.position.angleTo(targetHitbox.box.position);
 
          // Force carry if colliding and head is looking at the carry target
          const headHitbox = transformComponent.hitboxes[1];
@@ -382,7 +382,7 @@ function onTick(cow: Entity): void {
          if (willStopAtDesiredDistance(cowBodyHitbox, 130, dist)) {
             // If the cow is too close, move away
             // Turn to the target while moving backwards away from it
-            const awayFromTarget = targetHitbox.box.position.calculateAngleBetween(cowBodyHitbox.box.position);
+            const awayFromTarget = targetHitbox.box.position.angleTo(cowBodyHitbox.box.position);
             const awayPos = cowBodyHitbox.box.position.offset(999, awayFromTarget);
             // @Hack: acceleration (to counteract acceleration multiplier)
             aiHelperComponent.moveFunc(cow, awayPos, Vars.SLOWMEDIUM_ACCELERATION / 0.6);
@@ -393,7 +393,7 @@ function onTick(cow: Entity): void {
             if (cowComponent.ramCooldownTicks === 0) {
                // If the ram attack isn't 
                const headHitbox = transformComponent.hitboxes[1];
-               const targetDirection = headHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+               const targetDirection = headHitbox.box.position.angleTo(targetHitbox.box.position);
                if (getAbsAngleDiff(headHitbox.box.angle, targetDirection) < 0.1) {
                   // Start the ram attack
                   cowComponent.isRamming = true;
@@ -410,21 +410,22 @@ function onTick(cow: Entity): void {
    }
 
    // Graze dirt to recover health
-   if (cowComponent.grazeCooldownTicks === 0) {
-      if (!entityExists(cowComponent.targetGrass)) {
-         const target = getTargetGrass(cow);
-         if (target !== null && getEntityAgeTicks(cow) % Settings.TPS === 0) {
-            cowComponent.targetGrass = target;
-         }
-      }
+   // @TEMPORARY cuz they are constantly grazing and i cnant get a clean unshitting shot of them
+   // if (cowComponent.grazeCooldownTicks === 0) {
+   //    if (!entityExists(cowComponent.targetGrass)) {
+   //       const target = getTargetGrass(cow);
+   //       if (target !== null && getEntityAgeTicks(cow) % Settings.TPS === 0) {
+   //          cowComponent.targetGrass = target;
+   //       }
+   //    }
 
-      if (entityExists(cowComponent.targetGrass)) {
-         graze(cow, cowComponent, cowComponent.targetGrass);
-         return;
-      }
-      // @Incomplete: Why is this here?
-      cowComponent.grazeProgressTicks = 0;
-   }
+   //    if (entityExists(cowComponent.targetGrass)) {
+   //       graze(cow, cowComponent, cowComponent.targetGrass);
+   //       return;
+   //    }
+   //    // @Incomplete: Why is this here?
+   //    cowComponent.grazeProgressTicks = 0;
+   // }
 
    const layer = getEntityLayer(cow);
 
@@ -468,7 +469,7 @@ function onTick(cow: Entity): void {
             const berryBushTransformComponent = TransformComponentArray.getComponent(berryBush);
             const berryBushHitbox = berryBushTransformComponent.hitboxes[0];
             
-            const distance = cowBodyHitbox.box.position.calculateDistanceBetween(berryBushHitbox.box.position);
+            const distance = cowBodyHitbox.box.position.distanceTo(berryBushHitbox.box.position);
             if (distance < minDistance) {
                minDistance = distance;
                target = berryBush;
@@ -618,7 +619,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
       return;
    }
 
-   const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
    
    damageEntity(collidingEntity, collidingHitbox, cow, 2, DamageSource.iceSpikes, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingHitbox, 180, hitDirection);

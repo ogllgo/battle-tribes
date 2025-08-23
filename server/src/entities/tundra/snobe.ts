@@ -68,7 +68,7 @@ const moveFunc = (snobe: Entity, pos: Point, acceleration: number): void => {
       const transformComponent = TransformComponentArray.getComponent(snobe);
       const hitbox = transformComponent.hitboxes[0];
       
-      const direction = hitbox.box.position.calculateAngleBetween(pos);
+      const direction = hitbox.box.position.angleTo(pos);
       // @HACK: so that snobes get affected by freezing from ingu serpents. But this shouldn't have to be thought about here!!
       const physicsComponent = PhysicsComponentArray.getComponent(snobe);
       applyAbsoluteKnockback(hitbox, polarVec2(320 / 1600 * acceleration * physicsComponent.moveSpeedMultiplier, direction));
@@ -100,7 +100,8 @@ export function createSnobeConfig(position: Point, angle: number): EntityConfig 
       springConstant: 18,
       damping: 0,
       padding: Math.PI * 0.06,
-      idealHitboxAngleOffset: 0
+      idealHitboxAngleOffset: 0,
+      useLeverage: false
    });
 
    for (let i = 0; i < 2; i++) {

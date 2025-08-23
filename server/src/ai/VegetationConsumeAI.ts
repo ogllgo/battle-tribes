@@ -62,7 +62,7 @@ const getVegetationConsumeAITarget = (krumblid: Entity, aiHelperComponent: AIHel
       const path = findSingleLayerPath(layer, hitbox.box.position.x, hitbox.box.position.y, entityHitbox.box.position.x, entityHitbox.box.position.y, pathfindingGroupID, pathfindingEntityFootprint, options);
 
       if (!path.isFailed) {
-         const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+         const dist = hitbox.box.position.distanceTo(entityHitbox.box.position);
          if (dist < minDist) {
             minDist = dist;
             target = entity;

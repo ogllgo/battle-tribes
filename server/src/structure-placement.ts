@@ -14,7 +14,6 @@ import { getHitboxesCollidingEntities } from "./collision-detection";
 import { EntityConfig } from "./components";
 import { ItemComponentArray } from "./components/ItemComponent";
 import { TransformComponentArray } from "./components/TransformComponent";
-import { createBlueprintEntityConfig } from "./entities/blueprint-entity";
 import { createBallistaConfig } from "./entities/structures/ballista";
 import { createBarrelConfig } from "./entities/structures/barrel";
 import { createBracingsConfig } from "./entities/structures/bracings";
@@ -84,7 +83,7 @@ export function entityIsStructure(entityType: EntityType): entityType is Structu
 
 export function calculateRelativeOffsetDirection(entityPosition: Point, entityAngle: number, connectingEntityPosition: Point): number {
    // Relative angle of the offset (relative to the entity)
-   let relativeOffsetDirection = entityPosition.calculateAngleBetween(connectingEntityPosition);
+   let relativeOffsetDirection = entityPosition.angleTo(connectingEntityPosition);
    // Account for the entity rotaiton
    relativeOffsetDirection -= entityAngle;
    return relativeOffsetDirection;
@@ -374,7 +373,7 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
             let position!: Point;
             let minDist = Number.MAX_SAFE_INTEGER;
             for (const currentPosition of positions) {
-               const dist = currentPosition.calculateDistanceBetween(desiredPlacePosition);
+               const dist = currentPosition.distanceTo(desiredPlacePosition);
                if (dist < minDist) {
                   minDist = dist;
                   position = currentPosition;
@@ -408,7 +407,7 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
 
             // // If the hitbox is circular, add the free position
             // if (hitboxIsCircular(hitbox)) {
-            //    const offsetDirection = connectingEntity.position.calculateAngleBetween(desiredPlacePosition);
+            //    const offsetDirection = connectingEntity.position.angleTo(desiredPlacePosition);
             //    // @Copynpaste
    
                
@@ -555,7 +554,7 @@ const filterCandidatePositions = (candidates: Array<SnapCandidate>, regularPlace
    for (let i = 0; i < candidates.length; i++) {
       const transform = candidates[i];
 
-      if (transform.position.calculateDistanceBetween(regularPlacePosition) > Settings.STRUCTURE_POSITION_SNAP) {
+      if (transform.position.distanceTo(regularPlacePosition) > Settings.STRUCTURE_POSITION_SNAP) {
          candidates.splice(i, 1);
          i--;
       }

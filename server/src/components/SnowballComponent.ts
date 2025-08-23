@@ -87,7 +87,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    if (HealthComponentArray.hasComponent(collidingEntity)) {
       const healthComponent = HealthComponentArray.getComponent(collidingEntity);
       if (canDamageEntity(healthComponent, "snowball")) {
-         const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+         const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
 
          damageEntity(collidingEntity, collidingHitbox, null, 4, DamageSource.snowball, AttackEffectiveness.effective, collisionPoint, 0);
          applyKnockback(collidingHitbox, 100, hitDirection);

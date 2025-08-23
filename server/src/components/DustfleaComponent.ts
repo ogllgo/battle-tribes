@@ -47,7 +47,7 @@ const getSitTarget = (dustflea: Entity, aiHelperComponent: AIHelperComponent): E
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
       const entityHitbox = entityTransformComponent.hitboxes[0];
 
-      const dist = dustfleaHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+      const dist = dustfleaHitbox.box.position.distanceTo(entityHitbox.box.position);
       if (dist < minDist) {
          minDist = dist;
          target = entity;
@@ -76,7 +76,31 @@ const getSuckTarget = (dustflea: Entity, aiHelperComponent: AIHelperComponent): 
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
       const entityHitbox = entityTransformComponent.hitboxes[0];
 
-      const dist = dustfleaHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+      const dist = dustfleaHitbox.box.position.distanceTo(entityHitbox.box.position);
+      if (dist < minDist) {
+         minDist = dist;
+         target = entity;
+      }
+   }
+
+   return target;
+}
+
+const getTargetPoopoosqueam = (dustflea: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
+   const dustfleaTransformComponent = TransformComponentArray.getComponent(dustflea);
+   const dustfleaHitbox = dustfleaTransformComponent.hitboxes[0];
+   
+   let minDist = Number.MAX_SAFE_INTEGER;
+   let target: Entity | null = null;
+   for (const entity of aiHelperComponent.visibleEntities) {
+      if (!TribeMemberComponentArray.hasComponent(entity)) {
+         continue;
+      }
+      
+      const entityTransformComponent = TransformComponentArray.getComponent(entity);
+      const entityHitbox = entityTransformComponent.hitboxes[0];
+
+      const dist = dustfleaHitbox.box.position.distanceTo(entityHitbox.box.position);
       if (dist < minDist) {
          minDist = dist;
          target = entity;
@@ -90,6 +114,18 @@ function onTick(dustflea: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(dustflea);
    const dustfleaTransformComponent = TransformComponentArray.getComponent(dustflea);
    const dustfleaHitbox = dustfleaTransformComponent.hitboxes[0];
+
+   // @SQUEAM
+   {
+      const target = getTargetPoopoosqueam(dustflea, aiHelperComponent);
+      if (target !== null) {
+         const targetTransformComponent = TransformComponentArray.getComponent(target);
+         const targetHitbox = targetTransformComponent.hitboxes[0];
+         aiHelperComponent.moveFunc(dustflea, targetHitbox.box.position, 250);
+         aiHelperComponent.turnFunc(dustflea, targetHitbox.box.position, 16 * Math.PI, 0.25);
+         return;
+      }
+   }
 
    // If the dustflea is attached to something, don't escape at all. (To prevent it trying to hop around in escape, while on an okren, causing the okren to hop around)
    // @HACK???
@@ -123,7 +159,7 @@ function onTick(dustflea: Entity): void {
             const targetHitbox = targetTransformComponent.hitboxes[0];
             aiHelperComponent.moveFunc(dustflea, targetHitbox.box.position, 250);
             aiHelperComponent.turnFunc(dustflea, targetHitbox.box.position, 16 * Math.PI, 0.25);
-            if (entitiesAreColliding(dustflea, suckTarget) !== CollisionVars.NO_COLLISION && getHitboxVelocity(dustfleaHitbox).calculateDistanceBetween(getHitboxVelocity(targetHitbox)) < 125) {
+            if (entitiesAreColliding(dustflea, suckTarget) !== CollisionVars.NO_COLLISION && getHitboxVelocity(dustfleaHitbox).distanceTo(getHitboxVelocity(targetHitbox)) < 125) {
                attachHitbox(dustfleaHitbox, targetHitbox, false);
 
                const tickEvent: EntityTickEvent = {

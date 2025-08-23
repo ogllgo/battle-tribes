@@ -179,7 +179,7 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
    for (const angularTether of hitbox.angularTethers) {
       const originHitbox = angularTether.originHitbox;
 
-      const originToHitboxDirection = originHitbox.box.position.calculateAngleBetween(hitbox.box.position);
+      const originToHitboxDirection = originHitbox.box.position.angleTo(hitbox.box.position);
       const idealAngle = originHitbox.box.angle + angularTether.idealAngle;
       
       const directionDiff = getAngleDiff(originToHitboxDirection, idealAngle);
@@ -197,7 +197,11 @@ const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
          const dampingForce = -relVel * angularTether.damping;
          
          // @HACK: the * 0.1
-         const force = (rotationForce + dampingForce) * 0.1;
+         let force = (rotationForce + dampingForce) * 0.1;
+
+         if (angularTether.useLeverage) {
+            force *= originHitbox.box.position.distanceTo(hitbox.box.position);
+         }
 
          // @HACK: the * 4
          applyForce(hitbox, polarVec2(force * 4, hitboxAccDir));

@@ -78,7 +78,7 @@ const moveFunc = (fish: Entity, pos: Point, acceleration: number): void => {
    const transformComponent = TransformComponentArray.getComponent(fish);
    const fishHitbox = transformComponent.hitboxes[0];
 
-   const direction = fishHitbox.box.position.calculateAngleBetween(pos);
+   const direction = fishHitbox.box.position.angleTo(pos);
 
    const layer = getEntityLayer(fish);
    
@@ -102,7 +102,7 @@ const turnFunc = (fish: Entity, pos: Point, turnSpeed: number, turnDamping: numb
    const transformComponent = TransformComponentArray.getComponent(fish);
    const fishHitbox = transformComponent.hitboxes[0];
 
-   const direction = fishHitbox.box.position.calculateAngleBetween(pos);
+   const direction = fishHitbox.box.position.angleTo(pos);
 
    const layer = getEntityLayer(fish);
    

@@ -58,7 +58,7 @@ const drop = (pricklyPear: Entity): void => {
    const parentCactus = hitbox.parent.entity;
    const cactusTransformComponent = TransformComponentArray.getComponent(parentCactus);
    const cactusHitbox = cactusTransformComponent.hitboxes[0];
-   const angleFromCactusToPear = cactusHitbox.box.position.calculateAngleBetween(hitbox.box.position);
+   const angleFromCactusToPear = cactusHitbox.box.position.angleTo(hitbox.box.position);
    
    const x = hitbox.box.position.x + 8 * Math.sin(angleFromCactusToPear);
    const y = hitbox.box.position.y + 8 * Math.cos(angleFromCactusToPear);

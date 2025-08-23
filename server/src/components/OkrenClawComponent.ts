@@ -138,7 +138,7 @@ function onHitboxCollision(affectedHitbox: Hitbox, collidingHitbox: Hitbox, coll
       return;
    }
    
-   const velocityDiff = getHitboxVelocity(affectedHitbox).calculateDistanceBetween(getHitboxVelocity(collidingHitbox));
+   const velocityDiff = getHitboxVelocity(affectedHitbox).distanceTo(getHitboxVelocity(collidingHitbox));
    // @Temporary @Hack as sometimes the slashers aren't moving fast enough... maybe just remove it completely but only have it work for one side? not the back of the hitbox/
    // if (velocityDiff < 100) {
    //    return;
@@ -159,7 +159,7 @@ function onHitboxCollision(affectedHitbox: Hitbox, collidingHitbox: Hitbox, coll
 
    const okrenClawComponent = OkrenClawComponentArray.getComponent(okrenClaw);
    
-   const hitDir = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDir = affectedHitbox.box.position.angleTo(collidingHitbox.box.position);
 
    damageEntity(collidingEntity, collidingHitbox, okrenClaw, ATTACK_DAMAGES[okrenClawComponent.size], DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
    applyAbsoluteKnockback(collidingHitbox, polarVec2(200, hitDir));

@@ -446,7 +446,9 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          const temperature = temperatureMap[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
          const humidity = humidityMap[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
 
-         const biome = getBiome(height, temperature, humidity);
+         // @SQUEAM
+         // const biome = getBiome(height, temperature, humidity);
+         const biome = Biome.grasslands;
          
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
          surfaceLayer.tileBiomes[tileIndex] = biome;
@@ -493,45 +495,52 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       generateCaveEntrances(surfaceLayer);
    }
 
+   registerNewSpawnInfo({
+      entityTypes: [EntityType.cow],
+      layer: surfaceLayer,
+      spawnRate: 0.01,
+      biome: Biome.grasslands,
+      tileTypes: [TileType.grass],
+      packSpawning: {
+         getPackSize: () => randInt(2, 5),
+         spawnRange: 200
+      },
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150,
+      // @SQUEAM for cow pen extended thing, want less cows in shot
+      spawnDistribution: createRawSpawnDistribution(16, 0.001),
+      // spawnDistribution: createRawSpawnDistribution(16, 0.003),
+      balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: false,
+      createEntity: (pos: Point, angle: number, firstEntityConfig: ReadonlyArray<EntityConfig> | null): ReadonlyArray<EntityConfig> | null => {
+         const species = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig[0].components[ServerComponentType.cow]!.species;
+         return [createCowConfig(pos, angle, species)];
+      }
+   });
+   // @SQUEAM disabled so that cows in the pen don't try and go for it
    // registerNewSpawnInfo({
-   //    entityTypes: [EntityType.cow],
+   //    entityTypes: [EntityType.berryBush],
    //    layer: surfaceLayer,
-   //    spawnRate: 0.01,
+   //    // @SQUEAM so that they don't regrow after killed, for the pen shot
+   //    // spawnRate: 0.001,
+   //    spawnRate: 0,
    //    biome: Biome.grasslands,
    //    tileTypes: [TileType.grass],
-   //    packSpawning: {
-   //       getPackSize: () => randInt(2, 5),
-   //       spawnRange: 200
-   //    },
    //    onlySpawnsInNight: false,
    //    minSpawnDistance: 150,
-   //    spawnDistribution: createRawSpawnDistribution(16, 0.003),
-   //    balanceSpawnDistribution: false,
-   //    doStrictTileTypeCheck: false,
-   //    createEntity: (pos: Point, angle: number, firstEntityConfig: ReadonlyArray<EntityConfig> | null): ReadonlyArray<EntityConfig> | null => {
-   //       const species = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig[0].components[ServerComponentType.cow]!.species;
-   //       return [createCowConfig(pos, angle, species)];
+   //    spawnDistribution: createRawSpawnDistribution(8, 0.0025),
+   //    balanceSpawnDistribution: true,
+   //    doStrictTileTypeCheck: true,
+   //    createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
+   //       return [createBerryBushConfig(pos, angle)];
    //    }
    // });
    registerNewSpawnInfo({
-      entityTypes: [EntityType.berryBush],
-      layer: surfaceLayer,
-      spawnRate: 0.001,
-      biome: Biome.grasslands,
-      tileTypes: [TileType.grass],
-      onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      spawnDistribution: createRawSpawnDistribution(8, 0.0025),
-      balanceSpawnDistribution: true,
-      doStrictTileTypeCheck: true,
-      createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
-         return [createBerryBushConfig(pos, angle)];
-      }
-   });
-   registerNewSpawnInfo({
       entityTypes: [EntityType.tree],
       layer: surfaceLayer,
-      spawnRate: 0.013,
+      // @SQUEAM so that they don't regrow after killed, for the pen shot
+      // spawnRate: 0.013,
+      spawnRate: 0,
       biome: Biome.grasslands,
       tileTypes: [TileType.grass],
       onlySpawnsInNight: false,
@@ -814,21 +823,21 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       }
    });
 
-   registerNewSpawnInfo({
-      entityTypes: [EntityType.dustflea],
-      layer: surfaceLayer,
-      spawnRate: 0,
-      biome: Biome.desert,
-      tileTypes: [TileType.sand],
-      onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      spawnDistribution: createRawSpawnDistribution(4, 0.013),
-      balanceSpawnDistribution: false,
-      doStrictTileTypeCheck: true,
-      createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
-         return [createDustfleaConfig(pos, angle)];
-      }
-   });
+   // registerNewSpawnInfo({
+   //    entityTypes: [EntityType.dustflea],
+   //    layer: surfaceLayer,
+   //    spawnRate: 0,
+   //    biome: Biome.desert,
+   //    tileTypes: [TileType.sand],
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 150,
+   //    spawnDistribution: createRawSpawnDistribution(4, 0.013),
+   //    balanceSpawnDistribution: false,
+   //    doStrictTileTypeCheck: true,
+   //    createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
+   //       return [createDustfleaConfig(pos, angle)];
+   //    }
+   // });
    // registerNewSpawnInfo({
    //    entityTypes: [EntityType.krumblid],
    //    layer: surfaceLayer,

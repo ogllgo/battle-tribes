@@ -171,7 +171,7 @@ function onHit(_okren: Entity, hitbox: Hitbox, hitPosition: Point): void {
       // @INCOMPLETE: this is meant for the ancient okren size. not tweaked for anything else
       for (let i = 0; i < 10; i++) {
          const offsetMagnitude = randFloat(10, 20);
-         const offsetDirection = hitbox.box.position.calculateAngleBetween(hitPosition) + randAngle() * 0.2;
+         const offsetDirection = hitbox.box.position.angleTo(hitPosition) + randAngle() * 0.2;
          const particlePos = hitbox.box.position.offset(offsetMagnitude, offsetDirection);
          createOkrenEyeParticle(particlePos.x, particlePos.y, 0, 0, offsetDirection);
       }

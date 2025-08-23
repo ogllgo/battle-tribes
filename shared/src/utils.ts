@@ -119,7 +119,7 @@ export class Point {
       return this.x * other.x + this.y * other.y;
    }
 
-   public calculateDistanceBetween(other: Point): number {
+   public distanceTo(other: Point): number {
       const xDiff = this.x - other.x;
       const yDiff = this.y - other.y;
       return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
@@ -131,7 +131,7 @@ export class Point {
       return diffX * diffX + diffY * diffY;
    }
 
-   public calculateAngleBetween(other: Point): number {
+   public angleTo(other: Point): number {
       let angle = Math.atan2(other.y - this.y, other.x - this.x);
       // @Hack @Speed: won't be necessary when we switch the angle system
       if (angle >= Math.PI) {
@@ -143,8 +143,8 @@ export class Point {
    public convertToVector(other?: Point): Vector {
       const targetPoint = other || new Point(0, 0);
 
-      const distance = this.calculateDistanceBetween(targetPoint);
-      const angle = targetPoint.calculateAngleBetween(this);
+      const distance = this.distanceTo(targetPoint);
+      const angle = targetPoint.angleTo(this);
       return new Vector(distance, angle);
    }
 
@@ -519,4 +519,8 @@ export function polarVec2(magnitude: number, direction: number): Point {
    const x = magnitude * Math.sin(direction);
    const y = magnitude * Math.cos(direction);
    return new Point(x, y);
+}
+
+export function averageVec2(v1: Point, v2: Point): Point {
+   return new Point((v1.x + v2.x) * 0.5, (v1.y + v2.y) * 0.5);
 }

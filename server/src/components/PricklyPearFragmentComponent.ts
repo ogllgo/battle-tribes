@@ -63,7 +63,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
       return;
    }
 
-   const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
 
    damageEntity(collidingEntity, collidingHitbox, fragment, 3, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingHitbox, 100, hitDirection);

@@ -116,7 +116,7 @@ const sendHelpMessage = (communicatingTribesman: Entity, communicationTargets: R
 //    let minDistance = Number.MAX_SAFE_INTEGER;
 //    let closestBarrel: Entity | null = null;
 //    for (const barrel of tribeComponent.tribe.barrels) {
-//       const distance = tribesman.position.calculateDistanceBetween(barrel.position);
+//       const distance = tribesman.position.distanceTo(barrel.position);
 //       if (distance < minDistance) {
 //          minDistance = distance;
 //          closestBarrel = barrel;
@@ -213,7 +213,7 @@ const sendHelpMessage = (communicatingTribesman: Entity, communicationTargets: R
 //    // @Incomplete: goal radius
 //    const didPathfind = pathfindToPosition(tribesman, barrel.position.x, barrel.position.y, barrel.id, TribesmanPathType.haulingToBarrel, 0, PathfindFailureDefault.returnEmpty);
 
-//    if (tribesman.position.calculateDistanceBetween(barrel.position) <= BARREL_INTERACT_DISTANCE) {
+//    if (tribesman.position.distanceTo(barrel.position) <= BARREL_INTERACT_DISTANCE) {
 //       depositResources(tribesman, barrel);
 //    }
 
@@ -432,13 +432,13 @@ export function tickTribesman(tribesman: Entity): void {
          const entityTransformComponent = TransformComponentArray.getComponent(entity);
          const entityHitbox = entityTransformComponent.hitboxes[0];
 
-         const distance = tribesmanHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+         const distance = tribesmanHitbox.box.position.distanceTo(entityHitbox.box.position);
          if (!willStopAtDesiredDistance(tribesmanHitbox, 80, distance)) {
             const accM = getTribesmanAcceleration(tribesman);
             applyAccelerationFromGround(tribesmanHitbox, polarVec2(accM, tribesmanHitbox.box.angle));
          }
 
-         const targetAngle = tribesmanHitbox.box.position.calculateAngleBetween(entityHitbox.box.position);
+         const targetAngle = tribesmanHitbox.box.position.angleTo(entityHitbox.box.position);
          turnHitboxToAngle(tribesmanHitbox, targetAngle, TRIBESMAN_TURN_SPEED, 0.5, false);
 
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
@@ -553,7 +553,7 @@ export function tickTribesman(tribesman: Entity): void {
          const entityTransformComponent = TransformComponentArray.getComponent(entity);
          const entityHitbox = entityTransformComponent.hitboxes[0];
          
-         const distance = tribesmanHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+         const distance = tribesmanHitbox.box.position.distanceTo(entityHitbox.box.position);
          if (distance < minDistance) {
             closestBlueprint = entity;
             minDistance = distance;
@@ -564,7 +564,7 @@ export function tickTribesman(tribesman: Entity): void {
          const blueprintTransformComponent = TransformComponentArray.getComponent(closestBlueprint);
          const blueprintHitbox = blueprintTransformComponent.hitboxes[0];
          
-         const targetDir = tribesmanHitbox.box.position.calculateAngleBetween(blueprintHitbox.box.position);
+         const targetDir = tribesmanHitbox.box.position.angleTo(blueprintHitbox.box.position);
 
          const desiredAttackRange = getTribesmanDesiredAttackRange(tribesman);
          
@@ -645,7 +645,7 @@ export function tickTribesman(tribesman: Entity): void {
    //                stopEntity(physicsComponent);
    //             }
                
-   //             const targetDirection = transformComponent.position.calculateAngleBetween(targetTransformComponent.position);
+   //             const targetDirection = transformComponent.position.angleTo(targetTransformComponent.position);
 
    //             physicsComponent.targetRotation = targetDirection;
    //             physicsComponent.turnSpeed = TRIBESMAN_TURN_SPEED;
@@ -737,7 +737,7 @@ export function tickTribesman(tribesman: Entity): void {
             const entityTransformComponent = TransformComponentArray.getComponent(entity);
             const entityHitbox = entityTransformComponent.hitboxes[0];
             
-            const distance = tribesmanHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+            const distance = tribesmanHitbox.box.position.distanceTo(entityHitbox.box.position);
             if (distance < minDist && barrelHasFood(entity)) {
                minDist = distance;
                closestBarrelWithFood = entity;
@@ -748,7 +748,7 @@ export function tickTribesman(tribesman: Entity): void {
          const barrelTransformComponent = TransformComponentArray.getComponent(closestBarrelWithFood);
          const barrelHitbox = barrelTransformComponent.hitboxes[0];
          
-         if (tribesmanHitbox.box.position.calculateDistanceBetween(barrelHitbox.box.position) > BARREL_INTERACT_DISTANCE) {
+         if (tribesmanHitbox.box.position.distanceTo(barrelHitbox.box.position) > BARREL_INTERACT_DISTANCE) {
             pathfindTribesman(tribesman, barrelHitbox.box.position.x, barrelHitbox.box.position.y, getEntityLayer(closestBarrelWithFood), closestBarrelWithFood, TribesmanPathType.default, Math.floor(BARREL_INTERACT_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
          } else {
             grabBarrelFood(tribesman, closestBarrelWithFood);

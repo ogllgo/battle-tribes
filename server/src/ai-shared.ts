@@ -35,7 +35,7 @@ export function getClosestAccessibleEntity(entity: Entity, entities: ReadonlyArr
       // @Hack
       const currentEntityHitbox = currentEntityTransformComponent.hitboxes[0];
       
-      const dist = entityHitbox.box.position.calculateDistanceBetween(currentEntityHitbox.box.position);
+      const dist = entityHitbox.box.position.distanceTo(currentEntityHitbox.box.position);
       if (dist < minDistance) {
          closestEntity = currentEntity;
          minDistance = dist;
@@ -66,7 +66,7 @@ export function turnToPosition(entity: Entity, pos: Point, turnSpeed: number, tu
    // @Hack
    const entityHitbox = transformComponent.hitboxes[0];
    
-   const targetDirection = entityHitbox.box.position.calculateAngleBetween(pos);
+   const targetDirection = entityHitbox.box.position.angleTo(pos);
    turnHitboxToAngle(entityHitbox, targetDirection, turnSpeed, turnDamping, false);
 }
 
@@ -75,7 +75,7 @@ export function accelerateEntityToPosition(entity: Entity, pos: Point, accelerat
    // @Hack
    const entityHitbox = transformComponent.hitboxes[0];
 
-   const targetDirection = entityHitbox.box.position.calculateAngleBetween(pos);
+   const targetDirection = entityHitbox.box.position.angleTo(pos);
 
    applyAccelerationFromGround(entityHitbox, polarVec2(acceleration, targetDirection));
 }
@@ -164,7 +164,7 @@ export function runHerdAI(entity: Entity, herdMembers: ReadonlyArray<Entity>, vi
       // @HACK
       const herdMemberHitbox = herdMemberTransformComponent.hitboxes[0];
 
-      const distance = entityHitbox.box.position.calculateDistanceBetween(herdMemberHitbox.box.position);
+      const distance = entityHitbox.box.position.distanceTo(herdMemberHitbox.box.position);
       if (distance < minDist) {
          closestHerdMember = herdMember;
          minDist = distance;
@@ -831,7 +831,7 @@ export function computeInterceptAngle(monsterPos: Point, monsterSpeed: number, t
   const interceptX = targetPos.x + targetVelocity.x * t;
   const interceptY = targetPos.y + targetVelocity.y * t;
 
-  return monsterPos.calculateAngleBetween(new Point(interceptX, interceptY));
+  return monsterPos.angleTo(new Point(interceptX, interceptY));
 }
 
 /**

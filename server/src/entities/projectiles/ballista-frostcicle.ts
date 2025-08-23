@@ -75,7 +75,7 @@ export function createBallistaFrostcicleConfig(position: Point, rotation: number
 //       const ammoInfo = AMMO_INFO_RECORD[ItemType.frostcicle];
 
 //       const owner = validateEntity(projectileComponent.creator);
-//       const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
+//       const hitDirection = transformComponent.position.angleTo(collidingEntityTransformComponent.position);
       
 //       damageEntity(collidingEntity, owner, ammoInfo.damage, DamageSource.arrow, AttackEffectiveness.effective, collisionPoint, 0);
 //       applyKnockback(collidingEntity, ammoInfo.knockback, hitDirection);

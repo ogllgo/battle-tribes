@@ -58,7 +58,7 @@ export function replantPlanterBoxes(tribesman: Entity, aiHelperComponent: AIHelp
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
       const entityHitbox = entityTransformComponent.hitboxes[0];
 
-      const dist = tribesmanHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+      const dist = tribesmanHitbox.box.position.distanceTo(entityHitbox.box.position);
       if (dist < minDist) {
          minDist = dist;
          closestReplantablePlanterBox = entity;
@@ -96,7 +96,7 @@ export function replantPlanterBoxes(tribesman: Entity, aiHelperComponent: AIHelp
          const planterBoxTransformComponent = TransformComponentArray.getComponent(closestReplantablePlanterBox);
          const planterBoxHitbox = planterBoxTransformComponent.hitboxes[0];
 
-         const pointDistance = tribesmanHitbox.box.position.calculateDistanceBetween(planterBoxHitbox.box.position);
+         const pointDistance = tribesmanHitbox.box.position.distanceTo(planterBoxHitbox.box.position);
          const targetDirectRadius = pointDistance - distance;
 
          const goalRadius = Math.floor((desiredDistance + targetDirectRadius) / PathfindingSettings.NODE_SEPARATION);

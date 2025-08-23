@@ -96,7 +96,8 @@ const addTongueSegment = (tongue: Entity, okrenHitbox: Hitbox, previousBaseHitbo
       springConstant: 2.5/60,
       damping: 0.5,
       padding: 0,
-      idealHitboxAngleOffset: 0
+      idealHitboxAngleOffset: 0,
+      useLeverage: false
    };
    newSegmentHitbox.angularTethers.push(angularTether);
 
@@ -108,7 +109,8 @@ const addTongueSegment = (tongue: Entity, okrenHitbox: Hitbox, previousBaseHitbo
       springConstant: 1,
       damping: 0.1,
       padding: 0.03,
-      idealHitboxAngleOffset: 0
+      idealHitboxAngleOffset: 0,
+      useLeverage: false
    });
    
    // Apply some initial velocity
@@ -128,7 +130,7 @@ const advanceTongue = (tongue: Entity, tongueTransformComponent: TransformCompon
    for (let i = 0; i < tongueTransformComponent.hitboxes.length; i++) {
       const hitbox = tongueTransformComponent.hitboxes[i];
 
-      const targetDir = hitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+      const targetDir = hitbox.box.position.angleTo(targetHitbox.box.position);
       
       let acc: number;
       if (i === 0) {
@@ -155,7 +157,7 @@ const advanceTongue = (tongue: Entity, tongueTransformComponent: TransformCompon
    const okrenHitbox = okrenTransformComponent.hitboxes[0];
    
    const tongueBaseHitbox = getTongueBaseHitbox(tongueTransformComponent);
-   const distance = okrenHitbox.box.position.calculateDistanceBetween(tongueBaseHitbox.box.position);
+   const distance = okrenHitbox.box.position.distanceTo(tongueBaseHitbox.box.position);
 
    if (distance >= TONGUE_INITIAL_OFFSET + IDEAL_SEPARATION) {
       addTongueSegment(tongue, okrenHitbox, tongueBaseHitbox, distance);
@@ -185,14 +187,15 @@ export function startRetractingTongue(tongue: Entity, okrenTongueComponent: Okre
       springConstant: 2.5/60,
       damping: 0.5,
       padding: 0,
-      idealHitboxAngleOffset: 0
+      idealHitboxAngleOffset: 0,
+      useLeverage: false
    };
    tongueBaseHitbox.angularTethers.push(angularTether);
    // tongueBaseHitbox.tethers.push(createHitboxTether(tongueBaseHitbox, okrenHitbox, 0, 400/60, 0.5, false));
 
    // Do an initial jerk back of the tongue as the okren reacts to whatever caused it to want to retract its tongue (be it being hit, reaching max length, or catching something)
    for (const hitbox of tongueTransformComponent.hitboxes) {
-      const directionToOkren = hitbox.box.position.calculateAngleBetween(okrenHitbox.box.position);
+      const directionToOkren = hitbox.box.position.angleTo(okrenHitbox.box.position);
       addHitboxVelocity(hitbox, polarVec2(200, directionToOkren));
    }
 }
@@ -205,7 +208,7 @@ const regressTongue = (tongue: Entity, tongueTransformComponent: TransformCompon
    for (let i = 0; i < tongueTransformComponent.hitboxes.length; i++) {
       const hitbox = tongueTransformComponent.hitboxes[0];
 
-      const homeDir = hitbox.box.position.calculateAngleBetween(okrenHitbox.box.position);
+      const homeDir = hitbox.box.position.angleTo(okrenHitbox.box.position);
       
       // @Hack @Incomplete: should pull harder proportional to the amount of resistance the tongue is experiencing
       const MULTIPLIER = 2.3;
@@ -228,7 +231,7 @@ const regressTongue = (tongue: Entity, tongueTransformComponent: TransformCompon
    const tongueBaseHitbox = getTongueBaseHitbox(tongueTransformComponent);
 
    // remove base segment
-   const distance = okrenHitbox.box.position.calculateDistanceBetween(tongueBaseHitbox.box.position);
+   const distance = okrenHitbox.box.position.distanceTo(tongueBaseHitbox.box.position);
    if (distance < TONGUE_INITIAL_OFFSET) {
       let nextBaseSegment: Hitbox | null;
       if (tongueTransformComponent.hitboxes.length > 1) {
@@ -275,7 +278,8 @@ const regressTongue = (tongue: Entity, tongueTransformComponent: TransformCompon
             springConstant: 2.5/60,
             damping: 0.5,
             padding: 0,
-            idealHitboxAngleOffset: 0
+            idealHitboxAngleOffset: 0,
+            useLeverage: false
          };
          nextBaseSegment.angularTethers.push(angularTether);
          // nextBaseSegmentHitbox.tethers.push(createHitboxTether(nextBaseSegmentHitbox, okrenHitbox, 0, 400/60, 0.5, false));

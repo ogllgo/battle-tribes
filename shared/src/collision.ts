@@ -111,7 +111,7 @@ export function circleAndRectangleDoIntersect(circlePos: Point, circleRadius: nu
 
 /** Computes the axis for the line created by two points */
 export function computeSideAxis(point1: Point, point2: Point): Point {
-   const direction = point1.calculateAngleBetween(point2);
+   const direction = point1.angleTo(point2);
    return polarVec2(1, direction);
 }
 

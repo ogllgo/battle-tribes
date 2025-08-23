@@ -111,7 +111,7 @@ const moveTrunk = (trunk: Entity, targetPos: Point, accelerationMagnitude: numbe
       const isHead = i === trunkTransformComponent.hitboxes.length - 1;
       if (!onlyMoveHead || isHead) {
          const mag = accelerationMagnitude * (isHead ? 1 : 0.4);
-         const acc = polarVec2(mag, hitbox.box.position.calculateAngleBetween(targetPos));
+         const acc = polarVec2(mag, hitbox.box.position.angleTo(targetPos));
          applyAcceleration(hitbox, acc);
       }
    }
@@ -131,7 +131,7 @@ const getTargetTree = (tukmok: Entity, aiHelperComponent: AIHelperComponent): En
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
       const entityHitbox = entityTransformComponent.hitboxes[0];
 
-      const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+      const dist = hitbox.box.position.distanceTo(entityHitbox.box.position);
       if (dist < minDist) {
          closestTree = entity;
          minDist = dist;
@@ -160,7 +160,7 @@ const getTargetLeafItem = (tukmok: Entity, aiHelperComponent: AIHelperComponent)
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
       const entityHitbox = entityTransformComponent.hitboxes[0];
 
-      const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+      const dist = hitbox.box.position.distanceTo(entityHitbox.box.position);
       if (dist < minDist) {
          closestLeafItem = entity;
          minDist = dist;
@@ -209,7 +209,7 @@ const tailHasTargetInRange = (tukmok: Entity, aiHelperComponent: AIHelperCompone
 
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
       const targetHitbox = entityTransformComponent.hitboxes[0];
-      const dist = tailBaseHitbox.box.position.calculateDistanceBetween(targetHitbox.box.position);
+      const dist = tailBaseHitbox.box.position.distanceTo(targetHitbox.box.position);
       if (dist < MIN_DIST) {
          return true;
       }
@@ -269,7 +269,7 @@ const getTarget = (tukmok: Entity, aiHelperComponent: AIHelperComponent): Entity
 
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
       const targetHitbox = entityTransformComponent.hitboxes[0];
-      const dist = hitbox.box.position.calculateDistanceBetween(targetHitbox.box.position);
+      const dist = hitbox.box.position.distanceTo(targetHitbox.box.position);
       if (dist < minDist) {
          minDist = dist;
          target = entity;
@@ -353,7 +353,7 @@ const attackEntity = (tukmok: Entity, target: Entity): void => {
       const tailClubHitbox = tailClubTransformComponent.hitboxes[0];
 
       // Flail to target
-      const flailDirection = tailBaseHitbox.box.position.calculateAngleBetween(tailClubHitbox.box.position) + Math.PI * 0.5;
+      const flailDirection = tailBaseHitbox.box.position.angleTo(tailClubHitbox.box.position) + Math.PI * 0.5;
       const forceAmount = flailForce * 0.5 * Math.sin(getEntityAgeTicks(tukmok) / Settings.TPS * 4);
       applyForce(tailClubHitbox, polarVec2(forceAmount, flailDirection));
 
@@ -363,7 +363,7 @@ const attackEntity = (tukmok: Entity, target: Entity): void => {
          }
          
          if (hitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_BIG) || hitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_MEDIUM) || hitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_SMALL)) {
-            const flailDirection = tailBaseHitbox.box.position.calculateAngleBetween(hitbox.box.position) + Math.PI * 0.5;
+            const flailDirection = tailBaseHitbox.box.position.angleTo(hitbox.box.position) + Math.PI * 0.5;
             const forceAmount = flailForce * 0.27 * Math.sin(getEntityAgeTicks(tukmok) / Settings.TPS * 4);
             applyForce(hitbox, polarVec2(forceAmount, flailDirection));
          }
@@ -522,7 +522,7 @@ function onTick(tukmok: Entity): void {
 
                   // Too close, move back a bit
                   if (willStopAtDesiredDistance(tukmokHeadHitbox, IDEAL_DIST_FROM_TREE - 8, dist)) {
-                     const awayFromTarget = targetHitbox.box.position.calculateAngleBetween(tukmokBodyHitbox.box.position);
+                     const awayFromTarget = targetHitbox.box.position.angleTo(tukmokBodyHitbox.box.position);
                      const awayPos = tukmokBodyHitbox.box.position.offset(999, awayFromTarget);
                      aiHelperComponent.moveFunc(tukmok, awayPos, 240);
                   }
@@ -532,7 +532,7 @@ function onTick(tukmok: Entity): void {
                   if (trunkHeadHitbox.parent !== targetHitbox) {
                      moveTrunk(trunk, targetHitbox.box.position, 550, false);
                      
-                     const trunkHeadToTree = trunkHeadHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+                     const trunkHeadToTree = trunkHeadHitbox.box.position.angleTo(targetHitbox.box.position);
                      // First attach to the tree
                      if (getAbsAngleDiff(trunkHeadHitbox.box.angle, trunkHeadToTree) < Math.PI * 0.5 && trunkHeadHitbox.box.isColliding(targetHitbox.box)) {
                         attachHitbox(trunkHeadHitbox, targetHitbox, false);

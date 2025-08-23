@@ -92,7 +92,7 @@ const moveFunc = (tukmok: Entity, pos: Point, acceleration: number): void => {
    const transformComponent = TransformComponentArray.getComponent(tukmok);
    const bodyHitbox = transformComponent.hitboxes[0];
 
-   const bodyToTargetDirection = bodyHitbox.box.position.calculateAngleBetween(pos);
+   const bodyToTargetDirection = bodyHitbox.box.position.angleTo(pos);
 
    // Move whole cow to the target
    const alignmentToTarget = findAngleAlignment(bodyHitbox.box.angle, bodyToTargetDirection);
@@ -101,7 +101,7 @@ const moveFunc = (tukmok: Entity, pos: Point, acceleration: number): void => {
    
    // Move head to the target
    const headHitbox = transformComponent.hitboxes[1] as Hitbox;
-   const headToTargetDirection = headHitbox.box.position.calculateAngleBetween(pos);
+   const headToTargetDirection = headHitbox.box.position.angleTo(pos);
    // @Hack?
    const headForce = acceleration * 1.2;
    applyAcceleration(headHitbox, polarVec2(headForce, headToTargetDirection));
@@ -111,11 +111,11 @@ const turnFunc = (tukmok: Entity, pos: Point, turnSpeed: number, damping: number
    const transformComponent = TransformComponentArray.getComponent(tukmok);
    const bodyHitbox = transformComponent.hitboxes[0];
 
-   const bodyToTargetDirection = bodyHitbox.box.position.calculateAngleBetween(pos);
+   const bodyToTargetDirection = bodyHitbox.box.position.angleTo(pos);
    turnHitboxToAngle(bodyHitbox, bodyToTargetDirection, 0.5 * Math.PI, 1.2, false);
    
    const headHitbox = transformComponent.hitboxes[1] as Hitbox;
-   const headToTargetDirection = headHitbox.box.position.calculateAngleBetween(pos);
+   const headToTargetDirection = headHitbox.box.position.angleTo(pos);
    turnHitboxToAngle(headHitbox, headToTargetDirection, 1.5 * Math.PI, 1, false);
 }
 
@@ -123,7 +123,7 @@ function wanderPositionIsValid(tukmok: Entity, layer: Layer, x: number, y: numbe
    // Only wander if its far enough away
    const transformComponent = TransformComponentArray.getComponent(tukmok);
    const bodyHitbox = transformComponent.hitboxes[0];
-   const dist = bodyHitbox.box.position.calculateDistanceBetween(new Point(x, y));
+   const dist = bodyHitbox.box.position.distanceTo(new Point(x, y));
    if (dist < 300) {
       return false;
    }
@@ -158,7 +158,8 @@ export function createTukmokConfig(position: Point, angle: number): ReadonlyArra
       springConstant: 50000,
       damping: 0.4,
       padding: Math.PI * 0.05,
-      idealHitboxAngleOffset: 0
+      idealHitboxAngleOffset: 0,
+      useLeverage: false
    });
    
    // 
@@ -251,7 +252,7 @@ export function createTukmokConfig(position: Point, angle: number): ReadonlyArra
       if (lastHitbox === null) {
          offset = new Point(0, -102);
          hitboxPosition = position.copy();
-         hitboxPosition.add(polarVec2(102, Math.PI));
+         hitboxPosition.add(polarVec2(102, angle + Math.PI));
          parent = bodyHitbox;
       } else {
          offset = new Point(0, 0);
@@ -304,7 +305,8 @@ export function createTukmokConfig(position: Point, angle: number): ReadonlyArra
             damping: 0.5,
             // start off stiff, get softer the further we go
             padding: lerp(Math.PI * 0.012, Math.PI * 0.04, lerpAmount),
-            idealHitboxAngleOffset: Math.PI
+            idealHitboxAngleOffset: Math.PI,
+            useLeverage: false
          });
       }
 

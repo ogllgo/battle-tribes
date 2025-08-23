@@ -37,7 +37,7 @@ const moveFunc = (dustflea: Entity, pos: Point, acceleration: number): void => {
       const transformComponent = TransformComponentArray.getComponent(dustflea);
       const hitbox = transformComponent.hitboxes[0];
       
-      const direction = hitbox.box.position.calculateAngleBetween(pos);
+      const direction = hitbox.box.position.angleTo(pos);
       applyAbsoluteKnockback(hitbox, polarVec2(125, direction));
    }
 }
@@ -57,7 +57,7 @@ const extraEscapeCondition = (dustflea: Entity, escapeTarget: Entity): boolean =
    const escapeTargetTransformComponent = TransformComponentArray.getComponent(escapeTarget);
    const escapeTargetHitbox = escapeTargetTransformComponent.hitboxes[0];
 
-   const angleFromEscapeTarget = escapeTargetHitbox.box.position.calculateAngleBetween(dustfleaHitbox.box.position);
+   const angleFromEscapeTarget = escapeTargetHitbox.box.position.angleTo(dustfleaHitbox.box.position);
 
    return getAbsAngleDiff(angleFromEscapeTarget, escapeTargetHitbox.box.angle) < 0.4;
 }
@@ -74,7 +74,9 @@ export function createDustfleaConfig(position: Point, angle: number): EntityConf
 
    const healthComponent = new HealthComponent(2);
 
-   const aiHelperComponent = new AIHelperComponent(hitbox, 180, moveFunc, turnFunc);
+   // const aiHelperComponent = new AIHelperComponent(hitbox, 180, moveFunc, turnFunc);
+   // @SQUEAM more vision range for the inguYetuk shot
+   const aiHelperComponent = new AIHelperComponent(hitbox, 600, moveFunc, turnFunc);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, 4 * Math.PI, 0.25, 99999, wanderPositionIsValid);
    aiHelperComponent.ais[AIType.escape] = new EscapeAI(200, 4 * Math.PI, 0.25, 1, extraEscapeCondition);
    aiHelperComponent.ais[AIType.dustfleaHibernate] = new DustfleaHibernateAI(200, 4 * Math.PI, 0.25);

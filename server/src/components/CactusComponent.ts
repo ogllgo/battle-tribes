@@ -130,7 +130,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
       return;
    }
 
-   const hitDir = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDir = hitbox.box.position.angleTo(collidingHitbox.box.position);
 
    damageEntity(collidingEntity, collidingHitbox, hitbox.entity, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
    applyAbsoluteKnockback(collidingHitbox, polarVec2(200, hitDir));

@@ -289,16 +289,24 @@ export const BLUEPRINT_PROGRESS_TEXTURE_SOURCES: Record<BlueprintType, ReadonlyA
    ],
    [BlueprintType.fenceGate]: [
       {
-         progressTextureSources: ["entities/fence-gate/fence-gate-sides-blueprint-1.png"],
-         completedTextureSource: "entities/fence-gate/fence-gate-sides.png",
-         offsetX: 0,
+         progressTextureSources: ["entities/fence-gate/side-blueprint-1.png"],
+         completedTextureSource: "entities/fence-gate/side.png",
+         offsetX: -32,
          offsetY: 0,
          rotation: 0,
          zIndex: 1
       },
       {
-         progressTextureSources: ["entities/fence-gate/fence-gate-door-blueprint-1.png"],
-         completedTextureSource: "entities/fence-gate/fence-gate-door.png",
+         progressTextureSources: ["entities/fence-gate/side-blueprint-1.png"],
+         completedTextureSource: "entities/fence-gate/side.png",
+         offsetX: 32,
+         offsetY: 0,
+         rotation: 0,
+         zIndex: 1
+      },
+      {
+         progressTextureSources: ["entities/fence-gate/door-blueprint-1.png"],
+         completedTextureSource: "entities/fence-gate/door.png",
          offsetX: 0,
          offsetY: 0,
          rotation: 0,
@@ -468,7 +476,14 @@ const updatePartialTexture = (entity: Entity): void => {
       const textureSource = progressTextureInfo.progressTextureSources[localTextureIndex];
       if (blueprintComponent.partialRenderParts.length <= i) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.hitboxes[0];
+         // @HACK @COPYNPASTE since fence gates don't have their first hitbox at its actual 'position'
+         let hitbox: Hitbox;
+         if (blueprintType === BlueprintType.fenceGate) {
+            // 3rd hitbox is the door hitbox
+            hitbox = transformComponent.hitboxes[2];
+         } else {
+            hitbox = transformComponent.hitboxes[0];
+         }
          
          // New render part
          const renderPart = new TexturedRenderPart(
@@ -519,6 +534,10 @@ function onLoad(entity: Entity): void {
          getTextureArrayIndex(progressTextureInfo.completedTextureSource)
       );
       renderPart.offset.x = progressTextureInfo.offsetX;
+      // @HACK, this shittery is cuz the fence gate doesn't have its first hitbox at the 'core' position
+      if (blueprintComponent.blueprintType === BlueprintType.fenceGate) {
+         renderPart.offset.x += 32;
+      }
       renderPart.offset.y = progressTextureInfo.offsetY;
       renderPart.opacity = 0.5;
       if (tribeComponent.tribeID === playerTribe.id) {

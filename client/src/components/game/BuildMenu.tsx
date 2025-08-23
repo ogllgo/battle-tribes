@@ -384,7 +384,7 @@ const snapAngleToPlayerAngle = (structure: Entity, rotation: number): number => 
    const entityTransformComponent = TransformComponentArray.getComponent(structure);
    const entityHitbox = entityTransformComponent.hitboxes[0];
 
-   const playerDirection = playerHitbox.box.position.calculateAngleBetween(entityHitbox.box.position);
+   const playerDirection = playerHitbox.box.position.angleTo(entityHitbox.box.position);
    let snapRotation = playerDirection - rotation;
 
    // Snap to nearest PI/2 interval
@@ -407,7 +407,7 @@ const getGhostRotation = (building: Entity, ghostType: GhostType): number => {
                const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
 
                // Show the door closest to the player
-               const dirToPlayer = buildingHitbox.box.position.calculateAngleBetween(buildingHitbox.box.position);
+               const dirToPlayer = buildingHitbox.box.position.angleTo(buildingHitbox.box.position);
                const dot = Math.sin(buildingHitbox.box.angle) * Math.sin(dirToPlayer) + Math.cos(buildingHitbox.box.angle) * Math.cos(dirToPlayer);
 
                return dot > 0 ? buildingHitbox.box.angle : buildingHitbox.box.angle + Math.PI;

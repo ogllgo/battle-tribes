@@ -166,7 +166,7 @@ export function runHibernateAI(dustflea: Entity, aiHelperComponent: AIHelperComp
       aiHelperComponent.moveFunc(dustflea, ai.hibernateTargetPosition, ai.acceleration);
       aiHelperComponent.turnFunc(dustflea, ai.hibernateTargetPosition, ai.turnSpeed, ai.turnDamping);
 
-      if (dustfleaHitbox.box.position.calculateDistanceBetween(ai.hibernateTargetPosition) < 1) {
+      if (dustfleaHitbox.box.position.distanceTo(ai.hibernateTargetPosition) < 1) {
          destroyEntity(dustflea);
 
          const cocoonConfig = createDustfleaMorphCocoonConfig(dustfleaHitbox.box.position.copy(), randAngle());

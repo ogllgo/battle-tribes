@@ -55,7 +55,8 @@ export function createTukmokTrunkConfig(position: Point, angle: number, trunkBas
             springConstant: 25,
             damping: 0.5,
             padding: Math.PI * 0.1,
-            idealHitboxAngleOffset: 0
+            idealHitboxAngleOffset: 0,
+            useLeverage: false
          });
       }
 

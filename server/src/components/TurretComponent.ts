@@ -230,7 +230,7 @@ function onTick(turret: Entity): void {
          // @HACK
          const targetHitbox = targetTransformComponent.hitboxes[0];
          
-         const targetDirection = turretHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+         const targetDirection = turretHitbox.box.position.angleTo(targetHitbox.box.position);
 
          const turretAimDirection = turretComponent.aimDirection + turretHitbox.box.angle;
 

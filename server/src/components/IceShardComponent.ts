@@ -56,7 +56,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
          return;
       }
 
-      const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+      const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
 
       damageEntity(collidingEntity, collidingHitbox, null, 2, DamageSource.iceShards, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingHitbox, 150, hitDirection);

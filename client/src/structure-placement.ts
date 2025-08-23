@@ -90,7 +90,7 @@ export function entityIsStructure(entityType: EntityType): entityType is Structu
 
 const calculateRelativeOffsetDirection = (entityPosition: Point, entityRotation: number, connectingEntityPosition: Point): number => {
    // Relative rotation of the offset (relative to the entity)
-   let relativeOffsetDirection = entityPosition.calculateAngleBetween(connectingEntityPosition);
+   let relativeOffsetDirection = entityPosition.angleTo(connectingEntityPosition);
    // Account for the entity rotaiton
    relativeOffsetDirection -= entityRotation;
    return relativeOffsetDirection;
@@ -423,7 +423,7 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
             let position!: Point;
             let minDist = Number.MAX_SAFE_INTEGER;
             for (const currentPosition of positions) {
-               const dist = currentPosition.calculateDistanceBetween(desiredPlacePosition);
+               const dist = currentPosition.distanceTo(desiredPlacePosition);
                if (dist < minDist) {
                   minDist = dist;
                   position = currentPosition;
@@ -457,7 +457,7 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
 
             // // If the hitbox is circular, add the free position
             // if (hitboxIsCircular(hitbox)) {
-            //    const offsetDirection = connectingEntity.position.calculateAngleBetween(desiredPlacePosition);
+            //    const offsetDirection = connectingEntity.position.angleTo(desiredPlacePosition);
             //    // @Copynpaste
    
                
@@ -604,7 +604,7 @@ const filterCandidatePositions = (candidates: Array<SnapCandidate>, regularPlace
    for (let i = 0; i < candidates.length; i++) {
       const transform = candidates[i];
 
-      if (transform.position.calculateDistanceBetween(regularPlacePosition) > Settings.STRUCTURE_POSITION_SNAP) {
+      if (transform.position.distanceTo(regularPlacePosition) > Settings.STRUCTURE_POSITION_SNAP) {
          candidates.splice(i, 1);
          i--;
       }

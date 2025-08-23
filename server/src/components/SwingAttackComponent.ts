@@ -221,7 +221,7 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, hitHitbox: H
    for (const hitboxPair of collidingHitboxPairs) {
       const affectedHitbox = hitboxPair[0];
       const collidingHitbox = hitboxPair[1];
-      hitDirection += affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+      hitDirection += affectedHitbox.box.position.angleTo(collidingHitbox.box.position);
    }
    hitDirection /= collidingHitboxPairs.length;
 

@@ -121,7 +121,7 @@ function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point, hitFlags: num
    if (isDamagingHit) {
       // Create wood specks at the point of hit
 
-      let offsetDirection = hitbox.box.position.calculateAngleBetween(hitPosition);
+      let offsetDirection = hitbox.box.position.angleTo(hitPosition);
       offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
 
       const spawnPositionX = hitbox.box.position.x + (radius + 2) * Math.sin(offsetDirection);

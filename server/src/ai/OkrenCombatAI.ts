@@ -75,7 +75,7 @@ const getAttackTarget = (okren: Entity, aiHelperComponent: AIHelperComponent, en
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
       const entityHitbox = entityTransformComponent.hitboxes[0];
 
-      const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+      const dist = hitbox.box.position.distanceTo(entityHitbox.box.position);
       if (dist < minDist) {
          minDist = dist;
          target = entity;
@@ -165,7 +165,7 @@ export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperCompo
    // Make the okren lean into the swings
    for (const side of OKREN_SIDES) {
       if ((okrenComponent.swingStates[side] === OkrenSwingState.raising && okrenComponent.ticksInStates[side] > Math.floor(Settings.TPS * 0.25)) || (okrenComponent.swingStates[side] === OkrenSwingState.swinging && okrenComponent.ticksInStates[side] <= Math.floor(Settings.TPS * 0.15))) {
-         const targetDir = okrenHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+         const targetDir = okrenHitbox.box.position.angleTo(targetHitbox.box.position);
          const idealAngle = targetDir + (side === OkrenSide.right ? -0.6 : 0.6);
 
          // @COPYNPASTE

@@ -39,7 +39,7 @@ export function escapeFromEnemies(tribesman: Entity, visibleEnemies: ReadonlyArr
       const enemyTransformComponent = TransformComponentArray.getComponent(enemy);
       const enemyHitbox = enemyTransformComponent.hitboxes[0];
       
-      let distance = tribesmanHitbox.box.position.calculateDistanceBetween(enemyHitbox.box.position);
+      let distance = tribesmanHitbox.box.position.distanceTo(enemyHitbox.box.position);
       // @Hack
       if (distance > visionRange) {
          distance = visionRange;
@@ -64,7 +64,7 @@ export function escapeFromEnemies(tribesman: Entity, visibleEnemies: ReadonlyArr
       const enemyTransformComponent = TransformComponentArray.getComponent(enemy);
       const enemyHitbox = enemyTransformComponent.hitboxes[0];
 
-      let distance = tribesmanHitbox.box.position.calculateDistanceBetween(enemyHitbox.box.position);
+      let distance = tribesmanHitbox.box.position.distanceTo(enemyHitbox.box.position);
       if (distance > visionRange) {
          distance = visionRange;
       }

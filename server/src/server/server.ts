@@ -47,6 +47,9 @@ import { createInguSerpentConfig } from "../entities/tundra/ingu-serpent";
 import { createBarrelConfig } from "../entities/structures/barrel";
 import { mountCarrySlot, RideableComponentArray } from "../components/RideableComponent";
 import { createInguYetuksnoglurblidokowfleaConfig } from "../entities/wtf/ingu-yetuksnoglurblidokowflea";
+import { createFenceConfig } from "../entities/structures/fence";
+import { StructureConnection } from "../structure-placement";
+import { createEmbrasureConfig } from "../entities/structures/embrasure";
 
 /*
 
@@ -131,6 +134,8 @@ const estimateVisibleChunkBounds = (spawnPosition: Point, screenWidth: number, s
    return [minChunkX, maxChunkX, minChunkY, maxChunkY];
 }
 
+let aaa = true;
+
 // @Cleanup: Remove class, just have functions
 /** Communicates between the server and players */
 class GameServer {
@@ -149,11 +154,12 @@ class GameServer {
 
    public async start(): Promise<void> {
       // Seed the random number generator
-      if (OPTIONS.inBenchmarkMode) {
-         SRandom.seed(40404040404);
-      } else {
-         SRandom.seed(randInt(0, 9999999999));
-      }
+      // if (OPTIONS.inBenchmarkMode) {
+      //    SRandom.seed(40404040404);
+      // } else {
+      //    SRandom.seed(randInt(0, 9999999999));
+      // }
+      SRandom.seed(9079734040);
       // : the one with the tundra colliding the top and bottom world borders @Squeam
       // SRandom.seed(5128141131);
 
@@ -245,11 +251,159 @@ class GameServer {
 
                // @SQUEAM
                setTimeout(() => {
+                  if (!aaa) {
+                     return;
+                  }
+                  aaa = false;
 
+                  const l = Settings.BOARD_UNITS * 0.5 - 1000;
+                  const t = Settings.BOARD_UNITS * 0.5 - 400;
 
+                  // const r = Settings.BOARD_UNITS * 0.5 - 1000 + 64 * 14;
+                  // const b = Settings.BOARD_UNITS * 
+                  
+                  let topRow = [];
+                  for (let i = 0; i < 15; i++) {
+                     const x = l + i * 64;
+                     const y = t;
 
-                  const config = createInguYetuksnoglurblidokowfleaConfig(new Point(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
-                  createEntity(config, surfaceLayer, 0);
+                     const lastE = topRow[i - 1];
+                     const connections = new Array<StructureConnection>();
+                     if (i > 0) {
+                        connections.push({
+                           entity: lastE,
+                           relativeOffsetDirection: Math.PI * 3/2
+                        })
+                     }
+                     
+                     const config = createFenceConfig(new Point(x, y), 0, tribe, connections, null);
+                     const e = createEntity(config, layer, 0);
+                     topRow.push(e);
+                  }
+
+                  // left
+                  const leftRow = [];
+                  for (let i = 0; i < 10; i++) {
+                     const x = l;
+                     const y = t - 64 * (i + 1);
+
+                     const connections = new Array<StructureConnection>();
+                     if (i > 0) {
+                        const lastE = leftRow[i - 1];
+                        connections.push({
+                           entity: lastE,
+                           relativeOffsetDirection: Math.PI * 0
+                        })
+                     } else {
+                        const firstTopE = topRow[0];
+                        connections.push({
+                           entity: firstTopE,
+                           relativeOffsetDirection: Math.PI * 0
+                        })
+                     }
+                     
+                     const config = createFenceConfig(new Point(x, y), 0, tribe, connections, null);
+                     const e = createEntity(config, layer, 0);
+                     leftRow.push(e);
+                  }
+
+                  // bottom
+                  const bottomRow = [];
+                  for (let i = 0; i < 11; i++) {
+                     const x = l + 64 * (i + 1);
+                     const y = t - 64 * 10;
+
+                     const connections = new Array<StructureConnection>();
+                     if (i > 0) {
+                        const lastE = bottomRow[i - 1];
+                        connections.push({
+                           entity: lastE,
+                           relativeOffsetDirection: Math.PI * 3/2
+                        })
+                     } else {
+                        const lastLeftE = leftRow[leftRow.length - 1];
+                        connections.push({
+                           entity: lastLeftE,
+                           relativeOffsetDirection: Math.PI * 3/2
+                        })
+                     }
+                     
+                     const config = createFenceConfig(new Point(x, y), 0, tribe, connections, null);
+                     const e = createEntity(config, layer, 0);
+                     bottomRow.push(e);
+                  }
+
+                  // bottom walls
+                  for (let i = 0; i < 3; i++) {
+                     const x = l + 64 * 11 + 64 * (i + 1);
+                     const y = t - 64 * 10;
+
+                     const connections = new Array<StructureConnection>();
+                     if (i === 0) {
+                        const lastBottom = bottomRow[bottomRow.length - 1];
+                        connections.push({
+                           entity: lastBottom,
+                           relativeOffsetDirection: Math.PI * 3/2
+                        })
+                     }
+                     
+                     const config = createWallConfig(new Point(x, y), 0, tribe, BuildingMaterial.wood, connections, null);
+                     const e = createEntity(config, layer, 0);
+                  }
+
+                  // right
+                  const rightRow = [];
+                  for (let i = 0; i < 6; i++) {
+                     const x = l + 64 * 12;
+                     const y = t - 64 - 64 * (i);
+
+                     const connections = new Array<StructureConnection>();
+                     if (i > 0) {
+                        const lastE = rightRow[i - 1];
+                        connections.push({
+                           entity: lastE,
+                           relativeOffsetDirection: 0
+                        })
+                     } else {
+                        const topE = topRow[12];
+                        connections.push({
+                           entity: topE,
+                           relativeOffsetDirection: 0
+                        })
+                     }
+                     
+                     const config = createFenceConfig(new Point(x, y), 0, tribe, connections, null);
+                     const e = createEntity(config, layer, 0);
+                     rightRow.push(e);
+                  }
+
+                  // left walls
+                  for (let i = 0; i < 3; i++) {
+                     const x = l + 64 * 12;
+                     const y = t - 64 * 10 + 64 + 64 * i;
+                     
+                     if (i === 0) {
+                        const config = createEmbrasureConfig(new Point(x - 32 + 10, y), Math.PI * 3/2, tribe, BuildingMaterial.wood, [], null);
+                        const e = createEntity(config, layer, 0);
+                     } else {
+                        const config = createWallConfig(new Point(x, y), 0, tribe, BuildingMaterial.wood, [], null);
+                        const e = createEntity(config, layer, 0);
+                     }
+                  }
+
+                  // right walls
+                  for (let i = 0; i < 3; i++) {
+                     const x = l + 64 * 14;
+                     const y = t - 64 * 10 + 64 + 64 * i;
+                     
+                     const config = createWallConfig(new Point(x, y), 0, tribe, BuildingMaterial.wood, [], null);
+                     const e = createEntity(config, layer, 0);
+                  }
+
+                  // const configs = createInguYetuksnoglurblidokowfleaConfig(new Point(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
+                  // for (const config of configs) {
+                  //    createEntity(config, surfaceLayer, 0);
+                  // }
 
                   if (1+1===2)return;
                   

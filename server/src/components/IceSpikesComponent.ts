@@ -168,7 +168,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    if (HealthComponentArray.hasComponent(collidingEntity)) {
       const healthComponent = HealthComponentArray.getComponent(collidingEntity);
       if (canDamageEntity(healthComponent, "ice_spikes")) {
-         const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+         const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
          
          damageEntity(collidingEntity, collidingHitbox, hitbox.entity, 1, DamageSource.iceSpikes, AttackEffectiveness.effective, collisionPoint, 0);
          applyKnockback(collidingHitbox, 180, hitDirection);

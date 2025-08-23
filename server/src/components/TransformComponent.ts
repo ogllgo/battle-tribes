@@ -114,7 +114,7 @@ export class TransformComponent {
 export function addHitboxToTransformComponent(transformComponent: TransformComponent, hitbox: Hitbox): void {
    assert(!transformComponent.hitboxes.includes(hitbox));
    transformComponent.hitboxes.push(hitbox);
-   
+
    if (hitbox.parent === null) {
       transformComponent.rootHitboxes.push(hitbox);
    } else {
@@ -160,6 +160,27 @@ export function addHitboxToEntity(entity: Entity, hitbox: Hitbox): void {
    if (boundsMinX < 0 || boundsMaxX >= Settings.BOARD_UNITS || boundsMinY < 0 || boundsMaxY >= Settings.BOARD_UNITS) {
       cleanEntityTransform(entity);
    }
+}
+
+/** Returns the first hitbox with the specified flag. */
+export function getHitboxByFlag(transformComponent: TransformComponent, flag: HitboxFlag): Hitbox | null {
+   for (const hitbox of transformComponent.hitboxes) {
+      if (hitbox.flags.includes(flag)) {
+         return hitbox;
+      }
+   }
+
+   return null;
+}
+
+export function getHitboxesByFlag(transformComponent: TransformComponent, flag: HitboxFlag): Array<Hitbox> {
+   const matchingHitboxes = new Array<Hitbox>();
+   for (const hitbox of transformComponent.hitboxes) {
+      if (hitbox.flags.includes(flag)) {
+         matchingHitboxes.push(hitbox);
+      }
+   }
+   return matchingHitboxes;
 }
 
 const addToChunk = (entity: Entity, layer: Layer, chunk: Chunk): void => {

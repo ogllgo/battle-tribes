@@ -149,7 +149,7 @@ function onTick(fish: Entity): void {
                return;
             }
             
-            const hitDirection = fishHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+            const hitDirection = fishHitbox.box.position.angleTo(targetHitbox.box.position);
 
             // @Hack
             const collisionPoint = new Point((fishHitbox.box.position.x + targetHitbox.box.position.x) / 2, (fishHitbox.box.position.y + targetHitbox.box.position.y) / 2);

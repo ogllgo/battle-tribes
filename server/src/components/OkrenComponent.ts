@@ -423,7 +423,7 @@ function onTick(okren: Entity): void {
          const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.carryTarget);
          const targetHitbox = targetTransformComponent.hitboxes[0];
          
-         const targetDirection = okrenBodyHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+         const targetDirection = okrenBodyHitbox.box.position.angleTo(targetHitbox.box.position);
          aiHelperComponent.moveFunc(okren, targetHitbox.box.position, 350);
          aiHelperComponent.turnFunc(okren, targetHitbox.box.position, 0.5 * Math.PI, 0.6);
 
@@ -457,7 +457,7 @@ function onTick(okren: Entity): void {
    
    // if (okrenComponent.isProtectingEggs) {
    //    // Turn to face teh egg lay position
-   //    const angleToLayPosition = okrenBodyHitbox.box.position.calculateAngleBetween(okrenComponent.eggLayPosition);
+   //    const angleToLayPosition = okrenBodyHitbox.box.position.angleTo(okrenComponent.eggLayPosition);
    //    const distance = getDistanceFromPointToHitbox(okrenComponent.eggLayPosition, okrenBodyHitbox);
       
    //    if (getAbsAngleDiff(okrenBodyHitbox.box.angle, angleToLayPosition) < 0.2 && Math.abs(getHitboxAngularVelocity(okrenBodyHitbox)) < 0.2) {
@@ -495,7 +495,7 @@ function onTick(okren: Entity): void {
    //    const distance = getDistanceFromPointToHitbox(okrenComponent.eggLayPosition, okrenBodyHitbox);
    //    if (willStopAtDesiredDistance(okrenBodyHitbox, 60, distance)) {
    //       // Once in range, turn to face away from the lay position
-   //       const targetAngle = okrenBodyHitbox.box.position.calculateAngleBetween(okrenComponent.eggLayPosition) + Math.PI;
+   //       const targetAngle = okrenBodyHitbox.box.position.angleTo(okrenComponent.eggLayPosition) + Math.PI;
    //       turnHitboxToAngle(okrenBodyHitbox, targetAngle, 0.5 * Math.PI, 0.75, false);
 
    //       if (getAbsAngleDiff(okrenBodyHitbox.box.angle, targetAngle) < 0.2 && Math.abs(getHitboxAngularVelocity(okrenBodyHitbox)) < 0.2) {

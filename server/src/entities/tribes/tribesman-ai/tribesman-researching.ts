@@ -45,7 +45,7 @@ const getAvailableResearchBenchID = (tribesman: Entity, tribeComponent: TribeCom
       const benchTransformComponent = TransformComponentArray.getComponent(bench);
       const researchBenchHitbox = benchTransformComponent.hitboxes[0];
 
-      const dist = tribesmanHitbox.box.position.calculateDistanceBetween(researchBenchHitbox.box.position);
+      const dist = tribesmanHitbox.box.position.distanceTo(researchBenchHitbox.box.position);
       if (dist < minDist) {
          minDist = dist;
          id = bench;
@@ -72,7 +72,7 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
       const benchTransformComponent = TransformComponentArray.getComponent(occupiedBench);
       const researchBenchHitbox = benchTransformComponent.hitboxes[0];
       
-      const targetDir = tribesmanHitbox.box.position.calculateAngleBetween(researchBenchHitbox.box.position);
+      const targetDir = tribesmanHitbox.box.position.angleTo(researchBenchHitbox.box.position);
 
       const slowAcceleration = getTribesmanSlowAcceleration(tribesman);
       applyAccelerationFromGround(tribesmanHitbox, polarVec2(slowAcceleration, targetDir));

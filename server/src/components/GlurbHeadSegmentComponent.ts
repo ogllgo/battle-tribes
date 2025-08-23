@@ -90,7 +90,7 @@ const getFoodTarget = (glurbHeadHitbox: Hitbox, visibleEntities: ReadonlyArray<E
 
       const transformComponent = TransformComponentArray.getComponent(moss);
       const mossHitbox = transformComponent.hitboxes[0];
-      const dist = mossHitbox.box.position.calculateDistanceBetween(glurbHeadHitbox.box.position);
+      const dist = mossHitbox.box.position.distanceTo(glurbHeadHitbox.box.position);
       if (dist < minDist) {
          minDist = dist;
          target = moss;
@@ -233,7 +233,7 @@ function onTick(glurbHead: Entity): void {
                   const finalSegmentTransformComponent = TransformComponentArray.getComponent(finalChild);
                   const finalSegmentHitbox = finalSegmentTransformComponent.hitboxes[0];
 
-                  const spawnOffsetDirection = headHitbox.box.position.calculateAngleBetween(finalSegmentHitbox.box.position);
+                  const spawnOffsetDirection = headHitbox.box.position.angleTo(finalSegmentHitbox.box.position);
                   const spawnOffsetMagnitude = 30;
                   const x = finalSegmentHitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
                   const y = finalSegmentHitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);

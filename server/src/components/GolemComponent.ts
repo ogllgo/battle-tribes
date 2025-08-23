@@ -234,7 +234,7 @@ function onTick(golem: Entity): void {
    const targetTransformComponent = TransformComponentArray.getComponent(target);
    const targetHitbox = targetTransformComponent.hitboxes[0];
 
-   const targetDir = golemHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+   const targetDir = golemHitbox.box.position.angleTo(targetHitbox.box.position);
 
    // Wake up
    if (golemComponent.wakeTimerTicks < GOLEM_WAKE_TIME_TICKS) {
@@ -320,7 +320,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
       return;
    }
    
-   const hitDirection = hitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
 
    // @Incomplete: Cause of death
    damageEntity(collidingEntity, collidingHitbox, golem, 3, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);

@@ -36,7 +36,7 @@ const dustfleaIsThreat = (krumblid: Entity, dustflea: Entity): boolean => {
    }
    
    // Make sure the dustflea is looking towards the krumblid
-   const angleFromEscapeTarget = dustfleaHitbox.box.position.calculateAngleBetween(krumblidHitbox.box.position);
+   const angleFromEscapeTarget = dustfleaHitbox.box.position.angleTo(krumblidHitbox.box.position);
    return getAbsAngleDiff(angleFromEscapeTarget, dustfleaHitbox.box.angle) < 0.6;
 }
 
@@ -60,7 +60,7 @@ export function getKrumblidDustfleaThreatTarget(krumblid: Entity, aiHelperCompon
       const entityHitbox = entityTransformComponent.hitboxes[0];
       assertBoxIsCircular(entityHitbox.box);
 
-      const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+      const dist = hitbox.box.position.distanceTo(entityHitbox.box.position);
       if (dist < minDist) {
          minDist = dist;
          target = entity;
@@ -86,7 +86,7 @@ export function getKrumblidAttackTarget(krumblid: Entity, aiHelperComponent: AIH
       const entityHitbox = entityTransformComponent.hitboxes[0];
       assertBoxIsCircular(entityHitbox.box);
 
-      const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+      const dist = hitbox.box.position.distanceTo(entityHitbox.box.position);
       if (dist < minDist) {
          minDist = dist;
          target = entity;
