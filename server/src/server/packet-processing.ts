@@ -899,4 +899,18 @@ export function processSetSignMessagePacket(reader: PacketReader): void {
 
    const floorSignComponent = FloorSignComponentArray.getComponent(entity);
    floorSignComponent.message = message;
+   registerDirtyEntity(entity);
+}
+
+export function processRenameAnimalPacket(reader: PacketReader): void {
+   const entity = reader.readNumber();
+   const name = reader.readString();
+
+   if (!TamingComponentArray.hasComponent(entity)) {
+      return;
+   }
+
+   const tamingComponent = TamingComponentArray.getComponent(entity);
+   tamingComponent.name = name;
+   registerDirtyEntity(entity);
 }

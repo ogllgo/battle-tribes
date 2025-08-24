@@ -168,10 +168,14 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
 function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
    // Blood pool particles
-   for (let i = 0; i < 2; i++) {
-      createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 20);
+   // SQUEAM: to make blood more obvious for the shot
+   for (let i = 0; i < 4; i++) {
+      createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 80);
    }
-   
+   // for (let i = 0; i < 2; i++) {
+   //    createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 20);
+   // }
+
    // Blood particles
    for (let i = 0; i < 10; i++) {
       let offsetDirection = hitbox.box.position.angleTo(hitPosition);

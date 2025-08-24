@@ -30,9 +30,9 @@ import TribePlanVisualiser from "./tribe-plan-visualiser/TribePlanVisualiser";
 import { ItemTooltip } from "./inventories/ItemTooltip";
 import AnimalStaffOptions from "./AnimalStaffOptions";
 import { playerInstance } from "../../player";
-import TamingMenu from "./TamingMenu";
+import TamingMenu from "./taming-menu/TamingMenu";
 import SignInscribeMenu from "./SignInscribeMenu";
-import { Hitbox } from "../../hitboxes";
+import TamingRenamePrompt from "./taming-menu/TamingRenamePrompt";
 
 export const enum GameInteractState {
    none,
@@ -239,6 +239,7 @@ const GameScreen = (props: GameScreenProps) => {
       <AnimalStaffOptions setGameInteractState={setInteractState} />
 
       <TamingMenu />
+      <TamingRenamePrompt />
 
       <SignInscribeMenu />
 

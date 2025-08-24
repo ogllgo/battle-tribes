@@ -73,7 +73,7 @@ import { createDebugImageShaders, renderDebugImages } from "./rendering/webgl/de
 import { AnimalStaffOptions_update } from "./components/game/AnimalStaffOptions";
 import { updateDebugEntity } from "./entity-debugging";
 import { playerInstance } from "./player";
-import { TamingMenu_forceUpdate } from "./components/game/TamingMenu";
+import { TamingMenu_forceUpdate } from "./components/game/taming-menu/TamingMenu";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { Hitbox, setHitboxAngularVelocity } from "./hitboxes";
 

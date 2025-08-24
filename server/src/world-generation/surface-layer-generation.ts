@@ -495,28 +495,29 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       generateCaveEntrances(surfaceLayer);
    }
 
-   registerNewSpawnInfo({
-      entityTypes: [EntityType.cow],
-      layer: surfaceLayer,
-      spawnRate: 0.01,
-      biome: Biome.grasslands,
-      tileTypes: [TileType.grass],
-      packSpawning: {
-         getPackSize: () => randInt(2, 5),
-         spawnRange: 200
-      },
-      onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      // @SQUEAM for cow pen extended thing, want less cows in shot
-      spawnDistribution: createRawSpawnDistribution(16, 0.001),
-      // spawnDistribution: createRawSpawnDistribution(16, 0.003),
-      balanceSpawnDistribution: false,
-      doStrictTileTypeCheck: false,
-      createEntity: (pos: Point, angle: number, firstEntityConfig: ReadonlyArray<EntityConfig> | null): ReadonlyArray<EntityConfig> | null => {
-         const species = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig[0].components[ServerComponentType.cow]!.species;
-         return [createCowConfig(pos, angle, species)];
-      }
-   });
+   // @SQUEAM for big shots
+   // registerNewSpawnInfo({
+   //    entityTypes: [EntityType.cow],
+   //    layer: surfaceLayer,
+   //    spawnRate: 0.01,
+   //    biome: Biome.grasslands,
+   //    tileTypes: [TileType.grass],
+   //    packSpawning: {
+   //       getPackSize: () => randInt(2, 5),
+   //       spawnRange: 200
+   //    },
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 150,
+   //    // @SQUEAM for cow pen extended thing, want less cows in shot
+   //    spawnDistribution: createRawSpawnDistribution(16, 0.001),
+   //    // spawnDistribution: createRawSpawnDistribution(16, 0.003),
+   //    balanceSpawnDistribution: false,
+   //    doStrictTileTypeCheck: false,
+   //    createEntity: (pos: Point, angle: number, firstEntityConfig: ReadonlyArray<EntityConfig> | null): ReadonlyArray<EntityConfig> | null => {
+   //       const species = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig[0].components[ServerComponentType.cow]!.species;
+   //       return [createCowConfig(pos, angle, species)];
+   //    }
+   // });
    // @SQUEAM disabled so that cows in the pen don't try and go for it
    // registerNewSpawnInfo({
    //    entityTypes: [EntityType.berryBush],
@@ -535,23 +536,24 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    //       return [createBerryBushConfig(pos, angle)];
    //    }
    // });
-   registerNewSpawnInfo({
-      entityTypes: [EntityType.tree],
-      layer: surfaceLayer,
-      // @SQUEAM so that they don't regrow after killed, for the pen shot
-      // spawnRate: 0.013,
-      spawnRate: 0,
-      biome: Biome.grasslands,
-      tileTypes: [TileType.grass],
-      onlySpawnsInNight: false,
-      minSpawnDistance: 75,
-      spawnDistribution: createRawSpawnDistribution(8, 0.02),
-      balanceSpawnDistribution: true,
-      doStrictTileTypeCheck: false,
-      createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
-         return [createTreeConfig(pos, angle)];
-      }
-   });
+   // @SQUEAM cuz im copying the shit from before
+   // registerNewSpawnInfo({
+   //    entityTypes: [EntityType.tree],
+   //    layer: surfaceLayer,
+   //    // @SQUEAM so that they don't regrow after killed, for the pen shot
+   //    // spawnRate: 0.013,
+   //    spawnRate: 0,
+   //    biome: Biome.grasslands,
+   //    tileTypes: [TileType.grass],
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 75,
+   //    spawnDistribution: createRawSpawnDistribution(8, 0.02),
+   //    balanceSpawnDistribution: true,
+   //    doStrictTileTypeCheck: false,
+   //    createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
+   //       return [createTreeConfig(pos, angle, Math.random() > 1/3 ? TreeSize.large : TreeSize.small)];
+   //    }
+   // });
    // @TEMPORARY cuz they're messing up my shot!!!!
    // registerNewSpawnInfo({
    //    entityType: EntityType.tombstone,
@@ -611,7 +613,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       tileTypes: [TileType.snow, TileType.ice, TileType.permafrost],
       onlySpawnsInNight: false,
       minSpawnDistance: 90,
-      spawnDistribution: createRawSpawnDistribution(128, 0.00015),
+      spawnDistribution: createRawSpawnDistribution(64, 0.00015),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
       createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {

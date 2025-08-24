@@ -1,8 +1,8 @@
-import { EntityType } from "../../../../shared/src/entities";
-import { TamingSkillNode } from "../../../../shared/src/taming";
-import CLIENT_ENTITY_INFO_RECORD from "../../client-entity-info";
-import { getTamingSkillLearning, hasTamingSkill, skillLearningIsComplete, TamingComponent } from "../../entity-components/server-components/TamingComponent";
-import { cursorX, cursorY } from "../../mouse";
+import { EntityType } from "../../../../../shared/src/entities";
+import { TamingSkillNode } from "../../../../../shared/src/taming";
+import CLIENT_ENTITY_INFO_RECORD from "../../../client-entity-info";
+import { getTamingSkillLearning, hasTamingSkill, skillLearningIsComplete, TamingComponent } from "../../../entity-components/server-components/TamingComponent";
+import { cursorX, cursorY } from "../../../mouse";
 
 interface TamingSkillTooltipProps {
    readonly entityType: EntityType;

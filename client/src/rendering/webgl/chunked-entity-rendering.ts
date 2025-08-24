@@ -44,7 +44,8 @@ const CHUNKED_RENDER_LAYERS = [RenderLayer.grass] as const;
 
 const CHUNKED_LAYER_INFO_RECORD: Record<ChunkedRenderLayer, ChunkedRenderLayerInfo> = {
    [RenderLayer.grass]: {
-      maxEntitiesPerChunk: 500,
+      // @SQUEAM cuz the shot requires it MOAR!
+      maxEntitiesPerChunk: 1000,
       maxRenderPartsPerEntity: 5
    }
 };

@@ -14,7 +14,6 @@ import { TechID } from "../../../shared/src/techs";
 import { playerInstance } from "../player";
 import { TamingSkillID } from "../../../shared/src/taming";
 import Camera from "../Camera";
-import { Hitbox } from "../hitboxes";
 
 export function createPlayerDataPacket(): ArrayBuffer {
    // Position, rotation
@@ -387,5 +386,12 @@ export function sendSetSignMessagePacket(entity: Entity, message: string): void 
    const packet = new Packet(PacketType.setSignMessage, 2 * Float32Array.BYTES_PER_ELEMENT + getStringLengthBytes(message));
    packet.addNumber(entity);
    packet.addString(message);
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendRenameAnimalPacket(entity: Entity, name: string): void {
+   const packet = new Packet(PacketType.renameAnimal, 2 * Float32Array.BYTES_PER_ELEMENT + getStringLengthBytes(name));
+   packet.addNumber(entity);
+   packet.addString(name);
    Client.sendPacket(packet.buffer);
 }

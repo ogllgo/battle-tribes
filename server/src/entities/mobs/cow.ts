@@ -30,11 +30,6 @@ import { tetherHitboxes } from "../../tethers";
 import { findAngleAlignment } from "../../ai-shared";
 import { createNormalisedPivotPoint } from "../../../../shared/src/boxes/BaseBox";
 
-export const enum CowVars {
-   MIN_GRAZE_COOLDOWN = 15 * Settings.TPS,
-   MAX_GRAZE_COOLDOWN = 30 * Settings.TPS
-}
-
 registerEntityTamingSpec(EntityType.cow, {
    maxTamingTier: 3,
    skillNodes: [

@@ -73,6 +73,9 @@ export function handlePlayerDisconnect(playerClient: PlayerClient): void {
 }
 
 export function generatePlayerSpawnPosition(tribeType: TribeType): Point {
+   // @SQUEAM for grass spectator shots
+   return new Point(1452, 1339)
+   
    // @Temporary
    return new Point(Settings.BOARD_UNITS * 0.5 - 0, Settings.BOARD_UNITS * 0.5 - 500 - 320);
    

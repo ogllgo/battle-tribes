@@ -37,7 +37,7 @@ import { updateGrassBlockers } from "../grass-blockers";
 import { registerTamingSpecsFromData } from "../taming-specs";
 import { getEntityClientComponentConfigs } from "../entity-components/client-components"
 import { Hitbox } from "../hitboxes";
-import { createSparkParticle, createSlimePoolParticle } from "../particles";
+import { createSparkParticle, createSlimePoolParticle, createBloodPoolParticle } from "../particles";
 import { updateLightsFromData } from "../lights";
 
 const getBuildingBlockingTiles = (): ReadonlySet<TileIndex> => {
@@ -80,6 +80,27 @@ const getBuildingBlockingTiles = (): ReadonlySet<TileIndex> => {
 }
 
 export function processInitialGameDataPacket(reader: PacketReader): void {
+   // @SQUEAM
+   setTimeout(() => {
+      const padding = -5;
+      
+      const l = 1052 - padding;
+      const t = 1641 + padding;
+      const r = 1817 + padding;
+      const b = 1010 - padding;
+
+      for (let i = 0; i < 2800; i++) {
+         const x = randFloat(l, r);
+         const y = randFloat(b, t);
+
+         if (y >= 1500) {
+            continue;
+         }
+
+         createBloodPoolParticle(x, y, 30);
+      }
+   }, 6000);
+   
    const layerIdx = reader.readNumber();
    
    const spawnPositionX = reader.readNumber();

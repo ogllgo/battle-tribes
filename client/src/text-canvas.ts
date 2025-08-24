@@ -13,10 +13,9 @@ import { playerInstance } from "./player";
 import { addGhostRenderInfo, removeGhostRenderInfo } from "./rendering/webgl/entity-ghost-rendering";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { calculateHitboxRenderPosition } from "./rendering/render-part-matrices";
-import { Hitbox } from "./hitboxes";
 import { FloorSignComponentArray } from "./entity-components/server-components/FloorSignComponent";
-import { cursorX, cursorY } from "./mouse";
 import Game from "./Game";
+import { TamingComponentArray } from "./entity-components/server-components/TamingComponent";
 
 // @Cleanup: The logic for damage, research and heal numbers is extremely similar, can probably be combined
 
@@ -348,6 +347,7 @@ const renderNames = (frameProgress: number): void => {
    ctx.miterLimit = 2;
 
    const currentLayer = getCurrentLayer();
+
    for (let i = 0; i < TribeMemberComponentArray.entities.length; i++) {
       const entity = TribeMemberComponentArray.entities[i];
       if (entity === playerInstance || getEntityLayer(entity) !== currentLayer) {
@@ -363,6 +363,24 @@ const renderNames = (frameProgress: number): void => {
       renderName(hitboxRenderPosition.x, hitboxRenderPosition.y + getHumanoidRadius(entity) + 4, tribeMemberComponent.name, getEntityType(entity) === EntityType.player ? "#fff" : "#bbb");
    }
 
+   for (let i = 0; i < TamingComponentArray.entities.length; i++) {
+      const entity = TamingComponentArray.entities[i];
+      if (getEntityLayer(entity) !== currentLayer) {
+         continue;
+      }
+
+      const tamingComponent = TamingComponentArray.components[i];
+      const name = tamingComponent.name;
+      if (name !== "") {
+         const transformComponent = TransformComponentArray.getComponent(entity);
+         const hitbox = transformComponent.hitboxes[1];
+         const hitboxRenderPosition = calculateHitboxRenderPosition(hitbox, frameProgress);
+         
+         renderName(hitboxRenderPosition.x, hitboxRenderPosition.y + 16 + 4, name, "#ccc");
+      }
+   }
+
+   // @CLeanup: these aren't names!!
    // Floor signs
    if (Game.cursorX !== null && Game.cursorY !== null) {
       for (const entity of FloorSignComponentArray.entities) {

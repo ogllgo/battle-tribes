@@ -18,6 +18,7 @@ import { StructureComponentArray } from "../../../entity-components/server-compo
 import { getTileLocalBiome } from "../../../local-biomes";
 import { getHitboxVelocity, Hitbox } from "../../../hitboxes";
 import { SnobeComponentArray } from "../../../entity-components/server-components/SnobeComponent";
+import Game from "../../../Game";
 
 export let updateDebugInfoTile: (tile: Tile | null) => void = () => {};
 
@@ -198,6 +199,8 @@ const DebugInfo = () => {
    }, []);
 
    return <div id="debug-info">
+      <p>Looking at pos <span className="highlight">{Game.cursorX === null ? -1 : Game.cursorX.toFixed(0)}</span> <span className="highlight">{Game.cursorY === null ? -1 : Game.cursorY.toFixed(0)}</span></p>
+      
       {tile !== null ? <TileDebugInfo layer={layer} tile={tile} /> : undefined}
       {entity !== null && entityExists(entity) ? <EntityDebugInfo entity={entity} debugData={debugData.current} /> : undefined}
    </div>;

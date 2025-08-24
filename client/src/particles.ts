@@ -168,7 +168,9 @@ export enum BloodPoolSize {
 }
 
 export function createBloodPoolParticle(originX: number, originY: number, spawnRange: number): void {
-   const lifetime = 7.5;
+   // @SQUEAM for the cow shot
+   // const lifetime = 7.5;
+   const lifetime = 9000;
 
    const offsetMagnitude = spawnRange * Math.random();
    const offsetDirection = randAngle();

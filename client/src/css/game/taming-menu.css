@@ -17,11 +17,12 @@
    transform: translateX(-50%);
    white-space: pre;
 }
-#taming-menu h1 img {
+#taming-menu h1 .rename-icon {
    width: 48px;
    height: 28px;
    image-rendering: pixelated;
    margin-left: 8px;
+   cursor: pointer;
 } 
 
 #taming-menu .taming-tier {

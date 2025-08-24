@@ -273,7 +273,7 @@ crypto miner video
          - First, let me weave you a story. About a new up and coming Web3 blockchain product which will revolutionise the industry (never mention which industry)
          - Let me address the unfounded and frankly antagonistic allegations that my most recent game is mining crypto in the background. But before we unpack these fantasies, have you heard of BitCoin?
          - start the video on a browser page looking at my crypto wallet
-            - make another program which shows all active players of the game as little rats in cells in a big block with all of their hostnames, and coins being funneled into a big pig money jar, squid game stylo
+            - make another program which shows all active players of the game as little rats in cells in a big block with all of their hostnames, and coins being funneled into a big pig money jar
          - be eating chips the entire time, as i'm speaking too, and drinking water really obnoxiously
          * @param tamingComponent 
  * @param skillID 

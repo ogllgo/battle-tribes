@@ -32,14 +32,15 @@ import { getTextureArrayIndex } from "./texture-atlases/texture-atlases";
 import { GameInteractState } from "./components/game/GameScreen";
 import { playerInstance } from "./player";
 import { HealthComponentArray } from "./entity-components/server-components/HealthComponent";
-import { TamingMenu_setEntity, TamingMenu_setVisibility } from "./components/game/TamingMenu";
+import { TamingMenu_setEntity, TamingMenu_setVisibility } from "./components/game/taming-menu/TamingMenu";
 import { addMenuCloseFunction } from "./menus";
-import { entityIsTameableByPlayer } from "./entity-components/server-components/TamingComponent";
+import { entityIsTameableByPlayer, hasTamingSkill, TamingComponentArray } from "./entity-components/server-components/TamingComponent";
 import { createHitboxQuick, getHitboxVelocity, Hitbox } from "./hitboxes";
 import CircularBox from "../../shared/src/boxes/CircularBox";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../shared/src/collision";
 import { SignInscribeMenu_setEntity } from "./components/game/SignInscribeMenu";
 import { FloorSignComponentArray } from "./entity-components/server-components/FloorSignComponent";
+import { TamingSkillID } from "../../shared/src/taming";
 
 const enum Vars {
    DEFAULT_INTERACT_RANGE = 150
@@ -341,18 +342,29 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
       };
    // Rideable entities
    } else if (RideableComponentArray.hasComponent(entity)) {
-      const carrySlotIdx = getSelectedCarrySlotIdx(entity);
-      if (carrySlotIdx !== null) {
-         // @Hack
-         const rideableComponent = RideableComponentArray.getComponent(entity);
-         const carrySlot = rideableComponent.carrySlots[carrySlotIdx];
-         if (!entityExists(carrySlot.occupiedEntity)) {
-            return {
-               type: InteractActionType.mountCarrySlot,
-               interactEntity: entity,
-               interactRange: Vars.DEFAULT_INTERACT_RANGE,
-               carrySlotIdx: carrySlotIdx
-            };
+      // If the entity requires taming before it is rideable, make sure it has the appropriate skill
+      let isRideable = true;
+      if (TamingComponentArray.hasComponent(entity)) {
+         const tamingComponent = TamingComponentArray.getComponent(entity);
+         if (!hasTamingSkill(tamingComponent, TamingSkillID.riding)) {
+            isRideable = false;
+         }
+      }
+      
+      if (isRideable) {
+         const carrySlotIdx = getSelectedCarrySlotIdx(entity);
+         if (carrySlotIdx !== null) {
+            // @Hack
+            const rideableComponent = RideableComponentArray.getComponent(entity);
+            const carrySlot = rideableComponent.carrySlots[carrySlotIdx];
+            if (!entityExists(carrySlot.occupiedEntity)) {
+               return {
+                  type: InteractActionType.mountCarrySlot,
+                  interactEntity: entity,
+                  interactRange: Vars.DEFAULT_INTERACT_RANGE,
+                  carrySlotIdx: carrySlotIdx
+               };
+            }
          }
       }
    }

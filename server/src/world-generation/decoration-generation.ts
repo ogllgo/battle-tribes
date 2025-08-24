@@ -64,6 +64,9 @@ const generateRiversideDecorations = (): void => {
 }
 
 export function generateDecorations(): void {
+   // @SQUEAM cuz im copying from the shot
+   if(1+1===2)return;
+   
    const GROUP_SPAWN_RANGE = 256;
    
    const DECORATION_GENERATION_INFO: ReadonlyArray<DecorationGenerationInfo> = [

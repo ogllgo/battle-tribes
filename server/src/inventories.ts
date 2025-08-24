@@ -1,8 +1,9 @@
 import { EntityType } from "../../shared/src/entities";
-import { Inventory, InventoryName } from "../../shared/src/items/items";
+import { Inventory, InventoryName, ItemType } from "../../shared/src/items/items";
 import { Settings } from "../../shared/src/settings";
 import { addInventoryToInventoryComponent, InventoryComponent } from "./components/InventoryComponent";
 import { InventoryUseComponent } from "./components/InventoryUseComponent";
+import { createItem } from "./items";
 
 const getTribesmanHotbarSize = (entityType: EntityType): number => {
    switch (entityType) {
@@ -21,6 +22,12 @@ export function addHumanoidInventories(inventoryComponent: InventoryComponent, i
    // Hotbar
    const hotbarInventory = new Inventory(getTribesmanHotbarSize(entityType), 1, InventoryName.hotbar);
    addInventoryToInventoryComponent(inventoryComponent, hotbarInventory, { acceptsPickedUpItems: true, isDroppedOnDeath: true, isSentToEnemyPlayers: false });
+   hotbarInventory.addItem(createItem(ItemType.stone_sword, 1), 1);
+   hotbarInventory.addItem(createItem(ItemType.wood, 31), 2);
+   hotbarInventory.addItem(createItem(ItemType.tamingAlmanac, 1), 3);
+   hotbarInventory.addItem(createItem(ItemType.animalStaff, 1), 4);
+   hotbarInventory.addItem(createItem(ItemType.cooked_beef, 11), 5);
+   
 
    inventoryUseComponent.associatedInventoryNames.push(InventoryName.hotbar);
    

@@ -40,6 +40,7 @@ export const enum PacketType {
    setAttackTarget,
    completeTamingTier,
    setSignMessage,
+   renameAnimal,
    // @Hack
    setSpectatingPosition,
    forceCompleteTamingTier, // ((DEV))

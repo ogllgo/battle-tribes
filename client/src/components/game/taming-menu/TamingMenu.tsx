@@ -1,19 +1,21 @@
 import { useEffect, useReducer, useState } from "react";
-import CLIENT_ENTITY_INFO_RECORD from "../../client-entity-info";
-import { entityExists, getCurrentLayer, getEntityType } from "../../world";
-import { Entity } from "../../../../shared/src/entities";
+import CLIENT_ENTITY_INFO_RECORD from "../../../client-entity-info";
+import { entityExists, getCurrentLayer, getEntityType } from "../../../world";
+import { Entity } from "../../../../../shared/src/entities";
 import { TamingSkill, TamingSkillID, TamingSkillNode, TamingTier } from "battletribes-shared/taming";
-import { hasTamingSkill, TamingComponent, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
-import Menu from "./menus/Menu";
-import { keyIsPressed } from "../../keyboard-input";
-import { sendAcquireTamingSkillPacket, sendCompleteTamingTierPacket, sendForceAcquireTamingSkillPacket, sendForceCompleteTamingTierPacket } from "../../networking/packet-creation";
-import { isDev } from "../../utils";
+import { hasTamingSkill, TamingComponent, TamingComponentArray } from "../../../entity-components/server-components/TamingComponent";
+import Menu from "../menus/Menu";
+import { keyIsPressed } from "../../../keyboard-input";
+import { sendAcquireTamingSkillPacket, sendCompleteTamingTierPacket, sendForceAcquireTamingSkillPacket, sendForceCompleteTamingTierPacket } from "../../../networking/packet-creation";
+import { isDev } from "../../../utils";
 import TamingSkillTooltip from "./TamingSkillTooltip";
-import { getEntityTamingSpec } from "../../taming-specs";
-import CLIENT_ITEM_INFO_RECORD, { getItemTypeImage } from "../../client-item-info";
-import { assert } from "../../../../shared/src/utils";
-import { playSound } from "../../sound";
-import Camera from "../../Camera";
+import { getEntityTamingSpec } from "../../../taming-specs";
+import CLIENT_ITEM_INFO_RECORD, { getItemTypeImage } from "../../../client-item-info";
+import { assert } from "../../../../../shared/src/utils";
+import { playSound } from "../../../sound";
+import Camera from "../../../Camera";
+import { addMenuCloseFunction } from "../../../menus";
+import { TamingRenamePrompt_close, TamingRenamePrompt_open } from "./TamingRenamePrompt";
 
 const enum Vars {
    SKILL_TRANSFORM_SCALE_FACTOR = 0.5
@@ -51,14 +53,14 @@ const SKILL_ICON_NAMES: Record<TamingSkillID, string> = {
    [TamingSkillID.imprint]: "imprint-skill.png",
 };
 
-const UNUSED_NAMETAG_IMG = require("../../images/menus/taming-almanac/nametag-unused.png");
-const USED_NAMETAG_IMG = require("../../images/menus/taming-almanac/nametag-used.png");
+const UNUSED_NAMETAG_IMG = require("../../../images/menus/taming-almanac/nametag-unused.png");
+const USED_NAMETAG_IMG = require("../../../images/menus/taming-almanac/nametag-used.png");
 
 const TAMING_TIER_ICONS: Record<number, any> = {
-   0: require("../../images/entities/miscellaneous/taming-tier-0.png"),
-   1: require("../../images/entities/miscellaneous/taming-tier-1.png"),
-   2: require("../../images/entities/miscellaneous/taming-tier-2.png"),
-   3: require("../../images/entities/miscellaneous/taming-tier-3.png")
+   0: require("../../../images/entities/miscellaneous/taming-tier-0.png"),
+   1: require("../../../images/entities/miscellaneous/taming-tier-1.png"),
+   2: require("../../../images/entities/miscellaneous/taming-tier-2.png"),
+   3: require("../../../images/entities/miscellaneous/taming-tier-3.png")
 };
 
 const TierSeparator = (props: TierSeparatorProps) => {
@@ -148,6 +150,12 @@ const TamingMenu = () => {
       setHoveredSkill(null);
    }
 
+   const openRenamePrompt = (): void => {
+      TamingRenamePrompt_open(entity);
+      
+      addMenuCloseFunction(TamingRenamePrompt_close);
+   }
+
    let progressBarClassName: string;
    switch (tamingComponent.tamingTier) {
       case 0: {
@@ -189,8 +197,9 @@ const TamingMenu = () => {
       <Menu id="taming-menu" className="menu">
          <h1>
             {clientEntityInfo.name}
+            {tamingComponent.name !== "" ? <> ({tamingComponent.name})</> : null}
             {tamingComponent.tamingTier > 0 ? (
-               <img src={tamingComponent.name !== "" ? USED_NAMETAG_IMG : UNUSED_NAMETAG_IMG} />
+               <img onClick={openRenamePrompt} className="rename-icon" src={tamingComponent.name !== "" ? USED_NAMETAG_IMG : UNUSED_NAMETAG_IMG} />
             ) : null}
          </h1>
 
@@ -235,7 +244,7 @@ const TamingMenu = () => {
 
                const ending = SKILL_ICON_NAMES[skill.id];
                const entityInternalName = CLIENT_ENTITY_INFO_RECORD[getEntityType(entity)].internalName;
-               const iconSrc = require("../../images/menus/taming-almanac/" + entityInternalName + "-skills/" + ending);
+               const iconSrc = require("../../../images/menus/taming-almanac/" + entityInternalName + "-skills/" + ending);
 
                return <div key={i} className={className} style={{top: skillNode.y * Vars.SKILL_TRANSFORM_SCALE_FACTOR + "rem", left: `calc(50% + ${skillNode.x * Vars.SKILL_TRANSFORM_SCALE_FACTOR}rem)`}}>
                   <div>

@@ -128,7 +128,8 @@ export function updateGrassBlockers(reader: PacketReader): void {
 
          for (const grassStrand of grassBlocker.affectedGrassStrands) {
             const renderInfo = getEntityRenderInfo(grassStrand);
-            updateGrassStrandOpacity(renderInfo, 0);
+            // @SQUEAM cuz i wanna test removing the grass server-side!!!!
+            // updateGrassStrandOpacity(renderInfo, 0);
             registerDirtyRenderInfo(renderInfo);
 
             const blockers = strandBlockers.get(grassStrand);
@@ -159,7 +160,8 @@ export function updateGrassBlockers(reader: PacketReader): void {
 
                if (blockers.length === 0) {
                   const renderInfo = getEntityRenderInfo(grassStrand);
-                  updateGrassStrandOpacity(renderInfo, 1);
+                  // @SQUEAM cuz i wanna test removing the grass server-side!!!!
+                  // updateGrassStrandOpacity(renderInfo, 1);
                   registerDirtyRenderInfo(renderInfo);
                   strandBlockers.delete(grassStrand);
                }

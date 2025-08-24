@@ -8,7 +8,6 @@ import { ComponentArray } from "./ComponentArray";
 import { getTamingSkill, TamingSkill, TamingSkillID, TamingTier } from "battletribes-shared/taming";
 import { PlayerComponentArray } from "./PlayerComponent";
 import { TransformComponentArray } from "./TransformComponent";
-import { Hitbox } from "../hitboxes";
 
 interface TamingSkillLearning {
    readonly skill: TamingSkill;
