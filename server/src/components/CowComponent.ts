@@ -9,7 +9,7 @@ import { registerEntityTickEvent } from "../server/player-clients";
 import { getHitboxByFlag, TransformComponentArray } from "./TransformComponent";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { Packet } from "battletribes-shared/packets";
-import { getDistanceFromPointToEntity, runHerdAI, willStopAtDesiredDistance } from "../ai-shared";
+import { findAngleAlignment, getDistanceFromPointToEntity, runHerdAI, willStopAtDesiredDistance } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { BerryBushComponentArray } from "./BerryBushComponent";
 import { damageEntity, healEntity, HealthComponentArray, hitEntityWithoutDamage } from "./HealthComponent";
@@ -24,10 +24,11 @@ import { addSkillLearningProgress, getRiderTargetPosition, TamingComponentArray 
 import { TamingSkillID } from "../../../shared/src/taming";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { addHitboxVelocity, applyAccelerationFromGround, applyKnockback, getHitboxVelocity, Hitbox } from "../hitboxes";
+import { addHitboxAngularAcceleration, addHitboxVelocity, applyAcceleration, applyAccelerationFromGround, applyKnockback, getHitboxVelocity, Hitbox, turnHitboxToAngle } from "../hitboxes";
 import { entityWantsToFollow, FollowAI, followAISetFollowTarget, updateFollowAIComponent } from "../ai/FollowAI";
 import { runEscapeAI } from "../ai/EscapeAI";
 import { HitboxFlag } from "../../../shared/src/boxes/boxes";
+import { PlayerComponentArray } from "./PlayerComponent";
 
 const enum Vars {
    SLOW_ACCELERATION = 200,
@@ -106,8 +107,12 @@ CowComponentArray.onTick = {
    func: onTick
 };
 CowComponentArray.onHitboxCollision = onHitboxCollision;
+CowComponentArray.onDeath = onDeath;
 
 const poop = (cow: Entity, cowComponent: CowComponent): void => {
+   // @SQUEAM
+   if(1+1===2)return;
+   
    cowComponent.poopProductionCooldownTicks = randInt(Vars.MIN_POOP_PRODUCTION_COOLDOWN, Vars.MAX_POOP_PRODUCTION_COOLDOWN);
 
    // Shit it out
@@ -149,11 +154,6 @@ const getTargetGrass = (cow: Entity): Entity | null => {
             
             const dist = cowHeadHitbox.box.position.distanceTo(grassHitbox.box.position);
 
-            const distB = grassHitbox.box.position.distanceTo(new Point(1788,1079));
-            if (distB > 30) {
-               continue;                                         
-            }
-
             grasses.push(entity);
             if (dist < minDist) {
                closestGrassStrand = entity;
@@ -164,9 +164,13 @@ const getTargetGrass = (cow: Entity): Entity | null => {
    }
 
    // @SQUEAM so that cows don't get stuck going for grass on the other side of the fence
-   // if (Math.random() < 0.3) {
-   //    return randItem(grasses);
-   // }
+   if (Math.random() < 0.3) {
+      if (grasses.length > 0) {
+         return randItem(grasses);
+      } else {
+         return null;
+      }
+   }
 
    return closestGrassStrand;
 }
@@ -282,7 +286,15 @@ const entityIsHoldingBerry = (entity: Entity): boolean => {
    return false;
 }
 
-const getFollowTarget = (followAI: FollowAI, visibleEntities: ReadonlyArray<Entity>): [Entity | null, boolean] => {
+const getFollowTarget = (cow: Entity, followAI: FollowAI, visibleEntities: ReadonlyArray<Entity>): [Entity | null, boolean] => {
+   // @SQUEAM
+   const tamingComponent = TamingComponentArray.getComponent(cow);
+   if (tamingComponent.name === "27") {
+      return [PlayerComponentArray.activeEntities[0], true];
+   } else {
+      return [null, false];
+   }
+   
    const wantsToFollow = entityWantsToFollow(followAI);
 
    let currentTargetIsHoldingBerry = false;
@@ -307,14 +319,6 @@ const getFollowTarget = (followAI: FollowAI, visibleEntities: ReadonlyArray<Enti
 }
 
 function onTick(cow: Entity): void {
-   {
-      // @SQUEAM
-      const tamingComponent = TamingComponentArray.getComponent(cow);
-      if (tamingComponent.name === "7") {
-         return;
-      }
-   }
-
    const transformComponent = TransformComponentArray.getComponent(cow);
    const cowBodyHitbox = transformComponent.rootHitboxes[0];
    
@@ -329,22 +333,28 @@ function onTick(cow: Entity): void {
    {
       // @SQUEAM
       const tamingComponent = TamingComponentArray.getComponent(cow);
-      if (tamingComponent.name === "27") {
-      // if (tamingComponent.name !== "27" && tamingComponent.name !== "6" && tamingComponent.name !== "7" && tamingComponent.name !== "9") {
+      // if (tamingComponent.name !== "27") {
          cowComponent.bowelFullness -= 1 / Vars.BOWEL_EMPTY_TIME_TICKS * lerp(0.4, 1, cowComponent.randRate);
          if (cowComponent.bowelFullness < 0) {
             cowComponent.bowelFullness = 0;
          }
-      }
+      // }
    }
 
    if (cowComponent.grazeCooldownTicks > 0) {
       cowComponent.grazeCooldownTicks--;
    }
 
-   // @Temporary: cuz shouldn't it use the energy system now?????
-   if (cowComponent.bowelFullness === 0 && (getEntityAgeTicks(cow) + cow) % (2 * Settings.TPS) === 0) {
-      damageEntity(cow, cowBodyHitbox, null, 1, 0, AttackEffectiveness.effective, cowBodyHitbox.box.position.copy(), 0);
+   
+   {
+      // @SQUEAM
+      const tamingComponent = TamingComponentArray.getComponent(cow);
+      if (tamingComponent.name !== "27") {
+         // @Temporary: cuz shouldn't it use the energy system now?????
+         if (cowComponent.bowelFullness === 0 && (getEntityAgeTicks(cow) + cow) % (2 * Settings.TPS) === 0) {
+            damageEntity(cow, cowBodyHitbox, null, 1, 0, AttackEffectiveness.effective, cowBodyHitbox.box.position.copy(), 0);
+         }
+      }
    }
    
    // If the cow is recovering after doing a ram, just stand still and do nothing else
@@ -381,7 +391,7 @@ function onTick(cow: Entity): void {
       const targetTransformComponent = TransformComponentArray.getComponent(tamingComponent.followTarget);
       const targetHitbox = targetTransformComponent.hitboxes[0];
       
-      aiHelperComponent.moveFunc(cow, targetHitbox.box.position, Vars.MEDIUM_ACCELERATION);
+      aiHelperComponent.moveFunc(cow, targetHitbox.box.position, Vars.SLOWMEDIUM_ACCELERATION);
       aiHelperComponent.turnFunc(cow, targetHitbox.box.position, Math.PI, 0.4);
       if (getEntityAgeTicks(cow) % Settings.TPS === 0) {
          addSkillLearningProgress(tamingComponent, TamingSkillID.move, 1);
@@ -589,7 +599,7 @@ function onTick(cow: Entity): void {
       aiHelperComponent.turnFunc(cow, targetHitbox.box.position, Math.PI, 0.4);
       return;
    } else {
-      const [followTarget, isHoldingBerry] = getFollowTarget(followAI, aiHelperComponent.visibleEntities);
+      const [followTarget, isHoldingBerry] = getFollowTarget(cow, followAI, aiHelperComponent.visibleEntities);
       if (followTarget !== null) {
          // Follow the entity
          followAISetFollowTarget(followAI, followTarget, !isHoldingBerry);
@@ -599,14 +609,15 @@ function onTick(cow: Entity): void {
 
    // Herd AI
    // @Incomplete: Steer the herd away from non-plains biomes
-   const herdMembers = findHerdMembers(cowComponent, aiHelperComponent.visibleEntities);
-   if (herdMembers.length >= 2 && herdMembers.length <= 6) {
-      runHerdAI(cow, herdMembers, aiHelperComponent.visionRange, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
+   // @SQUEAM cuz they b running into fences
+   // const herdMembers = findHerdMembers(cowComponent, aiHelperComponent.visibleEntities);
+   // if (herdMembers.length >= 2 && herdMembers.length <= 6) {
+   //    runHerdAI(cow, herdMembers, aiHelperComponent.visionRange, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
 
-      // @Incomplete: use new move func
-      applyAccelerationFromGround(cowBodyHitbox, polarVec2(200, cowBodyHitbox.box.angle));
-      return;
-   }
+   //    // @Incomplete: use new move func
+   //    applyAccelerationFromGround(cowBodyHitbox, polarVec2(200, cowBodyHitbox.box.angle));
+   //    return;
+   // }
 
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
@@ -695,4 +706,14 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    const cowBodyHitbox = cowTransformComponent.hitboxes[0];
    const cowVelocity = getHitboxVelocity(cowBodyHitbox);
    addHitboxVelocity(cowBodyHitbox, new Point(cowVelocity.x * -0.5, cowVelocity.y * -0.5));
+}
+
+function onDeath() {
+   let numBad = 0;
+   for (const cow of CowComponentArray.activeEntities) {
+      const tamingComponent = TamingComponentArray.getComponent(cow)
+      if (tamingComponent.name !== "") {
+         numBad++;
+      }
+   }
 }

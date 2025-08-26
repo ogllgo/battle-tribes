@@ -117,7 +117,7 @@ const renderRenderablesBatch = (renderableType: RenderableType, renderables: Rea
             setupEntityRendering();
             for (const renderable of renderables) {
                const entity = renderable as Entity;
-               if (!OPTIONS.showEntities && getEntityType(entity) !== EntityType.grassStrand) {
+               if (OPTIONS.hideEntities && getEntityType(entity) !== EntityType.grassStrand) {
                   continue;
                }
                

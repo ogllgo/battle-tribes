@@ -8,9 +8,7 @@ export const enum Settings {
    SUBTILES_IN_TILE = TILE_SIZE / SUBTILE_SIZE,
    // @Temporary: for now the game uses too much memory to handle a board size of 64. thanks grass
    /** Number of chunks in the world's width and height */
-   // @SQUEAM for the cow shot cuz its very lag
-   // BOARD_SIZE = 32,
-   BOARD_SIZE = 16,
+   BOARD_SIZE = 32,
    /** Number of tiles in a chunk's width and height */
    CHUNK_SIZE = 4,
    CHUNK_UNITS = CHUNK_SIZE * TILE_SIZE,

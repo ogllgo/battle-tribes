@@ -4,7 +4,6 @@ import { ComponentArray } from "./ComponentArray";
 import { ItemType } from "battletribes-shared/items/items";
 import { Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
-import { destroyEntity, getEntityAgeTicks } from "../world";
 
 const enum Vars {
    TICKS_TO_DESPAWN = 300 * Settings.TPS,
@@ -37,12 +36,6 @@ function onTick(itemEntity: Entity): void {
    const itemComponent = ItemComponentArray.getComponent(itemEntity);
    if (itemComponent.throwingEntityPickupCooldownTicks > 0) {
       itemComponent.throwingEntityPickupCooldownTicks--;
-   }
-
-   // Despawn old items
-   const ageTicks = getEntityAgeTicks(itemEntity);
-   if (ageTicks >= Vars.TICKS_TO_DESPAWN) {
-      destroyEntity(itemEntity);
    }
 }
 

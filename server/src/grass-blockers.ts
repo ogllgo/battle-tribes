@@ -93,9 +93,6 @@ const removeGrassBlocker = (blocker: GrassBlocker, i: number): void => {
 }
 
 export function updateGrassBlockers(): void {
-   // @SQUEAM cuz i don't want grass to regrow for some of the shots
-   if (1+1===2)return;
-   
    for (let i = 0; i < blockers.length; i++) {
       const blocker = blockers[i];
       

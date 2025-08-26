@@ -11,7 +11,7 @@ import { generateCaveEntrances } from "./cave-entrance-generation";
 import { groupLocalBiomes, setWallInSubtiles } from "./terrain-generation-utils";
 import { Biome } from "../../../shared/src/biomes";
 import { createRawSpawnDistribution, EntitySpawnEvent, isTooCloseToSteppingStone, registerNewSpawnInfo } from "../entity-spawn-info";
-import { EntityType } from "../../../shared/src/entities";
+import { EntityType, TreeSize } from "../../../shared/src/entities";
 import { getEntitiesInRange } from "../ai-shared";
 import { getEntityType } from "../world";
 import { TransformComponentArray } from "../components/TransformComponent";
@@ -495,7 +495,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       generateCaveEntrances(surfaceLayer);
    }
 
-   // @SQUEAM for big shots
+   // @SQUEAM
    // registerNewSpawnInfo({
    //    entityTypes: [EntityType.cow],
    //    layer: surfaceLayer,
@@ -536,7 +536,6 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    //       return [createBerryBushConfig(pos, angle)];
    //    }
    // });
-   // @SQUEAM cuz im copying the shit from before
    // registerNewSpawnInfo({
    //    entityTypes: [EntityType.tree],
    //    layer: surfaceLayer,

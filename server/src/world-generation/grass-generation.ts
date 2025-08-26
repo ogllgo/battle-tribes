@@ -78,19 +78,6 @@ const isValidGrassPosition = (layer: Layer, x: number, y: number): boolean => {
 }
 
 export function generateGrassStrands(): void {
-   // @SQUEAM
-
-                     const l = Settings.BOARD_UNITS * 0.5 - 1000;
-                     const t = Settings.BOARD_UNITS * 0.5 - 400;
-   
-                     const r = 1817;
-                     const b = 1000;
-
-   const lTile = Math.floor(l / Settings.TILE_SIZE);
-   const tTile = Math.floor(t / Settings.TILE_SIZE);
-   const rTile = Math.floor(r / Settings.TILE_SIZE);
-   const bTile = Math.floor(b / Settings.TILE_SIZE);
-   
    // @Speed
    // @Incomplete: generate in edges
    for (let tileX = 0; tileX < Settings.BOARD_DIMENSIONS; tileX++) {
@@ -106,11 +93,6 @@ export function generateGrassStrands(): void {
             density = Math.ceil(density);
          } else {
             density = Math.floor(density);
-         }
-
-         // @SQUEAM
-         if (tileX >= lTile && tileX <= rTile && tileY >= bTile && tileY <= tTile) {
-            density = Vars.MAX_STRAND_DENSITY * 2;
          }
 
          for (let i = 0; i < density; i++) {

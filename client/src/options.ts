@@ -17,7 +17,7 @@ interface Options {
    showRenderChunkBorders: boolean;
    readonly showParticles: boolean;
    readonly showAllTechs: boolean;
-   showEntities: boolean;
+   hideEntities: boolean;
    showPathfindingNodes: boolean;
    showSafetyNodes: boolean;
    showBuildingSafetys: boolean;
@@ -41,7 +41,7 @@ const OPTIONS: Options = {
    showRenderChunkBorders: false,
    showParticles: true,
    showAllTechs: false,
-   showEntities: true,
+   hideEntities: false,
    showPathfindingNodes: false,
    showSafetyNodes: false,
    showBuildingSafetys: false,
