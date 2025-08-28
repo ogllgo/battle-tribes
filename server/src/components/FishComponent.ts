@@ -6,18 +6,18 @@ import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import { customTickIntervalHasPassed, Point, randFloat, UtilVars } from "battletribes-shared/utils";
+import { customTickIntervalHasPassed, Point, polarVec2, randAngle, randFloat, randSign, UtilVars } from "battletribes-shared/utils";
 import { runHerdAI, moveEntityToPosition } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { runEscapeAI } from "../ai/EscapeAI";
-import { hitEntity, HealthComponentArray, canDamageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { damageEntity, HealthComponentArray, canDamageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { InventoryComponentArray, hasInventory, getInventory } from "./InventoryComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray, getRandomPositionInEntity } from "./TransformComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
 import { TribesmanComponentArray } from "./TribesmanComponent";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { applyAccelerationFromGround, applyKnockback, getHitboxTile, Hitbox, addHitboxVelocity } from "../hitboxes";
+import { applyAccelerationFromGround, applyKnockback, getHitboxTile, Hitbox, addHitboxVelocity, addHitboxAngularVelocity } from "../hitboxes";
 
 const enum Vars {
    TURN_SPEED = UtilVars.PI / 1.5,
@@ -83,7 +83,7 @@ const unfollowLeader = (fish: Entity, leader: Entity): void => {
 
 function onTick(fish: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(fish);
-   const fishHitbox = transformComponent.children[0] as Hitbox;
+   const fishHitbox = transformComponent.hitboxes[0];
    
    const physicsComponent = PhysicsComponentArray.getComponent(fish);
    const fishComponent = FishComponentArray.getComponent(fish);
@@ -98,7 +98,7 @@ function onTick(fish: Entity): void {
       fishComponent.secondsOutOfWater += Settings.I_TPS;
       if (fishComponent.secondsOutOfWater >= 5 && customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TPS, 1.5)) {
          const hitPosition = getRandomPositionInEntity(transformComponent);
-         hitEntity(fish, null, 1, DamageSource.lackOfOxygen, AttackEffectiveness.effective, hitPosition, 0);
+         damageEntity(fish, fishHitbox, null, 1, DamageSource.lackOfOxygen, AttackEffectiveness.effective, hitPosition, 0);
       }
    } else {
       fishComponent.secondsOutOfWater = 0;
@@ -130,16 +130,18 @@ function onTick(fish: Entity): void {
       const target = fishComponent.attackTargetID;
       if (entityExists(target)) {
          const leaderTransformComponent = TransformComponentArray.getComponent(fishComponent.leader);
-         const leaderHitbox = leaderTransformComponent.children[0] as Hitbox;
+         const leaderHitbox = leaderTransformComponent.hitboxes[0];
          
          // Follow leader
-         aiHelperComponent.move(fish, 0, 0, leaderHitbox.box.position.x, leaderHitbox.box.position.y);
+         aiHelperComponent.moveFunc(fish, leaderHitbox.box.position, 40);
+         aiHelperComponent.turnFunc(fish, leaderHitbox.box.position, Math.PI / 1.5, 0.5);
       } else {
          const targetTransformComponent = TransformComponentArray.getComponent(target);
-         const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+         const targetHitbox = targetTransformComponent.hitboxes[0];
 
          // Attack the target
-         aiHelperComponent.move(fish, 0, 0, targetHitbox.box.position.x, targetHitbox.box.position.y);
+         aiHelperComponent.moveFunc(fish, targetHitbox.box.position, 40);
+         aiHelperComponent.turnFunc(fish, targetHitbox.box.position, Math.PI / 1.5, 0.5);
 
          if (entitiesAreColliding(fish, target) !== CollisionVars.NO_COLLISION) {
             const healthComponent = HealthComponentArray.getComponent(target);
@@ -147,13 +149,13 @@ function onTick(fish: Entity): void {
                return;
             }
             
-            const hitDirection = fishHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+            const hitDirection = fishHitbox.box.position.angleTo(targetHitbox.box.position);
 
             // @Hack
             const collisionPoint = new Point((fishHitbox.box.position.x + targetHitbox.box.position.x) / 2, (fishHitbox.box.position.y + targetHitbox.box.position.y) / 2);
             
-            hitEntity(target, fish, 2, DamageSource.fish, AttackEffectiveness.effective, collisionPoint, 0);
-            applyKnockback(target, targetHitbox, 100, hitDirection);
+            damageEntity(target, targetHitbox, fish, 2, DamageSource.fish, AttackEffectiveness.effective, collisionPoint, 0);
+            applyKnockback(targetHitbox, 100, hitDirection);
             addLocalInvulnerabilityHash(target, "fish", 0.3);
          }
       }
@@ -164,11 +166,10 @@ function onTick(fish: Entity): void {
    if (tileType !== TileType.water) {
       fishComponent.flailTimer += Settings.I_TPS;
       if (fishComponent.flailTimer >= 0.75) {
-         const flailDirection = 2 * Math.PI * Math.random();
-         fishHitbox.box.relativeAngle = flailDirection + randFloat(-0.5, 0.5);
-         transformComponent.isDirty = true;
+         const flailDirection = randAngle();
          
-         addHitboxVelocity(fishHitbox, 200 * Math.sin(flailDirection), 200 * Math.cos(flailDirection));
+         addHitboxAngularVelocity(fishHitbox, randFloat(1.5, 2.2) * randSign());
+         addHitboxVelocity(fishHitbox, polarVec2(200, flailDirection));
    
          fishComponent.flailTimer = 0;
       }
@@ -194,17 +195,16 @@ function onTick(fish: Entity): void {
    if (herdMembers.length >= 1) {
       runHerdAI(fish, herdMembers, aiHelperComponent.visionRange, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
 
-      const accelerationX = 100 * Math.sin(fishHitbox.box.angle);
-      const accelerationY = 100 * Math.cos(fishHitbox.box.angle);
-      applyAccelerationFromGround(fish, fishHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(fishHitbox, polarVec2(100, fishHitbox.box.angle));
       return;
    }
 
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(fish);
-   if (wanderAI.targetPositionX !== -1) {
-      moveEntityToPosition(fish, wanderAI.targetPositionX, wanderAI.targetPositionY, 200, Math.PI, 1);
+   if (wanderAI.targetPosition !== null) {
+      aiHelperComponent.moveFunc(fish, wanderAI.targetPosition, wanderAI.acceleration);
+      aiHelperComponent.turnFunc(fish, wanderAI.targetPosition, wanderAI.turnSpeed, wanderAI.turnDamping);
    }
 }
 

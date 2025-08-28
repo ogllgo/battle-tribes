@@ -6,7 +6,7 @@ import { Settings } from "battletribes-shared/settings";
 import { Point } from "battletribes-shared/utils";
 import { destroyEntity, getEntityAgeTicks } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { Hitbox } from "../hitboxes";
 
@@ -35,7 +35,7 @@ function onTick(quake: Entity): void {
       const life = getLife(age);
       
       const transformComponent = TransformComponentArray.getComponent(quake);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       hitbox.box.scale = life;
       transformComponent.isDirty = true;
 
@@ -45,14 +45,17 @@ function onTick(quake: Entity): void {
    }
 }
 
-function onHitboxCollision(guardian: Entity, collidingEntity: Entity, _pushedHitbox: Hitbox, _pushingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const guardian = hitbox.entity;
+   const collidingEntity = collidingHitbox.entity;
+   
    if (HealthComponentArray.hasComponent(collidingEntity)) {
       const healthComponent = HealthComponentArray.getComponent(collidingEntity);
       if (!canDamageEntity(healthComponent, "gemQuake")) {
          return;
       }
 
-      hitEntity(collidingEntity, guardian, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingEntity, collidingHitbox, guardian, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
       addLocalInvulnerabilityHash(collidingEntity, "gemQuake", 0.3);
    }
 }

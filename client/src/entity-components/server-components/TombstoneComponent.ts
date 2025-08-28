@@ -1,17 +1,18 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { DeathInfo, Entity, DamageSource } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { Point, randFloat, randInt, randItem } from "battletribes-shared/utils";
+import { Point, randAngle, randFloat, randInt, randItem } from "battletribes-shared/utils";
 import { createDirtParticle, createRockParticle, createRockSpeckParticle } from "../../particles";
 import { playSound, playSoundOnHitbox, ROCK_DESTROY_SOUNDS, ROCK_HIT_SOUNDS } from "../../sound";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { PacketReader } from "battletribes-shared/packets";
-import { EntityIntermediateInfo, EntityParams, getEntityAgeTicks, getEntityLayer } from "../../world";
+import { EntityParams, getEntityAgeTicks, getEntityLayer } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { TransformComponentArray } from "./TransformComponent";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface TombstoneComponentParams {
    readonly tombstoneType: number;
@@ -76,13 +77,13 @@ function createParamsFromData(reader: PacketReader): TombstoneComponentParams {
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const tombstoneComponentParams = entityParams.serverComponentParams[ServerComponentType.tombstone]!;
    
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,
@@ -158,14 +159,12 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    }
 }
 
-function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-
+function onHit(entity: Entity, hitbox: Hitbox): void {
    for (let i = 0; i < 4; i++) {
       const spawnPositionX = hitbox.box.position.x + randFloat(-HITBOX_WIDTH/2, HITBOX_WIDTH/2);
       const spawnPositionY = hitbox.box.position.y + randFloat(-HITBOX_HEIGHT/2, HITBOX_HEIGHT/2);
 
+      // @HACK @Robustness
       let moveDirection = Math.PI/2 - Math.atan2(spawnPositionY, spawnPositionX);
       moveDirection += randFloat(-1, 1);
       
@@ -185,13 +184,13 @@ function onHit(entity: Entity): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 8; i++) {
       const spawnPositionX = hitbox.box.position.x + randFloat(-HITBOX_WIDTH/2, HITBOX_WIDTH/2);
       const spawnPositionY = hitbox.box.position.y + randFloat(-HITBOX_HEIGHT/2, HITBOX_HEIGHT/2);
 
-      createRockParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(80, 125), ParticleRenderLayer.low);
+      createRockParticle(spawnPositionX, spawnPositionY, randAngle(), randFloat(80, 125), ParticleRenderLayer.low);
    }
 
    for (let i = 0; i < 5; i++) {

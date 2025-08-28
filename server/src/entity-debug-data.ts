@@ -12,6 +12,9 @@ import { AIPlan } from "./tribesman-ai/tribesman-ai-planning";
 import { AIPlanType, getTileX, getTileY } from "../../shared/src/utils";
 import { AIAssignmentComponentArray } from "./components/AIAssignmentComponent";
 import { YetiComponentArray } from "./components/YetiComponent";
+import { EnergyStoreComponentArray } from "./components/EnergyStoreComponent";
+import { EnergyStomachComponentArray } from "./components/EnergyStomachComponent";
+import { OkrenComponentArray } from "./components/OkrenComponent";
 import { AIPathfindingComponentArray } from "./components/AIPathfindingComponent";
 
 const getPlanDebugString = (plan: AIPlan): string => {
@@ -113,6 +116,21 @@ export function createEntityDebugData(entity: Entity): EntityDebugData {
             tilePosition: [tileX, tileY]
          });
       }
+   }
+
+   if (OkrenComponentArray.hasComponent(entity)) {
+      const okrenComponent = OkrenComponentArray.getComponent(entity);
+      debugEntries.push("Eggs ready: " + okrenComponent.numEggsReady);
+   }
+
+   if (EnergyStoreComponentArray.hasComponent(entity)) {
+      const energyStoreComponent = EnergyStoreComponentArray.getComponent(entity);
+      debugEntries.push("Base energy: " + energyStoreComponent.energyAmount);
+   }
+
+   if (EnergyStomachComponentArray.hasComponent(entity)) {
+      const energyStomachComponent = EnergyStomachComponentArray.getComponent(entity);
+      debugEntries.push("Stomach energy: " + energyStomachComponent.energy + "/" + energyStomachComponent.energyCapacity);
    }
 
    return {

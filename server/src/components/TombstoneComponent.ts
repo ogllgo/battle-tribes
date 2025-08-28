@@ -3,11 +3,10 @@ import { Entity } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { getStringLengthBytes, Packet } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
-import { Point, randInt } from "battletribes-shared/utils";
+import { Point, randAngle, randInt } from "battletribes-shared/utils";
 import { createZombieConfig } from "../entities/mobs/zombie";
-import { createEntity } from "../Entity";
 import { TransformComponentArray } from "./TransformComponent";
-import { destroyEntity, getEntityLayer, getGameTime, isNight } from "../world";
+import { createEntity, destroyEntity, getEntityLayer, getGameTime, isNight } from "../world";
 import TombstoneDeathManager from "../tombstone-deaths";
 import { Hitbox } from "../hitboxes";
 
@@ -45,7 +44,7 @@ TombstoneComponentArray.preRemove = preRemove;
 
 const generateZombieSpawnPosition = (tombstone: Entity): Point => {
    const transformComponent = TransformComponentArray.getComponent(tombstone);
-   const tombstoneHitbox = transformComponent.children[0] as Hitbox;
+   const tombstoneHitbox = transformComponent.hitboxes[0];
    
    const seenIs = new Array<number>();
    for (;;) {
@@ -78,7 +77,7 @@ const spawnZombie = (tombstone: Entity, tombstoneComponent: TombstoneComponent):
    
    // Spawn zombie
    const position = new Point(tombstoneComponent.zombieSpawnPositionX, tombstoneComponent.zombieSpawnPositionY);
-   const config = createZombieConfig(position, 2 * Math.PI * Math.random(), isGolden, tombstone);
+   const config = createZombieConfig(position, randAngle(), isGolden, tombstone);
    createEntity(config, getEntityLayer(tombstone), 0);
 
    tombstoneComponent.numZombies++;
@@ -132,9 +131,9 @@ function preRemove(tombstone: Entity): void {
    const isGolden = tombstoneComponent.tombstoneType === 0 && Math.random() < 0.005;
    
    const tombstoneTransformComponent = TransformComponentArray.getComponent(tombstone);
-   const tombstoneHitbox = tombstoneTransformComponent.children[0] as Hitbox;
+   const tombstoneHitbox = tombstoneTransformComponent.hitboxes[0];
 
-   const config = createZombieConfig(tombstoneHitbox.box.position.copy(), 2 * Math.PI * Math.random(), isGolden, tombstone);
+   const config = createZombieConfig(tombstoneHitbox.box.position.copy(), randAngle(), isGolden, tombstone);
    createEntity(config, getEntityLayer(tombstone), 0);
 }
 

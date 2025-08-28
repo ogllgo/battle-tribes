@@ -5,9 +5,7 @@ import { EntityType } from "../../../../shared/src/entities";
 import { Packet } from "../../../../shared/src/packets";
 import { Settings } from "../../../../shared/src/settings";
 import { STRUCTURE_TYPES, StructureType } from "../../../../shared/src/structures";
-import { angle, Point } from "../../../../shared/src/utils";
-import { cleanAngle } from "../../ai-shared";
-import { entityChildIsHitbox } from "../../components/TransformComponent";
+import { angle, clampAngleA, Point } from "../../../../shared/src/utils";
 import { Hitbox } from "../../hitboxes";
 import Layer from "../../Layer";
 import { addBoxDataToPacket, getBoxDataLength } from "../../server/packet-hitboxes";
@@ -197,9 +195,8 @@ export function createVirtualStructure(buildingLayer: TribeBuildingLayer, positi
    const tribe = getTribes()[0];
    const entityConfig = createStructureConfig(tribe, entityType, position, rotation, []);
    const transformComponent = entityConfig.components[ServerComponentType.transform]!;
-   const hitboxes = transformComponent.children;
    
-   return createVirtualStructureFromHitboxes(buildingLayer, position, rotation, entityType, hitboxes.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>);
+   return createVirtualStructureFromHitboxes(buildingLayer, position, rotation, entityType, transformComponent.hitboxes);
 }
 
 export function addVirtualBuildingData(packet: Packet, virtualBuilding: VirtualStructure): void {
@@ -234,7 +231,7 @@ const getWallSideNodeDir = (node: SafetyNode, wallPosition: Point, wallRotation:
 
    let dir = angle(x - wallPosition.x, y - wallPosition.y) - wallRotation;
    dir += Math.PI/4;
-   dir = cleanAngle(dir);
+   dir = clampAngleA(dir);
 
    return dir;
 }

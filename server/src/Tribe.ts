@@ -14,8 +14,7 @@ import { getPlayerClients, registerResearchOrbComplete } from "./server/player-c
 import { HutComponentArray } from "./components/HutComponent";
 import { ItemType, InventoryName } from "battletribes-shared/items/items";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
-import { createEntity } from "./Entity";
-import { addTribe, destroyEntity, entityExists, getEntityLayer, getEntityType, getGameTicks, removeTribe } from "./world";
+import { addTribe, createEntity, destroyEntity, entityExists, getEntityLayer, getEntityType, getGameTicks, removeTribe } from "./world";
 import Layer from "./Layer";
 import { EntityConfig } from "./components";
 import { createTribeWorkerConfig } from "./entities/tribes/tribe-worker";
@@ -140,7 +139,8 @@ export default class Tribe {
    public tribesmanCap: number;
 
    public selectedTechID: TechID | null = null;
-   public readonly unlockedTechs = new Array<Tech>();
+   // public readonly unlockedTechs = new Array<Tech>();
+   public readonly unlockedTechs = [getTechByID(TechID.frostshaping)];
    public readonly techTreeUnlockProgress: TechTreeUnlockProgress = {};
 
    private readonly respawnTimesRemaining = new Array<number>();
@@ -189,7 +189,7 @@ export default class Tribe {
       this.pathfindingGroupID = getPathfindingGroupID();
 
       // @TEMPORARY
-      const assignment = createGatherItemPlanAssignment([], ItemType.mithrilOre, 999);
+      const assignment = createGatherItemPlanAssignment([], ItemType.tukmokFurHide, 999);
       this.rootAssignment.children.push(assignment);
 
       addTribe(this);
@@ -405,7 +405,7 @@ export default class Tribe {
       hutComponent.hasTribesman = true;
       
       const transformComponent = TransformComponentArray.getComponent(hut);
-      const hutHitbox = transformComponent.children[0] as Hitbox;
+      const hutHitbox = transformComponent.hitboxes[0];
       
       // Offset the spawn position so the tribesman comes out of the correct side of the hut
       const position = new Point(hutHitbox.box.position.x + 10 * Math.sin(hutHitbox.box.angle), hutHitbox.box.position.y + 10 * Math.cos(hutHitbox.box.angle));

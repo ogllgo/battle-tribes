@@ -1,4 +1,4 @@
-import { WaterRockData, RiverSteppingStoneData, GrassTileInfo, RiverFlowDirectionsRecord, WaterRockSize, RiverSteppingStoneSize, GameDataPacket, HitData, PlayerKnockbackData, HealData, ServerTileUpdateData, EntityDebugData, LineDebugData, CircleDebugData, TileHighlightData, PathData, PathfindingNodeIndex, RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
+import { WaterRockData, RiverSteppingStoneData, GrassTileInfo, RiverFlowDirectionsRecord, WaterRockSize, RiverSteppingStoneSize, GameDataPacket, PlayerKnockbackData, HealData, ServerTileUpdateData, EntityDebugData, LineDebugData, CircleDebugData, TileHighlightData, PathData, PathfindingNodeIndex, RIVER_STEPPING_STONE_SIZES, HitFlags } from "battletribes-shared/client-server-types";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
@@ -19,17 +19,17 @@ import { createEntity, addLayer, changeEntityLayer, entityExists, EntityServerCo
 import { isDev, NEIGHBOUR_OFFSETS } from "../utils";
 import { createRiverSteppingStoneData } from "../rendering/webgl/river-rendering";
 import Layer, { getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorld, tileIsWithinEdge } from "../Layer";
-import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
+import { getHitboxByLocalID, TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { playSound } from "../sound";
 import { initialiseRenderables } from "../rendering/render-loop";
 import ServerComponentArray from "../entity-components/ServerComponentArray";
 import { MinedSubtile, setMinedSubtiles, tickCollapse } from "../collapses";
-import { createResearchNumber } from "../text-canvas";
+import { createDamageNumber, createResearchNumber } from "../text-canvas";
 import { registerDirtyRenderInfo } from "../rendering/render-part-matrices";
 import { Biome } from "../../../shared/src/biomes";
 import { ExtendedTribe, readExtendedTribeData, readShortTribeData, Tribe, tribes, updatePlayerTribe } from "../tribes";
 import { readPacketDevData } from "./dev-packet-processing";
-import { assert, TileIndex } from "../../../shared/src/utils";
+import { assert, Point, randAngle, randFloat, TileIndex } from "../../../shared/src/utils";
 import { playerInstance, setPlayerInstance } from "../player";
 import { gameScreenSetIsDead } from "../components/game/GameScreen";
 import { selectItemSlot } from "../components/game/GameInteractableLayer";
@@ -37,6 +37,8 @@ import { updateGrassBlockers } from "../grass-blockers";
 import { registerTamingSpecsFromData } from "../taming-specs";
 import { getEntityClientComponentConfigs } from "../entity-components/client-components"
 import { Hitbox } from "../hitboxes";
+import { createSparkParticle, createSlimePoolParticle, createBloodPoolParticle } from "../particles";
+import { updateLightsFromData } from "../lights";
 
 const getBuildingBlockingTiles = (): ReadonlySet<TileIndex> => {
    // Initially find all tiles below a dropdown tile
@@ -577,6 +579,9 @@ export function processGameDataPacket(reader: PacketReader): void {
       }
    }
 
+   // Lights
+   updateLightsFromData(reader);
+
    // @Cleanup: move to own function
    
    // @Temporary: I seem to be having an issue with some trees being invisible, possibly caused by this removing entities when they shouldn't be removed?
@@ -605,28 +610,65 @@ export function processGameDataPacket(reader: PacketReader): void {
    //    }
    // }
 
-   const visibleHits = new Array<HitData>();
+   // Register hits
    const numHits = reader.readNumber();
    console.assert(Number.isInteger(numHits));
    for (let i = 0; i < numHits; i++) {
-      const hitEntityID = reader.readNumber();
-      const x = reader.readNumber();
-      const y = reader.readNumber();
+      const hitEntity = reader.readNumber() as Entity;
+      const hitHitboxLocalID = reader.readNumber();
+      const hitPositionX = reader.readNumber();
+      const hitPositionY = reader.readNumber();
       const attackEffectiveness = reader.readNumber() as AttackEffectiveness;
       const damage = reader.readNumber();
       const shouldShowDamageNumber = reader.readBoolean();
       reader.padOffset(3);
       const flags = reader.readNumber();
+
+      if (entityExists(hitEntity)) {
+         if (attackEffectiveness === AttackEffectiveness.stopped) {
+            // Register stopped hit
+                     
+            const transformComponent = TransformComponentArray.getComponent(hitEntity);
+            const hitbox = transformComponent.hitboxes[0];
+            for (let i = 0; i < 6; i++) {
+               const position = hitbox.box.position.offset(randFloat(0, 6), randAngle());
+               createSparkParticle(position.x, position.y);
+            }
+         } else {
+            // Register hit
+
+            const transformComponent = TransformComponentArray.getComponent(hitEntity);
+
+            // If the entity is hit by a flesh sword, create slime puddles
+            if (flags & HitFlags.HIT_BY_FLESH_SWORD) {
+               const hitbox = transformComponent.hitboxes[0];
+               for (let i = 0; i < 2; i++) {
+                  createSlimePoolParticle(hitbox.box.position.x, hitbox.box.position.y, 32);
+               }
+            }
+
+            // @Incomplete @Hack
+            if (flags & HitFlags.HIT_BY_SPIKES) {
+               playSound("spike-stab.mp3", 0.3, 1, new Point(hitPositionX, hitPositionY), getEntityLayer(hitEntity));
+            }
+
+            const hitHitbox = getHitboxByLocalID(transformComponent.hitboxes, hitHitboxLocalID);
+            if (hitHitbox !== null) {
+               // @Speed
+               const componentArrays = getComponentArrays();
+               for (let i = 0; i < componentArrays.length; i++) {
+                  const componentArray = componentArrays[i];
+                  if (typeof componentArray.onHit !== "undefined" && componentArray.hasComponent(hitEntity)) {
+                     componentArray.onHit(hitEntity, hitHitbox, new Point(hitPositionX, hitPositionY), flags);
+                  }
+               }
+            }
+         }
+      }
       
-      const hit: HitData = {
-         hitEntityID: hitEntityID,
-         hitPosition: [x, y],
-         attackEffectiveness: attackEffectiveness,
-         damage: damage,
-         shouldShowDamageNumber: shouldShowDamageNumber,
-         flags: flags
-      };
-      visibleHits.push(hit);
+      if (damage > 0 && shouldShowDamageNumber) {
+         createDamageNumber(hitPositionX, hitPositionY, damage);
+      }
    }
 
    const playerKnockbacks = new Array<PlayerKnockbackData>();
@@ -798,7 +840,6 @@ export function processGameDataPacket(reader: PacketReader): void {
    // @Garbage
    const gameDataPacket: GameDataPacket = {
       tileUpdates: tileUpdates,
-      visibleHits: visibleHits,
       playerKnockbacks: playerKnockbacks,
       heals: heals,
       playerHealth: playerHealth,
@@ -823,7 +864,7 @@ export function processSyncDataPacket(reader: PacketReader): void {
    if (!Game.isRunning || playerInstance === null) return;
 
    const transformComponent = TransformComponentArray.getComponent(playerInstance);
-   const playerHitbox = transformComponent.children[0] as Hitbox;
+   const playerHitbox = transformComponent.hitboxes[0];
    
    const x = reader.readNumber();
    const y = reader.readNumber();
@@ -850,7 +891,7 @@ export function processForcePositionUpdatePacket(reader: PacketReader): void {
    const y = reader.readNumber();
 
    const transformComponent = TransformComponentArray.getComponent(playerInstance);
-   const playerHitbox = transformComponent.children[0] as Hitbox;
+   const playerHitbox = transformComponent.hitboxes[0];
    playerHitbox.box.position.x = x;
    playerHitbox.box.position.y = y;
 }

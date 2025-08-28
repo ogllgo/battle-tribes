@@ -2,13 +2,14 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType, PlantedEntityType } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { randInt, customTickIntervalHasPassed } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
 import { createGrowthParticle } from "../../particles";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { getEntityRenderInfo, getEntityAgeTicks, EntityIntermediateInfo, EntityParams } from "../../world";
+import { getEntityRenderInfo, getEntityAgeTicks, EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponent, TransformComponentArray, getRandomPositionInEntity } from "./TransformComponent";
 
@@ -67,11 +68,11 @@ function createParamsFromData(reader: PacketReader): PlanterBoxComponentParams {
    return fillParams(plantedEntityType, isFertilised);
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,
@@ -85,7 +86,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    let renderPart: TexturedRenderPart | null;
    if (planterBoxComponentParams.plantedEntityType !== -1) {
       renderPart = createMoundRenderPart(planterBoxComponentParams.plantedEntityType, hitbox);
-      entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+      renderInfo.attachRenderPart(renderPart);
    } else {
       renderPart = null;
    }
@@ -140,7 +141,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          createGrowthParticleInEntity(transformComponent);
       }
 
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       playSoundOnHitbox("fertiliser.mp3", 0.6, 1, entity, hitbox, false);
    }
    planterBoxComponent.isFertilised = isFertilised;
@@ -149,7 +150,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    if (hasPlant && planterBoxComponent.hasPlant !== hasPlant) {
       // Plant sound effect
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       playSoundOnHitbox("plant.mp3", 0.4, 1, entity, hitbox, false);
    }
    planterBoxComponent.hasPlant = hasPlant;
@@ -157,7 +158,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    if (plantType !== -1) {
       if (planterBoxComponent.moundRenderPart === null) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.children[0] as Hitbox;
+         const hitbox = transformComponent.hitboxes[0];
 
          planterBoxComponent.moundRenderPart = createMoundRenderPart(plantType, hitbox);
          

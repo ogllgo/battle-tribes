@@ -6,12 +6,12 @@ import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { addHitboxToTransformComponent, TransformComponent } from "../components/TransformComponent";
 import { EntityType } from "battletribes-shared/entities";
-import { createHitbox } from "../hitboxes";
+import { Hitbox } from "../hitboxes";
 
 export function createLilypadConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 24), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 24), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    return {

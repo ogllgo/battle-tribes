@@ -1,7 +1,7 @@
 import { Box } from "./boxes/boxes";
 import RectangularBox from "./boxes/RectangularBox";
 import { Settings } from "./settings";
-import { Mutable, Point, angle, distance, rotateXAroundPoint, rotateYAroundPoint } from "./utils";
+import { Mutable, Point, angle, distance, polarVec2, rotateXAroundPoint, rotateYAroundPoint } from "./utils";
 
 // @Speed: Maybe make into const enum?
 export const enum CollisionBit {
@@ -11,10 +11,11 @@ export const enum CollisionBit {
    iceSpikes = 1 << 3,
    plants = 1 << 4,
    planterBox = 1 << 5,
-   arrowPassable = 1 << 6
+   arrowPassable = 1 << 6,
+   snowball = 1 << 7
 };
 
-export const DEFAULT_COLLISION_MASK = CollisionBit.default | CollisionBit.cactus | CollisionBit.iceSpikes | CollisionBit.plants | CollisionBit.planterBox | CollisionBit.arrowPassable;
+export const DEFAULT_COLLISION_MASK = CollisionBit.default | CollisionBit.cactus | CollisionBit.iceSpikes | CollisionBit.plants | CollisionBit.planterBox | CollisionBit.arrowPassable | CollisionBit.snowball;
 
 export interface CollisionResult {
    readonly isColliding: boolean;
@@ -91,7 +92,7 @@ export function getCircleCircleCollisionResult(circle1Pos: Point, radius1: numbe
    
    return {
       isColliding: amountIn > 0,
-      overlap: Point.fromVectorForm(amountIn, direction),
+      overlap: polarVec2(amountIn, direction),
       collisionPoint: new Point(0, 0)
    };
 }
@@ -131,7 +132,7 @@ export function getCircleRectangleCollisionResult(circlePos: Point, circleRadius
       return {
          isColliding: true,
          // @Speed: don't need sin/cos here at all
-         overlap: Point.fromVectorForm(verticalAmountIn, direction),
+         overlap: polarVec2(verticalAmountIn, direction),
          collisionPoint: new Point(0, 0)
       };
    }
@@ -142,7 +143,7 @@ export function getCircleRectangleCollisionResult(circlePos: Point, circleRadius
       return {
          isColliding: true,
          // @Speed: don't need sin/cos here at all
-         overlap: Point.fromVectorForm(horizontalAmountIn, direction),
+         overlap: polarVec2(horizontalAmountIn, direction),
          collisionPoint: new Point(0, 0)
       };
    }
@@ -165,7 +166,7 @@ export function getCircleRectangleCollisionResult(circlePos: Point, circleRadius
          if (len > 0) {
             return {
                isColliding: true,
-               overlap: Point.fromVectorForm(len, direction),
+               overlap: polarVec2(len, direction),
                collisionPoint: new Point(0, 0)
             };
          }
@@ -177,7 +178,7 @@ export function getCircleRectangleCollisionResult(circlePos: Point, circleRadius
          if (len > 0) {
             return {
                isColliding: true,
-               overlap: Point.fromVectorForm(len, direction),
+               overlap: polarVec2(len, direction),
                collisionPoint: new Point(0, 0)
             };
          }
@@ -193,8 +194,8 @@ export function getCircleRectangleCollisionResult(circlePos: Point, circleRadius
 
 /** Computes the axis for the line created by two points */
 export function computeSideAxis(point1: Point, point2: Point): Point {
-   const direction = point1.calculateAngleBetween(point2);
-   return Point.fromVectorForm(1, direction);
+   const direction = point1.angleTo(point2);
+   return polarVec2(1, direction);
 }
 
 function getOverlap(proj1min: number, proj1max: number, proj2min: number, proj2max: number) {
@@ -204,7 +205,7 @@ function getOverlap(proj1min: number, proj1max: number, proj2min: number, proj2m
 const updateMinOverlap = (collisionData: Mutable<CollisionResult>, proj1min: number, proj1max: number, proj2min: number, proj2max: number, axisX: number, axisY: number): void => {
    const axisOverlap = getOverlap(proj1min, proj1max, proj2min, proj2max);
    // The first check in this if statement is so that the first overlap will always ovreride, without it every single overlap will be discarded
-   if ((collisionData.overlap.x === 0 && collisionData.overlap.y === 0) || axisOverlap < collisionData.overlap.length()) {
+   if ((collisionData.overlap.x === 0 && collisionData.overlap.y === 0) || axisOverlap < collisionData.overlap.magnitude()) {
       collisionData.overlap.x = axisOverlap * Math.sin(axisX);
       collisionData.overlap.y = axisOverlap * Math.cos(axisY);
    }

@@ -4,11 +4,12 @@ import Board from "../../Board";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityParams, getEntityRenderInfo } from "../../world";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface AmmoBoxComponentParams {
    readonly ammoType: TurretAmmoType | null;
@@ -68,14 +69,14 @@ function createParamsFromData(reader: PacketReader): AmmoBoxComponentParams {
    return fillParams(ammoType, ammoRemaining);
 }
 
-function createIntermediateInfo(intermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function createIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    let ammoWarningRenderPart: VisualRenderPart | null;
    if (entityParams.serverComponentParams[ServerComponentType.ammoBox]!.ammoType === null) {
       const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-      const hitbox = transformComponentParams.children[0] as Hitbox;
+      const hitbox = transformComponentParams.hitboxes[0];
       
       ammoWarningRenderPart = createAmmoWarningRenderPart(hitbox);
-      intermediateInfo.renderInfo.attachRenderPart(ammoWarningRenderPart);
+      renderInfo.attachRenderPart(ammoWarningRenderPart);
    } else {
       ammoWarningRenderPart = null;
    }
@@ -105,7 +106,7 @@ const updateAmmoType = (ammoBoxComponent: AmmoBoxComponent, entity: Entity, ammo
 
       if (ammoBoxComponent.ammoWarningRenderPart === null) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.children[0] as Hitbox;
+         const hitbox = transformComponent.hitboxes[0];
          
          ammoBoxComponent.ammoWarningRenderPart = new TexturedRenderPart(
             hitbox,

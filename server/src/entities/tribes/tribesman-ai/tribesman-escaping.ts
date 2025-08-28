@@ -1,4 +1,4 @@
-import { angle } from "battletribes-shared/utils";
+import { angle, polarVec2 } from "battletribes-shared/utils";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { getTribesmanAcceleration } from "./tribesman-ai-utils";
 import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
@@ -26,7 +26,7 @@ export function tribeMemberShouldEscape(entityType: EntityType, healthComponent:
 // @Cleanup: just pass in visibleThreats
 export function escapeFromEnemies(tribesman: Entity, visibleEnemies: ReadonlyArray<Entity>, visibleHostileMobs: ReadonlyArray<Entity>): void {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
    
    const aiHelperComponent = AIHelperComponentArray.getComponent(tribesman);
    const visionRange = aiHelperComponent.visionRange;
@@ -38,9 +38,9 @@ export function escapeFromEnemies(tribesman: Entity, visibleEnemies: ReadonlyArr
       const enemy = visibleEnemies[i];
 
       const enemyTransformComponent = TransformComponentArray.getComponent(enemy);
-      const enemyHitbox = enemyTransformComponent.children[0] as Hitbox;
+      const enemyHitbox = enemyTransformComponent.hitboxes[0];
       
-      let distance = tribesmanHitbox.box.position.calculateDistanceBetween(enemyHitbox.box.position);
+      let distance = tribesmanHitbox.box.position.distanceTo(enemyHitbox.box.position);
       // @Hack
       if (distance > visionRange) {
          distance = visionRange;
@@ -63,9 +63,9 @@ export function escapeFromEnemies(tribesman: Entity, visibleEnemies: ReadonlyArr
       const enemy = visibleHostileMobs[i];
 
       const enemyTransformComponent = TransformComponentArray.getComponent(enemy);
-      const enemyHitbox = enemyTransformComponent.children[0] as Hitbox;
+      const enemyHitbox = enemyTransformComponent.hitboxes[0];
 
-      let distance = tribesmanHitbox.box.position.calculateDistanceBetween(enemyHitbox.box.position);
+      let distance = tribesmanHitbox.box.position.distanceTo(enemyHitbox.box.position);
       if (distance > visionRange) {
          distance = visionRange;
       }
@@ -89,13 +89,12 @@ export function escapeFromEnemies(tribesman: Entity, visibleEnemies: ReadonlyArr
    // Run away from that position
    // 
 
-   const runDirection = angle(averageEnemyX - tribesmanHitbox.box.position.x, averageEnemyY - tribesmanHitbox.box.position.y) + Math.PI;
+   const runDir = angle(averageEnemyX - tribesmanHitbox.box.position.x, averageEnemyY - tribesmanHitbox.box.position.y) + Math.PI;
 
-   const accelerationX = getTribesmanAcceleration(tribesman) * Math.sin(runDirection);
-   const accelerationY = getTribesmanAcceleration(tribesman) * Math.cos(runDirection);
-   applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+   const acceleration = getTribesmanAcceleration(tribesman);
+   applyAccelerationFromGround(tribesmanHitbox, polarVec2(acceleration, runDir));
 
-   turnHitboxToAngle(tribesmanHitbox, runDirection, TRIBESMAN_TURN_SPEED, 0.5, false);
+   turnHitboxToAngle(tribesmanHitbox, runDir, TRIBESMAN_TURN_SPEED, 0.5, false);
 
    clearPathfinding(tribesman);
 }

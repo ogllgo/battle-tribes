@@ -1,9 +1,13 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
+import { Settings } from "../../../shared/src/settings";
+import { TileType } from "../../../shared/src/tiles";
+import { getHitboxTile } from "../hitboxes";
+import { destroyEntity, getEntityLayer } from "../world";
 import { AIHelperComponentArray, AIType } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
-import { removeAttachedEntity, TransformComponentArray } from "./TransformComponent";
+import { detachHitbox, TransformComponentArray } from "./TransformComponent";
 
 export class SandBallComponent {
    public size = 1;
@@ -16,13 +20,22 @@ SandBallComponentArray.onTick = {
 };
  
 function onTick(sandBall: Entity): void {
-   // @HACK @SPEED
    const transformComponent = TransformComponentArray.getComponent(sandBall);
-   if (transformComponent.rootEntity !== sandBall) {
-      const aiHelperComponent = AIHelperComponentArray.getComponent(transformComponent.rootEntity);
+   const hitbox = transformComponent.hitboxes[0];
+   
+   // @HACK @SPEED
+   if (hitbox.parent !== null) {
+      const aiHelperComponent = AIHelperComponentArray.getComponent(hitbox.parent.entity);
       if (aiHelperComponent.currentAIType !== AIType.sandBalling) {
-         removeAttachedEntity(transformComponent.rootEntity, sandBall);
+         detachHitbox(hitbox);
       }
+   }
+
+   // While in water sand balls have a chance of disintegrating
+   const tile = getHitboxTile(hitbox);
+   const layer = getEntityLayer(sandBall);
+   if (layer.getTileType(tile) === TileType.water && Math.random() < 0.3 / Settings.TPS) {
+      destroyEntity(sandBall);
    }
 }
 

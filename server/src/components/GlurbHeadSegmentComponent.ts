@@ -1,27 +1,26 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
-import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 import { ItemType } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
-import { assert, Point } from "../../../shared/src/utils";
+import { assert, Point, randAngle } from "../../../shared/src/utils";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { createEntityConfigAttachInfo, EntityConfig } from "../components";
-import { createGlurbBodySegmentConfig } from "../entities/mobs/glurb-body-segment";
-import { createGlurbTailSegmentConfig } from "../entities/mobs/glurb-tail-segment";
-import { createEntity } from "../Entity";
 import { Hitbox } from "../hitboxes";
-import { registerEntityTickEvent } from "../server/player-clients";
-import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
+import { destroyEntity, entityExists, getEntityType } from "../world";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { AttackingEntitiesComponentArray } from "./AttackingEntitiesComponent";
 import { ComponentArray } from "./ComponentArray";
 import { updateFollowAIComponent, followAISetFollowTarget, FollowAI, entityWantsToFollow } from "../ai/FollowAI";
-import { GlurbComponentArray } from "./GlurbComponent";
-import { GlurbSegmentComponentArray } from "./GlurbSegmentComponent";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
 import { ItemComponentArray } from "./ItemComponent";
 import { TamingComponentArray } from "./TamingComponent";
-import { EntityAttachInfo, getFirstComponent, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
+import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
+import { EntityConfig } from "../components";
+import { createGlurbBodySegmentConfig } from "../entities/mobs/glurb-body-segment";
+import { createGlurbTailSegmentConfig } from "../entities/mobs/glurb-tail-segment";
+import { registerEntityTickEvent } from "../server/player-clients";
+import { GlurbSegmentComponentArray } from "./GlurbSegmentComponent";
+import { tetherGlurbSegments } from "../entities/mobs/glurb";
 
 const enum Vars {
    // @Temporary
@@ -30,7 +29,13 @@ const enum Vars {
 }
 
 export class GlurbHeadSegmentComponent {
+   public readonly maxNumSegments: number;
+   
    public food = 1;
+
+   constructor(maxNumSegments: number) {
+      this.maxNumSegments = maxNumSegments;
+   }
 }
 
 export const GlurbHeadSegmentComponentArray = new ComponentArray<GlurbHeadSegmentComponent>(ServerComponentType.glurbHeadSegment, true, getDataLength, addDataToPacket);
@@ -49,8 +54,9 @@ const moveToEntity = (glurb: Entity, targetEntity: Entity): void => {
    const aiHelperComponent = AIHelperComponentArray.getComponent(glurb);
    
    const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);
-   const targetHitbox = targetTransformComponent.children[0] as Hitbox;
-   aiHelperComponent.move(glurb, 0, 0, targetHitbox.box.position.x, targetHitbox.box.position.y);
+   const targetHitbox = targetTransformComponent.hitboxes[0];
+   aiHelperComponent.moveFunc(glurb, targetHitbox.box.position, 0);
+   aiHelperComponent.turnFunc(glurb, targetHitbox.box.position, 0, 0);
 }
 
 const getFollowTarget = (followAIComponent: FollowAI, visibleEntities: ReadonlyArray<Entity>): Entity | null => {
@@ -83,8 +89,8 @@ const getFoodTarget = (glurbHeadHitbox: Hitbox, visibleEntities: ReadonlyArray<E
       }
 
       const transformComponent = TransformComponentArray.getComponent(moss);
-      const mossHitbox = transformComponent.children[0] as Hitbox;
-      const dist = mossHitbox.box.position.calculateDistanceBetween(glurbHeadHitbox.box.position);
+      const mossHitbox = transformComponent.hitboxes[0];
+      const dist = mossHitbox.box.position.distanceTo(glurbHeadHitbox.box.position);
       if (dist < minDist) {
          minDist = dist;
          target = moss;
@@ -94,9 +100,51 @@ const getFoodTarget = (glurbHeadHitbox: Hitbox, visibleEntities: ReadonlyArray<E
    return target;
 }
 
+// @Cleanup: shares a bunch of logic with the functions in glurb-head-segment.ts
+const getFinalSegment = (glurbSegment: Entity, foundSegments: Array<Entity>): Entity => {
+   const transformComponent = TransformComponentArray.getComponent(glurbSegment);
+   const hitbox = transformComponent.hitboxes[0];
+
+   let nextSegment: Entity | undefined;
+   for (const tether of hitbox.tethers) {
+      const otherHitbox = tether.getOtherHitbox(hitbox);
+      if (!foundSegments.includes(otherHitbox.entity)) {
+         foundSegments.push(otherHitbox.entity);
+         nextSegment = otherHitbox.entity;
+      }
+   }
+
+   if (typeof nextSegment !== "undefined") {
+      return getFinalSegment(nextSegment, foundSegments);
+   } else {
+      return glurbSegment;
+   }
+}
+
+// @Cleanup: shares a bunch of logic with the functions in glurb-head-segment.ts
+const getNumSegments = (glurbSegment: Entity, foundSegments: Array<Entity>): number => {
+   const transformComponent = TransformComponentArray.getComponent(glurbSegment);
+   const hitbox = transformComponent.hitboxes[0];
+
+   let nextSegment: Entity | undefined;
+   for (const tether of hitbox.tethers) {
+      const otherHitbox = tether.getOtherHitbox(hitbox);
+      if (!foundSegments.includes(otherHitbox.entity)) {
+         foundSegments.push(otherHitbox.entity);
+         nextSegment = otherHitbox.entity;
+      }
+   }
+
+   if (typeof nextSegment !== "undefined") {
+      return 1 + getNumSegments(nextSegment, foundSegments);
+   } else {
+      return 1;
+   }
+}
+
 function onTick(glurbHead: Entity): void {
    const glurbHeadTransformComponent = TransformComponentArray.getComponent(glurbHead);
-   const headHitbox = glurbHeadTransformComponent.children[0] as Hitbox;
+   const headHitbox = glurbHeadTransformComponent.hitboxes[0];
    
    const glurbHeadSegmentComponent = GlurbHeadSegmentComponentArray.getComponent(glurbHead);
    glurbHeadSegmentComponent.food -= 1 / (Vars.STOMACH_EMPTY_TIME_SECONDS * Settings.TPS);
@@ -111,7 +159,7 @@ function onTick(glurbHead: Entity): void {
    
    // Go to follow target if possible
    // @Copynpaste
-   const tamingComponent = getFirstComponent(TamingComponentArray, glurbHead);
+   const tamingComponent = TamingComponentArray.getComponent(glurbHead);
    if (entityExists(tamingComponent.followTarget)) {
       moveToEntity(glurbHead, tamingComponent.followTarget);
       return;
@@ -119,16 +167,18 @@ function onTick(glurbHead: Entity): void {
    
    const aiHelperComponent = AIHelperComponentArray.getComponent(glurbHead);
    
-   const attackingEntitiesComponent = getFirstComponent(AttackingEntitiesComponentArray, glurbHead);
+   const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(glurbHead);
    for (const pair of attackingEntitiesComponent.attackingEntities) {
       const attacker = pair[0];
       const attackerTransformComponent = TransformComponentArray.getComponent(attacker);
-      const attackerHitbox = attackerTransformComponent.children[0] as Hitbox;
+      const attackerHitbox = attackerTransformComponent.hitboxes[0];
 
       // Run away!!
       const targetX = headHitbox.box.position.x * 2 - attackerHitbox.box.position.x;
       const targetY = headHitbox.box.position.y * 2 - attackerHitbox.box.position.y;
-      aiHelperComponent.move(glurbHead, 0, 0, targetX, targetY);
+      const targetPos = new Point(targetX, targetY);
+      aiHelperComponent.moveFunc(glurbHead, targetPos, 0);
+      aiHelperComponent.turnFunc(glurbHead, targetPos, 0, 0);
       return;
    }
    
@@ -167,14 +217,7 @@ function onTick(glurbHead: Entity): void {
             };
             registerEntityTickEvent(glurbHead, tickEvent);
 
-            const glurb = glurbHeadTransformComponent.parentEntity;
-            assert(glurb !== glurbHead);
-            assert(entityExists(glurb));
-
-            const glurbTransformComponent = TransformComponentArray.getComponent(glurb);
-            // @Hack: shite shite shite. what if an entity gets attached to the glurb?
-            const finalChildAttachInfo = glurbTransformComponent.children[glurbTransformComponent.children.length - 1] as EntityAttachInfo;
-            const finalChild = finalChildAttachInfo.attachedEntity;
+            const finalChild = getFinalSegment(glurbHead, []);
             if (getEntityType(finalChild) === EntityType.glurbBodySegment) {
                const glurbSegmentComponent = GlurbSegmentComponentArray.getComponent(finalChild);
                glurbSegmentComponent.mossBallCompleteness++;
@@ -184,29 +227,28 @@ function onTick(glurbHead: Entity): void {
 
                   glurbSegmentComponent.mossBallCompleteness = 0;
 
-                  const glurbComponent = GlurbComponentArray.getComponent(glurb);
-                  // @Hack: it isn't guaranteed that children will only be glurb segments...
-                  const currentNumComponents = glurbTransformComponent.children.length;
-                  assert(currentNumComponents < glurbComponent.numSegments);
+                  const numSegments = getNumSegments(glurbHead, []);
+                  assert(numSegments < glurbHeadSegmentComponent.maxNumSegments);
 
                   const finalSegmentTransformComponent = TransformComponentArray.getComponent(finalChild);
-                  const finalSegmentHitbox = finalSegmentTransformComponent.children[0] as Hitbox;
+                  const finalSegmentHitbox = finalSegmentTransformComponent.hitboxes[0];
 
-                  const spawnOffsetDirection = headHitbox.box.position.calculateAngleBetween(finalSegmentHitbox.box.position);
+                  const spawnOffsetDirection = headHitbox.box.position.angleTo(finalSegmentHitbox.box.position);
                   const spawnOffsetMagnitude = 30;
                   const x = finalSegmentHitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
                   const y = finalSegmentHitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
                   
                   let config: EntityConfig;
-                  if (currentNumComponents + 1 === glurbComponent.numSegments) {
+                  if (numSegments + 1 === glurbHeadSegmentComponent.maxNumSegments) {
                      // Tail segment
-                     config = createGlurbTailSegmentConfig(new Point(x, y), 2 * Math.PI * Math.random(), finalSegmentHitbox);
+                     config = createGlurbTailSegmentConfig(new Point(x, y), randAngle());
                   } else {
                      // Body segment
-                     config = createGlurbBodySegmentConfig(new Point(x, y), 2 * Math.PI * Math.random(), finalSegmentHitbox);
+                     config = createGlurbBodySegmentConfig(new Point(x, y), randAngle());
                   }
-                  config.attachInfo = createEntityConfigAttachInfo(glurb, null, true);
-                  createEntity(config, getEntityLayer(glurb), 0);
+
+                  const newSegmentHitbox = config.components[ServerComponentType.transform]!.hitboxes[0];
+                  tetherGlurbSegments(newSegmentHitbox, finalSegmentHitbox);
                }
             }
          }
@@ -233,7 +275,8 @@ function onTick(glurbHead: Entity): void {
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(glurbHead);
-   if (wanderAI.targetPositionX !== -1) {
-      aiHelperComponent.move(glurbHead, 0, 0, wanderAI.targetPositionX, wanderAI.targetPositionY);
+   if (wanderAI.targetPosition !== null) {
+      aiHelperComponent.moveFunc(glurbHead, wanderAI.targetPosition, 0);
+      aiHelperComponent.turnFunc(glurbHead, wanderAI.targetPosition, 0, 0);
    }
 }

@@ -2,10 +2,9 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { Point } from "../../../../shared/src/utils";
-import { createLight } from "../../lights";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface GlurbHeadSegmentComponentParams {}
 
@@ -30,9 +29,9 @@ function createParamsFromData(): GlurbHeadSegmentComponentParams {
    return createGlurbHeadSegmentComponentParams();
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -42,14 +41,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       getTextureArrayIndex("entities/glurb/glurb-head-segment.png")
    );
    renderPart.addTag("tamingComponent:head");
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
-      
-   // Attach light to the render part
-   const light = createLight(new Point(0, 0), 0.35, 0.8, 6, 1, 0.2, 0.9);
-   entityIntermediateInfo.lights.push({
-      light: light,
-      attachedRenderPart: renderPart
-   });
+   renderInfo.attachRenderPart(renderPart);
 
    // Eyes
    for (let j = 0; j < 2; j++) {
@@ -64,7 +56,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       }
       eyeRenderPart.offset.x = 16;
       eyeRenderPart.offset.y = 14;
-      entityIntermediateInfo.renderInfo.attachRenderPart(eyeRenderPart);
+      renderInfo.attachRenderPart(eyeRenderPart);
    }
 
    return {};

@@ -1,4 +1,4 @@
-import { entityChildIsHitbox, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
+import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { getTexture } from "../../textures";
 import { createWebGLProgram, gl } from "../../webgl";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
@@ -58,14 +58,10 @@ export function renderDebugImages(): void {
    for (let i = 0; i < TransformComponentArray.components.length; i++) {
       const transformComponent = TransformComponentArray.components[i];
 
-      for (const child of transformComponent.children) {
-         if (!entityChildIsHitbox(child)) {
-            continue;
-         }
-
+      for (const child of transformComponent.hitboxes) {
          const hitbox = child;
          for (const tether of hitbox.tethers) {
-            const direction = hitbox.box.position.calculateAngleBetween(tether.originBox.position);
+            const direction = hitbox.box.position.angleTo(tether.originBox.position);
             const perpDirection = direction + Math.PI * 0.5;
             
             const x1 = hitbox.box.position.x + Vars.SPRING_WIDTH * 0.5 * Math.sin(perpDirection);

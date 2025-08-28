@@ -1,6 +1,6 @@
 import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { randInt } from "battletribes-shared/utils";
+import { Point, randInt } from "battletribes-shared/utils";
 import { entityHasReachedPosition } from "../ai-shared";
 import { AIHelperComponentArray } from "../components/AIHelperComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
@@ -20,43 +20,47 @@ const positionIsValid = (layer: Layer, x: number, y: number): boolean => {
 
 export default class WanderAI {
    public acceleration: number;
-   private readonly turnSpeed: number;
+   public readonly turnSpeed: number;
+   public readonly turnDamping: number;
    private readonly wanderRate: number;
 
-   // If these are set to -1, the wander AI has no current target position
-   public targetPositionX = -1;
-   public targetPositionY = -1;
+   public targetPosition: Point | null = null;
 
    private lastRecordedPositionX = -1;
    private lastRecordedPositionY = -1;
    
    private readonly positionIsValidCallback: WanderAITileIsValidCallback;
 
-   constructor(acceleration: number, turnSpeed: number, wanderRate: number, positionIsValidCallback: WanderAITileIsValidCallback) {
+   constructor(acceleration: number, turnSpeed: number, turnDamping: number, wanderRate: number, positionIsValidCallback: WanderAITileIsValidCallback) {
       this.acceleration = acceleration;
       this.turnSpeed = turnSpeed;
+      this.turnDamping = turnDamping;
       this.wanderRate = wanderRate;
       this.positionIsValidCallback = positionIsValidCallback;
    }
 
    private shouldTryAndWander(hitbox: Hitbox): boolean {
+      // @SQUEAM cuz tukmoks aren't wandering thanks to their clubs pushing them around and making them be in constant motion
+      return Math.random() < this.wanderRate / Settings.TPS;
+      
       const velocity = getHitboxVelocity(hitbox);
-      return velocity.x === 0 && velocity.y === 0 && Math.random() < this.wanderRate / Settings.TPS;
+      // We check for < 1 instead of == 0 here as sometimtes the velocity can be an infinitessimal
+      return Math.abs(velocity.x) < 1 && Math.abs(velocity.y) < 1 && Math.random() < this.wanderRate / Settings.TPS;
    }
 
    public update(entity: Entity): void {
       const transformComponent = TransformComponentArray.getComponent(entity);
       // @Hack
-      const entityHitbox = transformComponent.children[0] as Hitbox;
+      const entityHitbox = transformComponent.hitboxes[0];
       
       if (getEntityAgeTicks(entity) % Vars.POSITION_RECORD_INTERVAL === 0) {
          // If the entity hasn't moved enough since the last position check-in, clear the target as they are most likely stuck
-         if (this.targetPositionX !== -1) {
+         if (this.targetPosition !== null) {
             const dx = entityHitbox.box.position.x - this.lastRecordedPositionX;
             const dy = entityHitbox.box.position.y - this.lastRecordedPositionY;
             const positionDelta = Math.sqrt(dx * dx + dy * dy);
             if (positionDelta < 10) {
-               this.targetPositionX = -1;
+               this.targetPosition = null;
             }
          }
          
@@ -64,14 +68,13 @@ export default class WanderAI {
          this.lastRecordedPositionY = entityHitbox.box.position.y;
       }
       
-      if (this.targetPositionX !== -1) {
-         if (entityHasReachedPosition(entity, this.targetPositionX, this.targetPositionY)) {
-            this.targetPositionX = -1;
+      if (this.targetPosition !== null) {
+         if (entityHasReachedPosition(entity, this.targetPosition)) {
+            this.targetPosition = null;
          }
       } else if (this.shouldTryAndWander(entityHitbox)) {
          const layer = getEntityLayer(entity);
 
-         const transformComponent = TransformComponentArray.getComponent(entity);
          const aiHelperComponent = AIHelperComponentArray.getComponent(entity);
          
          const minTileX = Math.max(Math.floor((entityHitbox.box.position.x - aiHelperComponent.visionRange) / Settings.TILE_SIZE), 0);
@@ -104,8 +107,7 @@ export default class WanderAI {
          }
 
          if (isValid) {
-            this.targetPositionX = x!;
-            this.targetPositionY = y!;
+            this.targetPosition = new Point(x!, y!);
          }
       }
    }

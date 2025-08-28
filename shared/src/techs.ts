@@ -113,7 +113,7 @@ export const TECHS: ReadonlyArray<Tech> = [
        name: "Stoneworking",
        description: "Manipulation of stone in crafting.",
        iconSrc: "stoneworking.png",
-       unlockedItems: [ItemType.stone_pickaxe, ItemType.stone_axe, ItemType.stone_sword, ItemType.spear],
+       unlockedItems: [ItemType.stone_pickaxe, ItemType.stone_axe, ItemType.stone_sword, ItemType.stoneSpear],
        positionX: -40,
        positionY: -1,
        dependencies: [TechID.fire],

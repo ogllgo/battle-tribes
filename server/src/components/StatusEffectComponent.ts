@@ -3,7 +3,7 @@ import { Entity, DamageSource } from "battletribes-shared/entities";
 import { StatusEffect, STATUS_EFFECT_MODIFIERS } from "battletribes-shared/status-effects";
 import { customTickIntervalHasPassed } from "battletribes-shared/utils";
 import { ComponentArray } from "./ComponentArray";
-import { hitEntity } from "./HealthComponent";
+import { damageEntity } from "./HealthComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { getRandomPositionInEntity, TransformComponentArray } from "./TransformComponent";
@@ -33,6 +33,10 @@ const entityIsImmuneToStatusEffect = (statusEffectComponent: StatusEffectCompone
 }
 
 export function applyStatusEffect(entity: Entity, statusEffect: StatusEffect, durationTicks: number): void {
+   if (!StatusEffectComponentArray.hasComponent(entity)) {
+      return;
+   }
+   
    const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
    if (entityIsImmuneToStatusEffect(statusEffectComponent, statusEffect)) {
       return;
@@ -111,16 +115,16 @@ function onTick(entity: Entity): void {
          case StatusEffect.burning: {
             const transformComponent = TransformComponentArray.getComponent(entity);
             // @Hack
-            const hitbox = transformComponent.children[0] as Hitbox;
+            const hitbox = transformComponent.hitboxes[0];
             // If the entity is in a river, clear the fire effect
-            if (hitboxIsInRiver(entity, hitbox)) {
+            if (hitboxIsInRiver(hitbox)) {
                clearStatusEffect(entity, i);
             } else {
                // Fire tick
                const ticksElapsed = statusEffectComponent.activeStatusEffectTicksElapsed[i];
                if (customTickIntervalHasPassed(ticksElapsed, 0.75)) {
                   const hitPosition = getRandomPositionInEntity(transformComponent);
-                  hitEntity(entity, null, 1, DamageSource.fire, AttackEffectiveness.effective, hitPosition, 0);
+                  damageEntity(entity, hitbox, null, 1, DamageSource.fire, AttackEffectiveness.effective, hitPosition, 0);
                }
             }
             break;
@@ -129,8 +133,10 @@ function onTick(entity: Entity): void {
             const ticksElapsed = statusEffectComponent.activeStatusEffectTicksElapsed[i];
             if (customTickIntervalHasPassed(ticksElapsed, 0.5)) {
                const transformComponent = TransformComponentArray.getComponent(entity);
+               // @Hack
+               const hitbox = transformComponent.hitboxes[0];
                const hitPosition = getRandomPositionInEntity(transformComponent);
-               hitEntity(entity, null, 1, DamageSource.poison, AttackEffectiveness.effective, hitPosition, 0);
+               damageEntity(entity, hitbox, null, 1, DamageSource.poison, AttackEffectiveness.effective, hitPosition, 0);
             }
             break;
          }
@@ -138,8 +144,10 @@ function onTick(entity: Entity): void {
             const ticksElapsed = statusEffectComponent.activeStatusEffectTicksElapsed[i];
             if (customTickIntervalHasPassed(ticksElapsed, 1)) {
                const transformComponent = TransformComponentArray.getComponent(entity);
+               // @Hack
+               const hitbox = transformComponent.hitboxes[0];
                const hitPosition = getRandomPositionInEntity(transformComponent);
-               hitEntity(entity, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
+               damageEntity(entity, hitbox, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
             }
             break;
          }
@@ -147,8 +155,10 @@ function onTick(entity: Entity): void {
             const ticksElapsed = statusEffectComponent.activeStatusEffectTicksElapsed[i];
             if (customTickIntervalHasPassed(ticksElapsed, 2)) {
                const transformComponent = TransformComponentArray.getComponent(entity);
+               // @Hack
+               const hitbox = transformComponent.hitboxes[0];
                const hitPosition = getRandomPositionInEntity(transformComponent);
-               hitEntity(entity, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
+               damageEntity(entity, hitbox, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
             }
          }
       }

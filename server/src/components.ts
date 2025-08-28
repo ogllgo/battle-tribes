@@ -10,7 +10,6 @@ import { DoorComponent } from "./components/DoorComponent";
 import { FenceComponent } from "./components/FenceComponent";
 import { FenceGateComponent } from "./components/FenceGateComponent";
 import { FishComponent } from "./components/FishComponent";
-import { FrozenYetiComponent } from "./components/FrozenYetiComponent";
 import { GolemComponent } from "./components/GolemComponent";
 import { HealingTotemComponent } from "./components/HealingTotemComponent";
 import { HealthComponent } from "./components/HealthComponent";
@@ -37,7 +36,6 @@ import { TunnelComponent } from "./components/TunnelComponent";
 import { TurretComponent } from "./components/TurretComponent";
 import { YetiComponent } from "./components/YetiComponent";
 import { ZombieComponent } from "./components/ZombieComponent";
-import { RockSpikeComponent } from "./components/RockSpikeComponent";
 import { AIHelperComponent } from "./components/AIHelperComponent";
 import { IceShardComponent } from "./components/IceShardComponent";
 import { IceSpikesComponent } from "./components/IceSpikesComponent";
@@ -47,7 +45,7 @@ import { ThrowingProjectileComponent } from "./components/ThrowingProjectileComp
 import { TribeWarriorComponent } from "./components/TribeWarriorComponent";
 import { StructureComponent } from "./components/StructureComponent";
 import { CraftingStationComponent } from "./components/CraftingStationComponent";
-import { EntityAttachInfo, TransformComponent } from "./components/TransformComponent";
+import { TransformComponent } from "./components/TransformComponent";
 import { BoulderComponent } from "./components/BoulderComponent";
 import { ProjectileComponent } from "./components/ProjectileComponent";
 import { LayeredRodComponent } from "./components/LayeredRodComponent";
@@ -62,7 +60,7 @@ import { GuardianComponent } from "./components/GuardianComponent";
 import { GuardianGemQuakeComponent } from "./components/GuardianGemQuakeComponent";
 import { GuardianGemFragmentProjectileComponent } from "./components/GuardianGemFragmentProjectileComponent";
 import { GuardianSpikyBallComponent } from "./components/GuardianSpikyBallComponent";
-import { Entity, EntityType } from "battletribes-shared/entities";
+import { EntityType } from "battletribes-shared/entities";
 import { BracingsComponent } from "./components/BracingsComponent";
 import { BallistaComponent } from "./components/BallistaComponent";
 import { SlingTurretComponent } from "./components/SlingTurretComponent";
@@ -77,12 +75,11 @@ import { AttackingEntitiesComponent } from "./components/AttackingEntitiesCompon
 import { TreeRootBaseComponent } from "./components/TreeRootBaseComponent";
 import { TreeRootSegmentComponent } from "./components/TreeRootSegmentComponent";
 import { AIAssignmentComponent } from "./components/AIAssignmentComponent";
-import { PatrolAI } from "./ai/PatrolAI";
 import { PlantedComponent } from "./components/PlantedComponent";
 import { TreePlantedComponent } from "./components/TreePlantedComponent";
 import { BerryBushPlantedComponent } from "./components/BerryBushPlantedComponent";
 import { IceSpikesPlantedComponent } from "./components/IceSpikesPlantedComponent";
-import { Light } from "./light-levels";
+import { Light } from "./lights";
 import { MithrilOreNodeComponent } from "./components/MithrilOreNodeComponent";
 import { ScrappyComponent } from "./components/ScrappyComponent";
 import { CogwalkerComponent } from "./components/CogwalkerComponent";
@@ -99,9 +96,7 @@ import { GlurbBodySegmentComponent } from "./components/GlurbBodySegmentComponen
 import { GlurbSegmentComponent } from "./components/GlurbSegmentComponent";
 import { FleshSwordItemComponent } from "./components/FleshSwordItemComponent";
 import { HitboxAngularTether, Hitbox } from "./hitboxes";
-import { Point } from "../../shared/src/utils";
 import { MossComponent } from "./components/MossComponent";
-import { GlurbComponent } from "./components/GlurbComponent";
 import { FloorSignComponent } from "./components/FloorSignComponent";
 import { DesertBushLivelyComponent } from "./components/DesertBushLivelyComponent";
 import { DesertBushSandyComponent } from "./components/DesertBushSandyComponent";
@@ -113,7 +108,7 @@ import { TumbleweedDeadComponent } from "./components/TumbleweedDeadComponent";
 import { PalmTreeComponent } from "./components/PalmTreeComponent";
 import { PricklyPearComponent } from "./components/PricklyPearComponent";
 import { PricklyPearFragmentProjectileComponent } from "./components/PricklyPearFragmentComponent";
-import { HungerComponent } from "./components/HungerComponent";
+import { EnergyStomachComponent } from "./components/EnergyStomachComponent";
 import { EnergyStoreComponent } from "./components/EnergyStoreComponent";
 import { DustfleaComponent } from "./components/DustfleaComponent";
 import { SandstoneRockComponent } from "./components/SandstoneRockComponent";
@@ -121,11 +116,24 @@ import { OkrenComponent } from "./components/OkrenComponent";
 import { DustfleaMorphCocoonComponent } from "./components/DustfleaMorphCocoonComponent";
 import { SandBallComponent } from "./components/SandBallComponent";
 import { KrumblidMorphCocoonComponent } from "./components/KrumblidMorphCocoonComponent";
-import { OkrenTongueSegmentComponent } from "./components/OkrenTongueSegmentComponent";
-import { OkrenTongueTipComponent } from "./components/OkrenTongueTipComponent";
 import { OkrenTongueComponent } from "./components/OkrenTongueComponent";
 import { AIPathfindingComponent } from "./components/AIPathfindingComponent";
 import { DustfleaEggComponent } from "./components/DustfleaEggComponent";
+import { OkrenClawComponent } from "./components/OkrenClawComponent";
+import { SpruceTreeComponent } from "./components/SpruceTreeComponent";
+import { TundraRockComponent } from "./components/TundraRockComponent";
+import { SnowberryBushComponent } from "./components/SnowberryBushComponent";
+import { SnobeComponent } from "./components/SnobeComponent";
+import { SnobeMoundComponent } from "./components/SnobeMoundComponent";
+import { TundraRockFrozenComponent } from "./components/TundraRockFrozenComponent";
+import { InguSerpentComponent } from "./components/InguSerpentComponent";
+import { TukmokComponent } from "./components/TukmokComponent";
+import { TukmokTailClubComponent } from "./components/TukmokTailClubComponent";
+import { TukmokTrunkComponent } from "./components/TukmokTrunkComponent";
+import { TukmokSpurComponent } from "./components/TukmokSpurComponent";
+import { InguYetuksnoglurblidokowfleaComponent } from "./components/InguYetuksnoglurblidokowfleaComponent";
+import { InguYetuksnoglurblidokowfleaSeekerHeadComponent } from "./components/InguYetuksnoglurblidokowfleaSeekerHeadComponent";
+import { InguYetukLaserComponent } from "./components/InguYetukLaserComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -154,13 +162,11 @@ const ComponentClassRecord = {
    [ServerComponentType.blueprint]: () => BlueprintComponent,
    [ServerComponentType.boulder]: () => BoulderComponent,
    [ServerComponentType.yeti]: () => YetiComponent,
-   [ServerComponentType.frozenYeti]: () => FrozenYetiComponent,
    [ServerComponentType.totemBanner]: () => TotemBannerComponent,
    [ServerComponentType.cooking]: () => CookingComponent,
    [ServerComponentType.hut]: () => HutComponent,
    [ServerComponentType.snowball]: () => SnowballComponent,
    [ServerComponentType.fish]: () => FishComponent,
-   [ServerComponentType.rockSpike]: () => RockSpikeComponent,
    [ServerComponentType.slimeSpit]: () => SlimeSpitComponent,
    [ServerComponentType.door]: () => DoorComponent,
    [ServerComponentType.tribesman]: () => TribesmanComponent,
@@ -207,10 +213,9 @@ const ComponentClassRecord = {
    [ServerComponentType.furnace]: () => FurnaceComponent,
    [ServerComponentType.fireTorch]: () => FireTorchComponent,
    [ServerComponentType.spikyBastard]: () => SpikyBastardComponent,
-   [ServerComponentType.glurb]: () => GlurbComponent,
-   [ServerComponentType.glurbSegment]: () => GlurbSegmentComponent,
-   [ServerComponentType.glurbBodySegment]: () => GlurbBodySegmentComponent,
    [ServerComponentType.glurbHeadSegment]: () => GlurbHeadSegmentComponent,
+   [ServerComponentType.glurbBodySegment]: () => GlurbBodySegmentComponent,
+   [ServerComponentType.glurbSegment]: () => GlurbSegmentComponent,
    [ServerComponentType.slurbTorch]: () => SlurbTorchComponent,
    [ServerComponentType.attackingEntities]: () => AttackingEntitiesComponent,
    [ServerComponentType.aiAssignment]: () => AIAssignmentComponent,
@@ -239,19 +244,32 @@ const ComponentClassRecord = {
    [ServerComponentType.palmTree]: () => PalmTreeComponent,
    [ServerComponentType.pricklyPear]: () => PricklyPearComponent,
    [ServerComponentType.pricklyPearFragmentProjectile]: () => PricklyPearFragmentProjectileComponent,
-   [ServerComponentType.hunger]: () => HungerComponent,
    [ServerComponentType.energyStore]: () => EnergyStoreComponent,
+   [ServerComponentType.energyStomach]: () => EnergyStomachComponent,
    [ServerComponentType.dustflea]: () => DustfleaComponent,
    [ServerComponentType.sandstoneRock]: () => SandstoneRockComponent,
    [ServerComponentType.okren]: () => OkrenComponent,
+   [ServerComponentType.okrenClaw]: () => OkrenClawComponent,
    [ServerComponentType.dustfleaMorphCocoon]: () => DustfleaMorphCocoonComponent,
    [ServerComponentType.sandBall]: () => SandBallComponent,
    [ServerComponentType.krumblidMorphCocoon]: () => KrumblidMorphCocoonComponent,
    [ServerComponentType.okrenTongue]: () => OkrenTongueComponent,
-   [ServerComponentType.okrenTongueSegment]: () => OkrenTongueSegmentComponent,
-   [ServerComponentType.okrenTongueTip]: () => OkrenTongueTipComponent,
    [ServerComponentType.aiPathfinding]: () => AIPathfindingComponent,
    [ServerComponentType.dustfleaEgg]: () => DustfleaEggComponent,
+   [ServerComponentType.spruceTree]: () => SpruceTreeComponent,
+   [ServerComponentType.tundraRock]: () => TundraRockComponent,
+   [ServerComponentType.tundraRockFrozen]: () => TundraRockFrozenComponent,
+   [ServerComponentType.snowberryBush]: () => SnowberryBushComponent,
+   [ServerComponentType.snobe]: () => SnobeComponent,
+   [ServerComponentType.snobeMound]: () => SnobeMoundComponent,
+   [ServerComponentType.inguSerpent]: () => InguSerpentComponent,
+   [ServerComponentType.tukmok]: () => TukmokComponent,
+   [ServerComponentType.tukmokTrunk]: () => TukmokTrunkComponent,
+   [ServerComponentType.tukmokTailClub]: () => TukmokTailClubComponent,
+   [ServerComponentType.tukmokSpur]: () => TukmokSpurComponent,
+   [ServerComponentType.inguYetuksnoglurblidokowflea]: () => InguYetuksnoglurblidokowfleaComponent,
+   [ServerComponentType.inguYetuksnoglurblidokowfleaSeekerHead]: () => InguYetuksnoglurblidokowfleaSeekerHeadComponent,
+   [ServerComponentType.inguYetukLaser]: () => InguYetukLaserComponent,
 } satisfies {
    [T in ServerComponentType]: () => {
       new (...args: any): unknown;
@@ -267,21 +285,28 @@ type EntityComponents = Partial<{
    [T in ServerComponentType]: InstanceType<ReturnType<typeof ComponentClassRecord[T]>>;
 }>;
 
+// @ASS @ASS @ASS all of this @Hack
+
 export interface EntityConfigAttachInfo {
-   readonly parent: Entity;
-   readonly parentHitbox: Hitbox | null;
-   readonly destroyWhenParentIsDestroyed: boolean;
+   readonly attachedHitbox: Hitbox;
+   readonly parentHitbox: Hitbox;
+   readonly isPartOfParent: boolean;
 }
 
-export interface EntityConfigAttachInfoWithTether {
-   readonly parent: Entity;
-   readonly parentHitbox: Hitbox | null;
-   readonly destroyWhenParentIsDestroyed: boolean;
+export interface EntityConfigAttachInfoWithTether extends EntityConfigAttachInfo {
    readonly idealDistance: number;
    readonly springConstant: number;
    readonly damping: number;
    readonly affectsOriginHitbox: boolean;
    readonly angularTether?: HitboxAngularTether;
+}
+
+export interface ChildConfigAttachInfo {
+   readonly entityConfig: EntityConfig;
+   // @CLEANUP: i've basically copy pasted EntityConfigAttach into here but without the 'parent' field cuz wee can't know when we'ere creating it
+   readonly attachedHitbox: Hitbox;
+   readonly parentHitbox: Hitbox;
+   readonly isPartOfParent: boolean;
 }
 
 export interface EntityConfig {
@@ -291,27 +316,22 @@ export interface EntityConfig {
    /** If present, notes that upon being added to the world it should immediately be attached to an entity. */
    attachInfo?: EntityConfigAttachInfo | EntityConfigAttachInfoWithTether;
    /** Any child entities' configs. */
-   childConfigs?: ReadonlyArray<EntityConfig>;
-   /** Any existing entities for which, upon the entity spawns, they will all be childed to the entity and removed from their existing parents. */
-   childEntities?: ReadonlyArray<{
-      entity: Entity,
-      attachInfo: EntityAttachInfo;
-   }>;
+   childConfigs?: ReadonlyArray<ChildConfigAttachInfo>;
 }
 
-export function createEntityConfigAttachInfo(parent: Entity, parentHitbox: Hitbox | null, destroyWhenParentIsDestroyed: boolean): EntityConfigAttachInfo {
+export function createEntityConfigAttachInfo(attachedHitbox: Hitbox, parentHitbox: Hitbox, isPartOfParent: boolean): EntityConfigAttachInfo {
    return {
-      parent: parent,
+      attachedHitbox: attachedHitbox,
       parentHitbox: parentHitbox,
-      destroyWhenParentIsDestroyed: destroyWhenParentIsDestroyed
+      isPartOfParent: isPartOfParent
    };
 }
 
-export function createEntityConfigAttachInfoWithTether(parent: Entity, parentHitbox: Hitbox | null, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, destroyWhenParentIsDestroyed: boolean, angularTether?: HitboxAngularTether): EntityConfigAttachInfoWithTether {
+export function createEntityConfigAttachInfoWithTether(attachedHitbox: Hitbox, parentHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean, isPartOfParent: boolean, angularTether?: HitboxAngularTether): EntityConfigAttachInfoWithTether {
    return {
-      parent: parent,
+      attachedHitbox: attachedHitbox,
       parentHitbox: parentHitbox,
-      destroyWhenParentIsDestroyed: destroyWhenParentIsDestroyed,
+      isPartOfParent: isPartOfParent,
       idealDistance: idealDistance,
       springConstant: springConstant,
       damping: damping,

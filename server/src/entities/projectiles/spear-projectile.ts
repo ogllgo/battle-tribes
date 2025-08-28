@@ -1,7 +1,7 @@
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collision";
 import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
-import { HealthComponentArray, hitEntity } from "../../components/HealthComponent";
+import { HealthComponentArray, damageEntity } from "../../components/HealthComponent";
 import { ThrowingProjectileComponent, ThrowingProjectileComponentArray } from "../../components/ThrowingProjectileComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { EntityRelationship, getEntityRelationship } from "../../components/TribeComponent";
@@ -13,12 +13,12 @@ import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { destroyEntity, entityExists } from "../../world";
 import { SpearProjectileComponent } from "../../components/SpearProjectileComponent";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 export function createSpearProjectileConfig(position: Point, rotation: number, tribeMember: Entity, itemID: number | null): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 12, 60), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 12, 60), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
@@ -39,40 +39,3 @@ export function createSpearProjectileConfig(position: Point, rotation: number, t
       lights: []
    };
 }
-
-// export function onSpearProjectileCollision(spear: Entity, collidingEntity: Entity, collisionPoint: Point): void {
-//    // Don't hurt friendlies
-//    const spearComponent = ThrowingProjectileComponentArray.getComponent(spear);
-//    if (entityExists(spearComponent.tribeMember) && getEntityRelationship(spearComponent.tribeMember, collidingEntity) === EntityRelationship.friendly) {
-//       return;
-//    }
-   
-//    if (!HealthComponentArray.hasComponent(collidingEntity)) {
-//       return;
-//    }
-
-//    const tribeMember = entityExists(spearComponent.tribeMember) ? spearComponent.tribeMember : null;
-
-//    const spearTransformComponent = TransformComponentArray.getComponent(spear);
-
-//    let vx = spearTransformComponent.selfVelocity.x + spearTransformComponent.externalVelocity.x;
-//    let vy = spearTransformComponent.selfVelocity.y + spearTransformComponent.externalVelocity.y;
-//    if (tribeMember !== null) {
-//       const tribeMemberTransformComponent = TransformComponentArray.getComponent(tribeMember);
-//       vx -= tribeMemberTransformComponent.selfVelocity.x + tribeMemberTransformComponent.externalVelocity.x;
-//       vy -= tribeMemberTransformComponent.selfVelocity.y + tribeMemberTransformComponent.externalVelocity.y;
-//    }
-   
-//    const spearVelocityMagnitude = Math.sqrt(vx * vx + vy * vy);
-//    const damage = Math.floor(spearVelocityMagnitude / 140);
-   
-//    const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
-   
-//    // Damage the entity
-//    // @Temporary
-//    const hitDirection = spearTransformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
-//    damageEntity(collidingEntity, tribeMember, damage, DamageSource.spear, AttackEffectiveness.effective, collisionPoint, 0);
-//    applyKnockback(collidingEntity, 200, hitDirection);
-   
-//    destroyEntity(spear);
-// }

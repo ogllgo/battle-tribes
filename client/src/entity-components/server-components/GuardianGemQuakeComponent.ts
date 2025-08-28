@@ -2,11 +2,12 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { randItem } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
 import { createGemQuakeProjectile } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
@@ -38,9 +39,9 @@ function createParamsFromData(reader: PacketReader): GuardianGemQuakeComponentPa
    return {};
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -48,7 +49,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0,
       getTextureArrayIndex(randItem(TEXTURE_SOURCES))
    );
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {};
 }

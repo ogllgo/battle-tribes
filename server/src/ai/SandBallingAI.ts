@@ -3,17 +3,22 @@ import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
-import { Point, randInt } from "../../../shared/src/utils";
+import { Point, polarVec2, randInt } from "../../../shared/src/utils";
 import { createEntityConfigAttachInfoWithTether } from "../components";
 import { AIHelperComponent, AIType } from "../components/AIHelperComponent";
 import { HealthComponentArray } from "../components/HealthComponent";
 import { getOkrenMandibleHitbox, OKREN_SIDES } from "../components/OkrenComponent";
 import { SandBallComponentArray } from "../components/SandBallComponent";
-import { entityChildIsEntity, removeAttachedEntity, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
+import { detachHitbox, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { createSandBallConfig } from "../entities/desert/sand-ball";
-import { createEntity } from "../Entity";
 import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle, HitboxAngularTether, addHitboxAngularAcceleration } from "../hitboxes";
-import { getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { createEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+
+const MIN_BALLING_COOLDOWN_TICKS = 30 * Settings.TPS;
+const MAX_BALLING_COOLDOWN_TICKS = 40 * Settings.TPS;
+
+const MIN_BALL_TIME_TICKS = 1.5 * Settings.TPS;
+const MAX_BALL_TIME_TICKS = 5 * Settings.TPS;
 
 export class SandBallingAI {
    public readonly acceleration: number;
@@ -21,7 +26,7 @@ export class SandBallingAI {
 
    public readonly sandBallGrowRate: number;
    
-   public ballingInterestCooldownTicks = randInt(MIN_BALLING_COOLDOWN_TICKS, MAX_BALLING_COOLDOWN_TICKS);
+   public ballingInterestCooldownTicks = Math.floor(randInt(MIN_BALLING_COOLDOWN_TICKS, MAX_BALLING_COOLDOWN_TICKS) * Math.random());
 
    public remainingBallTimeTicks = 0;
 
@@ -33,12 +38,6 @@ export class SandBallingAI {
       this.sandBallGrowRate = sandBallGrowRate;
    }
 }
-
-const MIN_BALLING_COOLDOWN_TICKS = 30 * Settings.TPS;
-const MAX_BALLING_COOLDOWN_TICKS = 40 * Settings.TPS;
-
-const MIN_BALL_TIME_TICKS = 1.5 * Settings.TPS;
-const MAX_BALL_TIME_TICKS = 5 * Settings.TPS;
 
 export function updateSandBallingAI(sandBallingAI: SandBallingAI): void {
    if (sandBallingAI.ballingInterestCooldownTicks > 0) {
@@ -55,9 +54,11 @@ export function getSandBallMass(sizeInteger: number): number {
 }
 
 const getCurrentSandBall = (transformComponent: TransformComponent): Entity | null => {
-   for (const child of transformComponent.children) {
-      if (entityChildIsEntity(child) && getEntityType(child.attachedEntity) === EntityType.sandBall) {
-         return child.attachedEntity;
+   for (const hitbox of transformComponent.hitboxes) {
+      for (const childHitbox of hitbox.children) {
+         if (getEntityType(childHitbox.entity) === EntityType.sandBall) {
+            return childHitbox.entity;
+         }
       }
    }
    return null;
@@ -67,7 +68,7 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
    aiHelperComponent.currentAIType = AIType.sandBalling;
 
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+   const entityHitbox = entityTransformComponent.hitboxes[0];
    assertBoxIsCircular(entityHitbox.box);
 
    const currentSandBall = getCurrentSandBall(entityTransformComponent);
@@ -77,7 +78,7 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
       const sandBall = currentSandBall;
 
       const sandBallTransformComponent = TransformComponentArray.getComponent(sandBall);
-      const sandBallHitbox = sandBallTransformComponent.children[0] as Hitbox;
+      const sandBallHitbox = sandBallTransformComponent.hitboxes[0];
 
       if ((getEntityAgeTicks(entity) % Math.floor(Settings.TPS / 2)) === 0 && Math.random() < 0.5 / (Settings.TPS / 2)) {
          sandBallingAI.isTurningClockwise = !sandBallingAI.isTurningClockwise;
@@ -93,9 +94,7 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
       }
 
       // move forwards
-      const accelerationX = sandBallingAI.acceleration * Math.sin(entityHitbox.box.angle);
-      const accelerationY = sandBallingAI.acceleration * Math.cos(entityHitbox.box.angle);
-      applyAccelerationFromGround(entity, entityHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(entityHitbox, polarVec2(sandBallingAI.acceleration, entityHitbox.box.angle));
 
       const sandBallComponent = SandBallComponentArray.getComponent(sandBall);
 
@@ -106,9 +105,9 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
       // (max size)
       if (sandBallComponent.size > 6) {
          sandBallComponent.size = 6;
-         removeAttachedEntity(entity, currentSandBall);
+         detachHitbox(sandBallHitbox);
       } else if (--sandBallingAI.remainingBallTimeTicks <= 0) {
-         removeAttachedEntity(entity, currentSandBall);
+         detachHitbox(sandBallHitbox);
       }
 
       const newSizeCategory = Math.floor(sandBallComponent.size);
@@ -126,7 +125,7 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
       if (getEntityType(entity) === EntityType.krumblid) {
          for (let i = 0; i < 2; i++) {
             // @Hack
-            const mandibleHitbox = entityTransformComponent.children[i + 1] as Hitbox;
+            const mandibleHitbox = entityTransformComponent.hitboxes[i + 1];
             const idealAngle = ((getEntityAgeTicks(entity) * 3.2 + (i === 0 ? Settings.TPS * 0.35 : 0)) % Settings.TPS) / Settings.TPS < 0.5 ? -Math.PI * 0.3 : Math.PI * 0.1;
             turnHitboxToAngle(mandibleHitbox, idealAngle, 3 * Math.PI, 0.5, true);
          }
@@ -134,8 +133,10 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
          for (let i = 0; i < 2; i++) {
             const side = OKREN_SIDES[i];
             const mandibleHitbox = getOkrenMandibleHitbox(entity, side);
-            const idealAngle = ((getEntityAgeTicks(entity) * 3.2 + (i === 0 ? Settings.TPS * 0.35 : 0)) % Settings.TPS) / Settings.TPS < 0.5 ? -Math.PI * 0.4 : Math.PI * 0.2;
-            turnHitboxToAngle(mandibleHitbox, idealAngle, 20 * Math.PI, 0.05, true);
+            if (mandibleHitbox !== null) {
+               const idealAngle = ((getEntityAgeTicks(entity) * 3.2 + (i === 0 ? Settings.TPS * 0.35 : 0)) % Settings.TPS) / Settings.TPS < 0.5 ? -Math.PI * 0.4 : Math.PI * 0.2;
+               turnHitboxToAngle(mandibleHitbox, idealAngle, 20 * Math.PI, 0.05, true);
+            }
          }
       } else {
          throw new Error();
@@ -153,16 +154,19 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
       
       const ballConfig = createSandBallConfig(new Point(x, y), entityHitbox.box.angle);
 
-      const ballHitbox = ballConfig.components[ServerComponentType.transform]!.children[0] as Hitbox;
+      const ballHitbox = ballConfig.components[ServerComponentType.transform]!.hitboxes[0];
       const angularTether: HitboxAngularTether = {
          originHitbox: entityHitbox,
+         idealAngle: 0,
          springConstant: 10,
          damping: 0.4,
-         padding: 0
+         padding: 0,
+         idealHitboxAngleOffset: 0,
+         useLeverage: false
       };
       ballHitbox.angularTethers.push(angularTether);
 
-      ballConfig.attachInfo = createEntityConfigAttachInfoWithTether(entity, entityHitbox, offsetMagnitude, 10, 0.4, false, false);
+      ballConfig.attachInfo = createEntityConfigAttachInfoWithTether(ballHitbox, entityHitbox, offsetMagnitude, 10, 0.4, false, false);
       
       createEntity(ballConfig, getEntityLayer(entity), 0);
 

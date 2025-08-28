@@ -2,14 +2,15 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { randFloat, randInt } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
 import { createColouredParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { getRandomPositionInEntity, TransformComponentArray } from "./TransformComponent";
+import { getRandomPositionInBox, getRandomPositionInEntity, TransformComponentArray } from "./TransformComponent";
 
 export interface MithrilOreNodeComponentParams {
    readonly size: number;
@@ -43,9 +44,9 @@ function createParamsFromData(reader: PacketReader): MithrilOreNodeComponentPara
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const mithrilOreNodeComponentParams = entityParams.serverComponentParams[ServerComponentType.mithrilOreNode]!;
    const size = mithrilOreNodeComponentParams.size;
@@ -76,7 +77,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0,
       getTextureArrayIndex(textureSource)
    );
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {};
 }
@@ -97,13 +98,11 @@ function updateFromData(reader: PacketReader): void {
    padData(reader);
 }
 
-function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+function onHit(entity: Entity, hitbox: Hitbox): void {
    for (let i = 0; i < 3; i++) {
       const c = randFloat(0.25, 0.4);
       
-      const position = getRandomPositionInEntity(transformComponent);
+      const position = getRandomPositionInBox(hitbox.box);
       createColouredParticle(position.x, position.y, randFloat(50, 80), c, c, c);
    }
    
@@ -112,7 +111,7 @@ function onHit(entity: Entity): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    for (let i = 0; i < 6; i++) {
       const c = randFloat(0.25, 0.4);
       

@@ -1,10 +1,11 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 import { WALL_SPIKE_TEXTURE_SOURCES, FLOOR_SPIKE_TEXTURE_SOURCES } from "../server-components/BuildingMaterialComponent";
@@ -28,9 +29,9 @@ export function createRegularSpikesComponentParams(): RegularSpikesComponentPara
    return {};
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    const materialComponentParams = entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!;
 
@@ -50,7 +51,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    )
    mainRenderPart.addTag("buildingMaterialComponent:material");
 
-   entityIntermediateInfo.renderInfo.attachRenderPart(mainRenderPart);
+   renderInfo.attachRenderPart(mainRenderPart);
 
    return {};
 }
@@ -63,14 +64,12 @@ function getMaxRenderParts(): number {
    return 1;
 }
 
-function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+function onHit(entity: Entity, hitbox: Hitbox): void {
    playSoundOnHitbox("wooden-spikes-hit.mp3", 0.2, 1, entity, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox("wooden-spikes-destroy.mp3", 0.4, 1, entity, hitbox, false);
 }

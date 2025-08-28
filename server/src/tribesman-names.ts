@@ -64,11 +64,22 @@ const STRIDER_NAMES = [
 
 const PLAINSPEOPLE_NAMES: ReadonlyArray<string> = [
    "Oda",
-   "Grug",
-   "Og",
-   "Urgh",
-   "Blurgh"
+   "Toffle",
+   "Marny",
+   "Bilber",
+   "Doffin",
+   "Bramble",
+   "Jorry",
+   "Nuddle",
+   "Wuddle",
+   "Pottle"
 ];
+
+// @INCOMPLETE: which tribe should have these types of names?
+// "Grug",
+// "Og",
+// "Urgh",
+// "Blurgh",
 
 const BARBARIAN_NAMES: ReadonlyArray<string> = [
    "RAAAAGH",
@@ -85,7 +96,8 @@ const BARBARIAN_NAMES: ReadonlyArray<string> = [
 const FROSTLING_NAMES: ReadonlyArray<string> = [
    "Fraazgakk",
    "Fruzeek",
-   "Grivve"
+   "Grivve",
+   "Frum"
 ];
 
 const GOBLIN_NAMES: ReadonlyArray<string> = [
@@ -125,7 +137,8 @@ const DWARF_NAMES: ReadonlyArray<string> = [
    "Torrin",
    "Zarn",
    "Grimm",
-   "Haddar"
+   "Haddar",
+   "Harnum"
 ];
 
 const TITLE_DISPLAY_OPTIONS: Record<TribesmanTitle, ReadonlyArray<string>> = {
@@ -142,7 +155,7 @@ const TITLE_DISPLAY_OPTIONS: Record<TribesmanTitle, ReadonlyArray<string>> = {
    [TribesmanTitle.yetisbane]: ["Yetisbane", "Slayer of Yetis"]
 };
 
-const UNTITLED_ADJECTIVES: ReadonlyArray<string> = [
+const TITLELESS_ADJECTIVES: ReadonlyArray<string> = [
    "Useless",
    "Weak",
    "Puny",
@@ -168,8 +181,7 @@ const UNTITLED_ADJECTIVES: ReadonlyArray<string> = [
    "Struggler",
    "Limp",
    "Lame",
-   // shh
-   "Twink"
+   "Twink" // shh
 ];
 
 export function generateTribesmanName(tribeType: TribeType): string {
@@ -204,7 +216,7 @@ export function generateTribesmanName(tribeType: TribeType): string {
    }
 
    // Add the untitled adjective
-   const descriptor = UNTITLED_ADJECTIVES[Math.floor(Math.random() * UNTITLED_ADJECTIVES.length)];
+   const descriptor = TITLELESS_ADJECTIVES[Math.floor(Math.random() * TITLELESS_ADJECTIVES.length)];
    name += " the " + descriptor;
 
    return name;

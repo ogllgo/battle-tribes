@@ -1,13 +1,12 @@
 import { GuardianCrystalBurstStage, ServerComponentType } from "battletribes-shared/components";
 import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { lerp, Point, randFloat, randSign, UtilVars } from "battletribes-shared/utils";
+import { lerp, Point, polarVec2, randAngle, randFloat, randSign, UtilVars } from "battletribes-shared/utils";
 import { turnToPosition } from "../ai-shared";
 import { GuardianComponent, GuardianComponentArray, GuardianVars } from "../components/GuardianComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { createGuardianGemFragmentProjectileConfig } from "../entities/projectiles/guardian-gem-fragment-projectile";
-import { createEntity } from "../Entity";
-import { getEntityLayer } from "../world";
+import { createEntity, getEntityLayer } from "../world";
 import { Hitbox, addHitboxAngularVelocity, addHitboxVelocity } from "../hitboxes";
 
 const enum Vars {
@@ -23,7 +22,7 @@ const enum Vars {
 
 const createFragmentProjectile = (guardian: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(guardian);
-   const bodyHitbox = transformComponent.children[0] as Hitbox;
+   const bodyHitbox = transformComponent.hitboxes[0];
 
    const offsetDirection = bodyHitbox.box.angle + randFloat(-0.2, 0.2);
    const offsetMagnitude = GuardianVars.LIMB_ORBIT_RADIUS;
@@ -32,13 +31,12 @@ const createFragmentProjectile = (guardian: Entity): void => {
 
    const velocityMagnitude = randFloat(450, 700);
    const velocityDirection = offsetDirection + randFloat(-0.2, 0.2);
-   const vx = velocityMagnitude * Math.sin(velocityDirection);
-   const vy = velocityMagnitude * Math.cos(velocityDirection);
+   const vel = polarVec2(velocityMagnitude, velocityDirection);
    
-   const config = createGuardianGemFragmentProjectileConfig(new Point(originX, originY), 2 * Math.PI * Math.random(), guardian);
+   const config = createGuardianGemFragmentProjectileConfig(new Point(originX, originY), randAngle(), guardian);
 
-   const snowballHitbox = config.components[ServerComponentType.transform]!.children[0] as Hitbox;
-   addHitboxVelocity(snowballHitbox, vx, vy);
+   const snowballHitbox = config.components[ServerComponentType.transform]!.hitboxes[0];
+   addHitboxVelocity(snowballHitbox, vel);
    addHitboxAngularVelocity(snowballHitbox, randFloat(3.5 * Math.PI, 6 * Math.PI) * randSign());
 
    createEntity(config, getEntityLayer(guardian), 0);
@@ -75,7 +73,7 @@ export default class GuardianCrystalBurstAI {
    }
    
    public run(guardian: Entity, targetX: number, targetY: number): void {
-      turnToPosition(guardian, targetX, targetY, this.turnSpeed, 1);
+      turnToPosition(guardian, new Point(targetX, targetY), this.turnSpeed, 1);
 
       const guardianComponent = GuardianComponentArray.getComponent(guardian);
       if (this.windupProgressTicks < Vars.WINDUP_TIME_TICKS) {

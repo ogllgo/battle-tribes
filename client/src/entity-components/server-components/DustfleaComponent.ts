@@ -3,12 +3,13 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { Entity } from "../../../../shared/src/entities";
 import { playSoundOnHitbox } from "../../sound";
 import { TransformComponentArray } from "./TransformComponent";
 import { randFloat } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface DustfleaComponentParams {}
 
@@ -23,6 +24,7 @@ export const DustfleaComponentArray = new ServerComponentArray<DustfleaComponent
    getMaxRenderParts: getMaxRenderParts,
    padData: padData,
    updateFromData: updateFromData,
+   onHit: onHit,
    onDie: onDie
 });
 
@@ -30,11 +32,11 @@ function createParamsFromData(): DustfleaComponentParams {
    return {};
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,
@@ -58,8 +60,12 @@ function padData(reader: PacketReader): void {}
 
 function updateFromData(reader: PacketReader): void {}
 
+function onHit(dustflea: Entity, hitbox: Hitbox): void {
+   playSoundOnHitbox("dustflea-hit.mp3", 0.4, randFloat(0.9, 1.1), dustflea, hitbox, false);
+}
+
 function onDie(dustflea: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(dustflea);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox("dustflea-explosion.mp3", 0.4, randFloat(0.9, 1.1), dustflea, hitbox, false);
 }

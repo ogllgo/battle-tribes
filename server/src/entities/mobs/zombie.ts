@@ -19,25 +19,27 @@ import Layer from "../../Layer";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { InventoryUseComponent } from "../../components/InventoryUseComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 export const enum ZombieVars {
    CHASE_PURSUE_TIME_TICKS = 5 * Settings.TPS,
    VISION_RANGE = 375
 }
 
-registerEntityLootOnDeath(EntityType.zombie, [
-   {
-      itemType: ItemType.eyeball,
-      getAmount: () => Math.random() < 0.1 ? 1 : 0
-   }
-]);
+registerEntityLootOnDeath(EntityType.zombie, {
+   itemType: ItemType.eyeball,
+   getAmount: () => Math.random() < 0.1 ? 1 : 0
+});
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return layer.getBiomeAtPosition(x, y) === Biome.grasslands;
 }
 
-const move = () => {
+const moveFunc = () => {
+   throw new Error();
+}
+
+const turnFunc = () => {
    throw new Error();
 }
 
@@ -46,7 +48,7 @@ export function createZombieConfig(position: Point, rotation: number, isGolden: 
 
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 32), 1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 32), 1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const physicsComponent = new PhysicsComponent();
@@ -57,8 +59,8 @@ export function createZombieConfig(position: Point, rotation: number, isGolden: 
 
    const zombieComponent = new ZombieComponent(zombieType, tombstone);
 
-   const aiHelperComponent = new AIHelperComponent(hitbox, ZombieVars.VISION_RANGE, move);
-   aiHelperComponent.ais[AIType.wander] = new WanderAI(150, Math.PI * 3, 0.4, positionIsValidCallback);
+   const aiHelperComponent = new AIHelperComponent(hitbox, ZombieVars.VISION_RANGE, moveFunc, turnFunc);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(150, Math.PI * 3, 1, 0.4, positionIsValidCallback);
    
    const inventoryComponent = new InventoryComponent();
    const inventoryUseComponent = new InventoryUseComponent();

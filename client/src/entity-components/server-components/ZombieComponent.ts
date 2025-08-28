@@ -1,6 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
-import { angle, randFloat, randInt } from "battletribes-shared/utils";
+import { Point, randAngle, randFloat, randInt } from "battletribes-shared/utils";
 import { playSoundOnHitbox } from "../../sound";
 import { PacketReader } from "battletribes-shared/packets";
 import { Entity } from "../../../../shared/src/entities";
@@ -9,11 +9,11 @@ import ServerComponentArray from "../ServerComponentArray";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { HitData } from "../../../../shared/src/client-server-types";
 import { createBloodPoolParticle, createBloodParticle, BloodParticleSize, createBloodParticleFountain } from "../../particles";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface ZombieComponentParams {
    readonly zombieType: number;
@@ -49,9 +49,9 @@ function createParamsFromData(reader: PacketReader): ZombieComponentParams {
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    const zombieComponentParams = entityParams.serverComponentParams[ServerComponentType.zombie]!;
    const inventoryUseComponentParams = entityParams.serverComponentParams[ServerComponentType.inventoryUse]!;
@@ -62,7 +62,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0,
       getTextureArrayIndex(ZOMBIE_TEXTURE_SOURCES[zombieComponentParams.zombieType])
    );
-   entityIntermediateInfo.renderInfo.attachRenderPart(bodyRenderPart);
+   renderInfo.attachRenderPart(bodyRenderPart);
 
    // @Hack @Copynpaste
 
@@ -79,7 +79,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
          attachPoint.setFlipX(true);
       }
       attachPoint.addTag("inventoryUseComponent:attachPoint");
-      entityIntermediateInfo.renderInfo.attachRenderPart(attachPoint);
+      renderInfo.attachRenderPart(attachPoint);
       
       const renderPart = new TexturedRenderPart(
          attachPoint,
@@ -88,7 +88,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
          getTextureArrayIndex(handTextureSource)
       );
       renderPart.addTag("inventoryUseComponent:hand");
-      entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+      renderInfo.attachRenderPart(renderPart);
       handRenderParts.push(renderPart);
    }
 
@@ -108,7 +108,7 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    // @Sync should be a server event
    if (Math.random() < 0.1 / Settings.TPS) {
@@ -124,22 +124,19 @@ function updateFromData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-function onHit(entity: Entity, hitData: HitData): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-
+function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
    // Blood pool particle
    createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 20);
    
    // Blood particles
    for (let i = 0; i < 10; i++) {
-      let offsetDirection = angle(hitData.hitPosition[0] - hitbox.box.position.x, hitData.hitPosition[1] - hitbox.box.position.y);
+      let offsetDirection = hitbox.box.position.angleTo(hitPosition);
       offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
 
       const spawnPositionX = hitbox.box.position.x + RADIUS * Math.sin(offsetDirection);
       const spawnPositionY = hitbox.box.position.y + RADIUS * Math.cos(offsetDirection);
    
-      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
+      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, randAngle(), randFloat(150, 250), true);
    }
 
    playSoundOnHitbox("zombie-hurt-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, hitbox, false);
@@ -147,7 +144,7 @@ function onHit(entity: Entity, hitData: HitData): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 20);
    createBloodParticleFountain(entity, 0.1, 1);

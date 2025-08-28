@@ -1,28 +1,32 @@
 import { DamageSource, Entity } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { parseCommand } from "battletribes-shared/commands";
-import { hitEntity, healEntity } from "./components/HealthComponent";
+import { damageEntity, healEntity } from "./components/HealthComponent";
 import { InventoryComponentArray, addItem } from "./components/InventoryComponent";
-import { createItem } from "./items";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { getPlayerFromUsername } from "./server/player-clients";
 import { TribeComponentArray } from "./components/TribeComponent";
 import { ItemType, getItemTypeFromString } from "battletribes-shared/items/items";
 import { getRandomPositionInEntity, TransformComponentArray } from "./components/TransformComponent";
 import { Biome } from "../../shared/src/biomes";
+import { Hitbox } from "./hitboxes";
 
 const ENTITY_SPAWN_RANGE = 200;
 
 const killPlayer = (player: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(player);
+   const hitbox = transformComponent.hitboxes[0];
+   
    const hitPosition = getRandomPositionInEntity(transformComponent);
-   hitEntity(player, null, 999999, DamageSource.god, AttackEffectiveness.effective, hitPosition, 0);
+   damageEntity(player, hitbox, null, 999999, DamageSource.god, AttackEffectiveness.effective, hitPosition, 0);
 }
 
 const damagePlayer = (player: Entity, damage: number): void => {
    const transformComponent = TransformComponentArray.getComponent(player);
+   const hitbox = transformComponent.hitboxes[0];
+
    const hitPosition = getRandomPositionInEntity(transformComponent);
-   hitEntity(player, null, damage, DamageSource.god, AttackEffectiveness.effective, hitPosition, 0);
+   damageEntity(player, hitbox, null, damage, DamageSource.god, AttackEffectiveness.effective, hitPosition, 0);
 }
 
 const setTime = (time: number): void => {

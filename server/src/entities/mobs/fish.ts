@@ -1,6 +1,6 @@
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collision";
 import { Entity, EntityType, FishColour } from "battletribes-shared/entities";
-import { angle, customTickIntervalHasPassed, Point, UtilVars } from "battletribes-shared/utils";
+import { angle, customTickIntervalHasPassed, Point, polarVec2, UtilVars } from "battletribes-shared/utils";
 import { HealthComponent, HealthComponentArray } from "../../components/HealthComponent";
 import { FishComponent, FishComponentArray } from "../../components/FishComponent";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -20,7 +20,7 @@ import { Biome } from "../../../../shared/src/biomes";
 import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
-import { applyAccelerationFromGround, createHitbox, getHitboxTile, Hitbox, addHitboxVelocity, turnHitboxToAngle } from "../../hitboxes";
+import { applyAccelerationFromGround, getHitboxTile, Hitbox, addHitboxVelocity, turnHitboxToAngle } from "../../hitboxes";
 import { getEntityLayer } from "../../world";
 
 const enum Vars {
@@ -33,12 +33,10 @@ const enum Vars {
    TILE_VALIDATION_PADDING = 20
 }
 
-registerEntityLootOnDeath(EntityType.fish, [
-   {
-      itemType: ItemType.raw_fish,
-      getAmount: () => 1
-   }
-]);
+registerEntityLootOnDeath(EntityType.fish, {
+   itemType: ItemType.raw_fish,
+   getAmount: () => 1
+});
 
 const positionIsOnlyNearWater = (layer: Layer, x: number, y: number): boolean => {
    const minTileX = Math.max(Math.floor((x - Vars.TILE_VALIDATION_PADDING) / Settings.TILE_SIZE), 0);
@@ -67,7 +65,7 @@ function wanderTargetIsValid(fish: Entity, layer: Layer, x: number, y: number): 
    }
 
    const transformComponent = TransformComponentArray.getComponent(fish);
-   const fishHitbox = transformComponent.children[0] as Hitbox;
+   const fishHitbox = transformComponent.hitboxes[0];
    
    if (!layer.tileRaytraceMatchesTileTypes(fishHitbox.box.position.x, fishHitbox.box.position.y, x, y, [TileType.water])) {
       return false;
@@ -76,22 +74,18 @@ function wanderTargetIsValid(fish: Entity, layer: Layer, x: number, y: number): 
    return true;
 }
 
-const move = (fish: Entity, acceleration: number, turnSpeed: number, x: number, y: number): void => {
+const moveFunc = (fish: Entity, pos: Point, acceleration: number): void => {
    const transformComponent = TransformComponentArray.getComponent(fish);
-   const fishHitbox = transformComponent.children[0] as Hitbox;
+   const fishHitbox = transformComponent.hitboxes[0];
 
-   const direction = angle(x - fishHitbox.box.position.x, y - fishHitbox.box.position.y);
+   const direction = fishHitbox.box.position.angleTo(pos);
 
    const layer = getEntityLayer(fish);
    
    const tileIndex = getHitboxTile(fishHitbox);
    if (layer.tileTypes[tileIndex] === TileType.water) {
       // Swim on water
-      const accelerationX = 40 * Math.sin(direction);
-      const accelerationY = 40 * Math.cos(direction);
-      applyAccelerationFromGround(fish, fishHitbox, accelerationX, accelerationY);
-
-      turnHitboxToAngle(fishHitbox, direction, Vars.TURN_SPEED, 0.5, false);
+      applyAccelerationFromGround(fishHitbox, polarVec2(acceleration, direction));
    } else {
       // 
       // Lunge on land
@@ -99,8 +93,32 @@ const move = (fish: Entity, acceleration: number, turnSpeed: number, x: number, 
 
       const fishComponent = FishComponentArray.getComponent(fish);
       if (customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TPS, Vars.LUNGE_INTERVAL)) {
-         addHitboxVelocity(fishHitbox, Vars.LUNGE_FORCE * Math.sin(direction), Vars.LUNGE_FORCE * Math.cos(direction));
+         addHitboxVelocity(fishHitbox, polarVec2(Vars.LUNGE_FORCE, direction));
+      }
+   }
+}
+
+const turnFunc = (fish: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
+   const transformComponent = TransformComponentArray.getComponent(fish);
+   const fishHitbox = transformComponent.hitboxes[0];
+
+   const direction = fishHitbox.box.position.angleTo(pos);
+
+   const layer = getEntityLayer(fish);
+   
+   const tileIndex = getHitboxTile(fishHitbox);
+   if (layer.tileTypes[tileIndex] === TileType.water) {
+      // Swim on water
+      turnHitboxToAngle(fishHitbox, direction, turnSpeed, turnDamping, false);
+   } else {
+      // 
+      // Lunge on land
+      // 
+
+      const fishComponent = FishComponentArray.getComponent(fish);
+      if (customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TPS, Vars.LUNGE_INTERVAL)) {
          if (direction !== fishHitbox.box.angle) {
+            // @HACK @BUG
             fishHitbox.box.angle = direction;
             transformComponent.isDirty = true;
          }
@@ -111,7 +129,7 @@ const move = (fish: Entity, acceleration: number, turnSpeed: number, x: number, 
 export function createFishConfig(position: Point, rotation: number, colour: FishColour): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 28, 56), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 28, 56), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const physicsComponent = new PhysicsComponent();
@@ -120,9 +138,9 @@ export function createFishConfig(position: Point, rotation: number, colour: Fish
 
    const statusEffectComponent = new StatusEffectComponent(0);
 
-   const aiHelperComponent = new AIHelperComponent(hitbox, 200, move);
-   aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI, 0.6, wanderTargetIsValid);
-   aiHelperComponent.ais[AIType.escape] = new EscapeAI(200, Math.PI * 2/3, 1);
+   const aiHelperComponent = new AIHelperComponent(hitbox, 200, moveFunc, turnFunc);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI, 0.5, 0.6, wanderTargetIsValid);
+   aiHelperComponent.ais[AIType.escape] = new EscapeAI(200, Math.PI * 2/3, 0.5, 1);
 
    const attackingEntitiesComponent = new AttackingEntitiesComponent(3 * Settings.TPS);
    

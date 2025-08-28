@@ -4,8 +4,8 @@ import Board from "./Board";
 import { Entity } from "../../shared/src/entities";
 import { Point } from "../../shared/src/utils";
 import { Settings } from "../../shared/src/settings";
-import { TILE_MOVE_SPEED_MULTIPLIERS, TileType, TILE_FRICTIONS } from "../../shared/src/tiles";
-import { entityIsInRiver, getHitboxTile, TransformComponentArray, TransformNode } from "./entity-components/server-components/TransformComponent";
+import { TILE_PHYSICS_INFO_RECORD, TileType } from "../../shared/src/tiles";
+import { entityIsInRiver, getHitboxTile, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { getEntityLayer } from "./world";
 import { PhysicsComponentArray } from "./entity-components/server-components/PhysicsComponent";
 
@@ -25,9 +25,13 @@ export const enum HitboxParentType {
 export interface Hitbox {
    readonly localID: number;
 
+   readonly entity: Entity;
+   rootEntity: Entity;
+
    parent: Hitbox | null;
    
-   readonly children: Array<TransformNode>;
+   readonly children: Array<Hitbox>;
+   isPartOfParent: boolean;
 
    readonly box: Box;
    
@@ -47,10 +51,13 @@ export interface Hitbox {
    lastUpdateTicks: number;
 }
 
-export function createHitbox(localID: number, parent: Hitbox | null, box: Box, previousPosition: Point, acceleration: Point, tethers: Array<HitboxTether>, previousRelativeAngle: number, angularAcceleration: number, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
+export function createHitbox(localID: number, entity: Entity, rootEntity: Entity, parent: Hitbox | null, isPartOfParent: boolean, box: Box, previousPosition: Point, acceleration: Point, tethers: Array<HitboxTether>, previousRelativeAngle: number, angularAcceleration: number, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
    return {
       localID: localID,
+      entity: entity,
+      rootEntity: rootEntity,
       parent: parent,
+      isPartOfParent: isPartOfParent,
       children: [],
       box: box,
       previousPosition: previousPosition,
@@ -70,7 +77,11 @@ export function createHitbox(localID: number, parent: Hitbox | null, box: Box, p
 export function createHitboxQuick(localID: number, parent: Hitbox | null, box: Box, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
    return {
       localID: localID,
+      // @HACK @INCOMPLETE (? maybe not)
+      entity: 0,
+      rootEntity: 0,
       parent: parent,
+      isPartOfParent: true,
       children: [],
       box: box,
       previousPosition: box.position.copy(),
@@ -135,15 +146,15 @@ export function applyAcceleration(entity: Entity, hitbox: Hitbox, accelerationX:
    const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
    const tile = getHitboxTile(getEntityLayer(entity), hitbox);
+   const tilePhysicsInfo = TILE_PHYSICS_INFO_RECORD[tile.type];
       
-   let tileMoveSpeedMultiplier = TILE_MOVE_SPEED_MULTIPLIERS[tile.type];
+   let tileMoveSpeedMultiplier = tilePhysicsInfo.moveSpeedMultiplier;
    if (physicsComponent.ignoredTileSpeedMultipliers.includes(tile.type) || (tile.type === TileType.water && !entityIsInRiver(transformComponent, entity))) {
       tileMoveSpeedMultiplier = 1;
    }
-
-   const friction = TILE_FRICTIONS[tile.type];
-
+   
    // Calculate the desired velocity based on acceleration
+   const friction = tilePhysicsInfo.friction;
    const desiredVelocityX = accelerationX * friction * tileMoveSpeedMultiplier;
    const desiredVelocityY = accelerationY * friction * tileMoveSpeedMultiplier;
 

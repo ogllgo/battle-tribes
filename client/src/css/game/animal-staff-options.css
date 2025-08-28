@@ -25,17 +25,18 @@
    filter: brightness(1.2);
 }
 
+#animal-staff-options .option:not(:last-child) {
+   margin-right: 20px;
+}
+
 #animal-staff-options .follow {
    background-image: url(../../images/menus/animal-staff-options/follow.png);
-   margin-right: 20px;
 }
 #animal-staff-options .move {
    background-image: url(../../images/menus/animal-staff-options/move.png);
-   margin-right: 20px;
 }
 #animal-staff-options .carry {
    background-image: url(../../images/menus/animal-staff-options/carry.png);
-   margin-right: 20px;
 }
 #animal-staff-options .attack {
    background-image: url(../../images/menus/animal-staff-options/attack.png);

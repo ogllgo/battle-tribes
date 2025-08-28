@@ -1,5 +1,5 @@
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { Point, lerp } from "battletribes-shared/utils";
+import { Point, lerp, secondsToTicks } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { ServerComponentType } from "battletribes-shared/components";
 import Board from "../../Board";
@@ -8,10 +8,11 @@ import { playSoundOnHitbox } from "../../sound";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
-import { EntityIntermediateInfo, EntityParams, getEntityAgeTicks, getEntityRenderInfo, getEntityType } from "../../world";
+import { EntityParams, getEntityAgeTicks, getEntityRenderInfo, getEntityType } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface HutComponentParams {
    readonly doorSwingAmount: number;
@@ -37,9 +38,9 @@ export interface HutComponent {
 export const WORKER_HUT_SIZE = 88;
 export const WARRIOR_HUT_SIZE = 104;
 
-const DOOR_OPEN_TICKS = Math.floor(0.15 * Settings.TPS);
-const DOOR_REMAIN_TICKS = Math.floor(0.175 * Settings.TPS);
-const DOOR_CLOSE_TICKS = Math.floor(0.175 * Settings.TPS);
+const DOOR_OPEN_TICKS = secondsToTicks(0.15);
+const DOOR_REMAIN_TICKS = secondsToTicks(0.175);
+const DOOR_CLOSE_TICKS = secondsToTicks(0.175);
 
 const calculateDoorSwingAmount = (lastDoorSwingTicks: number): number => {
    const ticksSinceLastSwing = Board.serverTicks - lastDoorSwingTicks;
@@ -117,12 +118,12 @@ const createRecallMarker = (parentHitbox: Hitbox): TexturedRenderPart => {
    return recallMarker;
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    return {
-      doorRenderParts: entityIntermediateInfo.renderInfo.getRenderThings("hutComponent:door") as Array<VisualRenderPart>,
+      doorRenderParts: renderInfo.getRenderThings("hutComponent:door") as Array<VisualRenderPart>,
       recallMarker: entityParams.serverComponentParams[ServerComponentType.hut]!.isRecalling ? createRecallMarker(hitbox) : null
    };
 }
@@ -181,7 +182,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    // @Incomplete: What if this packet is skipped?
    if (lastDoorSwingTicks === Board.serverTicks) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       playSoundOnHitbox("door-open.mp3", 0.4, 1, entity, hitbox, false);
    }
    
@@ -192,7 +193,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    if (hutComponent.isRecalling) {
       if (hutComponent.recallMarker === null) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.children[0] as Hitbox;
+         const hitbox = transformComponent.hitboxes[0];
          
          hutComponent.recallMarker = createRecallMarker(hitbox);
          const renderInfo = getEntityRenderInfo(entity);

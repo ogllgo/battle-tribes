@@ -11,12 +11,13 @@ import { EnergyStoreComponent } from "../../components/EnergyStoreComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 export function createDesertShrubConfig(position: Point, angle: number): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 36), 1.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), angle, 36), 1.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);

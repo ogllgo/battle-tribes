@@ -3,7 +3,7 @@ import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 
 export interface AutomatonAssemblerComponentParams {}
@@ -33,11 +33,11 @@ function createParamsFromData(): AutomatonAssemblerComponentParams {
    return fillParams();
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          2,
@@ -46,7 +46,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       )
    );
 
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,
@@ -64,7 +64,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    );
    gearRenderPart.offset.y = 28;
    gearRenderPart.offset.x = -64;
-   entityIntermediateInfo.renderInfo.attachRenderPart(gearRenderPart);
+   renderInfo.attachRenderPart(gearRenderPart);
 
    // Gear 2
    const gear2RenderPart = new TexturedRenderPart(
@@ -75,7 +75,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    );
    gear2RenderPart.offset.y = 28;
    gear2RenderPart.offset.x = -24;
-   entityIntermediateInfo.renderInfo.attachRenderPart(gear2RenderPart);
+   renderInfo.attachRenderPart(gear2RenderPart);
 
    // Bottom gear
    const bottomGearRenderPart = new TexturedRenderPart(
@@ -86,7 +86,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    );
    bottomGearRenderPart.offset.y = -32;
    bottomGearRenderPart.offset.x = 20;
-   entityIntermediateInfo.renderInfo.attachRenderPart(bottomGearRenderPart);
+   renderInfo.attachRenderPart(bottomGearRenderPart);
 
    return {};
 }

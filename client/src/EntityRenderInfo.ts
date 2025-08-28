@@ -10,7 +10,6 @@ import { getEntityLayer, getEntityType } from "./world";
 import { getServerComponentArrays } from "./entity-components/ComponentArray";
 import { gl } from "./webgl";
 import { EntityRenderingVars, setRenderInfoInVertexData } from "./rendering/webgl/entity-rendering";
-import { removeLightsAttachedToRenderPart } from "./lights";
 
 export interface ComponentTint {
    readonly tintR: number;
@@ -155,8 +154,6 @@ export class EntityRenderInfo {
          return;
       }
       
-      removeLightsAttachedToRenderPart(renderPart);
-
       delete Board.renderPartRecord[renderPart.id];
       
       // Remove from the root array

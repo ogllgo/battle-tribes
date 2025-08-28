@@ -1,11 +1,11 @@
-import { assert, Point } from "battletribes-shared/utils";
-import Board from "./Board";
-import { getEntityLayer } from "./world";
-import { createTranslationMatrix, Matrix3x2, matrixMultiplyInPlace } from "./rendering/matrices";
-import Layer from "./Layer";
+import { assert, Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { getEntityLayer, layers } from "./world";
+import { createTranslationMatrix, Matrix3x2 } from "./rendering/matrices";
 import { Entity } from "../../shared/src/entities";
-import { RenderPart } from "./render-parts/render-parts";
-import { EntityRenderInfo } from "./EntityRenderInfo";
+import { PacketReader } from "../../shared/src/packets";
+import { Hitbox } from "./hitboxes";
+import { getHitboxByLocalID, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import Board from "./Board";
 
 export type LightID = number;
 
@@ -19,144 +19,171 @@ export interface Light {
    r: number;
    g: number;
    b: number;
+   lastUpdateTicks: number;
 }
 
-interface LightRenderPartInfo {
-   readonly renderPart: RenderPart;
-   // We store the entity for the render part on the light instead of the render part to save memory (the vast majority of render parts won't have lights on them)
+interface LightHitboxInfo {
+   // Store the entity for the hitbox on the light instead of the hitbox to save memory (the vast majority of hitboxes won't have lights on them)
    readonly entity: Entity;
+   readonly hitbox: Hitbox;
 }
 
 export interface LightIntermediateInfo {
    readonly light: Light;
-   readonly attachedRenderPart: RenderPart;
+   readonly attachedHitbox: Hitbox;
 }
 
-let lightIDCounter = 0;
-   
-const lightRecord: Record<LightID, Light> = {};
 
-const lightToRenderPartRecord: Partial<Record<LightID, LightRenderPartInfo>> = {};
-const renderPartToLightsRecord: Partial<Record<number, Array<LightID>>> = {};
+const lightMap = new Map<LightID, Light>();
+
+const lightToHitboxRecord: Partial<Record<LightID, LightHitboxInfo>> = {};
+const hitboxToLightsMap = new Map<Hitbox, Array<LightID>>();
 
 export function getNumLights(): number {
-   return Object.keys(lightRecord).length;
+   return lightMap.size;
 }
 
-const getLightLayer = (light: Light): Layer => {
-   const attachedRenderPartInfo = lightToRenderPartRecord[light.id];
-   if (typeof attachedRenderPartInfo !== "undefined") {
-      return getEntityLayer(attachedRenderPartInfo.entity);
-   }
-
-   throw new Error();
-}
-
-export function createLight(offset: Point, intensity: number, strength: number, radius: number, r: number, g: number, b: number): Light {
-   const lightID = lightIDCounter++;
-
+export function createLight(id: LightID, offset: Point, intensity: number, strength: number, radius: number, r: number, g: number, b: number): Light {
    return {
-      id: lightID,
+      id: id,
       offset: offset,
       intensity: intensity,
       strength: strength,
       radius: radius,
       r: r,
       g: g,
-      b: b
+      b: b,
+      lastUpdateTicks: Board.serverTicks
    };
 }
 
 // @Cleanup: the 2 final parameters are all related, and ideally should just be able to be deduced from the render part? maybe?
-export function attachLightToRenderPart(light: Light, renderPart: RenderPart, entity: Entity): void {
+export function attachLightToHitbox(light: Light, entity: Entity, hitbox: Hitbox): void {
    // Make sure the light doesn't already exist
-   assert(typeof lightRecord[light.id] === "undefined")
+   assert(!lightMap.has(light.id))
 
    const layer = getEntityLayer(entity);
    
    layer.lights.push(light);
-   lightRecord[light.id] = light;
+   lightMap.set(light.id, light);
    
-   lightToRenderPartRecord[light.id] = {
-      renderPart: renderPart,
-      entity: entity
+   lightToHitboxRecord[light.id] = {
+      entity: entity,
+      hitbox: hitbox
    };
 
-   const lightIDs = renderPartToLightsRecord[renderPart.id];
+   const lightIDs = hitboxToLightsMap.get(hitbox);
    if (typeof lightIDs === "undefined") {
-      renderPartToLightsRecord[renderPart.id] = [light.id];
+      hitboxToLightsMap.set(hitbox, [light.id]);
    } else {
       lightIDs.push(light.id);
    }
 }
 
 export function removeLight(light: Light): void {
-   const layer = getLightLayer(light);
-   
-   const idx = layer.lights.indexOf(light);
-   if (idx === -1) {
-      return;
-   }
-   
-   layer.lights.splice(idx, 1);
-   delete lightRecord[light.id];
-
-   const renderPartInfo = lightToRenderPartRecord[light.id];
-   delete lightToRenderPartRecord[light.id];
-
-   // If the light was attached to a render light, register the light's removal from that render part
-   if (typeof renderPartInfo !== "undefined") {
-      const renderPartID = renderPartInfo.renderPart.id;
-      
-      const idx = renderPartToLightsRecord[renderPartID]!.indexOf(light.id);
-      renderPartToLightsRecord[renderPartID]!.splice(idx, 1);
-      if (renderPartToLightsRecord[renderPartID]!.length === 0) {
-         delete renderPartToLightsRecord[renderPartID];
+   for (const layer of layers) {
+      // @SPEED
+      const idx = layer.lights.indexOf(light);
+      if (idx === -1) {
+         continue;
       }
+      
+      layer.lights.splice(idx, 1);
+      lightMap.delete(light.id);
 
-      return;
+      const renderPartInfo = lightToHitboxRecord[light.id];
+      delete lightToHitboxRecord[light.id];
+
+      // If the light was attached to a hitbox, register the light's removal from that hitbox
+      if (typeof renderPartInfo !== "undefined") {
+         const hitbox = renderPartInfo.hitbox;
+         
+         const lightIDs = hitboxToLightsMap.get(hitbox)!;
+         const idx = lightIDs.indexOf(light.id);
+         lightIDs.splice(idx, 1);
+         if (lightIDs.length === 0) {
+            hitboxToLightsMap.delete(hitbox);
+         }
+      }
    }
-
-   throw new Error();
 }
 
-export function removeLightsAttachedToRenderPart(renderPart: RenderPart): void {
-   const lightIDs = renderPartToLightsRecord[renderPart.id];
+export function removeLightsAttachedToHitbox(hitbox: Hitbox): void {
+   const lightIDs = hitboxToLightsMap.get(hitbox);
    if (typeof lightIDs === "undefined") {
       return;
    }
 
    for (let i = lightIDs.length - 1; i >= 0; i--) {
       const lightID = lightIDs[i];
-      const light = lightRecord[lightID];
-      removeLight(light);
-   }
-}
-
-export function removeAllAttachedLights(renderInfo: EntityRenderInfo): void {
-   for (const renderPart of renderInfo.renderPartsByZIndex) {
-      removeLightsAttachedToRenderPart(renderPart);
+      const light = lightMap.get(lightID);
+      if (typeof light !== "undefined") {
+         removeLight(light);
+      }
    }
 }
 
 export function getLightPositionMatrix(light: Light): Matrix3x2 {
-   const attachedRenderPartInfo = lightToRenderPartRecord[light.id];
-   if (typeof attachedRenderPartInfo !== "undefined") {
-      const renderPartID = attachedRenderPartInfo.renderPart.id;
-      const renderPart = Board.renderPartRecord[renderPartID];
+   const attachedHitboxInfo = lightToHitboxRecord[light.id];
+   if (typeof attachedHitboxInfo !== "undefined") {
+      const hitbox = attachedHitboxInfo.hitbox;
 
-      // @Speed @Copynpaste
-      const matrix = createTranslationMatrix(light.offset.x, light.offset.y);
-      matrixMultiplyInPlace(renderPart.modelMatrix, matrix);
-      // const matrix = copyMatrix(renderPart.modelMatrix);
-      // // @Hack: why do we need to rotate the offset?
-      // translateMatrix(matrix, light.offset.x, light.offset.y);
-
-      return matrix;
+      const x = hitbox.box.position.x + rotateXAroundOrigin(light.offset.x, light.offset.y, hitbox.box.angle);
+      const y = hitbox.box.position.y + rotateYAroundOrigin(light.offset.x, light.offset.y, hitbox.box.angle);
+      return createTranslationMatrix(x, y);
    }
 
    // @Incomplete
    // Make "attach light to world" logic
    throw new Error();
    // return light.offset;
+}
+
+export function updateLightsFromData(reader: PacketReader): void {
+   const numLights = reader.readNumber();
+   for (let i = 0; i < numLights; i++) {
+      const entity = reader.readNumber();
+      const hitboxLocalID = reader.readNumber();
+
+      const transformComponent = TransformComponentArray.getComponent(entity);
+      const hitbox = getHitboxByLocalID(transformComponent.hitboxes, hitboxLocalID);
+      assert(hitbox !== null);
+      
+      const lightID = reader.readNumber();
+
+      const existingLight = lightMap.get(lightID);
+      if (typeof existingLight !== "undefined") {
+         reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
+         existingLight.intensity = reader.readNumber();
+         existingLight.strength = reader.readNumber();
+         existingLight.radius = reader.readNumber();
+         existingLight.r = reader.readNumber();
+         existingLight.g = reader.readNumber();
+         existingLight.b = reader.readNumber();
+
+         existingLight.lastUpdateTicks = Board.serverTicks;
+      } else {
+         // New light
+
+         const offset = reader.readPoint();
+         const intensity = reader.readNumber();
+         const strength = reader.readNumber();
+         const radius = reader.readNumber();
+         const r = reader.readNumber();
+         const g = reader.readNumber();
+         const b = reader.readNumber();
+
+         const light = createLight(lightID, offset, intensity, strength, radius, r, g, b);
+         attachLightToHitbox(light, entity, hitbox);
+      }
+   }
+
+   // Remove lights which are no longer visible
+   for (const pair of lightMap) {
+      const light = pair[1];
+
+      if (light.lastUpdateTicks !== Board.serverTicks) {
+         removeLight(light);
+      }
+   }
 }

@@ -71,7 +71,7 @@ function getMaxRenderParts(): number {
 
 function onSpawn(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    switch (getEntityType(entity)) {
       case EntityType.wall: {

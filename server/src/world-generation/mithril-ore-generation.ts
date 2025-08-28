@@ -5,9 +5,8 @@ import { SubtileType } from "../../../shared/src/tiles";
 import { angle, Point, randFloat, randInt, randSign } from "../../../shared/src/utils";
 import { getEntitiesInRange } from "../ai-shared";
 import { createMithrilOreNodeConfig } from "../entities/resources/mithril-ore-node";
-import { createEntity } from "../Entity";
 import Layer from "../Layer";
-import { getEntityType, pushJoinBuffer } from "../world";
+import { createEntityImmediate, getEntityType } from "../world";
 
 const enum Vars {
    /** Number of spiky bastards attempted to be generated per subtile */
@@ -69,10 +68,8 @@ const spawnMithrilOre = (layer: Layer, x: number, y: number, direction: number, 
    const renderHeight = (2 - currentDepth) * 0.5 + Math.random() * 0.1;
 
    const config = createMithrilOreNodeConfig(new Point(x, y), direction + randFloat(-0.1, 0.1), size, variant, children, renderHeight);
-   const oreNode = createEntity(config, layer, 0);
+   const oreNode = createEntityImmediate(config, layer);
    
-   pushJoinBuffer(false);
-
    return oreNode;
 }
 

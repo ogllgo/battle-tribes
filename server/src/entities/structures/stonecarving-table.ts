@@ -13,7 +13,7 @@ import { CraftingStationComponent } from "../../components/CraftingStationCompon
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 import { Point } from "../../../../shared/src/utils";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../../shared/src/collision";
 import { StructureConnection } from "../../structure-placement";
@@ -22,7 +22,8 @@ export function createStonecarvingTableConfig(position: Point, rotation: number,
    const transformComponent = new TransformComponent();
    
    const box = new RectangularBox(position, new Point(0, 0), rotation, 120, 80);
-   const hitbox = createHitbox(transformComponent, null, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(40);

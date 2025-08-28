@@ -3,7 +3,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { PacketReader } from "../../../../shared/src/packets";
 import { TransformComponentArray } from "./TransformComponent";
@@ -12,6 +12,7 @@ import { Settings } from "../../../../shared/src/settings";
 import { randAngle, randFloat } from "../../../../shared/src/utils";
 import { createCocoonAmbientParticle, createCocoonFragmentParticle } from "../../particles";
 import { playSoundOnHitbox } from "../../sound";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface DustfleaMorphCocoonComponentParams {
    readonly stage: number;
@@ -42,9 +43,9 @@ const getTextureSource = (stage: number): string => {
    return "entities/dustflea-morph-cocoon/stage-" + stage + ".png";
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    const dustfleaMorphCocoonComponentParams = entityParams.serverComponentParams[ServerComponentType.dustfleaMorphCocoon]!;
    
@@ -54,7 +55,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0,
       getTextureArrayIndex(getTextureSource(dustfleaMorphCocoonComponentParams.stage))
    );
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {
       renderPart: renderPart
@@ -88,7 +89,7 @@ function getMaxRenderParts(): number {
 
 function onTick(cocoon: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(cocoon);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    const hitboxRadius = (hitbox.box as CircularBox).radius;
    const particleChance = hitboxRadius / Settings.TPS / 20;
@@ -117,13 +118,13 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
 function onHit(entity: Entity): void {
    // const transformComponent = TransformComponentArray.getComponent(entity);
-   // const hitbox = transformComponent.children[0] as Hitbox;
+   // const hitbox = transformComponent.hitboxes[0];
    // playBuildingHitSound(entity, hitbox);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox("cocoon-break.mp3", 0.4, 1, entity, hitbox, false);
    
    const hitboxRadius = (hitbox.box as CircularBox).radius;

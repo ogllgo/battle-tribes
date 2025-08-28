@@ -12,18 +12,17 @@ import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import { IceSpikesComponent } from "../../components/IceSpikesComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
-registerEntityLootOnDeath(EntityType.iceSpikes, [
-   {
-      itemType: ItemType.frostcicle,
-      getAmount: () => Math.random() < 0.5 ? 1 : 0
-   }
-]);
+registerEntityLootOnDeath(EntityType.iceSpikes, {
+   itemType: ItemType.frostcicle,
+   getAmount: () => Math.random() < 0.5 ? 1 : 0
+});
 
 export function createIceSpikesConfig(position: Point, rotation: number, rootIceSpikes: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 40), 1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 40), 1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionMask = DEFAULT_COLLISION_MASK & ~CollisionBit.iceSpikes;
    

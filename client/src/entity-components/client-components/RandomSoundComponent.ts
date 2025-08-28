@@ -19,6 +19,7 @@ export interface RandomSoundComponent {
    sounds: ReadonlyArray<string>;
 }
 
+// @Cleanup this system is so shit
 export function updateRandomSoundComponentSounds(randomSoundComponent: RandomSoundComponent, minSoundIntervalTicks: number, maxSoundIntervalTicks: number, sounds: ReadonlyArray<string>, volume: number) {
    // Don't update if already updated
    if (randomSoundComponent.sounds === sounds) {
@@ -72,7 +73,7 @@ function onTick(entity: Entity): void {
       randomSoundComponent.soundTimerTicks = randFloat(randomSoundComponent.minSoundIntervalTicks, randomSoundComponent.maxSoundIntervalTicks);
 
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       
       const soundSrc = randItem(randomSoundComponent.sounds);
       playSoundOnHitbox(soundSrc, randomSoundComponent.volume, 1, entity, hitbox, false);

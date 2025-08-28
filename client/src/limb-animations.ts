@@ -1,5 +1,5 @@
 import { Settings } from "battletribes-shared/settings";
-import { Point, customTickIntervalHasPassed, lerp, randFloat, randInt, randItem, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { Point, customTickIntervalHasPassed, lerp, randAngle, randFloat, randInt, randItem, rotateXAroundOrigin, rotateYAroundOrigin, secondsToTicks } from "battletribes-shared/utils";
 import { Entity, LimbAction } from "battletribes-shared/entities";
 import { InventoryUseComponentArray, LimbInfo } from "./entity-components/server-components/InventoryUseComponent";
 import { getTextureArrayIndex } from "./texture-atlases/texture-atlases";
@@ -24,10 +24,10 @@ enum CustomItemState {
 const MIN_LIMB_DIRECTION = 0.2;
 const MAX_LIMB_DIRECTION = 0.9;
 
-const MIN_LIMB_MOVE_INTERVAL = Math.floor(0.2 * Settings.TPS);
-const MAX_LIMB_MOVE_INTERVAL = Math.floor(0.4 * Settings.TPS);
+const MIN_LIMB_MOVE_INTERVAL = secondsToTicks(0.2);
+const MAX_LIMB_MOVE_INTERVAL = secondsToTicks(0.4);
 
-const BANDAGE_LIFETIME_TICKS = Math.floor(1.25 * Settings.TPS);
+const BANDAGE_LIFETIME_TICKS = secondsToTicks(1.25);
 
 // @Incomplete: Investigate using slices of the actual item images instead of hardcoded pixel colours
 const INGREDIENT_PARTICLE_COLOURS: Partial<Record<ItemType, ReadonlyArray<ParticleColour>>> = {
@@ -37,7 +37,7 @@ const INGREDIENT_PARTICLE_COLOURS: Partial<Record<ItemType, ReadonlyArray<Partic
 const MEDICINE_PARTICLE_COLOURS: ReadonlyArray<ParticleColour> = [[217/255, 26/255, 20/255], [63/255, 204/255, 91/255]];
 
 export function generateRandomLimbPosition(): Point {
-   const offsetDirection = 2 * Math.PI * Math.random();
+   const offsetDirection = randAngle();
    const offsetMagnitude = 8 * Math.random();
 
    const x = offsetMagnitude * Math.sin(offsetDirection);
@@ -57,7 +57,7 @@ export function createCraftingAnimationParticles(entity: Entity, limbIdx: number
    
    const transformComponent = TransformComponentArray.getComponent(entity);
    // @Hack
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    for (const itemTypeString of Object.keys(recipe.ingredients)) {
       const ingredientType = Number(itemTypeString) as ItemType;
@@ -90,17 +90,17 @@ export function createCraftingAnimationParticles(entity: Entity, limbIdx: number
 
 const createBandageRenderPart = (entity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
       hitbox,
       6,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       getTextureArrayIndex("entities/miscellaneous/bandage.png")
    );
 
    const offsetMagnitude = 32 * Math.random();
-   const offsetDirection = 2 * Math.PI * Math.random();
+   const offsetDirection = randAngle();
    renderPart.offset.x = offsetMagnitude * Math.sin(offsetDirection);
    renderPart.offset.y = offsetMagnitude * Math.cos(offsetDirection);
 
@@ -133,7 +133,7 @@ export function updateBandageRenderPart(entity: Entity, renderPart: VisualRender
 export function createMedicineAnimationParticles(entity: Entity, limbIdx: number): void {
    if (Math.random() < 5 / Settings.TPS) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
 
       const colour = randItem(MEDICINE_PARTICLE_COLOURS);
       const pos = generateRandomLimbPosition();
@@ -184,7 +184,7 @@ const getCustomItemRenderPartOpacity = (entity: Entity, state: CustomItemState):
          const useInfo = ITEM_INFO_RECORD[ItemType.herbal_medicine] as ConsumableItemInfo;
 
          const ticksSpentUsingMedicine = Board.serverTicks - lastEatTicks;
-         const useProgress = ticksSpentUsingMedicine / Math.floor(useInfo.consumeTime * Settings.TPS);
+         const useProgress = ticksSpentUsingMedicine / secondsToTicks(useInfo.consumeTime);
          return 1 - useProgress;
       }
       case CustomItemState.crafting: {
@@ -217,7 +217,7 @@ export function updateCustomItemRenderPart(entity: Entity): void {
    if (customItemState !== null) {
       if (inventoryUseComponent.customItemRenderPart === null) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.children[0] as Hitbox;
+         const hitbox = transformComponent.hitboxes[0];
          
          inventoryUseComponent.customItemRenderPart = new TexturedRenderPart(
             hitbox,

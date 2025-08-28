@@ -4,30 +4,32 @@ import { CollisionGroup, getEntityCollisionGroup } from "../../../shared/src/col
 import { Entity } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
-import { clampToSubtileBoardDimensions, distance, Point, positionIsInWorld, randFloat } from "../../../shared/src/utils";
+import { TamingSkillID } from "../../../shared/src/taming";
+import { clampToSubtileBoardDimensions, distance, Point, positionIsInWorld, randAngle, randFloat } from "../../../shared/src/utils";
 import { getEntitiesInRange } from "../ai-shared";
 import { AIHelperComponent } from "../components/AIHelperComponent";
-import { removeAttachedEntity, TransformComponentArray } from "../components/TransformComponent";
+import { hasTamingSkill, TamingComponentArray } from "../components/TamingComponent";
+import { detachHitbox, TransformComponentArray } from "../components/TransformComponent";
 import { createKrumblidMorphCocoonConfig } from "../entities/desert/krumblid-morph-cocoon";
-import { createEntity } from "../Entity";
-import { Hitbox } from "../hitboxes";
-import { destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { createEntity, destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 
 export class KrumblidHibernateAI {
    public readonly acceleration: number;
    public readonly turnSpeed: number;
+   public readonly turnDamping: number;
    
    public hibernateTargetPosition: Point | null = null;
 
-   constructor(acceleration: number, turnSpeed: number) {
+   constructor(acceleration: number, turnSpeed: number, turnDamping: number) {
       this.acceleration = acceleration;
       this.turnSpeed = turnSpeed;
+      this.turnDamping = turnDamping;
    }
 }
 
 const getRandomNearbyPosition = (krumblid: Entity): Point => {
    const krumblidTransformComponent = TransformComponentArray.getComponent(krumblid);
-   const krumblidHitbox = krumblidTransformComponent.children[0] as Hitbox;
+   const krumblidHitbox = krumblidTransformComponent.hitboxes[0];
 
    const RANGE = 600;
    
@@ -155,20 +157,26 @@ export function runKrumblidHibernateAI(krumblid: Entity, aiHelperComponent: AIHe
    }
 
    const krumblidTransformComponent = TransformComponentArray.getComponent(krumblid);
+   const krumblidHitbox = krumblidTransformComponent.hitboxes[0];
+
    // if the krumblid was previously latched onto a target or sitting on an object, unattach.
-   if (krumblidTransformComponent.rootEntity !== krumblid) {
-      removeAttachedEntity(krumblidTransformComponent.rootEntity, krumblid);
+   if (krumblidHitbox.parent !== null) {
+      detachHitbox(krumblidHitbox);
    }
 
    if (hibernateAI.hibernateTargetPosition !== null) {
       // go to it!
-      aiHelperComponent.move(krumblid, hibernateAI.acceleration, hibernateAI.turnSpeed, hibernateAI.hibernateTargetPosition.x, hibernateAI.hibernateTargetPosition.y);
+      aiHelperComponent.moveFunc(krumblid, hibernateAI.hibernateTargetPosition, hibernateAI.acceleration);
+      aiHelperComponent.turnFunc(krumblid, hibernateAI.hibernateTargetPosition, hibernateAI.turnSpeed, hibernateAI.turnDamping);
 
-      const krumblidHitbox = krumblidTransformComponent.children[0] as Hitbox;
-      if (krumblidHitbox.box.position.calculateDistanceBetween(hibernateAI.hibernateTargetPosition) < 1) {
+      if (krumblidHitbox.box.position.distanceTo(hibernateAI.hibernateTargetPosition) < 1) {
          destroyEntity(krumblid);
 
-         const cocoonConfig = createKrumblidMorphCocoonConfig(krumblidHitbox.box.position.copy(), 2 * Math.PI * Math.random());
+         // If the krumblid has the imprint skill, then it retains its tame tribe
+         const tamingComponent = TamingComponentArray.getComponent(krumblid);
+         const tribe = hasTamingSkill(tamingComponent, TamingSkillID.imprint) ? tamingComponent.tameTribe : null;
+
+         const cocoonConfig = createKrumblidMorphCocoonConfig(krumblidHitbox.box.position.copy(), randAngle(), tribe);
          createEntity(cocoonConfig, getEntityLayer(krumblid), 0);
       }
    } else {
@@ -178,8 +186,9 @@ export function runKrumblidHibernateAI(krumblid: Entity, aiHelperComponent: AIHe
       // Wander AI
       const wanderAI = aiHelperComponent.getWanderAI();
       wanderAI.update(krumblid);
-      if (wanderAI.targetPositionX !== -1) {
-         aiHelperComponent.move(krumblid, 250, 2 * Math.PI, wanderAI.targetPositionX, wanderAI.targetPositionY);
+      if (wanderAI.targetPosition !== null) {
+         aiHelperComponent.moveFunc(krumblid, wanderAI.targetPosition, wanderAI.acceleration);
+         aiHelperComponent.turnFunc(krumblid, wanderAI.targetPosition, wanderAI.turnSpeed, wanderAI.turnDamping);
       }
    }
 }

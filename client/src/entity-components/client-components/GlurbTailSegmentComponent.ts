@@ -1,12 +1,11 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { Point } from "../../../../shared/src/utils";
-import { createLight } from "../../lights";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface GlurbTailSegmentComponentParams {}
 
@@ -20,12 +19,10 @@ export const GlurbTailSegmentComponentArray = new ClientComponentArray<GlurbTail
    getMaxRenderParts: getMaxRenderParts
 });
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
-   const lightIntensity = 0.3;
-   const lightRadius = 4;
    const textureSource = "entities/glurb/glurb-tail-segment.png";
    
    const renderPart = new TexturedRenderPart(
@@ -35,14 +32,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0,
       getTextureArrayIndex(textureSource)
    );
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
-      
-   // Attach light to the render part
-   const light = createLight(new Point(0, 0), lightIntensity, 0.8, lightRadius, 1, 0.2, 0.9);
-   entityIntermediateInfo.lights.push({
-      light: light,
-      attachedRenderPart: renderPart
-   });
+   renderInfo.attachRenderPart(renderPart);
 
    return {};
 }

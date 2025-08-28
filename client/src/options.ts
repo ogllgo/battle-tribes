@@ -12,12 +12,12 @@ interface Options {
     */
    showChunkBorders: boolean;
    /**
-    * If true, then render chunk borders will be displayed in a wireframe.
     * @default false
     */
    showRenderChunkBorders: boolean;
    readonly showParticles: boolean;
    readonly showAllTechs: boolean;
+   hideEntities: boolean;
    showPathfindingNodes: boolean;
    showSafetyNodes: boolean;
    showBuildingSafetys: boolean;
@@ -41,6 +41,7 @@ const OPTIONS: Options = {
    showRenderChunkBorders: false,
    showParticles: true,
    showAllTechs: false,
+   hideEntities: false,
    showPathfindingNodes: false,
    showSafetyNodes: false,
    showBuildingSafetys: false,

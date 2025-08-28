@@ -50,6 +50,7 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
    const [showHitboxes, setShowEntityHitboxes] = useState(OPTIONS.showHitboxes);
    const [showChunkBorders, setShowChunkBorders] = useState(OPTIONS.showChunkBorders);
    const [showRenderChunkBorders, setShowRenderChunkBorders] = useState(OPTIONS.showRenderChunkBorders);
+   const [hideEntities, setHideEntities] = useState(OPTIONS.hideEntities);
    const [showPathfindingNodes, setShowPathfindingNodes] = useState(OPTIONS.showPathfindingNodes);
    const [showSafetyNodes, setShowSafetyNodes] = useState(OPTIONS.showSafetyNodes);
    const [showBuildingSafetys, setShowBuildingSafetys] = useState(OPTIONS.showBuildingSafetys);
@@ -96,6 +97,11 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
       OPTIONS.showRenderChunkBorders = !showRenderChunkBorders;
       setShowRenderChunkBorders(!showRenderChunkBorders);
    }, [showRenderChunkBorders]);
+
+   const toggleHideEntities = useCallback(() => {
+      OPTIONS.hideEntities = !hideEntities;
+      setHideEntities(!hideEntities);
+   }, [hideEntities]);
 
    const toggleShowPathfindingNodes = useCallback(() => {
       OPTIONS.showPathfindingNodes = !showPathfindingNodes;
@@ -230,6 +236,12 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
             <label className={showRenderChunkBorders ? "enabled" : undefined}>
                <input checked={showRenderChunkBorders} name="render-chunk-borders-checkbox" type="checkbox" onChange={toggleShowRenderChunkBorders} />
                Render chunk borders
+            </label>
+         </li>
+         <li>
+            <label className={hideEntities ? "enabled" : undefined}>
+               <input checked={hideEntities} name="hide-entities-checkbox" type="checkbox" onChange={toggleHideEntities} />
+               Hide entities
             </label>
          </li>
          <li>

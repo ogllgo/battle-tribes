@@ -226,7 +226,7 @@ const CraftingMenu = (props: CraftingMenuProps) => {
       }
 
       const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
-      const playerHitbox = playerTransformComponent.children[0] as Hitbox;
+      const playerHitbox = playerTransformComponent.hitboxes[0];
 
       playSound("craft.mp3", 0.25, 1, playerHitbox.box.position, null);
       sendCraftItemPacket(selectedRecipeIndex.current);

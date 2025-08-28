@@ -1,4 +1,4 @@
-import { randFloat } from "battletribes-shared/utils";
+import { randAngle, randFloat } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { playSoundOnHitbox } from "../../sound";
@@ -9,8 +9,9 @@ import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { Entity } from "../../../../shared/src/entities";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface SpikesComponentParams {
    readonly isCovered: boolean;
@@ -71,7 +72,7 @@ const createLeafRenderPart = (isSmall: boolean, parentHitbox: Hitbox): VisualRen
    const renderPart = new TexturedRenderPart(
       parentHitbox,
       1 + Math.random() * 0.5,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       getTextureArrayIndex(textureSource)
    );
 
@@ -83,23 +84,23 @@ const createLeafRenderPart = (isSmall: boolean, parentHitbox: Hitbox): VisualRen
    return renderPart;
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const leafRenderParts = new Array<VisualRenderPart>();
    for (let i = 0; i < NUM_SMALL_COVER_LEAVES; i++) {
       const renderPart = createLeafRenderPart(true, hitbox);
       // @TEMPORARY
       renderPart.opacity = 0;
-      entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+      renderInfo.attachRenderPart(renderPart);
       leafRenderParts.push(renderPart);
    }
    for (let i = 0; i < NUM_LARGE_COVER_LEAVES; i++) {
       const renderPart = createLeafRenderPart(false, hitbox);
       // @TEMPORARY
       renderPart.opacity = 0;
-      entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+      renderInfo.attachRenderPart(renderPart);
       leafRenderParts.push(renderPart);
    }
 
@@ -146,7 +147,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    
    if (isCoveredBefore !== spikesComponent.isCovered) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
 
       if (spikesComponent.isCovered) {
          // When covering trap
@@ -157,8 +158,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    
          // Create leaf particles
          for (let i = 0; i < 4; i++) {
-            const position = hitbox.box.position.offset(randFloat(0, 22), 2 * Math.PI * Math.random())
-            createLeafParticle(position.x, position.y, 2 * Math.PI * Math.random() + randFloat(-1, 1), Math.random() < 0.5 ? LeafParticleSize.large : LeafParticleSize.small);
+            const position = hitbox.box.position.offset(randFloat(0, 22), randAngle())
+            createLeafParticle(position.x, position.y, randAngle() + randFloat(-1, 1), Math.random() < 0.5 ? LeafParticleSize.large : LeafParticleSize.small);
          }
          
          // Create leaf specks

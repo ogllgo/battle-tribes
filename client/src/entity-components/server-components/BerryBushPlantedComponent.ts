@@ -6,9 +6,10 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
 import { randInt } from "../../../../shared/src/utils";
 import { playSoundOnHitbox } from "../../sound";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface BerryBushPlantedComponentParams {
    readonly growthProgress: number;
@@ -67,9 +68,9 @@ function createParamsFromData(reader: PacketReader): BerryBushPlantedComponentPa
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const berryBushPlantedComponentParams = entityParams.serverComponentParams[ServerComponentType.berryBushPlanted]!;
    
@@ -80,7 +81,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0,
       getTextureArrayIndex(getTextureSource(berryBushPlantedComponentParams.growthProgress, berryBushPlantedComponentParams.numFruits))
    );
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {
       renderPart: renderPart
@@ -109,16 +110,14 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    berryBushPlantedComponent.renderPart.switchTextureSource(getTextureSource(growthProgress, numFruits));
 }
 
-function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+function onHit(entity: Entity, hitbox: Hitbox): void {
    // @Incomplete: particles?
    playSoundOnHitbox("berry-bush-hit-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, hitbox, false);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    // @Incomplete: particles?
    playSoundOnHitbox("berry-bush-destroy-1.mp3", 0.4, 1, entity, hitbox, false);
 }

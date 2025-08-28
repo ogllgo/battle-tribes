@@ -1,14 +1,13 @@
 import { GuardianCrystalSlamStage } from "battletribes-shared/components";
 import { Entity } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { lerp, Point, UtilVars } from "battletribes-shared/utils";
+import { lerp, Point, polarVec2, randAngle, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition, turnToPosition } from "../ai-shared";
 import { GuardianComponent, GuardianComponentArray, GuardianVars } from "../components/GuardianComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { createGuardianGemQuakeConfig } from "../entities/guardian-gem-quake";
-import { createEntity } from "../Entity";
-import { getEntityLayer } from "../world";
-import { applyAbsoluteKnockback, Hitbox } from "../hitboxes";
+import { createEntity, getEntityLayer } from "../world";
+import { applyAbsoluteKnockback } from "../hitboxes";
 
 const enum Vars {
    WINDUP_TIME_TICKS = (1.5 * Settings.TPS) | 0,
@@ -42,9 +41,9 @@ export default class GuardianCrystalSlamAI {
    private slam(guardian: Entity): void {
       // Push back the guardian
       const transformComponent = TransformComponentArray.getComponent(guardian);
-      const bodyHitbox = transformComponent.children[0] as Hitbox;
+      const bodyHitbox = transformComponent.hitboxes[0];
       
-      applyAbsoluteKnockback(guardian, bodyHitbox, 150, bodyHitbox.box.angle + UtilVars.PI);
+      applyAbsoluteKnockback(bodyHitbox, polarVec2(150, bodyHitbox.box.angle + Math.PI));
 
       const offsetMagnitude = GuardianVars.LIMB_ORBIT_RADIUS + Vars.LIMB_EXTEND_AMOUNT;
       const originX = bodyHitbox.box.position.x + offsetMagnitude * Math.sin(bodyHitbox.box.angle);
@@ -70,11 +69,11 @@ export default class GuardianCrystalSlamAI {
 
             // Add random offset to position
             const offsetMagnitude = 8 * Math.random();
-            const offsetDirection = 2 * Math.PI * Math.random();
+            const offsetDirection = randAngle();
             x += offsetMagnitude * Math.sin(offsetDirection);
             y += offsetMagnitude * Math.cos(offsetDirection);
             
-            const config = createGuardianGemQuakeConfig(new Point(x, y), 2 * Math.PI * Math.random());
+            const config = createGuardianGemQuakeConfig(new Point(x, y), randAngle());
             createEntity(config, layer, spawnDelayTicks);
          }
       }
@@ -131,7 +130,7 @@ export default class GuardianCrystalSlamAI {
          this.stage = GuardianCrystalSlamStage.return;
 
          // Look at target
-         turnToPosition(guardian, targetX, targetY, this.turnSpeed, 1);
+         turnToPosition(guardian, new Point(targetX, targetY), this.turnSpeed, 1);
 
          // Return limbs to normal
          let progress = this.returnProgressTicks / Vars.RETURN_TIME_TICKS;

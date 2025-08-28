@@ -7,7 +7,8 @@ export const enum TamingSkillID {
    carry,
    attack,
    shatteredWill,
-   dulledPainReceptors
+   dulledPainReceptors,
+   imprint
 }
 
 export type TamingTier = 0 | 1 | 2 | 3;
@@ -23,14 +24,14 @@ export interface TamingSkill {
    readonly name: string;
    readonly description: string;
    readonly requirements: ReadonlyArray<TamingSkillRequirement>;
-   readonly requiredTamingTier: number;
-   readonly parent: TamingSkillID | null;
 }
 
 export interface TamingSkillNode {
    readonly skill: TamingSkill;
    readonly x: number;
    readonly y: number;
+   readonly parent: TamingSkillID | null;
+   readonly requiredTamingTier: number;
 }
 
 export interface EntityTamingSpec<TamingTiers extends TamingTier = TamingTier> {
@@ -44,72 +45,62 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
    [TamingSkillID.follow]: {
       id: TamingSkillID.follow,
       name: "Follow",
-      description: "Allows you to command the cow to follow you.",
+      description: "Allows you to command the [[CREATURE_NAME]] to follow you.",
       requirements: [
          {
-            description: "Time around cow",
+            description: "Time spent around creature",
             amountRequired: 30,
             suffix: " seconds"
          }
-      ],
-      requiredTamingTier: 1,
-      parent: null
+      ]
    },
    [TamingSkillID.riding]: {
       id: TamingSkillID.riding,
       name: "Riding",
-      description: "Allows you to ride the cow.",
+      description: "Allows you to ride the [[CREATURE_NAME]].",
       requirements: [
          {
             description: "Mount attempts",
             amountRequired: 5,
             suffix: " attempts"
          }
-      ],
-      requiredTamingTier: 2,
-      parent: TamingSkillID.follow
+      ]
    },
    [TamingSkillID.move]: {
       id: TamingSkillID.move,
       name: "Move",
-      description: "Allows you to command the cow to move to a specific location.",
+      description: "Allows you to command the [[CREATURE_NAME]] to move to a specific location.",
       requirements: [
          {
             description: "Time spent following",
             amountRequired: 30,
             suffix: " seconds"
          }
-      ],
-      requiredTamingTier: 2,
-      parent: TamingSkillID.follow
+      ]
    },
    [TamingSkillID.carry]: {
       id: TamingSkillID.carry,
       name: "Carry",
-      description: "Allows you to command the cow to pick up an entity.",
+      description: "Allows you to command the [[CREATURE_NAME]] to pick up an entity.",
       requirements: [
          {
             description: "Time spent riding",
             amountRequired: 120,
             suffix: " seconds"
          }
-      ],
-      requiredTamingTier: 3,
-      parent: TamingSkillID.riding
+      ]
    },
    [TamingSkillID.attack]: {
       id: TamingSkillID.attack,
       name: "Attack",
-      description: "Allows you to command the cow to attack enemies.",
+      description: "Allows you to command the [[CREATURE_NAME]] to attack enemies.",
       requirements: [
          {
             description: "Time spent being moved",
             amountRequired: 30,
             suffix: " seconds"
          }
-      ],
-      requiredTamingTier: 3,
-      parent: TamingSkillID.move
+      ]
    },
    [TamingSkillID.shatteredWill]: {
       id: TamingSkillID.shatteredWill,
@@ -121,9 +112,7 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
             amountRequired: 15,
             suffix: " damage"
          }
-      ],
-      requiredTamingTier: 3,
-      parent: TamingSkillID.move
+      ]
    },
    [TamingSkillID.dulledPainReceptors]: {
       id: TamingSkillID.dulledPainReceptors,
@@ -135,9 +124,19 @@ export const TAMING_SKILL_RECORD: Record<TamingSkillID, TamingSkill> = {
             amountRequired: 15,
             suffix: " damage"
          }
-      ],
-      requiredTamingTier: 1,
-      parent: null
+      ]
+   },
+   [TamingSkillID.imprint]: {
+      id: TamingSkillID.imprint,
+      name: "Imprint",
+      description: "The krumblid will remain tame at Taming Tier 1 when it metamorphs into an okren.",
+      requirements: [
+         {
+            description: "Time spent at Taming Tier 3",
+            amountRequired: 1000,
+            suffix: " seconds"
+         }
+      ]
    }
 };
 

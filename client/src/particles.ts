@@ -1,4 +1,4 @@
-import { Point, angle, lerp, randFloat, randInt, randItem, randSign } from "battletribes-shared/utils";
+import { Point, angle, lerp, polarVec2, randAngle, randFloat, randInt, randItem, randSign } from "battletribes-shared/utils";
 import { CactusFlowerSize, Entity } from "battletribes-shared/entities";
 import Particle from "./Particle";
 import { ParticleColour, ParticleRenderLayer, addMonocolourParticleToBufferContainer, addTexturedParticleToBufferContainer } from "./rendering/webgl/particle-rendering";
@@ -54,7 +54,7 @@ export function createBloodParticle(size: BloodParticleSize, spawnPositionX: num
       velocityX, velocityY,
       0, 0,
       friction,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0,
       0,
       0,
@@ -66,9 +66,9 @@ export function createBloodParticle(size: BloodParticleSize, spawnPositionX: num
 const BLOOD_FOUNTAIN_RAY_COUNT = 5;
 
 export function createBloodParticleFountain(entity: Entity, interval: number, speedMultiplier: number): void {
-   const offset = 2 * Math.PI * Math.random();
+   const offset = randAngle();
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 4; i++) {
       Board.addTickCallback(interval * (i + 1), () => {
@@ -114,7 +114,7 @@ export function createLeafParticle(spawnPositionX: number, spawnPositionY: numbe
       velocityX, velocityY,
       0, 0,
       60,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       Math.PI * randFloat(-1, 1),
       0,
       1.5 * Math.PI,
@@ -124,11 +124,11 @@ export function createLeafParticle(spawnPositionX: number, spawnPositionY: numbe
    Board.lowTexturedParticles.push(particle);
 }
 
-export function createFootprintParticle(entity: Entity, numFootstepsTaken: number, footstepOffset: number, size: number, lifetime: number): void {
-   const footstepAngleOffset = numFootstepsTaken % 2 === 0 ? Math.PI : 0;
+export function createFootprintParticle(entity: Entity, isLeftFootprint: boolean, footstepOffset: number, size: number, lifetime: number): void {
+   const footstepAngleOffset = isLeftFootprint ? Math.PI : 0;
 
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const velocity = getHitboxVelocity(hitbox);
    const velocityDirection = angle(velocity.x, velocity.y);
@@ -168,10 +168,12 @@ export enum BloodPoolSize {
 }
 
 export function createBloodPoolParticle(originX: number, originY: number, spawnRange: number): void {
-   const lifetime = 7.5;
+   // @SQUEAM for the cow shot
+   // const lifetime = 7.5;
+   const lifetime = 10;
 
    const offsetMagnitude = spawnRange * Math.random();
-   const offsetDirection = 2 * Math.PI * Math.random();
+   const offsetDirection = randAngle();
    const spawnPositionX = originX + offsetMagnitude * Math.sin(offsetDirection);
    const spawnPositionY = originY + offsetMagnitude * Math.cos(offsetDirection);
 
@@ -191,7 +193,7 @@ export function createBloodPoolParticle(originX: number, originY: number, spawnR
       0, 0,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0,
       0,
       0,
@@ -236,7 +238,7 @@ export function createRockParticle(spawnPositionX: number, spawnPositionY: numbe
       velocityX, velocityY,
       accelerationX, accelerationY,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       2 * Math.PI * spinDirection,
       0,
       Math.abs(Math.PI * spinDirection),
@@ -253,7 +255,7 @@ export function createRockParticle(spawnPositionX: number, spawnPositionY: numbe
 export function createDirtParticle(spawnPositionX: number, spawnPositionY: number, renderLayer: ParticleRenderLayer): void {
    const speedMultiplier = randFloat(1, 2.2);
 
-   const velocityDirection = 2 * Math.PI * Math.random();
+   const velocityDirection = randAngle();
    const velocityX = 80 * speedMultiplier * Math.sin(velocityDirection);
    const velocityY = 80 * speedMultiplier * Math.cos(velocityDirection);
 
@@ -274,7 +276,7 @@ export function createDirtParticle(spawnPositionX: number, spawnPositionY: numbe
       velocityX, velocityY,
       0, 0,
       300,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       angularVelocityMagnitude * randSign(),
       0,
       angularVelocityMagnitude / lifetime,
@@ -295,7 +297,7 @@ const SNOW_PARTICLE_COLOUR_HIGH: ParticleColour = [199/255, 209/255, 209/255];
 export function createSnowParticle(spawnPositionX: number, spawnPositionY: number, moveSpeed: number): void {
    const lifetime = randFloat(0.6, 0.8);
 
-   const velocityDirection = 2 * Math.PI * Math.random();
+   const velocityDirection = randAngle();
    const velocityX = moveSpeed * Math.sin(velocityDirection);
    const velocityY = moveSpeed * Math.cos(velocityDirection);
    
@@ -319,7 +321,7 @@ export function createSnowParticle(spawnPositionX: number, spawnPositionY: numbe
       velocityX, velocityY,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0,
       0,
       0,
@@ -328,9 +330,47 @@ export function createSnowParticle(spawnPositionX: number, spawnPositionY: numbe
    Board.lowMonocolourParticles.push(particle);
 }
 
+// @Copynpaste, basically just so the snobe particles are above snobes
+export function createHighSnowParticle(spawnPositionX: number, spawnPositionY: number, moveSpeed: number): void {
+   const lifetime = randFloat(0.6, 0.8);
+
+   const velocityDirection = randAngle();
+   const velocityX = moveSpeed * Math.sin(velocityDirection);
+   const velocityY = moveSpeed * Math.cos(velocityDirection);
+   
+   const particle = new Particle(lifetime);
+   particle.getOpacity = (): number => {
+      return 1 - particle.age / lifetime;
+   };
+
+   const pixelSize = 4 * randInt(1, 2);
+
+   const colourLerp = Math.random();
+   // @HACK @ASS
+   const r = lerp(SNOW_PARTICLE_COLOUR_LOW[0] * 0.8, SNOW_PARTICLE_COLOUR_HIGH[0] * 1.05, colourLerp);
+   const g = lerp(SNOW_PARTICLE_COLOUR_LOW[1] * 0.8, SNOW_PARTICLE_COLOUR_HIGH[1] * 1.05, colourLerp);
+   const b = lerp(SNOW_PARTICLE_COLOUR_LOW[2] * 0.8, SNOW_PARTICLE_COLOUR_HIGH[2] * 1.05, colourLerp);
+   
+   addMonocolourParticleToBufferContainer(
+      particle,
+      ParticleRenderLayer.high,
+      pixelSize, pixelSize,
+      spawnPositionX, spawnPositionY,
+      velocityX, velocityY,
+      0, 0,
+      0,
+      randAngle(),
+      0,
+      0,
+      0,
+      r, g, b
+   );
+   Board.highMonocolourParticles.push(particle);
+}
+
 export function createWhiteSmokeParticle(spawnPositionX: number, spawnPositionY: number, strength: number): void {
    const velocityMagnitude = 125 * randFloat(0.8, 1.2) * strength;
-   const velocityDirection = 2 * Math.PI * Math.random();
+   const velocityDirection = randAngle();
    const velocityX = velocityMagnitude * Math.sin(velocityDirection);
    const velocityY = velocityMagnitude * Math.cos(velocityDirection);
 
@@ -351,7 +391,7 @@ export function createWhiteSmokeParticle(spawnPositionX: number, spawnPositionY:
       velocityX, velocityY,
       0, 0,
       velocityMagnitude / lifetime / 1.5,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       Math.PI * randFloat(2, 3) * randSign(),
       0,
       Math.PI,
@@ -362,7 +402,7 @@ export function createWhiteSmokeParticle(spawnPositionX: number, spawnPositionY:
 }
 
 export function createLeafSpeckParticle(originX: number, originY: number, offset: number, lowColour: Readonly<ParticleColour>, highColour: Readonly<ParticleColour>): void {
-   const spawnOffsetDirection = 2 * Math.PI * Math.random();
+   const spawnOffsetDirection = randAngle();
    const spawnPositionX = originX + offset * Math.sin(spawnOffsetDirection);
    const spawnPositionY = originY + offset * Math.cos(spawnOffsetDirection);
 
@@ -395,7 +435,7 @@ export function createLeafSpeckParticle(originX: number, originY: number, offset
       velocityX, velocityY,
       0, 0,
       velocityMagnitude / lifetime / 1.5,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       angularVelocity,
       0,
       Math.abs(angularVelocity) / lifetime / 1.5,
@@ -405,7 +445,7 @@ export function createLeafSpeckParticle(originX: number, originY: number, offset
 }
 
 export function createWoodSpeckParticle(originX: number, originY: number, offset: number): void {
-   const spawnOffsetDirection = 2 * Math.PI * Math.random();
+   const spawnOffsetDirection = randAngle();
    const spawnPositionX = originX + offset * Math.sin(spawnOffsetDirection);
    const spawnPositionY = originY + offset * Math.cos(spawnOffsetDirection);
 
@@ -438,7 +478,7 @@ export function createWoodSpeckParticle(originX: number, originY: number, offset
       velocityX, velocityY,
       0, 0,
       velocityMagnitude / lifetime / 1.5,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       angularVelocity,
       0,
       Math.abs(angularVelocity) / lifetime / 1.5,
@@ -448,7 +488,7 @@ export function createWoodSpeckParticle(originX: number, originY: number, offset
 }
 
 export function createRockSpeckParticle(originX: number, originY: number, offset: number, velocityAddX: number, velocityAddY: number, renderLayer: ParticleRenderLayer): void {
-   const spawnOffsetDirection = 2 * Math.PI * Math.random();
+   const spawnOffsetDirection = randAngle();
    const spawnPositionX = originX + offset * Math.sin(spawnOffsetDirection);
    const spawnPositionY = originY + offset * Math.cos(spawnOffsetDirection);
 
@@ -479,7 +519,7 @@ export function createRockSpeckParticle(originX: number, originY: number, offset
       velocityX, velocityY,
       0, 0,
       velocityMagnitude / lifetime / 1.1,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       angularVelocity,
       0,
       Math.abs(angularVelocity) / lifetime / 1.5,
@@ -494,7 +534,7 @@ export function createRockSpeckParticle(originX: number, originY: number, offset
 
 export function createSlimeSpeckParticle(originX: number, originY: number, spawnOffset: number): void {
    const spawnOffsetMagnitude = spawnOffset;
-   const spawnOffsetDirection = 2 * Math.PI * Math.random();
+   const spawnOffsetDirection = randAngle();
    const spawnPositionX = originX + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
    const spawnPositionY = originY + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 
@@ -503,7 +543,7 @@ export function createSlimeSpeckParticle(originX: number, originY: number, spawn
    const size = randInt(0, 1);
 
    const moveSpeed = randFloat(30, 40);
-   const moveDirection = 2 * Math.PI * Math.random();
+   const moveDirection = randAngle();
    const velocityX = moveSpeed * Math.sin(moveDirection);
    const velocityY = moveSpeed * Math.cos(moveDirection);
 
@@ -522,7 +562,7 @@ export function createSlimeSpeckParticle(originX: number, originY: number, spawn
       velocityX, velocityY,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       randFloat(-Math.PI, Math.PI) * 2,
       0,
       Math.PI,
@@ -534,7 +574,7 @@ export function createSlimeSpeckParticle(originX: number, originY: number, spawn
 
 export function createSlimePoolParticle(originX: number, originY: number, spawnOffsetRange: number): void {
    const spawnOffsetMagnitude = spawnOffsetRange * Math.random();
-   const spawnOffsetDirection = 2 * Math.PI * Math.random();
+   const spawnOffsetDirection = randAngle();
    const spawnPositionX = originX + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
    const spawnPositionY = originY + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 
@@ -555,7 +595,7 @@ export function createSlimePoolParticle(originX: number, originY: number, spawnO
       0, 0,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0,
       0,
       0,
@@ -572,7 +612,7 @@ export function createWaterSplashParticle(spawnPositionX: number, spawnPositionY
    const lifetime = 1;
 
    const velocityMagnitude = randFloat(40, 60);
-   const velocityDirection = 2 * Math.PI * Math.random()
+   const velocityDirection = randAngle()
    const velocityX = velocityMagnitude * Math.sin(velocityDirection);
    const velocityY = velocityMagnitude * Math.cos(velocityDirection);
       
@@ -594,7 +634,7 @@ export function createWaterSplashParticle(spawnPositionX: number, spawnPositionY
       velocityX, velocityY,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       randFloat(2, 3) * randSign(),
       0,
       0,
@@ -615,7 +655,7 @@ export function createSmokeParticle(spawnPositionX: number, spawnPositionY: numb
       return 1 + deathProgress * 2;
    }
 
-   const velocity = Point.fromVectorForm(30, 2 * Math.PI * Math.random());
+   const velocity = polarVec2(30, randAngle());
 
    addTexturedParticleToBufferContainer(
       particle,
@@ -625,7 +665,7 @@ export function createSmokeParticle(spawnPositionX: number, spawnPositionY: numb
       velocity.x, velocity.y,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0,
       0.75 * Math.PI * randFloat(-1, 1),
       0,
@@ -642,7 +682,7 @@ export function createEmberParticle(spawnPositionX: number, spawnPositionY: numb
    const velocityY = moveSpeed * Math.cos(initialMoveDirection);
 
    const accelerationMagnitude = randFloat(0, 80);
-   const accelerationDirection = 2 * Math.PI * Math.random();
+   const accelerationDirection = randAngle();
    const accelerationX = accelerationMagnitude * Math.sin(accelerationDirection);
    const accelerationY = accelerationDirection * Math.cos(accelerationDirection);
    
@@ -662,7 +702,7 @@ export function createEmberParticle(spawnPositionX: number, spawnPositionY: numb
       velocityX + vAddX, velocityY + vAddY,
       accelerationX, accelerationY,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0, 
       0,
       0,
@@ -675,7 +715,7 @@ export function createPoisonBubble(spawnPositionX: number, spawnPositionY: numbe
    const lifetime = randFloat(0.2, 0.3);
    
    const moveSpeed = randFloat(75, 150);
-   const moveDirection = 2 * Math.PI * Math.random();
+   const moveDirection = randAngle();
    const velocityX = moveSpeed * Math.sin(moveDirection);
    const velocityY = moveSpeed * Math.cos(moveDirection);
 
@@ -696,7 +736,7 @@ export function createPoisonBubble(spawnPositionX: number, spawnPositionY: numbe
       velocityX, velocityY,
       0, 0,
       moveSpeed / lifetime / 1.1,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       randFloat(-1, 1) * Math.PI * 2,
       0,
       0,
@@ -713,12 +753,12 @@ export function createFlyParticle(x: number, y: number): void {
    const lifetime = randFloat(0.5, 1);
    
    const moveSpeed = randFloat(75, 150);
-   const moveDirection = 2 * Math.PI * Math.random();
+   const moveDirection = randAngle();
    const velocityX = moveSpeed * Math.sin(moveDirection);
    const velocityY = moveSpeed * Math.cos(moveDirection);
    
    const accelerateMagnitude = randFloat(75, 150);
-   const accelerateDirection = 2 * Math.PI * Math.random();
+   const accelerateDirection = randAngle();
    const accelerationX = accelerateMagnitude * Math.sin(accelerateDirection);
    const accelerationY = accelerateMagnitude * Math.cos(accelerateDirection);
 
@@ -740,7 +780,7 @@ export function createFlyParticle(x: number, y: number): void {
       velocityX, velocityY,
       accelerationX, accelerationY,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       randFloat(-1, 1) * Math.PI * 2,
       0,
       0,
@@ -754,7 +794,7 @@ export function createStarParticle(x: number, y: number): void {
    const lifetime = randFloat(0.5, 1);
    
    const moveSpeed = randFloat(75, 150);
-   const moveDirection = 2 * Math.PI * Math.random();
+   const moveDirection = randAngle();
    const velocityX = moveSpeed * Math.sin(moveDirection);
    const velocityY = moveSpeed * Math.cos(moveDirection);
 
@@ -776,7 +816,7 @@ export function createStarParticle(x: number, y: number): void {
       velocityX, velocityY,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       randFloat(-1, 1) * Math.PI * 2,
       0,
       0,
@@ -788,7 +828,7 @@ export function createStarParticle(x: number, y: number): void {
 
 export function createMagicParticle(x: number, y: number): void {
    const velocityMagnitude = randFloat(30, 40);
-   const velocityDirection = 2 * Math.PI * Math.random();
+   const velocityDirection = randAngle();
    const velocityX = velocityMagnitude * Math.sin(velocityDirection);
    const velocityY = velocityMagnitude * Math.cos(velocityDirection);
 
@@ -819,7 +859,7 @@ export function createMagicParticle(x: number, y: number): void {
       velocityX, velocityY,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       angularVelocity,
       0,
       Math.abs(angularVelocity) / lifetime / 1.5,
@@ -832,7 +872,7 @@ const HEALING_PARTICLE_TEXTURE_INDEXES = [3 * 8 + 1, 3 * 8 + 2, 3 * 8 + 3];
 
 export function createHealingParticle(position: Point, size: number): void {
    const moveSpeed = randFloat(20, 30);
-   const moveDirection = 2 * Math.PI * Math.random();
+   const moveDirection = randAngle();
    const velocityX = moveSpeed * Math.sin(moveDirection);
    const velocityY = moveSpeed * Math.cos(moveDirection);
    
@@ -863,7 +903,7 @@ export function createHealingParticle(position: Point, size: number): void {
 
 export function createSnowflakeParticle(x: number, y: number): void {
    const moveSpeed = randFloat(20, 30);
-   const moveDirection = 2 * Math.PI * Math.random();
+   const moveDirection = randAngle();
    const velocityX = moveSpeed * Math.sin(moveDirection);
    const velocityY = moveSpeed * Math.cos(moveDirection);
    
@@ -894,7 +934,7 @@ export function createSnowflakeParticle(x: number, y: number): void {
 
 export function createPaperParticle(x: number, y: number): void {
    const moveSpeed = randFloat(20, 30);
-   const moveDirection = 2 * Math.PI * Math.random();
+   const moveDirection = randAngle();
    const velocityX = moveSpeed * Math.sin(moveDirection);
    const velocityY = moveSpeed * Math.cos(moveDirection);
    
@@ -915,7 +955,7 @@ export function createPaperParticle(x: number, y: number): void {
       velocityX, velocityY,
       0, 0,
       moveSpeed / lifetime * 1.1,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       angularFrictionMagnitude * randSign(),
       0,
       angularFrictionMagnitude / lifetime * 1.1,
@@ -966,7 +1006,7 @@ const getFlowerTextureIndex = (flowerType: number, size: CactusFlowerSize): numb
 
 export function createFlowerParticle(spawnPositionX: number, spawnPositionY: number, flowerType: number, size: CactusFlowerSize, rotation: number): void {
    const velocityMagnitude = randFloat(30, 50);
-   const velocityDirection = 2 * Math.PI * Math.random();
+   const velocityDirection = randAngle();
    const velocityX = velocityMagnitude * Math.sin(velocityDirection);
    const velocityY = velocityMagnitude * Math.cos(velocityDirection);
    
@@ -996,16 +1036,16 @@ export function createFlowerParticle(spawnPositionX: number, spawnPositionY: num
    Board.lowTexturedParticles.push(particle);
 }
 
-export function createCactusSpineParticle(transformComponent: TransformComponent, offset: number, flyDirection: number): void {
-   const hitbox = transformComponent.children[0] as Hitbox;
+export function createCactusSpineParticle(transformComponent: TransformComponent, offset: number, flyDir: number): void {
+   const hitbox = transformComponent.hitboxes[0];
    
    // @Speed: Garbage collection
-   const spawnPosition = Point.fromVectorForm(offset, flyDirection);
+   const spawnPosition = polarVec2(offset, flyDir);
    spawnPosition.add(hitbox.box.position);
    
    const lifetime = randFloat(0.2, 0.3);
 
-   const velocity = Point.fromVectorForm(randFloat(150, 200), flyDirection);
+   const velocity = polarVec2(randFloat(150, 200), flyDir);
 
    const particle = new Particle(lifetime);
    particle.getOpacity = () => {
@@ -1020,7 +1060,7 @@ export function createCactusSpineParticle(transformComponent: TransformComponent
       velocity.x, velocity.y,
       0, 0,
       0,
-      flyDirection,
+      flyDir,
       0,
       0,
       0,
@@ -1032,7 +1072,7 @@ export function createCactusSpineParticle(transformComponent: TransformComponent
 const FROST_PARTICLE_LOW: ParticleColour = [102/255, 165/255, 205/255];
 const FROST_PARTICLE_HIGH: ParticleColour = [202/255, 239/255, 255/255];
 export function createFrostShieldBreakParticle(positionX: number, positionY: number): void {
-   const offsetDirection = 2 * Math.PI * Math.random();
+   const offsetDirection = randAngle();
    positionX += 32 * Math.sin(offsetDirection);
    positionY += 32 * Math.cos(offsetDirection);
 
@@ -1076,7 +1116,7 @@ export function createSawdustCloud(x: number, y: number): void {
    const lifetime = randFloat(0.4, 0.7);
    
    const moveSpeed = randFloat(75, 150);
-   const moveDirection = 2 * Math.PI * Math.random();
+   const moveDirection = randAngle();
    const velocityX = moveSpeed * Math.sin(moveDirection);
    const velocityY = moveSpeed * Math.cos(moveDirection);
 
@@ -1094,7 +1134,7 @@ export function createSawdustCloud(x: number, y: number): void {
       velocityX, velocityY,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       randFloat(-1, 1) * Math.PI * 2,
       0,
       0,
@@ -1108,7 +1148,7 @@ export function createDustCloud(x: number, y: number): void {
    const lifetime = randFloat(0.4, 0.7);
    
    const moveSpeed = randFloat(75, 150);
-   const moveDirection = 2 * Math.PI * Math.random();
+   const moveDirection = randAngle();
    const velocityX = moveSpeed * Math.sin(moveDirection);
    const velocityY = moveSpeed * Math.cos(moveDirection);
 
@@ -1126,7 +1166,7 @@ export function createDustCloud(x: number, y: number): void {
       velocityX, velocityY,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       randFloat(-1, 1) * Math.PI * 2,
       0,
       0,
@@ -1143,7 +1183,7 @@ const ARROW_DESTROY_PARTICLE_ADD_VELOCITY = 80;
 export function createArrowDestroyParticle(originX: number, originY: number, velocityX: number, velocityY: number): void {
    // Offset weighted further out
    const spawnOffsetMagnitude = Math.pow(Math.random(), 0.5) * 40;
-   const spawnOffsetDirection = 2 * Math.PI * Math.random();
+   const spawnOffsetDirection = randAngle();
    const spawnPositionX = originX + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
    const spawnPositionY = originY + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 
@@ -1192,7 +1232,7 @@ export function createArrowDestroyParticle(originX: number, originY: number, vel
       particleVelocityX, particleVelocityY,
       0, 0,
       velocityMagnitude / lifetime / 1.5,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       angularVelocity,
       0,
       Math.abs(angularVelocity) / lifetime / 1.5,
@@ -1232,7 +1272,7 @@ export function createBlueBloodPoolParticle(originX: number, originY: number, sp
    const lifetime = 11;
 
    const offsetMagnitude = spawnRange * Math.random();
-   const offsetDirection = 2 * Math.PI * Math.random();
+   const offsetDirection = randAngle();
    const spawnPositionX = originX + offsetMagnitude * Math.sin(offsetDirection);
    const spawnPositionY = originY + offsetMagnitude * Math.cos(offsetDirection);
 
@@ -1250,7 +1290,7 @@ export function createBlueBloodPoolParticle(originX: number, originY: number, sp
       0, 0,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0,
       0,
       0,
@@ -1287,7 +1327,7 @@ export function createBlueBloodParticle(size: BloodParticleSize, spawnPositionX:
       velocityX, velocityY,
       0, 0,
       friction,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0,
       0,
       0,
@@ -1299,8 +1339,8 @@ export function createBlueBloodParticle(size: BloodParticleSize, spawnPositionX:
 const BLUE_BLOOD_FOUNTAIN_RAY_COUNT = 7;
 
 export function createBlueBloodParticleFountain(transformComponent: TransformComponent, interval: number, speedMultiplier: number): void {
-   const hitbox = transformComponent.children[0] as Hitbox;
-   const offset = 2 * Math.PI * Math.random();
+   const hitbox = transformComponent.hitboxes[0];
+   const offset = randAngle();
 
    for (let i = 0; i < 6; i++) {
       Board.addTickCallback(interval * (i + 1), () => {
@@ -1315,12 +1355,12 @@ export function createBlueBloodParticleFountain(transformComponent: TransformCom
 }
 
 export function createWoodShardParticle(originX: number, originY: number, offset: number): void {
-   const spawnOffsetDirection = 2 * Math.PI * Math.random();
+   const spawnOffsetDirection = randAngle();
    const spawnPositionX = originX + offset * Math.sin(spawnOffsetDirection);
    const spawnPositionY = originY + offset * Math.cos(spawnOffsetDirection);
 
    const velocityMagnitude = randFloat(80, 140);
-   const velocityDirection = 2 * Math.PI * Math.random();
+   const velocityDirection = randAngle();
    const velocityX = velocityMagnitude * Math.sin(velocityDirection);
    const velocityY = velocityMagnitude * Math.cos(velocityDirection);
 
@@ -1349,7 +1389,7 @@ export function createWoodShardParticle(originX: number, originY: number, offset
       velocityX, velocityY,
       0, 0,
       velocityMagnitude,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       angularVelocity,
       0,
       Math.abs(angularVelocity),
@@ -1359,7 +1399,7 @@ export function createWoodShardParticle(originX: number, originY: number, offset
 }
 
 export function createLightWoodSpeckParticle(originX: number, originY: number, offset: number): void {
-   const spawnOffsetDirection = 2 * Math.PI * Math.random();
+   const spawnOffsetDirection = randAngle();
    const spawnPositionX = originX + offset * Math.sin(spawnOffsetDirection);
    const spawnPositionY = originY + offset * Math.cos(spawnOffsetDirection);
 
@@ -1392,7 +1432,7 @@ export function createLightWoodSpeckParticle(originX: number, originY: number, o
       velocityX, velocityY,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       angularVelocity,
       0,
       Math.abs(angularVelocity) / lifetime / 1.5,
@@ -1404,7 +1444,7 @@ export function createLightWoodSpeckParticle(originX: number, originY: number, o
 export function createColouredParticle(x: number, y: number, moveSpeed: number, r: number, g: number, b: number): void {
    const lifetime = randFloat(0.6, 0.8);
 
-   const velocityDirection = 2 * Math.PI * Math.random();
+   const velocityDirection = randAngle();
    const velocityX = moveSpeed * Math.sin(velocityDirection);
    const velocityY = moveSpeed * Math.cos(velocityDirection);
    
@@ -1425,7 +1465,7 @@ export function createColouredParticle(x: number, y: number, moveSpeed: number, 
       velocityX, velocityY,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0,
       0,
       0,
@@ -1488,7 +1528,7 @@ export function createSprintParticle(x: number, y: number, vx: number, vy: numbe
       vx, vy,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       randFloat(2, 5) * randSign(),
       3,
       0,
@@ -1514,7 +1554,7 @@ export function createConversionParticle(x: number, y: number, vx: number, vy: n
       vx, vy,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       randFloat(Math.PI*2.5,Math.PI * 4) * randSign(),
       0,
       0,
@@ -1535,7 +1575,7 @@ export function createSparkParticle(x: number, y: number): void {
    };
 
    const velocityMagnitude = randFloat(180, 250);
-   const velocityDirection = 2 * Math.PI * Math.random();
+   const velocityDirection = randAngle();
    const vx = velocityMagnitude * Math.sin(velocityDirection);
    const vy = velocityMagnitude * Math.cos(velocityDirection);
 
@@ -1570,7 +1610,7 @@ export function createGrowthParticle(x: number, y: number): void {
    };
 
    const velocityMagnitude = randFloat(22, 35);
-   const velocityDirection = 2 * Math.PI * Math.random();
+   const velocityDirection = randAngle();
    const vx = velocityMagnitude * Math.sin(velocityDirection);
    const vy = velocityMagnitude * Math.cos(velocityDirection);
 
@@ -1589,7 +1629,7 @@ export function createGrowthParticle(x: number, y: number): void {
       vx, vy,
       0, 0,
       2,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       randFloat(2, 5) * randSign(),
       3,
       0,
@@ -1630,7 +1670,7 @@ const createFrozenYetiBloodParticle = (size: BloodParticleSize, spawnPositionX: 
       velocityX, velocityY,
       0, 0,
       friction,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0,
       0,
       0,
@@ -1643,10 +1683,10 @@ export function createDeepFrostHeartBloodParticles(originX: number, originY: num
    if (Board.tickIntervalHasPassed(0.4)) {
       for (let i = 0; i < 6; i++) {
          const spawnPositionOffsetMagnitude = 13;
-         const spawnPositionOffsetDirection = 2 * Math.PI * Math.random();
+         const spawnPositionOffsetDirection = randAngle();
          const spawnPositionX = originX + spawnPositionOffsetMagnitude * Math.sin(spawnPositionOffsetDirection);
          const spawnPositionY = originY + spawnPositionOffsetMagnitude * Math.cos(spawnPositionOffsetDirection);
-         createFrozenYetiBloodParticle(BloodParticleSize.small, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(40, 60), true, extraVelocityX, extraVelocityY);
+         createFrozenYetiBloodParticle(BloodParticleSize.small, spawnPositionX, spawnPositionY, randAngle(), randFloat(40, 60), true, extraVelocityX, extraVelocityY);
       }
    }
 }
@@ -1669,7 +1709,7 @@ export function createAcidParticle(spawnPositionX: number, spawnPositionY: numbe
       0, 0,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0,
       0,
       0,
@@ -1685,11 +1725,11 @@ const POISON_COLOUR_HIGH = [77/255, 173/255, 38/255];
 
 export function createPoisonParticle(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    // Calculate spawn position
    const offsetMagnitude = 20 * Math.random();
-   const moveDirection = 2 * Math.PI * Math.random();
+   const moveDirection = randAngle();
    const spawnPositionX = hitbox.box.position.x + offsetMagnitude * Math.sin(moveDirection);
    const spawnPositionY = hitbox.box.position.y + offsetMagnitude * Math.cos(moveDirection);
 
@@ -1719,7 +1759,7 @@ export function createPoisonParticle(entity: Entity): void {
       velocityX, velocityY,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0,
       0,
       0,
@@ -1729,9 +1769,9 @@ export function createPoisonParticle(entity: Entity): void {
 }
 
 export function createIceSpeckProjectile(transformComponent: TransformComponent): void {
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
-   const spawnOffsetDirection = 2 * Math.PI * Math.random();
+   const spawnOffsetDirection = randAngle();
    const spawnPositionX = hitbox.box.position.x + 4 * Math.sin(spawnOffsetDirection);
    const spawnPositionY = hitbox.box.position.y + 4 * Math.cos(spawnOffsetDirection);
 
@@ -1769,7 +1809,7 @@ export function createIceSpeckProjectile(transformComponent: TransformComponent)
 
 export function createBlockParticle(x: number, y: number, blockType: BlockType): void {
    const velocityMagnitude = randFloat(80, 150);
-   const velocityDirection = 2 * Math.PI * Math.random();
+   const velocityDirection = randAngle();
    const velocityX = velocityMagnitude * Math.sin(velocityDirection);
    const velocityY = velocityMagnitude * Math.cos(velocityDirection);
    
@@ -1804,14 +1844,14 @@ export function createBlockParticle(x: number, y: number, blockType: BlockType):
 }
 
 export function createGemQuakeProjectile(transformComponent: TransformComponent): void {
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
-   const spawnOffsetDirection = 2 * Math.PI * Math.random();
+   const spawnOffsetDirection = randAngle();
    const spawnPositionX = hitbox.box.position.x + 4 * Math.sin(spawnOffsetDirection);
    const spawnPositionY = hitbox.box.position.y + 4 * Math.cos(spawnOffsetDirection);
 
    const velocityMagnitude = randFloat(30, 60);
-   const velocityDirection = 2 * Math.PI * Math.random();
+   const velocityDirection = randAngle();
    const velocityX = velocityMagnitude * Math.sin(velocityDirection);
    const velocityY = velocityMagnitude * Math.cos(velocityDirection);
    
@@ -1843,12 +1883,12 @@ export function createGemQuakeProjectile(transformComponent: TransformComponent)
 }
 
 export function createGenericGemParticle(hitbox: Hitbox, spawnOffsetRange: number, r: number, g: number, b: number): void {
-   const spawnOffsetDirection = 2 * Math.PI * Math.random();
+   const spawnOffsetDirection = randAngle();
    const spawnPositionX = hitbox.box.position.x + spawnOffsetRange * Math.sin(spawnOffsetDirection);
    const spawnPositionY = hitbox.box.position.y + spawnOffsetRange * Math.cos(spawnOffsetDirection);
 
    const velocityMagnitude = randFloat(30, 60);
-   const velocityDirection = 2 * Math.PI * Math.random();
+   const velocityDirection = randAngle();
    const velocityX = velocityMagnitude * Math.sin(velocityDirection);
    const velocityY = velocityMagnitude * Math.cos(velocityDirection);
    
@@ -1891,7 +1931,7 @@ export function createSlurbParticle(spawnPositionX: number, spawnPositionY: numb
    const velocityY = moveSpeed * Math.cos(initialMoveDirection);
 
    const accelerationMagnitude = randFloat(0, 80);
-   const accelerationDirection = 2 * Math.PI * Math.random();
+   const accelerationDirection = randAngle();
    const accelerationX = accelerationMagnitude * Math.sin(accelerationDirection);
    const accelerationY = accelerationDirection * Math.cos(accelerationDirection);
    
@@ -1920,7 +1960,7 @@ export function createSlurbParticle(spawnPositionX: number, spawnPositionY: numb
       velocityX + vAddX, velocityY + vAddY,
       accelerationX, accelerationY,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0, 
       0,
       0,
@@ -1940,7 +1980,7 @@ export function createHotSparkParticle(x: number, y: number): void {
    };
 
    const velocityMagnitude = randFloat(180, 250);
-   const velocityDirection = 2 * Math.PI * Math.random();
+   const velocityDirection = randAngle();
    const vx = velocityMagnitude * Math.sin(velocityDirection);
    const vy = velocityMagnitude * Math.cos(velocityDirection);
 
@@ -1976,7 +2016,7 @@ export function createHotSparkParticle(x: number, y: number): void {
 export function createKrumblidChitinParticle(spawnPositionX: number, spawnPositionY: number): void {
    const lifetime = randFloat(5, 7);
 
-   const velocityDirection = 2 * Math.PI * Math.random();
+   const velocityDirection = randAngle();
    const velocityMagnitude = randFloat(60, 80);
    const vx = velocityMagnitude * Math.sin(velocityDirection);
    const vy = velocityMagnitude * Math.cos(velocityDirection);
@@ -1994,7 +2034,7 @@ export function createKrumblidChitinParticle(spawnPositionX: number, spawnPositi
       vx, vy,
       0, 0,
       85,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0,
       0,
       0,
@@ -2062,7 +2102,7 @@ export function createHeatParticle(spawnPositionX: number, spawnPositionY: numbe
       velocityX, velocityY,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0,
       0,
       0,
@@ -2098,7 +2138,7 @@ export function createPricklyPearParticle(spawnPositionX: number, spawnPositionY
       velocityX, velocityY,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0,
       0,
       0,
@@ -2139,7 +2179,7 @@ export function createCocoonAmbientParticle(spawnPositionX: number, spawnPositio
       velocityX, velocityY,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0,
       0,
       0,
@@ -2168,7 +2208,7 @@ export function createCocoonFragmentParticle(spawnPositionX: number, spawnPositi
       velocityX, velocityY,
       0, 0,
       85,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0,
       0,
       0,
@@ -2210,7 +2250,48 @@ export function createSandParticle(spawnPositionX: number, spawnPositionY: numbe
       velocityX, velocityY,
       0, 0,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
+      0,
+      0,
+      0,
+      r, g, b
+   );
+   Board.highMonocolourParticles.push(particle);
+}
+
+export function createOkrenEyeParticle(spawnPositionX: number, spawnPositionY: number, vx: number, vy: number, moveDirection: number): void {
+   const lifetime = randFloat(0.3, 0.4);
+   
+   const moveSpeed = randFloat(40, 60);
+   const velocityX = vx + moveSpeed * Math.sin(moveDirection);
+   const velocityY = vy + moveSpeed * Math.cos(moveDirection);
+
+   const particle = new Particle(lifetime);
+   particle.getOpacity = (): number => {
+      return 1 - Math.pow(particle.age / lifetime, 2);
+   };
+ 
+   const lowR = 22/255;
+   const lowG = 25/255;
+   const lowB = 41/255;
+   const highR = 69/255;
+   const highG = 73/255;
+   const highB = 96/255;
+
+   const u = Math.random();
+   const r = lerp(lowR, highR, u);
+   const g = lerp(lowG, highG, u);
+   const b = lerp(lowB, highB, u);
+
+   addMonocolourParticleToBufferContainer(
+      particle,
+      ParticleRenderLayer.high,
+      4, 4,
+      spawnPositionX, spawnPositionY,
+      velocityX, velocityY,
+      0, 0,
+      0,
+      randAngle(),
       0,
       0,
       0,

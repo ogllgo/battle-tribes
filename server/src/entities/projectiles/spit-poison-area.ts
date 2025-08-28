@@ -3,7 +3,7 @@ import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
-import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, hitEntity } from "../../components/HealthComponent";
+import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "../../components/StatusEffectComponent";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -13,12 +13,12 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { getEntityType } from "../../world";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { SpitPoisonAreaComponent } from "../../components/SpitPoisonAreaComponent";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 export function createSpitPoisonAreaConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
    // @Hack mass
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 55), Number.EPSILON, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 55), Number.EPSILON, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const spitPoisonAreaComponent = new SpitPoisonAreaComponent();
@@ -44,7 +44,8 @@ export function onSpitPoisonCollision(spit: Entity, collidingEntity: Entity, col
       return;
    }
 
-   hitEntity(collidingEntity, spit, 1, DamageSource.poison, AttackEffectiveness.effective, collisionPoint, 0);
+   // @INCOMPLET
+   // hitEntity(collidingEntity, spit, 1, DamageSource.poison, AttackEffectiveness.effective, collisionPoint, 0);
    addLocalInvulnerabilityHash(collidingEntity, "spitPoison", 0.35);
 
    if (StatusEffectComponentArray.hasComponent(collidingEntity)) {

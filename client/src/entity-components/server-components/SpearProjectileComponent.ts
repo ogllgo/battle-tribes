@@ -1,10 +1,11 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
@@ -29,16 +30,17 @@ function createParamsFromData(): SpearProjectileComponentParams {
    return {};
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,
          0,
-         getTextureArrayIndex("items/misc/spear.png")
+         // @HACK
+         getTextureArrayIndex("items/misc/ivory-spear.png")
       )
    );
 
@@ -55,7 +57,7 @@ function getMaxRenderParts(): number {
 
 function onSpawn(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox("spear-throw.mp3", 0.4, 1, entity, hitbox, false);
 }
 
@@ -65,6 +67,6 @@ function updateFromData(): void {}
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox("spear-hit.mp3", 0.4, 1, entity, hitbox, false);
 }

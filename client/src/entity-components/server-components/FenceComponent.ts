@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityParams, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { Entity } from "../../../../shared/src/entities";
 import { RenderPart } from "../../render-parts/render-parts";
@@ -9,6 +9,7 @@ import { assert } from "../../../../shared/src/utils";
 import { StructureConnection } from "../../structure-placement";
 import { Hitbox } from "../../hitboxes";
 import { TransformComponentArray } from "./TransformComponent";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface FenceComponentParams {}
 
@@ -87,11 +88,11 @@ const createConnectingRenderPart = (connection: StructureConnection, parentHitbo
    return renderPart;
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          1,
@@ -106,7 +107,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    const structureComponentParams = entityParams.serverComponentParams[ServerComponentType.structure]!;
    for (const connection of structureComponentParams.connections) {
       const renderPart = createConnectingRenderPart(connection, hitbox);
-      entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+      renderInfo.attachRenderPart(renderPart);
       connectingRenderParts[connection.entity] = renderPart;
    }
 
@@ -132,7 +133,7 @@ function updateFromData(): void {}
 
 export function addFenceConnection(fence: Entity, connection: StructureConnection): void {
    const transformComponent = TransformComponentArray.getComponent(fence);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const fenceComponent = FenceComponentArray.getComponent(fence);
 

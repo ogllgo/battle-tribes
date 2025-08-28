@@ -86,11 +86,11 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
    // limb.heldItemDamageBox.isBlockedByWall = false;
 
    const transformComponent = TransformComponentArray.getComponent(attackingEntity);
-   const attackingEntityHitbox = transformComponent.children[0] as Hitbox;
+   const attackingEntityHitbox = transformComponent.hitboxes[0];
 
    // Add extra range for moving attacks
    const velocity = getHitboxVelocity(attackingEntityHitbox);
-   const velocityMagnitude = velocity.length();
+   const velocityMagnitude = velocity.magnitude();
 
    const attackAlignment = (velocity.x * Math.sin(attackingEntityHitbox.box.angle) + velocity.y * Math.cos(attackingEntityHitbox.box.angle)) / velocityMagnitude;
    if (attackAlignment > 0) {
@@ -127,7 +127,7 @@ export function beginSwing(attackingEntity: Entity, itemSlot: number, inventoryN
 
 //       const targetEntityTransformComponent = TransformComponentArray.getComponent(targetEntity);
 
-//       const dist = transformComponent.position.calculateDistanceBetween(targetEntityTransformComponent.position);
+//       const dist = transformComponent.position.distanceTo(targetEntityTransformComponent.position);
 //       if (dist < minDistance) {
 //          closestEntity = targetEntity;
 //          minDistance = dist;

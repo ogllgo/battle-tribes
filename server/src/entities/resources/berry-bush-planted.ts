@@ -11,33 +11,32 @@ import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { BerryBushPlantedComponent, BerryBushPlantedComponentArray } from "../../components/BerryBushPlantedComponent";
-import { createHitbox } from "../../hitboxes";
 import { registerEntityLootOnHit } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerDirtyEntity } from "../../server/player-clients";
+import { Hitbox } from "../../hitboxes";
 
-registerEntityLootOnHit(EntityType.berryBushPlanted, [
-   {
-      itemType: ItemType.berry,
-      getAmount: (berryBush: Entity) => {
-         const berryBushPlantedComponent = BerryBushPlantedComponentArray.getComponent(berryBush);
-         return berryBushPlantedComponent.numFruit > 0 ? 1 : 0;
-      },
-      onItemDrop: (berryBush: Entity) => {
-         // @Hack: this type of logic feels like it should be done in a component
-         const berryBushPlantedComponent = BerryBushPlantedComponentArray.getComponent(berryBush);
-         if (berryBushPlantedComponent.numFruit > 0) {
-            berryBushPlantedComponent.numFruit--;
-            registerDirtyEntity(berryBush);
-         }
+registerEntityLootOnHit(EntityType.berryBushPlanted, {
+   itemType: ItemType.berry,
+   getAmount: (berryBush: Entity) => {
+      const berryBushPlantedComponent = BerryBushPlantedComponentArray.getComponent(berryBush);
+      return berryBushPlantedComponent.numFruit > 0 ? 1 : 0;
+   },
+   onItemDrop: (berryBush: Entity) => {
+      // @Hack: this type of logic feels like it should be done in a component
+      const berryBushPlantedComponent = BerryBushPlantedComponentArray.getComponent(berryBush);
+      if (berryBushPlantedComponent.numFruit > 0) {
+         berryBushPlantedComponent.numFruit--;
+         registerDirtyEntity(berryBush);
       }
    }
-]);
+});
 
 export function createBerryBushPlantedConfig(position: Point, rotation: number, planterBox: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 28), 0.3, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 28), 0.3, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionBit = CollisionBit.plants;
 

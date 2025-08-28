@@ -3,14 +3,14 @@ import { Entity, EntityType } from "../../../shared/src/entities";
 import { InventoryName } from "../../../shared/src/items/items";
 import { Settings, PathfindingSettings } from "../../../shared/src/settings";
 import { TileType } from "../../../shared/src/tiles";
-import { assert, distance } from "../../../shared/src/utils";
+import { assert, distance, polarVec2 } from "../../../shared/src/utils";
 import { getEntitiesInRange, willStopAtDesiredDistance } from "../ai-shared";
 import { TRIBESMAN_TURN_SPEED } from "../entities/tribes/tribesman-ai/tribesman-ai";
 import { getHumanoidRadius, getTribesmanAcceleration } from "../entities/tribes/tribesman-ai/tribesman-ai-utils";
 import { Hitbox, applyAccelerationFromGround, getHitboxTile, getHitboxVelocity, turnHitboxToAngle } from "../hitboxes";
 import Layer from "../Layer";
 import { surfaceLayer } from "../layers";
-import { convertEntityPathfindingGroupID, entityCanBlockPathfinding, entityHasReachedNode, findMultiLayerPath, getAngleToNode, getDistanceToNode, getEntityFootprint, getEntityPathfindingGroupID, Path, PathfindingFailureDefault, PathfindingQueryOptions, positionIsAccessible } from "../pathfinding";
+import { convertEntityPathfindingGroupID, entityCanBlockPathfinding, entityHasReachedNode, findMultiLayerPath, getAngleToNode, getDistanceToNode, getEntityFootprint, getEntityPathfindingGroupID, Path, PathfindFailureDefault, PathfindOptions, positionIsAccessible } from "../pathfinding";
 import Tribe from "../Tribe";
 import { getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks } from "../world";
 import { ComponentArray } from "./ComponentArray";
@@ -48,7 +48,7 @@ const shouldRecalculatePath = (tribesman: Entity, goalX: number, goalY: number, 
    // @Speed
    // Recalculate if the tribesman isn't making any progress
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
 
    const tribesmanVelocity = getHitboxVelocity(tribesmanHitbox);
    const vx = tribesmanVelocity.x;
@@ -85,7 +85,7 @@ const shouldRecalculatePath = (tribesman: Entity, goalX: number, goalY: number, 
 
 const openDoors = (tribesman: Entity, tribe: Tribe): void => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
    
    const layer = getEntityLayer(tribesman);
    
@@ -123,7 +123,7 @@ export function continueCurrentPath(tribesman: Entity): boolean {
    const finalPath = aiPathfindingComponent.paths[aiPathfindingComponent.paths.length - 1];
    if (getEntityLayer(tribesman) !== finalPath.layer) {
       const transformComponent = TransformComponentArray.getComponent(tribesman);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0] as Hitbox;
       const currentTileIndex = getHitboxTile(hitbox);
       if (surfaceLayer.getTileType(currentTileIndex) === TileType.dropdown) {
          changeEntityLayer(tribesman, finalPath.layer);
@@ -142,7 +142,7 @@ export function continueCurrentPath(tribesman: Entity): boolean {
       const nextNode = nodes[0];
       const targetDirection = getAngleToNode(transformComponent, nextNode);
 
-      const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+      const tribesmanHitbox = transformComponent.hitboxes[0];
 
       turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 1, false);
 
@@ -150,9 +150,7 @@ export function continueCurrentPath(tribesman: Entity): boolean {
       const distFromNode = getDistanceToNode(transformComponent, nextNode);
       if (!willStopAtDesiredDistance(tribesmanHitbox, -2, distFromNode)) {
          const accelerationMagnitude = getTribesmanAcceleration(tribesman);
-         const accelerationX = accelerationMagnitude * Math.sin(tribesmanHitbox.box.angle);
-         const accelerationY = accelerationMagnitude * Math.cos(tribesmanHitbox.box.angle);
-         applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+         applyAccelerationFromGround(tribesmanHitbox, polarVec2(accelerationMagnitude, tribesmanHitbox.box.angle));
       }
 
       // @Speed: only do this if we know the path has a door in it
@@ -186,7 +184,7 @@ export function getFinalPath(aiPathfindingComponent: AIPathfindingComponent): Pa
 
 const getPotentialBlockingTribesmen = (tribesman: Entity): ReadonlyArray<Entity> => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
    
    const layer = getEntityLayer(tribesman);
    
@@ -251,13 +249,13 @@ const cleanupPathfinding = (targetEntity: Entity | 0, tribe: Tribe, blockingTrib
    }
 }
 
-export function pathfindTribesman(tribesman: Entity, goalX: number, goalY: number, goalLayer: Layer, targetEntityID: number, pathType: TribesmanPathType, goalRadius: number, failureDefault: PathfindingFailureDefault): boolean {
+export function pathfindTribesman(tribesman: Entity, goalX: number, goalY: number, goalLayer: Layer, targetEntityID: number, pathType: TribesmanPathType, goalRadius: number, failureDefault: PathfindFailureDefault): boolean {
    assert(goalX >= 0 && goalX < Settings.BOARD_UNITS && goalY >= 0 && goalY < Settings.BOARD_UNITS);
    
    // If moving to a new target node, recalculate path
    if (shouldRecalculatePath(tribesman, goalX, goalY, goalLayer, goalRadius)) {
       const transformComponent = TransformComponentArray.getComponent(tribesman); // @Speed
-      const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+      const tribesmanHitbox = transformComponent.hitboxes[0];
       
       const tribeComponent = TribeComponentArray.getComponent(tribesman); // @Speed
       const aiPathfindingComponent = AIPathfindingComponentArray.getComponent(tribesman); // @Speed
@@ -269,7 +267,7 @@ export function pathfindTribesman(tribesman: Entity, goalX: number, goalY: numbe
       const blockingTribesmen = getPotentialBlockingTribesmen(tribesman);
       preparePathfinding(targetEntityID, tribe, blockingTribesmen);
       
-      const options: PathfindingQueryOptions = {
+      const options: PathfindOptions = {
          goalRadius: goalRadius,
          failureDefault: failureDefault
       };
@@ -292,7 +290,7 @@ export function entityIsAccessible(tribesman: Entity, entity: Entity, tribe: Tri
    preparePathfinding(entity, tribe, blockingTribesmen);
 
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = transformComponent.children[0] as Hitbox;
+   const entityHitbox = transformComponent.hitboxes[0];
    
    const layer = getEntityLayer(entity);
    const isAccessible = positionIsAccessible(layer, entityHitbox.box.position.x, entityHitbox.box.position.y, tribe.pathfindingGroupID, getEntityFootprint(goalRadius));
@@ -304,19 +302,19 @@ export function entityIsAccessible(tribesman: Entity, entity: Entity, tribe: Tri
 
 export function pathToEntityExists(tribesman: Entity, huntedEntity: Entity, goalRadius: number): boolean {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
    
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
 
    const huntedEntityTransformComponent = TransformComponentArray.getComponent(huntedEntity);
-   const targetHitbox = huntedEntityTransformComponent.children[0] as Hitbox;
+   const targetHitbox = huntedEntityTransformComponent.hitboxes[0];
    
    const blockingTribesmen = getPotentialBlockingTribesmen(tribesman);
    preparePathfinding(huntedEntity, tribeComponent.tribe, blockingTribesmen);
    
-   const queryOptions: PathfindingQueryOptions = {
+   const queryOptions: PathfindOptions = {
       goalRadius: Math.floor(goalRadius / PathfindingSettings.NODE_SEPARATION),
-      failureDefault: PathfindingFailureDefault.none
+      failureDefault: PathfindFailureDefault.none
    };
    const path = findMultiLayerPath(getEntityLayer(tribesman), getEntityLayer(huntedEntity), tribesmanHitbox.box.position.x, tribesmanHitbox.box.position.y, targetHitbox.box.position.x, targetHitbox.box.position.y, tribeComponent.tribe.pathfindingGroupID, getEntityFootprint(getHumanoidRadius(transformComponent)), queryOptions);
 

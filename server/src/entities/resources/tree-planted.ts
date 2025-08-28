@@ -13,27 +13,26 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
-registerEntityLootOnDeath(EntityType.treePlanted, [
-   {
-      itemType: ItemType.wood,
-      getAmount: (entity: Entity) => {
-         return plantedTreeIsFullyGrown(entity) ? randInt(2, 4) : 0;
-      }
-   },
-   {
-      itemType: ItemType.seed,
-      getAmount: (entity: Entity) => {
-         return plantedTreeIsFullyGrown(entity) ? 1 : 0;
-      }
+registerEntityLootOnDeath(EntityType.treePlanted, {
+   itemType: ItemType.wood,
+   getAmount: (entity: Entity) => {
+      return plantedTreeIsFullyGrown(entity) ? randInt(2, 4) : 0;
    }
-]);
+});
+registerEntityLootOnDeath(EntityType.treePlanted, {
+   itemType: ItemType.seed,
+   getAmount: (entity: Entity) => {
+      return plantedTreeIsFullyGrown(entity) ? 1 : 0;
+   }
+});
 
 export function createTreePlantedConfig(position: Point, rotation: number, planterBox: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 28), 0.3, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 28), 0.3, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionBit = CollisionBit.plants;
 

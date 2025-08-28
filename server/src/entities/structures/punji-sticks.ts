@@ -1,12 +1,11 @@
-import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
-import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, hitEntity } from "../../components/HealthComponent";
+import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
 import { StatusEffectComponent, StatusEffectComponentArray, applyStatusEffect } from "../../components/StatusEffectComponent";
 import { EntityRelationship, getEntityRelationship, TribeComponent } from "../../components/TribeComponent";
 import { SpikesComponent, SpikesComponentArray } from "../../components/SpikesComponent";
-import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { EntityConfig } from "../../components";
 import { ServerComponentType } from "battletribes-shared/components";
 import { getEntityType } from "../../world";
@@ -16,7 +15,7 @@ import Tribe from "../../Tribe";
 import { PunjiSticksComponent } from "../../components/PunjiSticksComponent";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { StructureConnection } from "../../structure-placement";
@@ -25,7 +24,8 @@ export function createFloorPunjiSticksConfig(position: Point, rotation: number, 
    const transformComponent = new TransformComponent();
 
    const box = new RectangularBox(position, new Point(0, 0), rotation, 48, 48);
-   const hitbox = createHitbox(transformComponent, null, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   const hitbox = new Hitbox(transformComponent, null, true, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(10);
@@ -59,7 +59,7 @@ export function createWallPunjiSticksConfig(position: Point, rotation: number, t
    const transformComponent = new TransformComponent();
 
    const box = new RectangularBox(position, new Point(0, 0), rotation, 56, 32);
-   const hitbox = createHitbox(transformComponent, null, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   const hitbox = new Hitbox(transformComponent, null, true, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(10);
@@ -115,7 +115,8 @@ export function onPunjiSticksCollision(punjiSticks: Entity, collidingEntity: Ent
    }
    
    // @Incomplete: Cause of death
-   hitEntity(collidingEntity, punjiSticks, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   // @INCOMPLETE
+   // hitEntity(collidingEntity, punjiSticks, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    addLocalInvulnerabilityHash(collidingEntity, "punjiSticks", 0.3);
 
    if (StatusEffectComponentArray.hasComponent(collidingEntity)) {

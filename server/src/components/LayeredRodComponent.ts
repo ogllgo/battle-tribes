@@ -1,4 +1,4 @@
-import { Colour, Point, randFloat } from "battletribes-shared/utils";
+import { Colour, Point, polarVec2, randAngle, randFloat } from "battletribes-shared/utils";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity } from "battletribes-shared/entities";
@@ -7,7 +7,7 @@ import { Packet } from "battletribes-shared/packets";
 export class LayeredRodComponent {
    public readonly numLayers: number;
    // @Memory: Can be removed and just use a hash on the entity ID
-   public readonly naturalBend = Point.fromVectorForm(randFloat(2, 4), 2 * Math.PI * Math.random());
+   public readonly naturalBend = polarVec2(randFloat(2, 4), randAngle());
 
    // @Memory: Can be removed and just use a hash on the entity ID
    public readonly r: number;

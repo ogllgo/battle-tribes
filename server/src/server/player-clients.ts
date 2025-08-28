@@ -1,10 +1,10 @@
-import { HitData, PlayerKnockbackData, HealData, ResearchOrbCompleteData } from "battletribes-shared/client-server-types";
+import { PlayerKnockbackData, HealData, ResearchOrbCompleteData } from "battletribes-shared/client-server-types";
 import { BuildingMaterial, MATERIAL_TO_ITEM_MAP } from "battletribes-shared/components";
 import { TechID } from "battletribes-shared/techs";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import Layer from "../Layer";
 import { registerCommand } from "../commands";
-import PlayerClient from "./PlayerClient";
+import PlayerClient, { HitData } from "./PlayerClient";
 import { SERVER } from "./server";
 import { createInitialGameDataPacket } from "./packet-creation";
 import { Entity, EntityType } from "battletribes-shared/entities";
@@ -29,6 +29,7 @@ import { surfaceLayer } from "../layers";
 import { createItemsOverEntity } from "../entities/item-entity";
 import { acceptTitleOffer, rejectTitleOffer, forceAddTitle, removeTitle } from "../components/TribesmanComponent";
 import { Hitbox } from "../hitboxes";
+import { PlayerComponentArray } from "../components/PlayerComponent";
 
 // @Cleanup: see if a decorator can be used to cut down on the player entity check copy-n-paste
 
@@ -41,18 +42,6 @@ const dirtyEntities = new Set<Entity>();
 
 export function getPlayerClients(): ReadonlyArray<PlayerClient> {
    return playerClients;
-}
-
-const getPlayerClientFromInstanceID = (instanceID: number): PlayerClient | null => {
-   for (let i = 0; i < playerClients.length; i++) {
-      const playerClient = playerClients[i];
-
-      if (playerClient.instance === instanceID) {
-         return playerClient;
-      }
-   }
-
-   return null;
 }
 
 // @Cleanup: better to be done by the player component array
@@ -85,7 +74,7 @@ export function handlePlayerDisconnect(playerClient: PlayerClient): void {
 
 export function generatePlayerSpawnPosition(tribeType: TribeType): Point {
    // @Temporary
-   return new Point(Settings.BOARD_UNITS * 0.5 - 500, Settings.BOARD_UNITS * 0.5 - 500 - 320);
+   return new Point(Settings.BOARD_UNITS * 0.5 - 0, Settings.BOARD_UNITS * 0.5 - 500 - 320);
    
    const tribeInfo = TRIBE_INFO_RECORD[tribeType];
    for (let numAttempts = 0; numAttempts < 50; numAttempts++) {
@@ -399,7 +388,7 @@ const getPlayersViewingPosition = (minX: number, maxX: number, minY: number, max
    return viewingPlayerClients;
 }
 
-export function registerEntityHit(hitEntity: Entity, attackingEntity: Entity | null, hitPosition: Point, attackEffectiveness: AttackEffectiveness, damage: number, flags: number): void {
+export function registerEntityHit(hitEntity: Entity, hitHitbox: Hitbox, attackingEntity: Entity | null, hitPosition: Point, attackEffectiveness: AttackEffectiveness, damage: number, flags: number): void {
    const viewingPlayers = getPlayersViewingEntity(hitEntity);
    if (viewingPlayers.length === 0) {
       return;
@@ -409,8 +398,9 @@ export function registerEntityHit(hitEntity: Entity, attackingEntity: Entity | n
       const playerClient = viewingPlayers[i];
 
       const hitData: HitData = {
-         hitEntityID: hitEntity,
-         hitPosition: hitPosition.package(),
+         hitEntity: hitEntity,
+         hitHitbox: hitHitbox,
+         hitPosition: hitPosition,
          attackEffectiveness: attackEffectiveness,
          damage: damage,
          shouldShowDamageNumber: shouldShowDamageNumber(playerClient, attackingEntity),
@@ -420,16 +410,14 @@ export function registerEntityHit(hitEntity: Entity, attackingEntity: Entity | n
    }
 }
 
-export function registerPlayerKnockback(playerID: number, knockback: number, knockbackDirection: number): void {
+export function registerPlayerKnockback(player: Entity, knockback: number, knockbackDirection: number): void {
    const knockbackData: PlayerKnockbackData = {
       knockback: knockback,
       knockbackDirection: knockbackDirection
    };
 
-   const playerClient = getPlayerClientFromInstanceID(playerID);
-   if (playerClient !== null) {
-      playerClient.playerKnockbacks.push(knockbackData);
-   }
+   const playerComponent = PlayerComponentArray.getComponent(player);
+   playerComponent.client.playerKnockbacks.push(knockbackData);
 }
 
 export function registerEntityHeal(healedEntity: Entity, healer: Entity, healAmount: number): void {
@@ -440,7 +428,7 @@ export function registerEntityHeal(healedEntity: Entity, healer: Entity, healAmo
 
    const transformComponent = TransformComponentArray.getComponent(healedEntity);
    // @Hack
-   const healedEntityHitbox = transformComponent.children[0] as Hitbox;
+   const healedEntityHitbox = transformComponent.hitboxes[0];
    
    const healData: HealData = {
       entityPositionX: healedEntityHitbox.box.position.x,
@@ -494,7 +482,9 @@ export function registerEntityTickEvent(entity: Entity, tickEvent: EntityTickEve
 }
 
 export function registerPlayerDroppedItemPickup(player: Entity): void {
-   const playerClient = getPlayerClientFromInstanceID(player);
+   const playerComponent = PlayerComponentArray.getComponent(player);
+   const playerClient = playerComponent.client;
+   
    if (playerClient !== null) {
       playerClient.hasPickedUpItem = true;
    } else {

@@ -5,7 +5,7 @@ import RectangularBox from "../../../shared/src/boxes/RectangularBox";
 import { PacketReader } from "../../../shared/src/packets";
 import { Point } from "../../../shared/src/utils";
 import Board from "../Board";
-import { getHitboxByLocalID, TransformNode } from "../entity-components/server-components/TransformComponent";
+import { findEntityHitbox, getHitboxByLocalID } from "../entity-components/server-components/TransformComponent";
 import { createHitbox, Hitbox, HitboxTether } from "../hitboxes";
 
 const readCircularBoxFromData = (reader: PacketReader): CircularBox => {
@@ -90,7 +90,7 @@ export function padBoxData(reader: PacketReader): void {
    }
 }
 
-export function readHitboxFromData(reader: PacketReader, localID: number, children: ReadonlyArray<TransformNode>): Hitbox {
+export function readHitboxFromData(reader: PacketReader, localID: number, hitboxes: ReadonlyArray<Hitbox>): Hitbox {
    const box = readBoxFromData(reader);
 
    const previousPosition = new Point(reader.readNumber(), reader.readNumber());
@@ -126,11 +126,17 @@ export function readHitboxFromData(reader: PacketReader, localID: number, childr
       flags.push(reader.readNumber());
    }
 
-   const parentHitboxLocalID = reader.readNumber();
-   // @INCOMPLETE @BUG: can't get from other transform components!
-   const parentHitbox = getHitboxByLocalID(children, parentHitboxLocalID);
+   const entity = reader.readNumber();
+   const rootEntity = reader.readNumber();
 
-   const hitbox = createHitbox(localID, parentHitbox, box, previousPosition, acceleration, tethers, previousRelativeAngle, angularAcceleration, mass, collisionType, collisionBit, collisionMask, flags);
+   const parentEntity = reader.readNumber();
+   const parentHitboxLocalID = reader.readNumber();
+   const parentHitbox = findEntityHitbox(parentEntity, parentHitboxLocalID);
+
+   const isPartOfParent = reader.readBoolean();
+   reader.padOffset(3);
+
+   const hitbox = createHitbox(localID, entity, rootEntity, parentHitbox, isPartOfParent, box, previousPosition, acceleration, tethers, previousRelativeAngle, angularAcceleration, mass, collisionType, collisionBit, collisionMask, flags);
    return hitbox;
 }
 export function padHitboxDataExceptLocalID(reader: PacketReader): void {
@@ -152,7 +158,11 @@ export function padHitboxDataExceptLocalID(reader: PacketReader): void {
    const numFlags = reader.readNumber();
    reader.padOffset(numFlags * Float32Array.BYTES_PER_ELEMENT);
 
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT); // entity and rootEntity
+
+   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT); // parent hitbox entity and local id
+
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT); // isPartOfParent
 }
 
 const updateCircularBoxFromData = (box: CircularBox, reader: PacketReader): void => {
@@ -213,7 +223,6 @@ export function updateHitboxExceptLocalIDFromData(hitbox: Hitbox, reader: Packet
 
    hitbox.tethers.splice(0, hitbox.tethers.length);
    
-   const tethers = new Array<HitboxTether>();
    const numTethers = reader.readNumber();
    for (let i = 0; i < numTethers; i++) {
       const originBox = readBoxFromData(reader);
@@ -226,7 +235,7 @@ export function updateHitboxExceptLocalIDFromData(hitbox: Hitbox, reader: Packet
          springConstant: springConstant,
          damping: damping
       };
-      tethers.push(tether);
+      hitbox.tethers.push(tether);
    }
 
    hitbox.previousRelativeAngle = reader.readNumber();
@@ -239,8 +248,15 @@ export function updateHitboxExceptLocalIDFromData(hitbox: Hitbox, reader: Packet
    const numFlags = reader.readNumber();
    reader.padOffset(numFlags * Float32Array.BYTES_PER_ELEMENT);
 
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT); // entity
+   hitbox.rootEntity = reader.readNumber();
+   
    // @HACK @INCOMPLETE
+   const parentEntity = reader.readNumber();
    const parentLocalID = reader.readNumber();
+
+   hitbox.isPartOfParent = reader.readBoolean();
+   reader.padOffset(3);
 
    hitbox.lastUpdateTicks = Board.serverTicks;
 }

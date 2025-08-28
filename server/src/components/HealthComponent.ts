@@ -7,9 +7,11 @@ import { AIHelperComponentArray } from "./AIHelperComponent";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { registerDirtyEntity, registerEntityHeal, registerEntityHit } from "../server/player-clients";
 import { ComponentArray, getComponentArrayRecord } from "./ComponentArray";
-import { getFirstEntityWithComponent, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
-import { destroyEntity, entityExists, getEntityComponentTypes, getEntityType } from "../world";
+import { destroyEntity, getEntityComponentTypes, getEntityType } from "../world";
+import { Hitbox } from "../hitboxes";
+import { HitFlags } from "../../../shared/src/client-server-types";
 
 export class HealthComponent {
    public maxHealth: number;
@@ -58,13 +60,13 @@ export function canDamageEntity(healthComponent: HealthComponent, attackHash: st
    return true;
 }
 
-const callOnTakeDamageCallbacks = (entity: Entity, attackingEntity: Entity | null, damageSource: DamageSource, damage: number): void => {
+const callOnTakeDamageCallbacks = (entity: Entity, hitHitbox: Hitbox, attackingEntity: Entity | null, damageSource: DamageSource, damage: number): void => {
    const componentArrayRecord = getComponentArrayRecord();
    const entityComponentTypes = getEntityComponentTypes(entity);
    for (const componentType of entityComponentTypes) {
       const componentArray = componentArrayRecord[componentType];
       if (typeof componentArray.onTakeDamage !== "undefined") {
-         componentArray.onTakeDamage(entity, attackingEntity, damageSource, damage);
+         componentArray.onTakeDamage(entity, hitHitbox, attackingEntity, damageSource, damage);
       }
    }
 }
@@ -86,29 +88,34 @@ const callOnDeathCallbacks = (entity: Entity, attackingEntity: Entity | null, da
  * @param damage The amount of damage given
  * @returns Whether the damage was received
  */
-export function hitEntity(entity: Entity, attackingEntity: Entity | null, damage: number, damageSource: DamageSource, attackEffectiveness: AttackEffectiveness, hitPosition: Point, hitFlags: number): boolean {
-   const damagedEntity = getFirstEntityWithComponent(HealthComponentArray, entity);
-   if (damagedEntity === null) {
-      throw new Error();
+export function damageEntity(entity: Entity, hitHitbox: Hitbox, attackingEntity: Entity | null, damage: number, damageSource: DamageSource, attackEffectiveness: AttackEffectiveness, hitPosition: Point, hitFlags: number): boolean {
+   const componentArrayRecord = getComponentArrayRecord();
+
+   let damageMultiplier = 1;
+   const attackedEntityComponentTypes = getEntityComponentTypes(entity);
+   for (const componentType of attackedEntityComponentTypes) {
+      const componentArray = componentArrayRecord[componentType];
+      if (typeof componentArray.getDamageTakenMultiplier !== "undefined") {
+         damageMultiplier *= componentArray.getDamageTakenMultiplier(entity, hitHitbox);
+      }
    }
+   const damageDealt = damage * damageMultiplier;
 
-   const healthComponent = HealthComponentArray.getComponent(damagedEntity);
+   const healthComponent = HealthComponentArray.getComponent(entity);
 
-   if (damage !== 0) {
-      const absorbedDamage = damage * clamp(healthComponent.defence, 0, 1);
-      const actualDamage = damage - absorbedDamage;
+   if (damageDealt !== 0) {
+      const absorbedDamage = damageDealt * clamp(healthComponent.defence, 0, 1);
+      const actualDamage = damageDealt - absorbedDamage;
       
       healthComponent.health -= actualDamage;
       
-      registerEntityHit(entity, attackingEntity, hitPosition, attackEffectiveness, damage, hitFlags);
+      registerEntityHit(entity, hitHitbox, attackingEntity, hitPosition, attackEffectiveness, damageDealt, hitFlags);
       registerDirtyEntity(entity);
    }
 
-   const componentArrayRecord = getComponentArrayRecord();
-
    // If the entity was killed by the attack, destroy the entity
    if (healthComponent.health <= 0) {
-      destroyEntity(damagedEntity);
+      destroyEntity(entity);
 
       // Call onDeath events for the dead entity
       callOnDeathCallbacks(entity, attackingEntity, damageSource);
@@ -126,7 +133,7 @@ export function hitEntity(entity: Entity, attackingEntity: Entity | null, damage
    }
 
    // Call onTakeDamage events for the attacked entity
-   callOnTakeDamageCallbacks(entity, attackingEntity, damageSource, damage);
+   callOnTakeDamageCallbacks(entity, hitHitbox, attackingEntity, damageSource, damageDealt);
 
    // Call onDealDamage events for the attacking entity
    if (attackingEntity !== null) {
@@ -171,8 +178,10 @@ export function hitEntity(entity: Entity, attackingEntity: Entity | null, damage
 }
 
 /** Basically every effect of hitEntity, but doesn't reduce the entity's health. */
-export function hitEntityWithoutDamage(entity: Entity, attackingEntity: Entity | null, hitPosition: Point, hitFlags: number): void {
+export function hitEntityWithoutDamage(entity: Entity, hitHitbox: Hitbox, attackingEntity: Entity | null, hitPosition: Point): void {
    // @Incomplete
+   // damageEntity(entity, hitHitbox, attackingEntity, 0, 0, AttackEffectiveness.effective, hitPosition, hitFlags);
+   registerEntityHit(entity, hitHitbox, attackingEntity, hitPosition, AttackEffectiveness.effective, 0, HitFlags.NON_DAMAGING_HIT);
 }
 
 export function healEntity(entity: Entity, healAmount: number, healer: Entity): void {

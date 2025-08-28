@@ -2,10 +2,9 @@ import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
 import Layer from "../Layer";
 import { createGrassStrandConfig } from "../entities/grass-strand";
-import { createEntity } from "../Entity";
 import { distance, getTileIndexIncludingEdges, Point, TileIndex, tileIsInWorldIncludingEdges } from "battletribes-shared/utils";
-import { pushJoinBuffer } from "../world";
 import { surfaceLayer } from "../layers";
+import { createEntityImmediate } from "../world";
 
 const enum Vars {
    /** Average number of grass strands per tile in a fully humidified area. */
@@ -79,7 +78,7 @@ const isValidGrassPosition = (layer: Layer, x: number, y: number): boolean => {
 }
 
 export function generateGrassStrands(): void {
-   // @Speed: this takes like 6 seconds to run... not ideal
+   // @Speed
    // @Incomplete: generate in edges
    for (let tileX = 0; tileX < Settings.BOARD_DIMENSIONS; tileX++) {
       for (let tileY = 0; tileY < Settings.BOARD_DIMENSIONS; tileY++) {
@@ -107,10 +106,7 @@ export function generateGrassStrands(): void {
             }
 
             const config = createGrassStrandConfig(new Point(x, y), 0, tileType);
-            createEntity(config, surfaceLayer, 0);
-
-            // Since the entity spawning has to find a place to insert the entity, we force push it to prevent it from taking forever
-            pushJoinBuffer(false);
+            createEntityImmediate(config, surfaceLayer);
          }
       }
    }

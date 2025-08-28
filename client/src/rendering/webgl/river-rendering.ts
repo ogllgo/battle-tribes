@@ -1,5 +1,5 @@
 import { TileType } from "battletribes-shared/tiles";
-import { Point, lerp, randFloat, rotatePoint, rotateXAroundPoint, rotateYAroundPoint } from "battletribes-shared/utils";
+import { Point, lerp, randFloat, rotatePointAroundPivot, rotateXAroundPoint, rotateYAroundPoint } from "battletribes-shared/utils";
 import { RIVER_STEPPING_STONE_SIZES, RiverSteppingStoneData, RiverSteppingStoneSize, WaterRockData, WaterRockSize } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { createWebGLProgram, gl } from "../../webgl";
@@ -1042,10 +1042,10 @@ const calculateFoamVertexData = (steppingStones: ReadonlyArray<RiverSteppingSton
       const pos = new Point(steppingStone.positionX, steppingStone.positionY);
 
       // Rotate the points to match the entity's rotation
-      topLeft = rotatePoint(topLeft, pos, steppingStone.rotation);
-      topRight = rotatePoint(topRight, pos, steppingStone.rotation);
-      bottomRight = rotatePoint(bottomRight, pos, steppingStone.rotation);
-      bottomLeft = rotatePoint(bottomLeft, pos, steppingStone.rotation);
+      topLeft = rotatePointAroundPivot(topLeft, pos, steppingStone.rotation);
+      topRight = rotatePointAroundPivot(topRight, pos, steppingStone.rotation);
+      bottomRight = rotatePointAroundPivot(bottomRight, pos, steppingStone.rotation);
+      bottomLeft = rotatePointAroundPivot(bottomLeft, pos, steppingStone.rotation);
 
       const tileX = Math.floor(steppingStone.positionX / Settings.TILE_SIZE);
       const tileY = Math.floor(steppingStone.positionY / Settings.TILE_SIZE);

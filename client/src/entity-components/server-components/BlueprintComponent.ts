@@ -1,5 +1,5 @@
 import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
-import { assertUnreachable, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { assertUnreachable, randAngle, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { playSoundOnHitbox } from "../../sound";
 import { createDustCloud, createLightWoodSpeckParticle, createRockParticle, createRockSpeckParticle, createSawdustCloud, createWoodShardParticle } from "../../particles";
 import { getEntityTextureAtlas, getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -289,16 +289,24 @@ export const BLUEPRINT_PROGRESS_TEXTURE_SOURCES: Record<BlueprintType, ReadonlyA
    ],
    [BlueprintType.fenceGate]: [
       {
-         progressTextureSources: ["entities/fence-gate/fence-gate-sides-blueprint-1.png"],
-         completedTextureSource: "entities/fence-gate/fence-gate-sides.png",
-         offsetX: 0,
+         progressTextureSources: ["entities/fence-gate/side-blueprint-1.png"],
+         completedTextureSource: "entities/fence-gate/side.png",
+         offsetX: -32,
          offsetY: 0,
          rotation: 0,
          zIndex: 1
       },
       {
-         progressTextureSources: ["entities/fence-gate/fence-gate-door-blueprint-1.png"],
-         completedTextureSource: "entities/fence-gate/fence-gate-door.png",
+         progressTextureSources: ["entities/fence-gate/side-blueprint-1.png"],
+         completedTextureSource: "entities/fence-gate/side.png",
+         offsetX: 32,
+         offsetY: 0,
+         rotation: 0,
+         zIndex: 1
+      },
+      {
+         progressTextureSources: ["entities/fence-gate/door-blueprint-1.png"],
+         completedTextureSource: "entities/fence-gate/door.png",
          offsetX: 0,
          offsetY: 0,
          rotation: 0,
@@ -363,7 +371,7 @@ export const BLUEPRINT_PROGRESS_TEXTURE_SOURCES: Record<BlueprintType, ReadonlyA
 
 const createWoodenBlueprintWorkParticleEffects = (entity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    for (let i = 0; i < 2; i++) {
       createWoodShardParticle(hitbox.box.position.x, hitbox.box.position.y, 24);
@@ -387,9 +395,9 @@ make the origin point for the offset be based on the partial render part (random
 
 const createStoneBlueprintWorkParticleEffects = (originX: number, originY: number): void => {
    for (let i = 0; i < 3; i++) {
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const offsetAmount = 12 * Math.random();
-      createRockParticle(originX + offsetAmount * Math.sin(offsetDirection), originY + offsetAmount * Math.cos(offsetDirection), 2 * Math.PI * Math.random(), randFloat(50, 70), ParticleRenderLayer.high);
+      createRockParticle(originX + offsetAmount * Math.sin(offsetDirection), originY + offsetAmount * Math.cos(offsetDirection), randAngle(), randFloat(50, 70), ParticleRenderLayer.high);
    }
 
    for (let i = 0; i < 10; i++) {
@@ -468,7 +476,14 @@ const updatePartialTexture = (entity: Entity): void => {
       const textureSource = progressTextureInfo.progressTextureSources[localTextureIndex];
       if (blueprintComponent.partialRenderParts.length <= i) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.children[0] as Hitbox;
+         // @HACK @COPYNPASTE since fence gates don't have their first hitbox at its actual 'position'
+         let hitbox: Hitbox;
+         if (blueprintType === BlueprintType.fenceGate) {
+            // 3rd hitbox is the door hitbox
+            hitbox = transformComponent.hitboxes[2];
+         } else {
+            hitbox = transformComponent.hitboxes[0];
+         }
          
          // New render part
          const renderPart = new TexturedRenderPart(
@@ -510,7 +525,7 @@ function onLoad(entity: Entity): void {
       const progressTextureInfo = progressTextureInfoArray[i];
 
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
 
       const renderPart = new TexturedRenderPart(
          hitbox,
@@ -519,6 +534,10 @@ function onLoad(entity: Entity): void {
          getTextureArrayIndex(progressTextureInfo.completedTextureSource)
       );
       renderPart.offset.x = progressTextureInfo.offsetX;
+      // @HACK, this shittery is cuz the fence gate doesn't have its first hitbox at the 'core' position
+      if (blueprintComponent.blueprintType === BlueprintType.fenceGate) {
+         renderPart.offset.x += 32;
+      }
       renderPart.offset.y = progressTextureInfo.offsetY;
       renderPart.opacity = 0.5;
       if (tribeComponent.tribeID === playerTribe.id) {
@@ -537,7 +556,7 @@ function onLoad(entity: Entity): void {
 
 function onSpawn(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox("blueprint-place.mp3", 0.4, 1, entity, hitbox, false);
 }
 
@@ -589,7 +608,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
    if (blueprintProgress !== blueprintComponent.lastBlueprintProgress) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
 
       playSoundOnHitbox("blueprint-work.mp3", 0.4, randFloat(0.9, 1.1), entity, hitbox, false);
 
@@ -644,7 +663,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    playSoundOnHitbox("blueprint-work.mp3", 0.4, 1, entity, hitbox, false);
    playSoundOnHitbox("structure-shaping.mp3", 0.4, 1, entity, hitbox, false);
@@ -681,9 +700,9 @@ function onDie(entity: Entity): void {
       case BlueprintType.stoneDoor:
       case BlueprintType.stoneBracings: {
          for (let i = 0; i < 5; i++) {
-            const offsetDirection = 2 * Math.PI * Math.random();
+            const offsetDirection = randAngle();
             const offsetAmount = 32 * Math.random();
-            createRockParticle(hitbox.box.position.x + offsetAmount * Math.sin(offsetDirection), hitbox.box.position.y + offsetAmount * Math.cos(offsetDirection), 2 * Math.PI * Math.random(), randFloat(50, 70), ParticleRenderLayer.high);
+            createRockParticle(hitbox.box.position.x + offsetAmount * Math.sin(offsetDirection), hitbox.box.position.y + offsetAmount * Math.cos(offsetDirection), randAngle(), randFloat(50, 70), ParticleRenderLayer.high);
          }
       
          for (let i = 0; i < 10; i++) {

@@ -16,14 +16,15 @@ import { Point } from "../../../../shared/src/utils";
 import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 import { StructureConnection } from "../../structure-placement";
 
 export function createBarrelConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent();
 
    const box = new CircularBox(position, new Point(0, 0), rotation, 40);
-   const hitbox = createHitbox(transformComponent, null, box, 1.5, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, box, 1.5, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(20);

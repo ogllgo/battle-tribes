@@ -2,15 +2,16 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityParams, getEntityRenderInfo } from "../../world";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
-import { randFloat, randInt } from "../../../../shared/src/utils";
+import { randAngle, randFloat, randInt } from "../../../../shared/src/utils";
 import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle } from "../../particles";
 import { playSoundOnHitbox } from "../../sound";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface BerryBushComponentParams {
    readonly numBerries: number;
@@ -57,9 +58,9 @@ function createParamsFromData(reader: PacketReader): BerryBushComponentParams {
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -68,7 +69,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       getTextureArrayIndex(BERRY_BUSH_TEXTURE_SOURCES[entityParams.serverComponentParams[ServerComponentType.berryBush]!.numBerries])
    );
    renderPart.addTag("berryBushComponent:renderPart");
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart)
+   renderInfo.attachRenderPart(renderPart)
 
    return {
       renderPart: renderPart
@@ -103,9 +104,9 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
-   const moveDirection = 2 * Math.PI * Math.random();
+   const moveDirection = randAngle();
    
    const spawnPositionX = hitbox.box.position.x + RADIUS * Math.sin(moveDirection);
    const spawnPositionY = hitbox.box.position.y + RADIUS * Math.cos(moveDirection);
@@ -122,15 +123,15 @@ function onHit(entity: Entity): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 6; i++) {
       const offsetMagnitude = RADIUS * Math.random();
-      const spawnOffsetDirection = 2 * Math.PI * Math.random();
+      const spawnOffsetDirection = randAngle();
       const spawnPositionX = hitbox.box.position.x + offsetMagnitude * Math.sin(spawnOffsetDirection);
       const spawnPositionY = hitbox.box.position.y + offsetMagnitude * Math.cos(spawnOffsetDirection);
 
-      createLeafParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), LeafParticleSize.small);
+      createLeafParticle(spawnPositionX, spawnPositionY, randAngle(), LeafParticleSize.small);
    }
    
    // Create leaf specks

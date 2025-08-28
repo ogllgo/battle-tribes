@@ -1,13 +1,13 @@
-import { HitData } from "../../../../shared/src/client-server-types";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
-import { angle } from "../../../../shared/src/utils";
+import { Point } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
 import { createLightWoodSpeckParticle, createWoodShardParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 import { EMBRASURE_TEXTURE_SOURCES } from "../server-components/BuildingMaterialComponent";
@@ -31,9 +31,9 @@ export function createEmbrasureComponentParams(): EmbrasureComponentParams {
    return {};
 }
 
-function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const buildingMaterialComponentParams = entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!;
 
@@ -45,7 +45,7 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
    );
    renderPart.addTag("buildingMaterialComponent:material");
 
-   intermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {};
 }
@@ -58,10 +58,7 @@ function getMaxRenderParts(): number {
    return 1;
 }
 
-function onHit(entity: Entity, hitData: HitData): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-
+function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
    playSoundOnHitbox("wooden-wall-hit.mp3", 0.3, 1, entity, hitbox, false);
 
    for (let i = 0; i < 4; i++) {
@@ -69,7 +66,7 @@ function onHit(entity: Entity, hitData: HitData): void {
    }
 
    for (let i = 0; i < 7; i++) {
-      let offsetDirection = angle(hitData.hitPosition[0] - hitbox.box.position.x, hitData.hitPosition[1] - hitbox.box.position.y);
+      let offsetDirection = hitbox.box.position.angleTo(hitPosition);
       offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
 
       const spawnPositionX = hitbox.box.position.x + 20 * Math.sin(offsetDirection);
@@ -80,7 +77,7 @@ function onHit(entity: Entity, hitData: HitData): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    playSoundOnHitbox("wooden-wall-break.mp3", 0.4, 1, entity, hitbox, false);
 

@@ -16,7 +16,7 @@ import { Point } from "../../../../../shared/src/utils";
 import { HitboxCollisionType, HitboxFlag } from "../../../../../shared/src/boxes/boxes";
 import RectangularBox from "../../../../../shared/src/boxes/RectangularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../../shared/src/collision";
-import { createHitbox } from "../../../hitboxes";
+import { Hitbox } from "../../../hitboxes";
 import { StructureConnection } from "../../../structure-placement";
 
 export function createMithrilAnvilConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
@@ -25,21 +25,24 @@ export function createMithrilAnvilConfig(position: Point, rotation: number, trib
    // Middle box
    {
       const box = new RectangularBox(position, new Point(-16, 0), rotation, 48, 56);
-      const hitbox = createHitbox(transformComponent, null, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+      const hitbox = new Hitbox(transformComponent, null, true, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+      hitbox.isStatic = true;
       addHitboxToTransformComponent(transformComponent, hitbox);
    }
 
    // Left box
    {
       const box = new RectangularBox(position, new Point(-48, 0), rotation, 16, 40);
-      const hitbox = createHitbox(transformComponent, null, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+      const hitbox = new Hitbox(transformComponent, null, true, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+      hitbox.isStatic = true;
       addHitboxToTransformComponent(transformComponent, hitbox);
    }
 
    // Right box
    {
       const box = new RectangularBox(position, new Point(30, 0), rotation, 44, 40);
-      const hitbox = createHitbox(transformComponent, null, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+      const hitbox = new Hitbox(transformComponent, null, true, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+      hitbox.isStatic = true;
       addHitboxToTransformComponent(transformComponent, hitbox);
    }
    

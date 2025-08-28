@@ -4,11 +4,12 @@ import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { Settings } from "../../../../shared/src/settings";
 import { randAngle, randFloat } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { getHitboxVelocity, Hitbox } from "../../hitboxes";
 import { createSandParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
@@ -39,9 +40,9 @@ const getTextureSource = (size: number): string => {
    return "entities/sand-ball/size-" + size + ".png";
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    const sandBallComponentParams = entityParams.serverComponentParams[ServerComponentType.sandBall]!;
    
@@ -51,7 +52,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0,
       getTextureArrayIndex(getTextureSource(sandBallComponentParams.size))
    );
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {
       renderPart: renderPart
@@ -86,7 +87,7 @@ function getMaxRenderParts(): number {
 function onTick(sandBall: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(sandBall);
    if (transformComponent.rootEntity !== sandBall) {
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       const hitboxRadius = (hitbox.box as CircularBox).radius;
       const hitboxVelocity = getHitboxVelocity(hitbox);
 

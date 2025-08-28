@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { assert, customTickIntervalHasPassed, lerp, randInt, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { assert, customTickIntervalHasPassed, lerp, randAngle, randInt, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
-import { TileType, TILE_FRICTIONS } from "battletribes-shared/tiles";
+import { TILE_PHYSICS_INFO_RECORD, TileType } from "battletribes-shared/tiles";
 import Board from "../../Board";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import Particle from "../../Particle";
@@ -11,8 +11,8 @@ import { keyIsPressed } from "../../keyboard-input";
 import { resolveWallCollisions } from "../../collision";
 import { PacketReader } from "battletribes-shared/packets";
 import { createWaterSplashParticle } from "../../particles";
-import { entityExists, EntityParams, getEntityLayer, getEntityRenderInfo, getEntityType } from "../../world";
-import { EntityAttachInfo, entityChildIsEntity, entityChildIsHitbox, entityIsInRiver, getHitboxTile, TransformComponent, TransformComponentArray, cleanTransform } from "./TransformComponent";
+import { EntityParams, getEntityLayer, getEntityRenderInfo, getEntityType } from "../../world";
+import { entityIsInRiver, getHitboxTile, TransformComponent, TransformComponentArray, cleanEntityTransform } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playerInstance } from "../../player";
@@ -58,19 +58,21 @@ const applyHitboxKinematics = (transformComponent: TransformComponent, entity: E
       }
    }
 
-   const friction = TILE_FRICTIONS[tile.type];
+   const tilePhysicsInfo = TILE_PHYSICS_INFO_RECORD[tile.type];
+   const tileFriction = tilePhysicsInfo.friction;
 
    let velX = hitbox.box.position.x - hitbox.previousPosition.x;
    let velY = hitbox.box.position.y - hitbox.previousPosition.y;
       
    // Air friction
-   velX *= 1 - friction / Settings.TPS * 2;
-   velY *= 1 - friction / Settings.TPS * 2;
+   // @Bug? the tile's friction shouldn't affect air friction?
+   velX *= 1 - tileFriction / Settings.TPS * 2;
+   velY *= 1 - tileFriction / Settings.TPS * 2;
 
    // Ground friction
    const velocityMagnitude = Math.hypot(velX, velY);
    if (velocityMagnitude > 0) {
-      const groundFriction = Math.min(friction, velocityMagnitude);
+      const groundFriction = Math.min(tileFriction, velocityMagnitude);
       velX -= groundFriction * velX / velocityMagnitude / Settings.TPS;
       velY -= groundFriction * velY / velocityMagnitude / Settings.TPS;
    }
@@ -90,7 +92,7 @@ const applyHitboxKinematics = (transformComponent: TransformComponent, entity: E
    hitbox.acceleration.y = 0;
 
    // Mark entity's position as updated
-   cleanTransform(entity);
+   cleanEntityTransform(entity);
    const renderInfo = getEntityRenderInfo(entity);
    registerDirtyRenderInfo(renderInfo);
 }
@@ -102,16 +104,12 @@ const resolveBorderCollisions = (entity: Entity): boolean => {
    
    let hasMoved = false;
    
-   const baseHitbox = transformComponent.children[0] as Hitbox;
+   const baseHitbox = transformComponent.hitboxes[0];
 
    // @Incomplete: do this using transform component bounds
    
    // @Bug: if the entity is a lot of hitboxes stacked vertically, and they are all in the left border, then they will be pushed too far out.
-   for (const hitbox of transformComponent.children) {
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
-      
+   for (const hitbox of transformComponent.hitboxes) {
       const box = hitbox.box;
       
       const minX = box.calculateBoundsMinX();
@@ -186,7 +184,7 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    // Water droplet particles
    // @Cleanup: Don't hardcode fish condition
@@ -196,7 +194,7 @@ function onTick(entity: Entity): void {
    
    // Water splash particles
    // @Cleanup: Move to particles file
-   if (entityIsInRiver(transformComponent, entity) && customTickIntervalHasPassed(Board.clientTicks, 0.15) && getHitboxVelocity(hitbox).length() > 0&& getEntityType(entity) !== EntityType.fish) {
+   if (entityIsInRiver(transformComponent, entity) && customTickIntervalHasPassed(Board.clientTicks, 0.15) && getHitboxVelocity(hitbox).magnitude() > 0&& getEntityType(entity) !== EntityType.fish) {
       const lifetime = 2.5;
 
       const particle = new Particle(lifetime);
@@ -215,7 +213,7 @@ function onTick(entity: Entity): void {
          0, 0, 
          0, 0,
          0,
-         2 * Math.PI * Math.random(),
+         randAngle(),
          0,
          0,
          0,
@@ -253,7 +251,7 @@ const applyHitboxTethers = (transformComponent: TransformComponent, hitbox: Hitb
       const diffY = originBox.position.y - hitbox.box.position.y;
       const distance = Math.sqrt(diffX * diffX + diffY * diffY);
       if (distance === 0) {
-         throw new Error();
+         continue;
       }
 
       const normalisedDiffX = diffX / distance;
@@ -269,27 +267,46 @@ const applyHitboxTethers = (transformComponent: TransformComponent, hitbox: Hitb
       hitbox.acceleration.y += springForceY / hitbox.mass;
       // Don't move the other hitbox, as that will be accounted for by the server!
    }
+
 }
+const tickHitboxPhysics = (hitbox: Hitbox): void => {
+   // @CLEANUP
+   const transformComponent = TransformComponentArray.getComponent(hitbox.entity);
 
-const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInfo: EntityAttachInfo): void => {
-   assert(entityExists(carryInfo.attachedEntity));
+   // tickHitboxAngularPhysics(hitbox.entity, hitbox, transformComponent);
+
+   // @Hack: this physics component check is needed because the applyHitboxKinematics function needs a physics component... for now, perhaps....
+   if (hitbox.parent === null && PhysicsComponentArray.hasComponent(hitbox.entity)) {
+      applyHitboxKinematics(transformComponent, hitbox.entity, hitbox);
+   }
    
-   const transformComponent = TransformComponentArray.getComponent(carryInfo.attachedEntity);
-
    // @Incomplete
-   // turnEntity(carryInfo.carriedEntity, transformComponent, physicsComponent);
-   // (Don't apply physics for carried entities)
-   // @Incomplete
-   // applyHitboxTethers(transformComponent, physicsComponent);
-   cleanTransform(carryInfo.attachedEntity);
+   // applyHitboxTethers(hitbox, transformComponent);
 
-   // Propagate to children
-   for (const entityAttachInfo of transformComponent.children) {
-      if (entityChildIsEntity(entityAttachInfo)) {
-         tickCarriedEntity(transformComponent, entityAttachInfo);
-      }
+   for (const childHitbox of hitbox.children) {
+      tickHitboxPhysics(childHitbox);
    }
 }
+
+// const tickCarriedEntity = (mountTransformComponent: TransformComponent, carryInfo: EntityAttachInfo): void => {
+//    assert(entityExists(carryInfo.attachedEntity));
+   
+//    const transformComponent = TransformComponentArray.getComponent(carryInfo.attachedEntity);
+
+//    // @Incomplete
+//    // turnEntity(carryInfo.carriedEntity, transformComponent, physicsComponent);
+//    // (Don't apply physics for carried entities)
+//    // @Incomplete
+//    // applyHitboxTethers(transformComponent, physicsComponent);
+//    cleanTransform(carryInfo.attachedEntity);
+
+//    // Propagate to children
+//    for (const entityAttachInfo of transformComponent.children) {
+//       if (entityChildIsEntity(entityAttachInfo)) {
+//          tickCarriedEntity(transformComponent, entityAttachInfo);
+//       }
+//    }
+// }
 
 function onUpdate(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
@@ -297,55 +314,41 @@ function onUpdate(entity: Entity): void {
       throw new Error();
    }
 
-   for (const child of transformComponent.children) {
-      if (!entityChildIsHitbox(child)) {
-         continue;
-      }
-
+   for (const child of transformComponent.hitboxes) {
       const hitbox = child;
       applyHitboxTethers(transformComponent, hitbox);
    }
    
-   // If the entity isn't being carried, update its' physics
-   if (transformComponent.rootEntity === entity) {
-      for (const rootChild of transformComponent.rootChildren) {
-         if (entityChildIsHitbox(rootChild)) {
-            applyHitboxKinematics(transformComponent, entity, rootChild);
-         }
-      }
-      // @Speed: only do if the kinematics moved the entity
-      cleanTransform(entity);
-      
-      // Don't resolve wall tile collisions in lightspeed mode
-      if (entity !== playerInstance || !keyIsPressed("l")) { 
-         const hasMoved = resolveWallCollisions(entity);
-   
-         if (hasMoved) {
-            cleanTransform(entity);
-         }
-      }
-   
-      const hasMoved = resolveBorderCollisions(entity);
-      if (hasMoved) {
-         cleanTransform(entity);
-      }
+   for (const rootHitbox of transformComponent.rootHitboxes) {
+      tickHitboxPhysics(rootHitbox);
+   }
 
-      // Propagate to children
-      // for (const entityAttachInfo of transformComponent.children) {
-      //    if (entityChildIsEntity(entityAttachInfo)) {
-      //       tickCarriedEntity(transformComponent, entityAttachInfo);
-      //    }
-      // }
-   } else {
-      // The player is attached to a parent: need to snap them to the parent!
-      for (const child of transformComponent.children) {
-         if (entityChildIsEntity(child)) {
-            cleanTransform(child.attachedEntity);
-         } else {
-            cleanTransform(child);
-         }
+   // @Speed: only do if the kinematics moved the entity
+   cleanEntityTransform(entity);
+   
+   // Don't resolve wall tile collisions in lightspeed mode
+   if (entity !== playerInstance || !keyIsPressed("l")) { 
+      const hasMoved = resolveWallCollisions(entity);
+
+      if (hasMoved) {
+         cleanEntityTransform(entity);
       }
    }
+
+   const hasMoved = resolveBorderCollisions(entity);
+   if (hasMoved) {
+      cleanEntityTransform(entity);
+   }
+
+      // @INCOMPLETE!
+      // The player is attached to a parent: need to snap them to the parent!
+      // for (const child of transformComponent.children) {
+      //    if (entityChildIsEntity(child)) {
+      //       cleanTransform(child.attachedEntity);
+      //    } else {
+      //       cleanTransform(child);
+      //    }
+      // }
 
    if (transformComponent.boundingAreaMinX < 0 || transformComponent.boundingAreaMaxX >= Settings.BOARD_UNITS || transformComponent.boundingAreaMinY < 0 || transformComponent.boundingAreaMaxY >= Settings.BOARD_UNITS) {
       throw new Error();

@@ -10,8 +10,8 @@ import { registerDirtyEntity } from "../server/player-clients";
 import { AIHelperComponentArray, AIType } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { GuardianSpikyBallComponentArray } from "./GuardianSpikyBallComponent";
-import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
-import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
+import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { TransformComponentArray } from "./TransformComponent";
 import { applyKnockback, Hitbox } from "../hitboxes";
 
 const enum Vars {
@@ -59,7 +59,7 @@ export class GuardianComponent {
 
       // @Hack
       const transformComponent = TransformComponentArray.getComponent(guardian);
-      const guardianHitbox = transformComponent.children[0] as Hitbox;
+      const guardianHitbox = transformComponent.hitboxes[0];
       this.limbNormalDirection = guardianHitbox.box.angle;
 
       const aiHelperComponent = AIHelperComponentArray.getComponent(guardian);
@@ -96,12 +96,10 @@ export function getGuardianLimbOrbitRadius(): number {
 function onJoin(guardian: Entity): void {
    const guardianComponent = GuardianComponentArray.getComponent(guardian);
    const transformComponent = TransformComponentArray.getComponent(guardian);
-   for (let i = 0; i < transformComponent.children.length; i++) {
-      const hitbox = transformComponent.children[i];
-      if (entityChildIsHitbox(hitbox)) {
-         if (hitbox.flags.includes(HitboxFlag.GUARDIAN_LIMB_HITBOX)) {
-            guardianComponent.limbHitboxes.push(hitbox);
-         }
+   for (let i = 0; i < transformComponent.hitboxes.length; i++) {
+      const hitbox = transformComponent.hitboxes[i];
+      if (hitbox.flags.includes(HitboxFlag.GUARDIAN_LIMB_HITBOX)) {
+         guardianComponent.limbHitboxes.push(hitbox);
       }
    }
 }
@@ -144,7 +142,7 @@ const moveGemActivation = (guardianComponent: GuardianComponent, targetActivatio
 
 const updateOrbitingGuardianLimbs = (guardian: Entity, guardianComponent: GuardianComponent): void => {
    const transformComponent = TransformComponentArray.getComponent(guardian);
-   const guardianHitbox = transformComponent.children[0] as Hitbox;
+   const guardianHitbox = transformComponent.hitboxes[0];
    for (let i = 0; i < guardianComponent.limbHitboxes.length; i++) {
       const hitbox = guardianComponent.limbHitboxes[i];
       const box = hitbox.box;
@@ -162,7 +160,7 @@ const updateOrbitingGuardianLimbs = (guardian: Entity, guardianComponent: Guardi
 
 const limbsAreInStagingPosition = (guardian: Entity, guardianComponent: GuardianComponent): boolean => {
    const transformComponent = TransformComponentArray.getComponent(guardian);
-   const guardianHitbox = transformComponent.children[0] as Hitbox;
+   const guardianHitbox = transformComponent.hitboxes[0];
 
    // @Hack
    const diffFromTarget1 = getAngleDiff(guardianComponent.limbNormalDirection, guardianHitbox.box.angle);
@@ -178,7 +176,7 @@ function onTick(guardian: Entity): void {
    const target = guardianAI.getTarget(guardian);
    if (target !== null) {
       const targetTransformComponent = TransformComponentArray.getComponent(target);
-      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+      const targetHitbox = targetTransformComponent.hitboxes[0];
       
       guardianComponent.lastTargetX = targetHitbox.box.position.x;
       guardianComponent.lastTargetY = targetHitbox.box.position.y;
@@ -269,7 +267,7 @@ function onTick(guardian: Entity): void {
 
          // @Hack
          const transformComponent = TransformComponentArray.getComponent(guardian);
-         const guardianHitbox = transformComponent.children[0] as Hitbox;
+         const guardianHitbox = transformComponent.hitboxes[0];
          guardianComponent.limbNormalDirection = guardianHitbox.box.angle;
    
          // @Copynpaste
@@ -293,7 +291,7 @@ function onTick(guardian: Entity): void {
          guardianComponent.limbMoveProgress = 0;
 
          const transformComponent = TransformComponentArray.getComponent(guardian);
-         const guardianHitbox = transformComponent.children[0] as Hitbox;
+         const guardianHitbox = transformComponent.hitboxes[0];
          guardianComponent.limbNormalDirection = guardianHitbox.box.angle;
       }
       updateOrbitingGuardianLimbs(guardian, guardianComponent);
@@ -328,8 +326,8 @@ function onTick(guardian: Entity): void {
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(guardian);
-   if (wanderAI.targetPositionX !== -1) {
-      moveEntityToPosition(guardian, wanderAI.targetPositionX, wanderAI.targetPositionY, 200, 0.5 * Math.PI, 1);
+   if (wanderAI.targetPosition !== null) {
+      moveEntityToPosition(guardian, wanderAI.targetPosition.x, wanderAI.targetPosition.y, 200, 0.5 * Math.PI, 1);
    }
 }
 
@@ -384,13 +382,15 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    packet.addNumber(stageProgress);
 }
 
-function onHitboxCollision(guardian: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
    // Only the limbs can damage entities
    // @Temporary?
    // if (!actingHitbox.flags.includes(HitboxFlag.GUARDIAN_LIMB_HITBOX)) {
    //    return;
    // }
 
+   const collidingEntity = collidingHitbox.entity;
+   
    // Don't attack spiky balls or other guardians
    if (GuardianSpikyBallComponentArray.hasComponent(collidingEntity) || GuardianComponentArray.hasComponent(collidingEntity)) {
       return;
@@ -402,10 +402,10 @@ function onHitboxCollision(guardian: Entity, collidingEntity: Entity, affectedHi
          return;
       }
 
-      const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+      const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
       
-      hitEntity(collidingEntity, guardian, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
-      applyKnockback(collidingEntity, collidingHitbox, 200, hitDirection);
+      damageEntity(collidingEntity, collidingHitbox, hitbox.entity, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+      applyKnockback(collidingHitbox, 200, hitDirection);
       addLocalInvulnerabilityHash(collidingEntity, "guardianLimb", 0.3);
    }
 }

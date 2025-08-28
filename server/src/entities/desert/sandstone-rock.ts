@@ -10,7 +10,7 @@ import { HealthComponent } from "../../components/HealthComponent";
 import { SandstoneRockComponent } from "../../components/SandstoneRockComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 export function createSandstoneRockConfig(position: Point, angle: number, size: number): EntityConfig {
    const transformComponent = new TransformComponent();
@@ -40,7 +40,8 @@ export function createSandstoneRockConfig(position: Point, angle: number, size: 
       default: throw new Error();
    }
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, radius), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), angle, radius), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);

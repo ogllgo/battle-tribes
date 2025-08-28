@@ -1,11 +1,12 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playBuildingHitSound, playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 import { TransformComponentArray } from "../server-components/TransformComponent";
@@ -28,9 +29,9 @@ export function createWarriorHutComponentParams(): WarriorHutComponentParams {
    return {};
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    // Hut
    const hutRenderPart = new TexturedRenderPart(
@@ -39,7 +40,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0,
       getTextureArrayIndex("entities/warrior-hut/warrior-hut.png")
    );
-   entityIntermediateInfo.renderInfo.attachRenderPart(hutRenderPart);
+   renderInfo.attachRenderPart(hutRenderPart);
 
    // Doors
    const doorRenderParts = new Array<VisualRenderPart>();
@@ -51,7 +52,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
          getTextureArrayIndex("entities/warrior-hut/warrior-hut-door.png")
       );
       doorRenderPart.addTag("hutComponent:door");
-      entityIntermediateInfo.renderInfo.attachRenderPart(doorRenderPart);
+      renderInfo.attachRenderPart(doorRenderPart);
       doorRenderParts.push(doorRenderPart);
    }
 
@@ -66,14 +67,12 @@ function getMaxRenderParts(): number {
    return 3;
 }
 
-function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+function onHit(entity: Entity, hitbox: Hitbox): void {
    playBuildingHitSound(entity, hitbox);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox("building-destroy-1.mp3", 0.4, 1, entity, hitbox, false);
 }

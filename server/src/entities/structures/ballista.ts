@@ -16,13 +16,17 @@ import { addInventoryToInventoryComponent, InventoryComponent } from "../../comp
 import { BallistaComponent } from "../../components/BallistaComponent";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 import { Point } from "../../../../shared/src/utils";
-import { createHitbox, Hitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { StructureConnection } from "../../structure-placement";
 
-const move = () => {
+const moveFunc = () => {
+   throw new Error();
+}
+
+const turnFunc = () => {
    throw new Error();
 }
 
@@ -30,7 +34,8 @@ export function createBallistaConfig(position: Point, rotation: number, tribe: T
    const transformComponent = new TransformComponent();
 
    const box = new RectangularBox(position, new Point(0, 0), rotation, 100, 100);
-   const hitbox = createHitbox(transformComponent, null, box, 2, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, box, 2, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(100);
@@ -43,7 +48,7 @@ export function createBallistaConfig(position: Point, rotation: number, tribe: T
 
    const turretComponent = new TurretComponent(0);
    
-   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 550, move);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.hitboxes[0], 550, moveFunc, turnFunc);
    
    const ammoBoxComponent = new AmmoBoxComponent();
 

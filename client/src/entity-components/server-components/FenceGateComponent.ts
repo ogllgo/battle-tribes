@@ -1,55 +1,16 @@
-import { angle, lerp } from "battletribes-shared/utils";
-import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
-import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { RenderPart } from "../../render-parts/render-parts";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityParams } from "../../world";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 
-export interface FenceGateComponentParams {
-   readonly openProgress: number;
-}
+export interface FenceGateComponentParams {}
 
-interface IntermediateInfo {
-   readonly doorRenderPart: RenderPart;
-}
+interface IntermediateInfo {}
 
-export interface FenceGateComponent {
-   readonly doorRenderPart: RenderPart;
-
-   openProgress: number;
-}
-
-interface DoorInfo {
-   readonly offsetX: number;
-   readonly offsetY: number;
-   readonly rotation: number;
-}
-
-const doorWidth = 52;
-const doorHeight = 16;
-
-const doorHalfDiagonalLength = Math.sqrt(doorHeight * doorHeight + doorWidth * doorWidth) / 2;
-const angleToCenter = angle(doorHeight, doorWidth);
-
-const getFenceGateDoorInfo = (openProgress: number): DoorInfo => {
-   const baseRotation = Math.PI/2;
-   const rotation = baseRotation - lerp(0, Math.PI/2 - 0.1, openProgress);
-   
-   // Rotate around the top left corner of the door
-   const offsetDirection = rotation + angleToCenter;
-   const xOffset = doorHalfDiagonalLength * Math.sin(offsetDirection) - doorHalfDiagonalLength * Math.sin(baseRotation + angleToCenter);
-   const yOffset = doorHalfDiagonalLength * Math.cos(offsetDirection) - doorHalfDiagonalLength * Math.cos(baseRotation + angleToCenter);
-
-   return {
-      offsetX: xOffset,
-      offsetY: yOffset,
-      rotation: rotation - Math.PI/2
-   };
-}
+export interface FenceGateComponent {}
 
 export const FenceGateComponentArray = new ServerComponentArray<FenceGateComponent, FenceGateComponentParams, IntermediateInfo>(ServerComponentType.fenceGate, true, {
    createParamsFromData: createParamsFromData,
@@ -60,78 +21,50 @@ export const FenceGateComponentArray = new ServerComponentArray<FenceGateCompone
    updateFromData: updateFromData
 });
 
-const fillParams = (openProgress: number): FenceGateComponentParams => {
-   return {
-      openProgress: openProgress
-   };
-}
-
 export function createFenceGateComponentParams(): FenceGateComponentParams {
-   return fillParams(0);
+   return {};
 }
 
-function createParamsFromData(reader: PacketReader): FenceGateComponentParams {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-   const openProgress = reader.readNumber();
-
-   return fillParams(openProgress);
+function createParamsFromData(): FenceGateComponentParams {
+   return {};
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponent.children[0] as Hitbox;
    
-   entityIntermediateInfo.renderInfo.attachRenderPart(
-      new TexturedRenderPart(
-         hitbox,
-         1,
-         0,
-         getTextureArrayIndex("entities/fence-gate/fence-gate-sides.png")
-      )
-   );
+   for (const hitbox of transformComponent.hitboxes) {
+      if (hitbox.flags.includes(HitboxFlag.FENCE_GATE_DOOR)) {
+         renderInfo.attachRenderPart(
+               new TexturedRenderPart(
+               hitbox,
+               1,
+               0,
+               getTextureArrayIndex("entities/fence-gate/door.png")
+            )
+         );
+      } else {
+         renderInfo.attachRenderPart(
+               new TexturedRenderPart(
+               hitbox,
+               0,
+               0,
+               getTextureArrayIndex("entities/fence-gate/side.png")
+            )
+         );
+      }
+   }
 
-   const doorRenderPart = new TexturedRenderPart(
-      hitbox,
-      0,
-      0,
-      getTextureArrayIndex("entities/fence-gate/fence-gate-door.png")
-   );
-   entityIntermediateInfo.renderInfo.attachRenderPart(doorRenderPart);
-
-   return {
-      doorRenderPart: doorRenderPart
-   };
+   return {};
 }
 
-function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): FenceGateComponent {
-   return {
-      doorRenderPart: intermediateInfo.doorRenderPart,
-      openProgress: entityParams.serverComponentParams[ServerComponentType.fenceGate]!.openProgress
-   };
+function createComponent(): FenceGateComponent {
+   return {};
 }
 
 function getMaxRenderParts(): number {
-   return 2;
+   return 3;
 }
 
-const updateDoor = (fenceGateComponent: FenceGateComponent): void => {
-   const doorInfo = getFenceGateDoorInfo(fenceGateComponent.openProgress);
+function padData(): void {}
 
-   fenceGateComponent.doorRenderPart.offset.x = doorInfo.offsetX;
-   fenceGateComponent.doorRenderPart.offset.y = doorInfo.offsetY;
-   fenceGateComponent.doorRenderPart.angle = doorInfo.rotation;
-}
-
-function padData(reader: PacketReader): void {
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
-   const fenceGateComponent = FenceGateComponentArray.getComponent(entity);
-   
-   // @Incomplete?
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-   fenceGateComponent.openProgress = reader.readNumber();
-   
-   updateDoor(fenceGateComponent);
-}
+function updateFromData(): void {}

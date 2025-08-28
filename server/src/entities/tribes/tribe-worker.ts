@@ -21,10 +21,14 @@ import { PatrolAI } from "../../ai/PatrolAI";
 import { AIAssignmentComponent } from "../../components/AIAssignmentComponent";
 import { generateTribesmanName } from "../../tribesman-names";
 import { TribesmanComponent } from "../../components/TribesmanComponent";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 import { AIPathfindingComponent } from "../../components/AIPathfindingComponent";
 
-const move = () => {
+const moveFunc = () => {
+   throw new Error();
+}
+
+const turnFunc = () => {
    throw new Error();
 }
 
@@ -45,14 +49,15 @@ const getHitboxRadius = (tribeType: TribeType): number => {
 export function createTribeWorkerConfig(position: Point, rotation: number, tribe: Tribe): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, getHitboxRadius(tribe.tribeType)), 1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, getHitboxRadius(tribe.tribeType)), 1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.traction = 1.4;
 
    const tribeInfo = TRIBE_INFO_RECORD[tribe.tribeType];
-   const healthComponent = new HealthComponent(tribeInfo.maxHealthWorker);
+   // @SQUEAM
+   const healthComponent = new HealthComponent(tribeInfo.maxHealthWorker * 10);
 
    const statusEffectComponent = new StatusEffectComponent(0);
 
@@ -64,7 +69,7 @@ export function createTribeWorkerConfig(position: Point, rotation: number, tribe
    
    const tribesmanAIComponent = new TribesmanAIComponent();
 
-   const aiHelperComponent = new AIHelperComponent(hitbox, 500, move);
+   const aiHelperComponent = new AIHelperComponent(hitbox, 500, moveFunc, turnFunc);
    aiHelperComponent.ais[AIType.patrol] = new PatrolAI();
 
    const aiPathfindingComponent = new AIPathfindingComponent();

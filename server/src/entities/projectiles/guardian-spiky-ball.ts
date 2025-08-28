@@ -5,24 +5,25 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
-import { EntityConfig } from "../../components";
+import { EntityConfig, LightCreationInfo } from "../../components";
 import { GuardianSpikyBallComponent } from "../../components/GuardianSpikyBallComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { ProjectileComponent } from "../../components/ProjectileComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
+import { createLight } from "../../lights";
 
 export function createGuardianSpikyBallConfig(position: Point, rotation: number,creator: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 20), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 20), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
    physicsComponent.isAffectedByAirFriction = false;
    physicsComponent.isAffectedByGroundFriction = false;
-   physicsComponent.isImmovable = true;
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned | StatusEffect.poisoned);
    
@@ -31,6 +32,13 @@ export function createGuardianSpikyBallConfig(position: Point, rotation: number,
    const projectileComponent = new ProjectileComponent(creator);
    
    const guardianSpikyBallComponent = new GuardianSpikyBallComponent();
+   
+   const lights = new Array<LightCreationInfo>();
+   const light = createLight(new Point(0, 0), 0.4, 0.3, 20, 0.9, 0.2, 0.9);
+   lights.push({
+      light: light,
+      attachedHitbox: hitbox
+   });
    
    return {
       entityType: EntityType.guardianSpikyBall,
@@ -42,6 +50,6 @@ export function createGuardianSpikyBallConfig(position: Point, rotation: number,
          [ServerComponentType.projectile]: projectileComponent,
          [ServerComponentType.guardianSpikyBall]: guardianSpikyBallComponent
       },
-      lights: []
+      lights: lights
    };
 }

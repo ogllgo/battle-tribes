@@ -16,14 +16,15 @@ import { Point } from "../../../../../shared/src/utils";
 import { HitboxCollisionType, HitboxFlag } from "../../../../../shared/src/boxes/boxes";
 import RectangularBox from "../../../../../shared/src/boxes/RectangularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../../shared/src/collision";
-import { createHitbox } from "../../../hitboxes";
+import { Hitbox } from "../../../hitboxes";
 import { StructureConnection } from "../../../structure-placement";
 
 export function createAutomatonAssemblerConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent();
    
    const box = new RectangularBox(position, new Point(0, 0), rotation, 160, 80);
-   const hitbox = createHitbox(transformComponent, null, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   const hitbox = new Hitbox(transformComponent, null, true, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(50);

@@ -5,10 +5,10 @@ import { Packet } from "battletribes-shared/packets";
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { Point, randFloat, UtilVars } from "battletribes-shared/utils";
+import { Point, polarVec2, randFloat, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition, runHerdAI } from "../ai-shared";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
-import { addLocalInvulnerabilityHash, canDamageEntity, hitEntity, healEntity, HealthComponentArray } from "./HealthComponent";
+import { addLocalInvulnerabilityHash, canDamageEntity, damageEntity, healEntity, HealthComponentArray } from "./HealthComponent";
 import { ItemComponentArray } from "./ItemComponent";
 import { StatusEffectComponentArray, hasStatusEffect, applyStatusEffect } from "./StatusEffectComponent";
 import { TransformComponentArray } from "./TransformComponent";
@@ -111,7 +111,7 @@ export function zombieShouldAttackEntity(zombie: Entity, entity: Entity): boolea
 
 const getTarget = (zombie: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(zombie);
-   const zombieHitbox = transformComponent.children[0] as Hitbox;
+   const zombieHitbox = transformComponent.hitboxes[0];
    
    // Attack the closest target in vision range
    let minDist = Number.MAX_SAFE_INTEGER;
@@ -120,9 +120,9 @@ const getTarget = (zombie: Entity, aiHelperComponent: AIHelperComponent): Entity
       const entity = aiHelperComponent.visibleEntities[i];
       if (zombieShouldAttackEntity(zombie, entity)) {
          const entityTransformComponent = TransformComponentArray.getComponent(entity);
-         const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+         const entityHitbox = entityTransformComponent.hitboxes[0];
          
-         const distance = zombieHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+         const distance = zombieHitbox.box.position.distanceTo(entityHitbox.box.position);
          if (distance < minDist) {
             minDist = distance;
             target = entity;
@@ -172,14 +172,14 @@ const doMeleeAttack = (zombie: Entity, target: Entity): void => {
 
 const doBiteAttack = (zombie: Entity, target: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(zombie);
-   const zombieHitbox = transformComponent.children[0] as Hitbox;
+   const zombieHitbox = transformComponent.hitboxes[0];
    
    const targetTransformComponent = TransformComponentArray.getComponent(target);
-   const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+   const targetHitbox = targetTransformComponent.hitboxes[0];
    
    // Lunge at the target
-   const lungeDirection = zombieHitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
-   applyAbsoluteKnockback(zombie, zombieHitbox, 130, lungeDirection);
+   const lungeDir = zombieHitbox.box.position.angleTo(targetHitbox.box.position);
+   applyAbsoluteKnockback(zombieHitbox, polarVec2(130, lungeDir));
 
    // Reset attack cooldown
    const zombieComponent = ZombieComponentArray.getComponent(zombie);
@@ -252,7 +252,7 @@ function onTick(zombie: Entity): void {
       }
       
       const targetTransformComponent = TransformComponentArray.getComponent(attackTarget);
-      const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+      const targetHitbox = targetTransformComponent.hitboxes[0];
       
       moveEntityToPosition(zombie, targetHitbox.box.position.x, targetHitbox.box.position.y, Vars.ACCELERATION, Vars.TURN_SPEED, 1);
       
@@ -262,7 +262,7 @@ function onTick(zombie: Entity): void {
    }
 
    const transformComponent = TransformComponentArray.getComponent(zombie);
-   const zombieHitbox = transformComponent.children[0] as Hitbox;
+   const zombieHitbox = transformComponent.hitboxes[0];
 
    // Eat raw beef and fish
    {
@@ -277,9 +277,9 @@ function onTick(zombie: Entity): void {
          const itemComponent = ItemComponentArray.getComponent(entity);
          if (itemComponent.itemType === ItemType.raw_beef || itemComponent.itemType === ItemType.raw_fish) {
             const entityTransformComponent = TransformComponentArray.getComponent(entity);
-            const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+            const entityHitbox = entityTransformComponent.hitboxes[0];
             
-            const distance = zombieHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+            const distance = zombieHitbox.box.position.distanceTo(entityHitbox.box.position);
             if (distance < minDist) {
                minDist = distance;
                closestFoodItem = entity;
@@ -288,7 +288,7 @@ function onTick(zombie: Entity): void {
       }
       if (closestFoodItem !== null) {
          const foodTransformComponent = TransformComponentArray.getComponent(closestFoodItem);
-         const foodHitbox = foodTransformComponent.children[0] as Hitbox;
+         const foodHitbox = foodTransformComponent.hitboxes[0];
          
          moveEntityToPosition(zombie, foodHitbox.box.position.x, foodHitbox.box.position.y, Vars.ACCELERATION, Vars.TURN_SPEED, 1);
 
@@ -305,7 +305,7 @@ function onTick(zombie: Entity): void {
       const hurtEntity = zombieComponent.visibleHurtEntityID;
       if (entityExists(hurtEntity)) {
          const hurtEntityTransformComponent = TransformComponentArray.getComponent(hurtEntity);
-         const hurtEntityHitbox = hurtEntityTransformComponent.children[0] as Hitbox;
+         const hurtEntityHitbox = hurtEntityTransformComponent.hitboxes[0];
          
          moveEntityToPosition(zombie, hurtEntityHitbox.box.position.x, hurtEntityHitbox.box.position.y, Vars.ACCELERATION_SLOW, Vars.TURN_SPEED, 1);
          return;
@@ -319,9 +319,7 @@ function onTick(zombie: Entity): void {
       if (herdMembers.length > 1) {
          runHerdAI(zombie, herdMembers, ZombieVars.VISION_RANGE, Vars.TURN_RATE, Vars.MIN_SEPARATION_DISTANCE, Vars.SEPARATION_INFLUENCE, Vars.ALIGNMENT_INFLUENCE, Vars.COHESION_INFLUENCE);
 
-         const accelerationX = Vars.ACCELERATION_SLOW * Math.sin(zombieHitbox.box.angle);
-         const accelerationY = Vars.ACCELERATION_SLOW * Math.cos(zombieHitbox.box.angle);
-         applyAccelerationFromGround(zombie, zombieHitbox, accelerationX, accelerationY);
+         applyAccelerationFromGround(zombieHitbox, polarVec2(Vars.ACCELERATION_SLOW, zombieHitbox.box.angle));
          return;
       }
    }
@@ -329,8 +327,8 @@ function onTick(zombie: Entity): void {
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(zombie);
-   if (wanderAI.targetPositionX !== -1) {
-      moveEntityToPosition(zombie, wanderAI.targetPositionX, wanderAI.targetPositionY, 150, 3 * Math.PI, 1);
+   if (wanderAI.targetPosition !== null) {
+      moveEntityToPosition(zombie, wanderAI.targetPosition.x, wanderAI.targetPosition.y, wanderAI.acceleration, wanderAI.turnSpeed, wanderAI.turnDamping);
    }
 }
 
@@ -343,7 +341,10 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    packet.addNumber(zombieComponent.zombieType);
 }
 
-function onHitboxCollision(zombie: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const zombie = hitbox.entity;
+   const collidingEntity = collidingHitbox.entity;
+   
    // Pick up item entities
    if (getEntityType(collidingEntity) === EntityType.itemEntity) {
       pickupItemEntity(zombie, collidingEntity);
@@ -359,16 +360,16 @@ function onHitboxCollision(zombie: Entity, collidingEntity: Entity, affectedHitb
       return;
    }
 
-   const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
 
    // Damage and knock back the player
-   hitEntity(collidingEntity, zombie, 1, DamageSource.zombie, AttackEffectiveness.effective, collisionPoint, 0);
-   applyKnockback(collidingEntity, collidingHitbox, 150, hitDirection);
+   damageEntity(collidingEntity, collidingHitbox, zombie, 1, DamageSource.zombie, AttackEffectiveness.effective, collisionPoint, 0);
+   applyKnockback(collidingHitbox, 150, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, "zombie", 0.3);
 
    // Push the zombie away from the entity
    const flinchDirection = hitDirection + Math.PI;
-   applyAbsoluteKnockback(zombie, affectedHitbox, 100, flinchDirection);
+   applyAbsoluteKnockback(hitbox, polarVec2(100, flinchDirection));
 }
 
 function preRemove(zombie: Entity): void {
@@ -379,7 +380,7 @@ function preRemove(zombie: Entity): void {
    }
 }
 
-function onTakeDamage(zombie: Entity, attackingEntity: Entity | null): void {
+function onTakeDamage(zombie: Entity, _hitHitbox: Hitbox, attackingEntity: Entity | null): void {
    if (attackingEntity !== null) {
       // @Cleanup: too many ifs. generalise
       const attackingEntityType = getEntityType(attackingEntity);

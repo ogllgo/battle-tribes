@@ -5,7 +5,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
-import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityParams, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { playBuildingHitSound, playSoundOnHitbox } from "../../sound";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
@@ -108,12 +108,12 @@ const createBannerRenderPart = (tribeType: TribeType, renderInfo: EntityRenderIn
    return renderPart;
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    // Main render part
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          1,
@@ -128,7 +128,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    const renderParts = new Array<TexturedRenderPart>();
    
    for (const banner of Object.values(bannerComponentParams.banners)) {
-      const renderPart = createBannerRenderPart(tribeComponentParams.tribeType, entityIntermediateInfo.renderInfo, hitbox, banner);
+      const renderPart = createBannerRenderPart(tribeComponentParams.tribeType, renderInfo, hitbox, banner);
       renderParts.push(renderPart);
    }
 
@@ -145,9 +145,8 @@ function createComponent(entityParams: EntityParams, intermediateInfo: Intermedi
 }
 
 function getMaxRenderParts(entityParams: EntityParams): number {
-   const bannerComponentParams = entityParams.serverComponentParams[ServerComponentType.totemBanner]!;
-   // @Garbage
-   return 1 + Object.keys(bannerComponentParams.banners).length;
+   // @HACK: over time the number of banners can increase so we can't use the number of banners at the start as anything...
+   return 20;
 }
 
 function padData(reader: PacketReader): void {
@@ -183,7 +182,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    for (const banner of banners) {
       if (!totemBannerComponent.banners.hasOwnProperty(banner.hutNum)) {
          const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.children[0] as Hitbox;
+         const hitbox = transformComponent.hitboxes[0];
          
          const tribeComponent = TribeComponentArray.getComponent(entity);
          const renderPart = createBannerRenderPart(tribeComponent.tribeType, renderInfo, hitbox, banner);
@@ -205,14 +204,12 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    }
 }
 
-function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+function onHit(entity: Entity, hitbox: Hitbox): void {
    playBuildingHitSound(entity, hitbox);
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox("building-destroy-1.mp3", 0.4, 1, entity, hitbox, false);
 }

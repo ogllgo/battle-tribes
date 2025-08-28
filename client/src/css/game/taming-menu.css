@@ -17,11 +17,12 @@
    transform: translateX(-50%);
    white-space: pre;
 }
-#taming-menu h1 img {
+#taming-menu h1 .rename-icon {
    width: 48px;
    height: 28px;
    image-rendering: pixelated;
    margin-left: 8px;
+   cursor: pointer;
 } 
 
 #taming-menu .taming-tier {
@@ -45,9 +46,10 @@
 }
 
 #taming-menu .progress-area .row {
-   width: 70%;
+   /* @INCOMPLETE: need to make it be centered! */
+   /* width: 70%; */
    display: flex;
-   margin-left: 15%;
+   /* margin-left: 15%; */
 }
 
 #taming-menu .berry-progress-bar {
@@ -261,6 +263,7 @@
 /* TAMING SKILL TOOLTIP */
 
 #taming-skill-tooltip {
+   max-width: 24rem;
    font-family: "Noto Sans";
    color: #fff;
    background-color: #888;

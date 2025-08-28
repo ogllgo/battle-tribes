@@ -18,20 +18,24 @@ import { addHitboxToTransformComponent, TransformComponent } from "../../../comp
 import { TribeComponent } from "../../../components/TribeComponent";
 import { TribeMemberComponent } from "../../../components/TribeMemberComponent";
 import { TribesmanAIComponent } from "../../../components/TribesmanAIComponent";
-import { createHitbox, Hitbox } from "../../../hitboxes";
+import { Hitbox } from "../../../hitboxes";
 import { addHumanoidInventories } from "../../../inventories";
 import Tribe from "../../../Tribe";
 import { generateScrappyName } from "../../../tribesman-names";
 import { AIPathfindingComponent } from "../../../components/AIPathfindingComponent";
 
-const move = () => {
+const moveFunc = () => {
+   throw new Error();
+}
+
+const turnFunc = () => {
    throw new Error();
 }
 
 export function createScrappyConfig(position: Point, rotation: number, tribe: Tribe): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 20), 0.75, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 20), 0.75, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
@@ -47,7 +51,7 @@ export function createScrappyConfig(position: Point, rotation: number, tribe: Tr
 
    const tribesmanAIComponent = new TribesmanAIComponent();
    
-   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 300, move);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.hitboxes[0], 300, moveFunc, turnFunc);
    aiHelperComponent.ais[AIType.patrol] = new PatrolAI();
    
    const aiPathfindingComponent = new AIPathfindingComponent();

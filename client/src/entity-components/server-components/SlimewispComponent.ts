@@ -6,9 +6,10 @@ import { Entity } from "../../../../shared/src/entities";
 import { createSlimePoolParticle, createSlimeSpeckParticle } from "../../particles";
 import { getHitboxTile, TransformComponentArray } from "./TransformComponent";
 import { TileType } from "../../../../shared/src/tiles";
-import { EntityIntermediateInfo, EntityParams, getEntityLayer } from "../../world";
+import { EntityParams, getEntityLayer } from "../../world";
 import { PhysicsComponentArray, resetIgnoredTileSpeedMultipliers } from "./PhysicsComponent";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface SlimewispComponentParams {}
 
@@ -37,9 +38,9 @@ function createParamsFromData(): SlimewispComponentParams {
    return {};
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -48,7 +49,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       getTextureArrayIndex(`entities/slimewisp/slimewisp.png`)
    );
    renderPart.opacity = 0.8;
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {};
 }
@@ -63,7 +64,7 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const layer = getEntityLayer(entity);
 
@@ -81,10 +82,7 @@ function padData(): void {}
 
 function updateFromData(): void {}
 
-function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-
+function onHit(_entity: Entity, hitbox: Hitbox): void {
    createSlimePoolParticle(hitbox.box.position.x, hitbox.box.position.y, RADIUS);
 
    for (let i = 0; i < 2; i++) {
@@ -94,7 +92,7 @@ function onHit(entity: Entity): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    createSlimePoolParticle(hitbox.box.position.x, hitbox.box.position.y, RADIUS);
 

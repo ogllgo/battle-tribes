@@ -73,7 +73,7 @@ import { createDebugImageShaders, renderDebugImages } from "./rendering/webgl/de
 import { AnimalStaffOptions_update } from "./components/game/AnimalStaffOptions";
 import { updateDebugEntity } from "./entity-debugging";
 import { playerInstance } from "./player";
-import { TamingMenu_forceUpdate } from "./components/game/TamingMenu";
+import { TamingMenu_forceUpdate } from "./components/game/taming-menu/TamingMenu";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { Hitbox, setHitboxAngularVelocity } from "./hitboxes";
 
@@ -122,14 +122,18 @@ const updatePlayerRotation = (cursorX: number, cursorY: number): void => {
    cursorDirection = Math.PI/2 - cursorDirection;
 
    const transformComponent = TransformComponentArray.getComponent(playerInstance);
-   const playerHitbox = transformComponent.children[0] as Hitbox;
+   const playerHitbox = transformComponent.hitboxes[0];
    
-   const previousRotation = playerHitbox.box.angle;
-   playerHitbox.box.angle = cursorDirection;
-   playerHitbox.box.relativeAngle = cursorDirection;
+   const previousRelativeAngle = playerHitbox.box.relativeAngle;
+
+   // @HACK: without this silliness occurs
+   if (playerHitbox.parent === null) {
+      playerHitbox.box.angle = playerHitbox.box.relativeAngle;
+   }
+   playerHitbox.box.relativeAngle = cursorDirection - playerHitbox.box.angle + playerHitbox.box.relativeAngle;
 
    // Angular velocity
-   setHitboxAngularVelocity(playerHitbox, (playerHitbox.box.angle - previousRotation) * Settings.TPS);
+   setHitboxAngularVelocity(playerHitbox, (playerHitbox.box.relativeAngle - previousRelativeAngle) * Settings.TPS);
 
    const renderInfo = getEntityRenderInfo(playerInstance);
    // @Temporary

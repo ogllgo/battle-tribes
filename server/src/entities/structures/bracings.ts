@@ -14,7 +14,7 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { StructureComponent } from "../../components/StructureComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { TribeComponent } from "../../components/TribeComponent";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 import Tribe from "../../Tribe";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 
@@ -24,10 +24,12 @@ const HEALTHS = [5, 20];
 export function createBracingsConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox1 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(0, Settings.TILE_SIZE * -0.5), rotation, 16, 16), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
+   const hitbox1 = new Hitbox(transformComponent, null, true, new RectangularBox(position.copy(), new Point(0, Settings.TILE_SIZE * -0.5), rotation, 16, 16), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
+   hitbox1.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox1);
 
-   const hitbox2 = createHitbox(transformComponent, null, new RectangularBox(position.copy(), new Point(0, Settings.TILE_SIZE * 0.5), rotation, 16, 16), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
+   const hitbox2 = new Hitbox(transformComponent, null, true, new RectangularBox(position.copy(), new Point(0, Settings.TILE_SIZE * 0.5), rotation, 16, 16), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
+   hitbox2.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox2);
    
    const healthComponent = new HealthComponent(HEALTHS[material]);

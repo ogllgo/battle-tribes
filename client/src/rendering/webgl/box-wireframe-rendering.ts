@@ -1,13 +1,12 @@
-import { Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { Point, polarVec2, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { CollisionGroup, getEntityCollisionGroup } from "battletribes-shared/collision-groups";
 import { createWebGLProgram, gl } from "../../webgl";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { Box, boxIsCircular, getRelativePivotPos, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
-import { entityChildIsHitbox, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
+import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { Entity } from "battletribes-shared/entities";
 import { getEntityLayer, getEntityType } from "../../world";
 import Layer from "../../Layer";
-import { PivotPointType } from "../../../../shared/src/boxes/BaseBox";
 
 const BORDER_THICKNESS = 3;
 const HALF_BORDER_THICKNESS = BORDER_THICKNESS / 2;
@@ -176,10 +175,10 @@ const addBoxVertices = (vertices: Array<number>, box: Box, adjustment: Point, r:
          const radians = i * 2 * Math.PI / CIRCLE_VERTEX_COUNT;
          // @Speed: Garbage collection
          
-         const bl = Point.fromVectorForm(radius, radians);
-         const br = Point.fromVectorForm(radius, radians + step);
-         const tl = Point.fromVectorForm(radius + BORDER_THICKNESS, radians);
-         const tr = Point.fromVectorForm(radius + BORDER_THICKNESS, radians + step);
+         const bl = polarVec2(radius, radians);
+         const br = polarVec2(radius, radians + step);
+         const tl = polarVec2(radius + BORDER_THICKNESS, radians);
+         const tr = polarVec2(radius + BORDER_THICKNESS, radians + step);
    
          bl.x += hitboxRenderPositionX;
          bl.y += hitboxRenderPositionY;
@@ -239,11 +238,7 @@ export function renderHitboxes(layer: Layer): void {
       
       const adjustment = calculateBoxAdjustment(entity);
 
-      for (const hitbox of transformComponent.children) {
-         if (!entityChildIsHitbox(hitbox)) {
-            continue;
-         }
-         
+      for (const hitbox of transformComponent.hitboxes) {
          let r: number;
          let g: number;
          let b: number;

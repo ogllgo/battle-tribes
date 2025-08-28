@@ -4,13 +4,14 @@ import ServerComponentArray from "../ServerComponentArray";
 import { Entity } from "../../../../shared/src/entities";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
-import { randFloat, randItem } from "../../../../shared/src/utils";
+import { randAngle, randFloat, randItem } from "../../../../shared/src/utils";
 import { createRockParticle, createRockSpeckParticle } from "../../particles";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { ROCK_HIT_SOUNDS, ROCK_DESTROY_SOUNDS, playSoundOnHitbox } from "../../sound";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface BoulderComponentParams {
    readonly boulderType: number;
@@ -47,13 +48,13 @@ function createParamsFromData(reader: PacketReader): BoulderComponentParams {
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const boulderComponentParams = entityParams.serverComponentParams[ServerComponentType.boulder]!;
    
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,
@@ -83,12 +84,9 @@ function updateFromData(reader: PacketReader): void {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
-function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-
+function onHit(entity: Entity, hitbox: Hitbox): void {
    for (let i = 0; i < 2; i++) {
-      let moveDirection = 2 * Math.PI * Math.random();
+      let moveDirection = randAngle();
 
       const spawnPositionX = hitbox.box.position.x + RADIUS * Math.sin(moveDirection);
       const spawnPositionY = hitbox.box.position.y + RADIUS * Math.cos(moveDirection);
@@ -107,15 +105,15 @@ function onHit(entity: Entity): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 5; i++) {
       const spawnOffsetMagnitude = RADIUS * Math.random();
-      const spawnOffsetDirection = 2 * Math.PI * Math.random();
+      const spawnOffsetDirection = randAngle();
       const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
       const spawnPositionY = hitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 
-      createRockParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(80, 125), ParticleRenderLayer.low);
+      createRockParticle(spawnPositionX, spawnPositionY, randAngle(), randFloat(80, 125), ParticleRenderLayer.low);
    }
 
    for (let i = 0; i < 5; i++) {

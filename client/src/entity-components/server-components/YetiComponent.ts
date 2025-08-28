@@ -1,4 +1,4 @@
-import { angle, lerp, randFloat, randItem } from "battletribes-shared/utils";
+import { lerp, Point, randAngle, randFloat, randItem } from "battletribes-shared/utils";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
@@ -6,15 +6,15 @@ import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, cr
 import { playSoundOnHitbox } from "../../sound";
 import { RandomSoundComponentArray, updateRandomSoundComponentSounds } from "../client-components/RandomSoundComponent";
 import { Settings } from "../../../../shared/src/settings";
-import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import ServerComponentArray from "../ServerComponentArray";
-import { HitData } from "../../../../shared/src/client-server-types";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 const enum Vars {
    SNOW_THROW_OFFSET = 64
@@ -68,15 +68,11 @@ function createParamsFromData(reader: PacketReader): YetiComponentParams {
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
 
    const pawRenderParts = new Array<VisualRenderPart>();
-   for (const hitbox of transformComponentParams.children) {
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
-      
+   for (const hitbox of transformComponentParams.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.YETI_BODY)) {
          const bodyRenderPart = new TexturedRenderPart(
             hitbox,
@@ -84,7 +80,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
             0,
             getTextureArrayIndex("entities/yeti/yeti.png")
          );
-         entityIntermediateInfo.renderInfo.attachRenderPart(bodyRenderPart);
+         renderInfo.attachRenderPart(bodyRenderPart);
 
          for (let i = 0; i < 2; i++) {
             const paw = new TexturedRenderPart(
@@ -94,7 +90,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
                getTextureArrayIndex("entities/yeti/yeti-paw.png")
             );
             pawRenderParts.push(paw);
-            entityIntermediateInfo.renderInfo.attachRenderPart(paw);
+            renderInfo.attachRenderPart(paw);
          }
       } else if (hitbox.flags.includes(HitboxFlag.YETI_HEAD)) {
          const headRenderPart = new TexturedRenderPart(
@@ -104,7 +100,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
             getTextureArrayIndex("entities/yeti/yeti-head.png")
          );
          headRenderPart.addTag("tamingComponent:head");
-         entityIntermediateInfo.renderInfo.attachRenderPart(headRenderPart);
+         renderInfo.attachRenderPart(headRenderPart);
       }
    }
 
@@ -129,7 +125,7 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const yetiComponent = YetiComponentArray.getComponent(entity);
 
@@ -141,7 +137,7 @@ function onTick(entity: Entity): void {
       
       for (let i = 0; i < 30; i++) {
          const offsetMagnitude = randFloat(0, 20);
-         const offsetDirection = 2 * Math.PI * Math.random();
+         const offsetDirection = randAngle();
          const positionX = impactPositionX + offsetMagnitude * Math.sin(offsetDirection);
          const positionY = impactPositionY + offsetMagnitude * Math.cos(offsetDirection);
          
@@ -158,10 +154,7 @@ function onTick(entity: Entity): void {
    yetiComponent.lastAttackProgress = yetiComponent.attackProgress;
 }
 
-function onHit(entity: Entity, hitData: HitData): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-
+function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
    playSoundOnHitbox(randItem(HURT_SOUNDS), 0.7, 1, entity, hitbox, false);
 
    // Blood pool particle
@@ -169,18 +162,18 @@ function onHit(entity: Entity, hitData: HitData): void {
    
    // Blood particles
    for (let i = 0; i < 10; i++) {
-      let offsetDirection = angle(hitData.hitPosition[0] - hitbox.box.position.x, hitData.hitPosition[1] - hitbox.box.position.y);
+      let offsetDirection = hitbox.box.position.angleTo(hitPosition);
       offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
 
       const spawnPositionX = hitbox.box.position.x + YETI_SIZE / 2 * Math.sin(offsetDirection);
       const spawnPositionY = hitbox.box.position.y + YETI_SIZE / 2 * Math.cos(offsetDirection);
-      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
+      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, randAngle(), randFloat(150, 250), true);
    }
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    playSoundOnHitbox(randItem(DEATH_SOUNDS), 0.7, 1, entity, hitbox, false);
 

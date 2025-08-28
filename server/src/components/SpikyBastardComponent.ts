@@ -1,11 +1,11 @@
 import { ServerComponentType } from "../../../shared/src/components";
-import { Entity, EntityType, DamageSource } from "../../../shared/src/entities";
+import { DamageSource } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Point } from "../../../shared/src/utils";
 import { applyKnockback, Hitbox } from "../hitboxes";
-import { getEntityType } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { GlurbSegmentComponentArray } from "./GlurbSegmentComponent";
+import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 
 export class SpikyBastardComponent {}
 
@@ -18,8 +18,10 @@ function getDataLength(): number {
 
 function addDataToPacket(): void {}
 
-function onHitboxCollision(bastard: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
-   if (getEntityType(collidingEntity) === EntityType.glurb) {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntity = collidingHitbox.entity;
+   
+   if (GlurbSegmentComponentArray.hasComponent(collidingEntity)) {
       return;
    }
    
@@ -32,9 +34,9 @@ function onHitboxCollision(bastard: Entity, collidingEntity: Entity, affectedHit
       return;
    }
 
-   const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
 
-   hitEntity(collidingEntity, bastard, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
-   applyKnockback(collidingEntity, collidingHitbox, 100, hitDirection);
+   damageEntity(collidingEntity, collidingHitbox, hitbox.entity, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
+   applyKnockback(collidingHitbox, 100, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, "spikyBastard", 0.3);
 }

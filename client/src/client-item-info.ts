@@ -352,12 +352,20 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       namePlural: "Leather Armours", 
       description: ""
    },
-   [ItemType.spear]: {
-      entityTextureSource: "items/small/spear.png",
-      textureSource: "items/large/spear.png",
-      toolTextureSource: "items/misc/spear.png",
-      name: "Spear",
-      namePlural: "Spears", 
+   [ItemType.woodenSpear]: {
+      entityTextureSource: "items/small/wooden-spear.png",
+      textureSource: "items/large/wooden-spear.png",
+      toolTextureSource: "items/misc/wooden-spear.png",
+      name: "Wooden Spear",
+      namePlural: "Wooden Spears", 
+      description: "Pointy end works best."
+   },
+   [ItemType.stoneSpear]: {
+      entityTextureSource: "items/small/stone-spear.png",
+      textureSource: "items/large/stone-spear.png",
+      toolTextureSource: "items/misc/stone-spear.png",
+      name: "Stone Spear",
+      namePlural: "Stone Spears", 
       description: "Pointy end works best."
    },
    [ItemType.paper]: {
@@ -755,7 +763,127 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       name: "Cooked Crab Meat",
       namePlural: "Cooked Crab Meats",
       description: ""
-   }
+   },
+   [ItemType.chitin]: {
+      entityTextureSource: "items/small/chitin.png",
+      textureSource: "items/large/chitin.png",
+      toolTextureSource: "",
+      name: "Chitin",
+      namePlural: "Chitin",
+      description: ""
+   },
+   [ItemType.crabplateArmour]: {
+      entityTextureSource: "items/small/crabplate-armour.png",
+      textureSource: "items/large/crabplate-armour.png",
+      toolTextureSource: "",
+      name: "Crabplate Armour",
+      namePlural: "Crabplate Armour",
+      description: ""
+   },
+   [ItemType.dustfleaEgg]: {
+      entityTextureSource: "items/small/dustflea-egg.png",
+      textureSource: "items/large/dustflea-egg.png",
+      toolTextureSource: "",
+      name: "Dustflea Egg",
+      namePlural: "Dustflea Eggs",
+      description: ""
+   },
+   [ItemType.snowberry]: {
+      entityTextureSource: "items/small/snowberry.png",
+      textureSource: "items/large/snowberry.png",
+      toolTextureSource: "",
+      name: "Snowberry",
+      namePlural: "Snowberries",
+      description: ""
+   },
+   [ItemType.rawSnobeMeat]: {
+      entityTextureSource: "items/small/raw-snobe-meat.png",
+      textureSource: "items/large/raw-snobe-meat.png",
+      toolTextureSource: "",
+      name: "Raw Snobe Meat",
+      namePlural: "Raw Snobe Meats",
+      description: ""
+   },
+   [ItemType.snobeStew]: {
+      entityTextureSource: "items/small/snobe-stew.png",
+      textureSource: "items/large/snobe-stew.png",
+      toolTextureSource: "",
+      name: "Snobe Stew",
+      namePlural: "Snobe Stews",
+      description: ""
+   },
+   [ItemType.snobeHide]: {
+      entityTextureSource: "items/small/snobe-hide.png",
+      textureSource: "items/large/snobe-hide.png",
+      toolTextureSource: "",
+      name: "Snobe Hide",
+      namePlural: "Snobe Hides",
+      description: ""
+   },
+   [ItemType.inguSerpentTooth]: {
+      entityTextureSource: "items/small/ingu-serpent-tooth.png",
+      textureSource: "items/large/ingu-serpent-tooth.png",
+      toolTextureSource: "",
+      name: "Ingu Serpent Tooth",
+      namePlural: "Ingu Serpent Teeth",
+      description: ""
+   },
+   [ItemType.iceWringer]: {
+      entityTextureSource: "items/small/ice-wringer.png",
+      textureSource: "items/large/ice-wringer.png",
+      toolTextureSource: "items/large/ice-wringer.png",
+      name: "Ice Wringer",
+      namePlural: "Ice Wringer",
+      description: ""
+   },
+   [ItemType.rawTukmokMeat]: {
+      entityTextureSource: "items/small/raw-tukmok-meat.png",
+      textureSource: "items/large/raw-tukmok-meat.png",
+      toolTextureSource: "",
+      name: "Raw Tukmok Meat",
+      namePlural: "Raw Tukmok Meat",
+      description: ""
+   },
+   [ItemType.cookedTukmokMeat]: {
+      entityTextureSource: "items/small/cooked-tukmok-meat.png",
+      textureSource: "items/large/cooked-tukmok-meat.png",
+      toolTextureSource: "",
+      name: "Cooked Tukmok Meat",
+      namePlural: "Cooked Tukmok Meat",
+      description: ""
+   },
+   [ItemType.tukmokFurHide]: {
+      entityTextureSource: "items/small/tukmok-fur-hide.png",
+      textureSource: "items/large/tukmok-fur-hide.png",
+      toolTextureSource: "",
+      name: "Tukmok Fur Hide",
+      namePlural: "Tukmok Fur Hides",
+      description: ""
+   },
+   [ItemType.winterskinArmour]: {
+      entityTextureSource: "items/small/winterskin-armour.png",
+      textureSource: "items/large/winterskin-armour.png",
+      toolTextureSource: "",
+      name: "Winterskin Armour",
+      namePlural: "Winterskin Armour",
+      description: ""
+   },
+   [ItemType.ivoryTusk]: {
+      entityTextureSource: "items/small/ivory-tusk.png",
+      textureSource: "items/large/ivory-tusk.png",
+      toolTextureSource: "items/misc/ivory-tusk.png",
+      name: "Timolothy's pocket quarter",
+      namePlural: "Ivory Tusk",
+      description: ""
+   },
+   [ItemType.ivorySpear]: {
+      entityTextureSource: "items/small/ivory-spear.png",
+      textureSource: "items/large/ivory-spear.png",
+      toolTextureSource: "items/misc/ivory-spear.png",
+      name: "Timolothy's pocket penny",
+      namePlural: "Ivory Spear",
+      description: ""
+   },
 };
 
 export function getItemTypeImage(itemType: ItemType): any {

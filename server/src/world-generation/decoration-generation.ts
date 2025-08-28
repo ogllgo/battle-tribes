@@ -1,12 +1,11 @@
-import { DecorationType, ServerComponentType } from "battletribes-shared/components";
+import { DecorationType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import { randInt, randFloat, TileIndex, getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorldIncludingEdges, Point } from "battletribes-shared/utils";
+import { randInt, randFloat, TileIndex, getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorldIncludingEdges, Point, randAngle } from "battletribes-shared/utils";
 import { getTilesInRange } from "../Layer";
 import { createDecorationConfig } from "../entities/decoration";
-import { createEntity } from "../Entity";
-import { pushJoinBuffer } from "../world";
 import { surfaceLayer } from "../layers";
+import { createEntityImmediate } from "../world";
 
 const enum Vars {
    RIVERSIDE_DECORATION_SPAWN_ATTEMPT_DENSITY_PER_TILE = 0.5,
@@ -24,10 +23,8 @@ interface DecorationGenerationInfo {
 }
 
 const createDecoration = (x: number, y: number, decorationType: DecorationType): void => {
-   const config = createDecorationConfig(new Point(x, y), 2 * Math.PI * Math.random(), decorationType);
-   createEntity(config, surfaceLayer, 0);
-
-   pushJoinBuffer(false);
+   const config = createDecorationConfig(new Point(x, y), randAngle(), decorationType);
+   createEntityImmediate(config, surfaceLayer);
 }
 
 const generateRiversideDecorations = (): void => {
@@ -67,6 +64,9 @@ const generateRiversideDecorations = (): void => {
 }
 
 export function generateDecorations(): void {
+   // @SQUEAM cuz im copying from the shot
+   if(1+1===2)return;
+   
    const GROUP_SPAWN_RANGE = 256;
    
    const DECORATION_GENERATION_INFO: ReadonlyArray<DecorationGenerationInfo> = [
@@ -121,33 +121,6 @@ export function generateDecorations(): void {
          spawnChancePerTile: 0.04,
          minGroupSize: 2,
          maxGroupSize: 4,
-         isAffectedByTemperature: false,
-         hasUniformGroups: false
-      },
-      {
-         decorationTypes: [DecorationType.blackRockSmall],
-         spawnableTileTypes: [TileType.snow, TileType.permafrost],
-         spawnChancePerTile: 0.02,
-         minGroupSize: 1,
-         maxGroupSize: 2,
-         isAffectedByTemperature: false,
-         hasUniformGroups: false
-      },
-      {
-         decorationTypes: [DecorationType.blackRock],
-         spawnableTileTypes: [TileType.snow, TileType.permafrost],
-         spawnChancePerTile: 0.02,
-         minGroupSize: 1,
-         maxGroupSize: 1,
-         isAffectedByTemperature: false,
-         hasUniformGroups: false
-      },
-      {
-         decorationTypes: [DecorationType.snowPile],
-         spawnableTileTypes: [TileType.ice, TileType.permafrost],
-         spawnChancePerTile: 0.02,
-         minGroupSize: 1,
-         maxGroupSize: 1,
          isAffectedByTemperature: false,
          hasUniformGroups: false
       },
@@ -208,7 +181,7 @@ export function generateDecorations(): void {
          const numOthers = randInt(generationInfo.minGroupSize, generationInfo.maxGroupSize) - 1;
          for (let i = 0; i < numOthers; i++) {
             const spawnOffsetMagnitude = randFloat(0, GROUP_SPAWN_RANGE);
-            const spawnOffsetDirection = 2 * Math.PI * Math.random();
+            const spawnOffsetDirection = randAngle();
             const spawnX = x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
             const spawnY = y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 

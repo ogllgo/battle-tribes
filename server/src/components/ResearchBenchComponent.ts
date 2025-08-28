@@ -120,7 +120,7 @@ export function continueResearching(researchBench: Entity, researcher: Entity, t
       const amount = RESEARCH_ORB_AMOUNTS[size];
       
       const researcherTransformComponent = TransformComponentArray.getComponent(researcher);
-      const researcherHitbox = researcherTransformComponent.children[0] as Hitbox;
+      const researcherHitbox = researcherTransformComponent.hitboxes[0];
 
       const tribeComponent = TribeComponentArray.getComponent(researchBench);
       tribeComponent.tribe.studyTech(tech, researcherHitbox.box.position.x, researcherHitbox.box.position.y, amount);

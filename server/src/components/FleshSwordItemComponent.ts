@@ -2,7 +2,7 @@ import { Biome } from "../../../shared/src/biomes";
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
-import { angle, getTileIndexIncludingEdges, getTileX, getTileY, lerp, Point, randItem, TileIndex } from "../../../shared/src/utils";
+import { angle, getTileIndexIncludingEdges, getTileX, getTileY, lerp, Point, polarVec2, randItem, TileIndex } from "../../../shared/src/utils";
 import { entityHasReachedPosition } from "../ai-shared";
 import { Hitbox, addHitboxVelocity } from "../hitboxes";
 import { getEntityType, getEntityLayer } from "../world";
@@ -30,7 +30,7 @@ FleshSwordItemComponentArray.onTick = {
 /** Returns the entity the flesh sword should run away from, or null if there are none */
 const getRunTarget = (itemEntity: Entity, visibleEntities: ReadonlyArray<Entity>): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(itemEntity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    let closestRunTargetDistance = Number.MAX_SAFE_INTEGER;
    let runTarget: Entity | null = null;
@@ -39,9 +39,9 @@ const getRunTarget = (itemEntity: Entity, visibleEntities: ReadonlyArray<Entity>
       const entityType = getEntityType(entity);
       if (entityType === EntityType.player || entityType === EntityType.tribeWorker || entityType === EntityType.tribeWarrior) {
          const entityTransformComponent = TransformComponentArray.getComponent(itemEntity);
-         const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+         const entityHitbox = entityTransformComponent.hitboxes[0];
 
-         const distance = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+         const distance = hitbox.box.position.distanceTo(entityHitbox.box.position);
          if (distance < closestRunTargetDistance) {
             closestRunTargetDistance = distance;
             runTarget = entity;
@@ -54,7 +54,7 @@ const getRunTarget = (itemEntity: Entity, visibleEntities: ReadonlyArray<Entity>
 
 const getTileWanderTargets = (itemEntity: Entity): Array<TileIndex> => {
    const transformComponent = TransformComponentArray.getComponent(itemEntity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    const layer = getEntityLayer(itemEntity);
    
    const aiHelperComponent = AIHelperComponentArray.getComponent(itemEntity);
@@ -74,7 +74,7 @@ const getTileWanderTargets = (itemEntity: Entity): Array<TileIndex> => {
          // if (layer.tileIsWalls[tileIndex]) continue;
          
          const position = new Point((tileX + Math.random()) * Settings.TILE_SIZE, (tileY + Math.random()) * Settings.TILE_SIZE);
-         const distance = hitbox.box.position.calculateDistanceBetween(position);
+         const distance = hitbox.box.position.distanceTo(position);
          if (distance <= aiHelperComponent.visionRange) {
             wanderTargets.push(tileIndex);
          }
@@ -97,20 +97,20 @@ function onTick(fleshSword: Entity): void {
    const runTarget = getRunTarget(fleshSword, visibleEntities);
 
    const transformComponent = TransformComponentArray.getComponent(fleshSword);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    const fleshSwordComponent = FleshSwordItemComponentArray.getComponent(fleshSword);
 
    // Run away from the run target
    if (runTarget !== null) {
       const runTargetTransformComponent = TransformComponentArray.getComponent(runTarget);
-      const targetHitbox = runTargetTransformComponent.children[0] as Hitbox;
+      const targetHitbox = runTargetTransformComponent.hitboxes[0];
       
-      const angleFromTarget = hitbox.box.position.calculateAngleBetween(targetHitbox.box.position);
+      const angleFromTarget = hitbox.box.position.angleTo(targetHitbox.box.position);
       targetPositionX = hitbox.box.position.x + 100 * Math.sin(angleFromTarget + Math.PI);
       targetPositionY = hitbox.box.position.y + 100 * Math.cos(angleFromTarget + Math.PI);
       
-      const distance = hitbox.box.position.calculateDistanceBetween(targetHitbox.box.position);
+      const distance = hitbox.box.position.distanceTo(targetHitbox.box.position);
       let dist = distance / aiHelperComponent.visionRange;
       dist = Math.pow(1 - dist, 2);
       wiggleSpeed = lerp(1, 4, dist);
@@ -119,7 +119,7 @@ function onTick(fleshSword: Entity): void {
       fleshSwordComponent.tileTargetPosition = null;
    } else {
       if (fleshSwordComponent.tileTargetPosition !== null) {
-         if (entityHasReachedPosition(fleshSword, fleshSwordComponent.tileTargetPosition.x, fleshSwordComponent.tileTargetPosition.y)) {
+         if (entityHasReachedPosition(fleshSword, fleshSwordComponent.tileTargetPosition)) {
             fleshSwordComponent.tileTargetPosition = null;
          } else {
             targetPositionX = fleshSwordComponent.tileTargetPosition.x;
@@ -177,7 +177,7 @@ function onTick(fleshSword: Entity): void {
       // @Hack: should instead change angularvelocity
       const moveAngle = directMoveAngle + moveAngleOffset;
       hitbox.box.relativeAngle = moveAngle - Math.PI/4;
-      addHitboxVelocity(hitbox, moveSpeed! * Math.sin(moveAngle), moveSpeed! * Math.cos(moveAngle));
+      addHitboxVelocity(hitbox, polarVec2(moveSpeed!, moveAngle));
 
       transformComponent.isDirty = true;
    }

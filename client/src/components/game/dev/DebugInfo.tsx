@@ -6,7 +6,7 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import { Tile } from "../../../Tile";
 import CLIENT_ENTITY_INFO_RECORD from "../../../client-entity-info";
 import Layer from "../../../Layer";
-import { getCurrentLayer, getEntityType } from "../../../world";
+import { entityExists, getCurrentLayer, getEntityType } from "../../../world";
 import { RENDER_CHUNK_SIZE } from "../../../rendering/render-chunks";
 import { Entity, EntityTypeString } from "../../../../../shared/src/entities";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
@@ -17,6 +17,8 @@ import { InventoryNameString } from "../../../../../shared/src/items/items";
 import { StructureComponentArray } from "../../../entity-components/server-components/StructureComponent";
 import { getTileLocalBiome } from "../../../local-biomes";
 import { getHitboxVelocity, Hitbox } from "../../../hitboxes";
+import { SnobeComponentArray } from "../../../entity-components/server-components/SnobeComponent";
+import Game from "../../../Game";
 
 export let updateDebugInfoTile: (tile: Tile | null) => void = () => {};
 
@@ -77,13 +79,13 @@ interface EntityDebugInfoProps {
 }
 const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    const displayX = roundNum(hitbox.box.position.x, 0);
    const displayY = roundNum(hitbox.box.position.y, 0);
 
    const velocity = getHitboxVelocity(hitbox);
-   let displayVelocityMagnitude = roundNum(velocity.length(), 0);
+   let displayVelocityMagnitude = roundNum(velocity.magnitude(), 0);
 
    const chunks = Array.from(transformComponent.chunks).map(chunk => `${chunk.x}-${chunk.y}`);
    const chunkDisplayText = chunks.reduce((previousValue, chunk, idx) => {
@@ -110,7 +112,8 @@ const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
          <p>Velocity: <span className="highlight">{displayVelocityMagnitude}</span></p>
       ) : null }
       
-      <p>Rotation: <span className="highlight">{hitbox.box.angle.toFixed(2)}</span></p>
+      <p>Angle: <span className="highlight">{hitbox.box.angle.toFixed(2)}</span></p>
+      <p>rAngle: <span className="highlight">{hitbox.box.relativeAngle.toFixed(2)}</span></p>
       <p>Angular acceleration: <span className="highlight">{hitbox.angularAcceleration.toFixed(2)}</span></p>
 
       <p>Chunks: {chunkDisplayText}</p>
@@ -152,6 +155,15 @@ const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
          </>;
       })() : undefined}
 
+      {SnobeComponentArray.hasComponent(entity) ? (() => {
+         const snobeComponent = SnobeComponentArray.getComponent(entity);
+
+         return <>
+            <p>Is digging:{snobeComponent.isDigging ? "true" : "false"}</p>
+            <p>Digging progress:{snobeComponent.diggingProgress.toFixed(2)}</p>
+         </>;
+      })() : undefined}
+
       {debugData !== null ? debugData.debugEntries.map((str, i) => {
          return <p key={i}>{str}</p>;
       }) : undefined}
@@ -187,8 +199,10 @@ const DebugInfo = () => {
    }, []);
 
    return <div id="debug-info">
+      <p>Looking at pos <span className="highlight">{Game.cursorX === null ? -1 : Game.cursorX.toFixed(0)}</span> <span className="highlight">{Game.cursorY === null ? -1 : Game.cursorY.toFixed(0)}</span></p>
+      
       {tile !== null ? <TileDebugInfo layer={layer} tile={tile} /> : undefined}
-      {entity !== null ? <EntityDebugInfo entity={entity} debugData={debugData.current} /> : undefined}
+      {entity !== null && entityExists(entity) ? <EntityDebugInfo entity={entity} debugData={debugData.current} /> : undefined}
    </div>;
 }
 

@@ -26,8 +26,11 @@ export const TreeComponentArray = new ComponentArray<TreeComponent>(ServerCompon
 TreeComponentArray.onJoin = onJoin;
 
 function onJoin(entity: Entity): void {
+   // @SQUEAM for the pen shot cuz i dont want grass gaps being made in the thing
+   if (1+1===2)return;
+   
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const treeHitbox = transformComponent.children[0] as Hitbox;
+   const treeHitbox = transformComponent.hitboxes[0];
    
    const treeComponent = TreeComponentArray.getComponent(entity);
 

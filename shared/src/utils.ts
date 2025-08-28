@@ -92,7 +92,7 @@ export function multiColourLerp(colours: ReadonlyArray<Colour>, u: number): Colo
    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-export function randFloat (min: number, max: number): number {
+export function randFloat(min: number, max: number): number {
    return Math.random() * (max - min) + min;
 }
 
@@ -119,7 +119,7 @@ export class Point {
       return this.x * other.x + this.y * other.y;
    }
 
-   public calculateDistanceBetween(other: Point): number {
+   public distanceTo(other: Point): number {
       const xDiff = this.x - other.x;
       const yDiff = this.y - other.y;
       return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
@@ -131,7 +131,7 @@ export class Point {
       return diffX * diffX + diffY * diffY;
    }
 
-   public calculateAngleBetween(other: Point): number {
+   public angleTo(other: Point): number {
       let angle = Math.atan2(other.y - this.y, other.x - this.x);
       // @Hack @Speed: won't be necessary when we switch the angle system
       if (angle >= Math.PI) {
@@ -143,8 +143,8 @@ export class Point {
    public convertToVector(other?: Point): Vector {
       const targetPoint = other || new Point(0, 0);
 
-      const distance = this.calculateDistanceBetween(targetPoint);
-      const angle = targetPoint.calculateAngleBetween(this);
+      const distance = this.distanceTo(targetPoint);
+      const angle = targetPoint.angleTo(this);
       return new Vector(distance, angle);
    }
 
@@ -152,14 +152,14 @@ export class Point {
       return new Point(this.x, this.y);
    }
 
-   public length(): number {
+   public magnitude(): number {
       return Math.sqrt(this.x * this.x + this.y * this.y);
    }
 
    public lengthSquared(): number {
       return this.x * this.x + this.y * this.y;
    }
-   
+
    public package(): [number, number] {
       return [this.x, this.y];
    }
@@ -170,13 +170,13 @@ export class Point {
       return new Point(x, y);
    }
 
+   /** Projects the point onto another point */
+   public scalarProj(pointB: Point): number {
+      return (this.x * pointB.x + this.y * pointB.y) / pointB.magnitude();
+   }
+
    public static unpackage(packagedPoint: [number, number]): Point {
       return new Point(packagedPoint[0], packagedPoint[1]);
-   }
-   public static fromVectorForm(magnitude: number, direction: number): Point {
-      const x = magnitude * Math.sin(direction);
-      const y = magnitude * Math.cos(direction);
-      return new Point(x, y);
    }
 }
 
@@ -266,9 +266,15 @@ export function rotateYAroundOrigin(x: number, y: number, rotation: number): num
    return -Math.sin(rotation) * x + Math.cos(rotation) * y;
 }
 
-export function rotatePoint(point: Point, pivotPoint: Point, rotation: number): Point {
+export function rotatePointAroundPivot(point: Point, pivotPoint: Point, rotation: number): Point {
    const x = Math.cos(rotation) * (point.x - pivotPoint.x) + Math.sin(rotation) * (point.y - pivotPoint.y) + pivotPoint.x;
    const y = -Math.sin(rotation) * (point.x - pivotPoint.x) + Math.cos(rotation) * (point.y - pivotPoint.y) + pivotPoint.y;
+   return new Point(x, y);
+}
+
+export function rotatePoint(point: Point, rotation: number): Point {
+   const x = Math.cos(rotation) * point.x + Math.sin(rotation) * point.y;
+   const y = -Math.sin(rotation) * point.x + Math.cos(rotation) * point.y;
    return new Point(x, y);
 }
 
@@ -415,18 +421,23 @@ export function distBetweenPointAndRectangularBox(pointX: number, pointY: number
 export function assertUnreachable(x: never): never {
    console.warn(x);
    throw new Error("Why must I exist?");
-} 
+}
 
-export function assert(condition: unknown, errorMessage?: string): asserts condition {
+export function assert(condition: unknown, errorMessage?: string | (() => string)): asserts condition {
    if (!condition) {
-      throw new Error(errorMessage);
+      if (typeof errorMessage === "string") {
+         throw new Error(errorMessage);
+      } else if (typeof errorMessage === "function") {
+         throw new Error(errorMessage());
+      } else {
+         throw new Error();
+      }
    }
 }
 
+/** Gets the smallest angle you need to add/subtract to the source angle to reach the target angle, in the range [-pi, pi) */
 export function getAngleDiff(sourceAngle: number, targetAngle: number): number {
-   let a = targetAngle - sourceAngle;
-   a = Math.abs((a + Math.PI) % (Math.PI * 2)) - Math.PI;
-   return a;
+   return clampAngleB(targetAngle - sourceAngle);
 }
 
 export function getAbsAngleDiff(sourceAngle: number, targetAngle: number): number {
@@ -486,4 +497,30 @@ export function unitsToChunksClamped(a: number): number {
 
 export function randAngle(): number {
    return 2 * Math.PI * Math.random();
+}
+
+/** Clamps an angle into the [0, 2PI) range. */
+export function clampAngleA(angle: number): number {
+  const twoPi = Math.PI * 2;
+  return ((angle % twoPi) + twoPi) % twoPi;
+}
+
+/** Clamps an angle into the [-PI, PI) range. */
+export function clampAngleB(angle: number): number {
+   return clampAngleA(angle + Math.PI) - Math.PI;
+}
+
+/** converts the secs into the equivalent integer number of ticks */
+export function secondsToTicks(sex: number): number {
+   return Math.floor(sex * Settings.TPS);
+}
+
+export function polarVec2(magnitude: number, direction: number): Point {
+   const x = magnitude * Math.sin(direction);
+   const y = magnitude * Math.cos(direction);
+   return new Point(x, y);
+}
+
+export function averageVec2(v1: Point, v2: Point): Point {
+   return new Point((v1.x + v2.x) * 0.5, (v1.y + v2.y) * 0.5);
 }

@@ -17,7 +17,7 @@ import { Point } from "../../../../../shared/src/utils";
 import { HitboxCollisionType, HitboxFlag } from "../../../../../shared/src/boxes/boxes";
 import CircularBox from "../../../../../shared/src/boxes/CircularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../../shared/src/collision";
-import { createHitbox } from "../../../hitboxes";
+import { Hitbox } from "../../../hitboxes";
 import { StructureConnection } from "../../../structure-placement";
 
 // @Incomplete: Destroy campfire when remaining heat reaches 0
@@ -26,7 +26,8 @@ export function createCampfireConfig(position: Point, rotation: number, tribe: T
    const transformComponent = new TransformComponent();
 
    const box = new CircularBox(position, new Point(0, 0), rotation, 52);
-   const hitbox = createHitbox(transformComponent, null, box, 2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   const hitbox = new Hitbox(transformComponent, null, true, box, 2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(25);

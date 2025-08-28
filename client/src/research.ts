@@ -1,4 +1,4 @@
-import { distance } from "battletribes-shared/utils";
+import { distance, randAngle } from "battletribes-shared/utils";
 import { RESEARCH_ORB_AMOUNTS, RESEARCH_ORB_COMPLETE_TIME, getRandomResearchOrbSize } from "battletribes-shared/research";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
@@ -37,7 +37,7 @@ const ORB_PARTICLES_PER_SECOND = [2, 3.5, 6];
 const generateResearchOrb = (researchBench: Entity): ResearchOrb => {
    const transformComponent = TransformComponentArray.getComponent(researchBench);
 
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const position = getRandomPositionInEntity(transformComponent);
    position.subtract(hitbox.box.position);
@@ -48,7 +48,7 @@ const generateResearchOrb = (researchBench: Entity): ResearchOrb => {
    return {
       positionX: position.x,
       positionY: position.y,
-      rotation: 2 * Math.PI * Math.random(),
+      rotation: randAngle(),
       size: getRandomResearchOrbSize()
    };
 }
@@ -85,7 +85,7 @@ export function updateResearchOrb(): void {
    }
 
    if (Math.random() < ORB_PARTICLES_PER_SECOND[currentResearchOrb.size] / Settings.TPS) {
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const offsetMagnitude = RESEARCH_ORB_SIZES[currentResearchOrb.size] / 2 * 1.25 * Math.random();
       const x = currentResearchOrb.positionX + offsetMagnitude * Math.sin(offsetDirection);
       const y = currentResearchOrb.positionY + offsetMagnitude * Math.cos(offsetDirection);
@@ -98,7 +98,7 @@ const completeOrb = (): void => {
    sendStudyTechPacket(studyAmount);
 
    for (let i = 0; i < ORB_NUM_PARTICLES[currentResearchOrb!.size]; i++) {
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const offsetMagnitude = RESEARCH_ORB_SIZES[currentResearchOrb!.size] / 2 * 1.5 * Math.random();
       const x = currentResearchOrb!.positionX + offsetMagnitude * Math.sin(offsetDirection);
       const y = currentResearchOrb!.positionY + offsetMagnitude * Math.cos(offsetDirection);
@@ -106,7 +106,7 @@ const completeOrb = (): void => {
    }
 
    const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
-   const playerHitbox = playerTransformComponent.children[0] as Hitbox;
+   const playerHitbox = playerTransformComponent.hitboxes[0];
 
    playSound("orb-complete.mp3", 0.3, ORB_COMPLETE_SOUND_PITCHES[currentResearchOrb!.size], playerHitbox.box.position, null);
 

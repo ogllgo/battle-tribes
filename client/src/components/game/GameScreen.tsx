@@ -14,7 +14,7 @@ import Infocards from "./infocards/Infocards";
 import SummonCrosshair from "./SummonCrosshair";
 import { AppState } from "../App";
 import { EntitySummonPacket } from "../../../../shared/src/dev-packets";
-import { Mutable } from "../../../../shared/src/utils";
+import { Mutable, randAngle } from "../../../../shared/src/utils";
 import { calculateCursorWorldPositionX, calculateCursorWorldPositionY } from "../../mouse";
 import GameInteractableLayer from "./GameInteractableLayer";
 import { sendEntitySummonPacket } from "../../networking/packet-creation";
@@ -30,9 +30,9 @@ import TribePlanVisualiser from "./tribe-plan-visualiser/TribePlanVisualiser";
 import { ItemTooltip } from "./inventories/ItemTooltip";
 import AnimalStaffOptions from "./AnimalStaffOptions";
 import { playerInstance } from "../../player";
-import TamingMenu from "./TamingMenu";
+import TamingMenu from "./taming-menu/TamingMenu";
 import SignInscribeMenu from "./SignInscribeMenu";
-import { Hitbox } from "../../hitboxes";
+import TamingRenamePrompt from "./taming-menu/TamingRenamePrompt";
 
 export const enum GameInteractState {
    none,
@@ -95,7 +95,7 @@ const GameScreen = (props: GameScreenProps) => {
          const y = calculateCursorWorldPositionY(e.clientY)!;
          
          // @Hack
-         sendEntitySummonPacket(summonPacket.entityType, x, y, 2 * Math.PI * Math.random());
+         sendEntitySummonPacket(summonPacket.entityType, x, y, randAngle());
       } else if (e.button === 2) {
          // Get out of summon entity mode
          setInteractState(GameInteractState.none);
@@ -164,7 +164,7 @@ const GameScreen = (props: GameScreenProps) => {
             let canAscendLayer = false;
             if (getCurrentLayer() === undergroundLayer) {
                const transformComponent = TransformComponentArray.getComponent(playerInstance);
-               const hitbox = transformComponent.children[0] as Hitbox;
+               const hitbox = transformComponent.hitboxes[0];
                const tileAbove = getHitboxTile(surfaceLayer, hitbox);
                if (tileAbove.type === TileType.dropdown) {
                   canAscendLayer = true;
@@ -239,6 +239,7 @@ const GameScreen = (props: GameScreenProps) => {
       <AnimalStaffOptions setGameInteractState={setInteractState} />
 
       <TamingMenu />
+      <TamingRenamePrompt />
 
       <SignInscribeMenu />
 

@@ -3,10 +3,11 @@ import { cleanupEntityRendering, renderEntity, setupEntityRendering } from "./we
 import { RenderPartOverlayGroup, renderEntityOverlay } from "./webgl/overlay-rendering";
 import { NUM_RENDER_LAYERS, RenderLayer } from "../render-layers";
 import { renderChunkedEntities, renderLayerIsChunkRendered } from "./webgl/chunked-entity-rendering";
-import { getEntityRenderInfo, layers } from "../world";
+import { getEntityRenderInfo, getEntityType, layers } from "../world";
 import Layer from "../Layer";
-import { Entity } from "../../../shared/src/entities";
+import { Entity, EntityType } from "../../../shared/src/entities";
 import { gl } from "../webgl";
+import OPTIONS from "../options";
 
 export const enum RenderableType {
    entity,
@@ -104,6 +105,7 @@ const renderRenderablesBatch = (renderableType: RenderableType, renderables: Rea
    
    switch (renderableType) {
       case RenderableType.entity: {
+         
          if (renderLayerIsChunkRendered(renderLayer)) {
             // @Bug: this always renders the whole render layer...
             renderChunkedEntities(layer, renderLayer);
@@ -114,8 +116,13 @@ const renderRenderablesBatch = (renderableType: RenderableType, renderables: Rea
 
             setupEntityRendering();
             for (const renderable of renderables) {
+               const entity = renderable as Entity;
+               if (OPTIONS.hideEntities && getEntityType(entity) !== EntityType.grassStrand) {
+                  continue;
+               }
+               
                // @Cleanup: cast
-               const renderInfo = getEntityRenderInfo(renderable as Entity);
+               const renderInfo = getEntityRenderInfo(entity);
                renderEntity(renderInfo);
             }
             cleanupEntityRendering();

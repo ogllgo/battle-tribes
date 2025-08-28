@@ -12,10 +12,10 @@ import { TransformComponentArray } from "../../../components/TransformComponent"
 import { Inventory, ItemType } from "../../../../../shared/src/items/items";
 import { consumeItemFromSlot } from "../../../components/InventoryComponent";
 import Tribe from "../../../Tribe";
-import { assert } from "../../../../../shared/src/utils";
+import { assert, polarVec2 } from "../../../../../shared/src/utils";
 import { getEntityLayer } from "../../../world";
 import { PathfindingSettings } from "../../../../../shared/src/settings";
-import { PathfindingFailureDefault } from "../../../pathfinding";
+import { PathfindFailureDefault } from "../../../pathfinding";
 import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../../hitboxes";
 import { pathfindTribesman } from "../../../components/AIPathfindingComponent";
 
@@ -32,7 +32,7 @@ const getOccupiedResearchBenchID = (tribesman: Entity, tribeComponent: TribeComp
 
 const getAvailableResearchBenchID = (tribesman: Entity, tribeComponent: TribeComponent): Entity => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
    
    let id = 0;
    let minDist = Number.MAX_SAFE_INTEGER;
@@ -44,9 +44,9 @@ const getAvailableResearchBenchID = (tribesman: Entity, tribeComponent: TribeCom
       }
 
       const benchTransformComponent = TransformComponentArray.getComponent(bench);
-      const researchBenchHitbox = benchTransformComponent.children[0] as Hitbox;
+      const researchBenchHitbox = benchTransformComponent.hitboxes[0];
 
-      const dist = tribesmanHitbox.box.position.calculateDistanceBetween(researchBenchHitbox.box.position);
+      const dist = tribesmanHitbox.box.position.distanceTo(researchBenchHitbox.box.position);
       if (dist < minDist) {
          minDist = dist;
          id = bench;
@@ -58,7 +58,7 @@ const getAvailableResearchBenchID = (tribesman: Entity, tribeComponent: TribeCom
 
 export function goResearchTech(tribesman: Entity, tech: Tech): void {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
    
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
    
@@ -71,16 +71,14 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
    const occupiedBench = getOccupiedResearchBenchID(tribesman, tribeComponent);
    if (occupiedBench !== 0) {
       const benchTransformComponent = TransformComponentArray.getComponent(occupiedBench);
-      const researchBenchHitbox = benchTransformComponent.children[0] as Hitbox;
+      const researchBenchHitbox = benchTransformComponent.hitboxes[0];
       
-      const targetDirection = tribesmanHitbox.box.position.calculateAngleBetween(researchBenchHitbox.box.position);
+      const targetDir = tribesmanHitbox.box.position.angleTo(researchBenchHitbox.box.position);
 
       const slowAcceleration = getTribesmanSlowAcceleration(tribesman);
-      const accelerationX = slowAcceleration * Math.sin(targetDirection);
-      const accelerationY = slowAcceleration * Math.cos(targetDirection);
-      applyAccelerationFromGround(tribesman, tribesmanHitbox, accelerationX, accelerationY);
+      applyAccelerationFromGround(tribesmanHitbox, polarVec2(slowAcceleration, targetDir));
 
-      turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 0.5, false);
+      turnHitboxToAngle(tribesmanHitbox, targetDir, TRIBESMAN_TURN_SPEED, 0.5, false);
       
       continueResearching(occupiedBench, tribesman, tech);
       
@@ -96,12 +94,12 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
    const bench = getAvailableResearchBenchID(tribesman, tribeComponent);
    if (bench !== 0) {
       const benchTransformComponent = TransformComponentArray.getComponent(bench);
-      const researchBenchHitbox = benchTransformComponent.children[0] as Hitbox;
+      const researchBenchHitbox = benchTransformComponent.hitboxes[0];
 
       const benchLayer = getEntityLayer(bench);
 
       markPreemptiveMoveToBench(bench, tribesman);
-      pathfindTribesman(tribesman, researchBenchHitbox.box.position.x, researchBenchHitbox.box.position.y, benchLayer, bench, TribesmanPathType.default, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindingFailureDefault.none);
+      pathfindTribesman(tribesman, researchBenchHitbox.box.position.x, researchBenchHitbox.box.position.y, benchLayer, bench, TribesmanPathType.default, Math.floor(64 / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
       
       tribesmanAIComponent.targetResearchBenchID = bench;
       tribesmanAIComponent.currentAIType = TribesmanAIType.researching;

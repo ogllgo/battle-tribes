@@ -17,14 +17,15 @@ import { Point } from "../../../../../shared/src/utils";
 import { HitboxCollisionType } from "../../../../../shared/src/boxes/boxes";
 import RectangularBox from "../../../../../shared/src/boxes/RectangularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../../shared/src/collision";
-import { createHitbox } from "../../../hitboxes";
+import { Hitbox } from "../../../hitboxes";
 import { StructureConnection } from "../../../structure-placement";
 
 export function createFurnaceConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent();
 
    const box = new RectangularBox(position, new Point(0, 0), rotation, 80, 80);
-   const hitbox = createHitbox(transformComponent, null, box, 2, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, box, 2, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(25);

@@ -64,9 +64,6 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
       return EntityRelationship.enemyBuilding;
    }
 
-   // @Temporary
-   const tempEntityType = getEntityType(entity);
-   
    const entityType = getEntityType(comparingEntity);
    switch (entityType) {
       case EntityType.treePlanted:
@@ -79,13 +76,7 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
 
          return planterBoxTribeComponent.tribe === tribeComponent.tribe ? EntityRelationship.neutral : EntityRelationship.enemyBuilding;
       }
-      // Friendlies
-      // @Hack @Hardcoded
-      case EntityType.player:
-      case EntityType.tribeWorker:
-      case EntityType.tribeWarrior:
-      case EntityType.scrappy:
-      case EntityType.cogwalker:
+      // Projectiles, although they do belong to a tribe, damage every tribe. so they should just be considered neutral
       case EntityType.woodenArrow:
       case EntityType.ballistaWoodenBolt:
       case EntityType.ballistaRock:
@@ -93,6 +84,15 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
       case EntityType.ballistaSlimeball:
       case EntityType.slingTurretRock:
       case EntityType.iceArrow: {
+         return EntityRelationship.neutral;
+      }
+      // Friendlies
+      // @Hack @Hardcoded
+      case EntityType.player:
+      case EntityType.tribeWorker:
+      case EntityType.tribeWarrior:
+      case EntityType.scrappy:
+      case EntityType.cogwalker:{
          const tribeComponent = TribeComponentArray.getComponent(entity);
          const comparingEntityTribeComponent = TribeComponentArray.getComponent(comparingEntity);
 
@@ -110,7 +110,8 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
       case EntityType.tombstone: // So that they try to destroy them
       case EntityType.zombie:
       case EntityType.pebblum:
-      case EntityType.okren: {
+      case EntityType.okren:
+      case EntityType.inguSerpent: {
          return EntityRelationship.hostileMob;
       }
       // Golem (hostile mob / neutral)
@@ -119,13 +120,12 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
          return Object.keys(golemComponent.attackingEntities).length > 0 ? EntityRelationship.hostileMob : EntityRelationship.neutral;
       }
       // Hostile if attacking a tribesman or on tribe territory, neutral otherwise
-      case EntityType.frozenYeti:
       case EntityType.yeti:
       case EntityType.slime:
       case EntityType.guardian: {
          const transformComponent = TransformComponentArray.getComponent(entity);
          // @Hack
-         const hitbox = transformComponent.children[0] as Hitbox;
+         const hitbox = transformComponent.hitboxes[0];
          const tileIndex = getHitboxTile(hitbox);
 
          const tribeComponent = TribeComponentArray.getComponent(entity);
@@ -142,7 +142,6 @@ export function getEntityRelationship(entity: Entity, comparingEntity: Entity): 
       case EntityType.iceShardProjectile:
       case EntityType.itemEntity:
       case EntityType.krumblid:
-      case EntityType.rockSpikeProjectile:
       case EntityType.slimeSpit:
       case EntityType.slimewisp:
       case EntityType.snowball:

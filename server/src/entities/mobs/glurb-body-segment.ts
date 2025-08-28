@@ -1,9 +1,10 @@
-import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/boxes";
+import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../../shared/src/collision";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityType } from "../../../../shared/src/entities";
 import { ItemType } from "../../../../shared/src/items/items";
+import { StatusEffect } from "../../../../shared/src/status-effects";
 import { Point } from "../../../../shared/src/utils";
 import { EntityConfig, LightCreationInfo } from "../../components";
 import { GlurbBodySegmentComponent } from "../../components/GlurbBodySegmentComponent";
@@ -11,36 +12,27 @@ import { GlurbSegmentComponent } from "../../components/GlurbSegmentComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
+import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
-import { createHitbox, createHitboxTether, Hitbox } from "../../hitboxes";
-import { createLight } from "../../light-levels";
+import { Hitbox } from "../../hitboxes";
+import { createLight } from "../../lights";
 
-registerEntityLootOnDeath(EntityType.glurbBodySegment, [
-   {
-      itemType: ItemType.slurb,
-      getAmount: () => 1
-   }
-]);
+registerEntityLootOnDeath(EntityType.glurbBodySegment, {
+   itemType: ItemType.slurb,
+   getAmount: () => 1
+});
 
-export function createGlurbBodySegmentConfig(position: Point, rotation: number, lastHitbox: Hitbox): EntityConfig {
-   // Middle segment
-   const radius = 28;
-   const flags = new Array<HitboxFlag>();
-   const mass = 0.8;
-   const lightIntensity = 0.4;
-   const lightRadius = 8;
-   
+export function createGlurbBodySegmentConfig(position: Point, angle: number): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, radius), mass, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, flags);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), angle, 28), 0.8, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
-
-   const tetherIdealDistance = (hitbox.box as CircularBox).radius + (lastHitbox.box as CircularBox).radius - 18;
-   hitbox.tethers.push(createHitboxTether(hitbox, lastHitbox, tetherIdealDistance, 15/60, 0.5, true));
 
    const physicsComponent = new PhysicsComponent();
 
    const healthComponent = new HealthComponent(5);
+   
+   const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.burning);
 
    const lootComponent = new LootComponent();
    
@@ -48,7 +40,7 @@ export function createGlurbBodySegmentConfig(position: Point, rotation: number, 
 
    const glurbBodySegmentComponent = new GlurbBodySegmentComponent();
 
-   const light = createLight(new Point(0, 0), lightIntensity, 0.8, lightRadius, 1, 0.2, 0.9);
+   const light = createLight(new Point(0, 0), 0.4, 0.8, 8, 1, 0.2, 0.9);
    const lights: Array<LightCreationInfo> = [{
       light: light,
       attachedHitbox: hitbox
@@ -60,6 +52,7 @@ export function createGlurbBodySegmentConfig(position: Point, rotation: number, 
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
+         [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.glurbSegment]: glurbSegmentComponent,
          [ServerComponentType.glurbBodySegment]: glurbBodySegmentComponent

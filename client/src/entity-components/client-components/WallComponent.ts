@@ -1,13 +1,13 @@
-import { HitData } from "../../../../shared/src/client-server-types";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
-import { angle } from "../../../../shared/src/utils";
+import { Point } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
 import { createLightWoodSpeckParticle, createWoodShardParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo, getEntityType } from "../../world";
+import { EntityParams, getEntityRenderInfo, getEntityType } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 import { WALL_TEXTURE_SOURCES } from "../server-components/BuildingMaterialComponent";
@@ -39,9 +39,9 @@ export function createWallComponentParams(): WallComponentParams {
    return {};
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const buildingMaterialComponentParams = entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!;
    
@@ -53,7 +53,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    );
    renderPart.addTag("buildingMaterialComponent:material");
 
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {};
 }
@@ -90,7 +90,7 @@ const updateDamageRenderPart = (entity: Entity, health: number, maxHealth: numbe
    const textureSource = "entities/wall/wooden-wall-damage-" + damageStage + ".png";
    if (wallComponent.damageRenderPart === null) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       
       wallComponent.damageRenderPart = new TexturedRenderPart(
          hitbox,
@@ -110,10 +110,7 @@ function onTick(entity: Entity): void {
    updateDamageRenderPart(entity, healthComponent.health, healthComponent.maxHealth);
 }
 
-function onHit(entity: Entity, hitData: HitData): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-
+function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
    playSoundOnHitbox("wooden-wall-hit.mp3", 0.3, 1, entity, hitbox, false);
 
    for (let i = 0; i < 6; i++) {
@@ -121,7 +118,7 @@ function onHit(entity: Entity, hitData: HitData): void {
    }
 
    for (let i = 0; i < 10; i++) {
-      let offsetDirection = angle(hitData.hitPosition[0] - hitbox.box.position.x, hitData.hitPosition[1] - hitbox.box.position.y);
+      let offsetDirection = hitbox.box.position.angleTo(hitPosition);
       offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
 
       const spawnPositionX = hitbox.box.position.x + 32 * Math.sin(offsetDirection);
@@ -133,7 +130,7 @@ function onHit(entity: Entity, hitData: HitData): void {
 // @Incomplete: doesn't play when removed by deconstruction
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    // @Speed @Hack
    // Don't play death effects if the wall was replaced by a blueprint
@@ -144,9 +141,9 @@ function onDie(entity: Entity): void {
          }
 
          const entityTransformComponent = TransformComponentArray.getComponent(entity);
-         const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+         const entityHitbox = entityTransformComponent.hitboxes[0];
 
-         const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+         const dist = hitbox.box.position.distanceTo(entityHitbox.box.position);
          if (dist < 1) {
             return;
          }

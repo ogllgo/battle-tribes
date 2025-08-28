@@ -3,7 +3,7 @@ import { RIVER_STEPPING_STONE_SIZES } from "../../shared/src/client-server-types
 import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { TileType } from "../../shared/src/tiles";
-import { assert, distance, getTileIndexIncludingEdges } from "../../shared/src/utils";
+import { assert, distance, getTileIndexIncludingEdges, Point } from "../../shared/src/utils";
 import { EntityConfig } from "./components";
 import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
 import Layer from "./Layer";
@@ -12,7 +12,7 @@ import { surfaceLayer } from "./layers";
 // @Cleanup: should probably combine this file with entity-spawning...
 
 export interface PackSpawningInfo {
-   getPackSize(x: number, y: number): number;
+   getPackSize(pos: Readonly<Point>): number;
    /** Distance from the original spawn that pack spawns can be made in */
    readonly spawnRange: number;
 }
@@ -29,9 +29,9 @@ export interface SpawnDistribution {
    readonly entityDensityMap: Map<Entity, Array<EntityBlockDensityInfo>>;
 }
 
-export interface EntitySpawnInfo {
-   /** The type of entity to spawn */
-   readonly entityType: EntityType;
+export interface EntitySpawnEvent {
+   /** All the types of entities which are spawned by the spawn event */
+   readonly entityTypes: ReadonlyArray<EntityType>;
    readonly layer: Layer;
    /** Average number of spawn attempts that happen each second per chunk. */
    readonly spawnRate: number;
@@ -47,8 +47,8 @@ export interface EntitySpawnInfo {
    readonly doStrictTileTypeCheck: boolean;
    /** If true, the entity must not be overlapping with any other collideable entities. */
    readonly doStrictCollisionCheck?: boolean;
-   readonly createEntity: (x: number, y: number, angle: number, firstEntityConfig: EntityConfig | null, layer: Layer) => EntityConfig | null;
-   readonly customSpawnIsValidFunc?: (spawnInfo: EntitySpawnInfo, spawnOriginX: number, spawnOriginY: number) => boolean;
+   readonly createEntity: (pos: Readonly<Point>, angle: number, firstEntityConfig: ReadonlyArray<EntityConfig> | null, layer: Layer) => ReadonlyArray<EntityConfig> | null;
+   readonly customSpawnIsValidFunc?: (spawnInfo: EntitySpawnEvent, spawnOriginX: number, spawnOriginY: number) => boolean;
 }
 
 // @Incomplete!
@@ -63,9 +63,9 @@ export interface EntitySpawnInfo {
    //    usesSpawnDistribution: true
    // },
    
-export const SPAWN_INFOS = new Array<EntitySpawnInfo>();
+export const SPAWN_INFOS = new Array<EntitySpawnEvent>();
 
-const countNumSpawnableTiles = (spawnInfo: EntitySpawnInfo, blockX: number, blockY: number): number => {
+const countNumSpawnableTiles = (spawnInfo: EntitySpawnEvent, blockX: number, blockY: number): number => {
    const blockSize = spawnInfo.spawnDistribution.blockSize;
 
    const originTileX = blockX * blockSize;
@@ -110,7 +110,7 @@ export function createRawSpawnDistribution(blockSize: number, maxDensity: number
 }
 
 /** Takes into account the spawnable tiles into the raw spawn distribution */
-const createBaseSpawnDistribution = (spawnInfo: EntitySpawnInfo): void => {
+const createBaseSpawnDistribution = (spawnInfo: EntitySpawnEvent): void => {
    const blockSize = spawnInfo.spawnDistribution.blockSize;
    
    const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / blockSize;
@@ -266,15 +266,15 @@ export function removeEntityFromSpawnDistributions(entity: Entity, autoSpawnedCo
    }
 }
 
-export function registerNewSpawnInfo(spawnInfo: EntitySpawnInfo): void {
+export function registerNewSpawnInfo(spawnInfo: EntitySpawnEvent): void {
    createBaseSpawnDistribution(spawnInfo);
    SPAWN_INFOS.push(spawnInfo);
 }
 
 // @HACK: there are sometimes multiple spawn infos per entity... this is ass
-export function getSpawnInfoForEntityType(entityType: EntityType): EntitySpawnInfo | null {
+export function getSpawnInfoForEntityType(entityType: EntityType): EntitySpawnEvent | null {
    for (const spawnInfo of SPAWN_INFOS) {
-      if (spawnInfo.entityType === entityType) {
+      if (spawnInfo.entityTypes.includes(entityType)) {
          return spawnInfo;
       }
    }
@@ -282,7 +282,7 @@ export function getSpawnInfoForEntityType(entityType: EntityType): EntitySpawnIn
    return null;
 }
 
-export function spawnPositionLacksDensity(spawnInfo: EntitySpawnInfo, x: number, y: number): boolean {
+export function spawnPositionLacksDensity(spawnInfo: EntitySpawnEvent, x: number, y: number): boolean {
    const spawnDistribution = spawnInfo.spawnDistribution;
    const blockSize = spawnDistribution.blockSize;
    

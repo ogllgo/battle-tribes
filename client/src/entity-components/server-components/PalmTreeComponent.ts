@@ -1,18 +1,19 @@
-import { Entity, TreeSize } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { HitData, HitFlags } from "../../../../shared/src/client-server-types";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { HitFlags } from "../../../../shared/src/client-server-types";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
-import { randFloat, angle, randItem, randInt } from "../../../../shared/src/utils";
+import { randFloat, randItem, randInt, Point, randAngle } from "../../../../shared/src/utils";
 import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle, LEAF_SPECK_COLOUR_LOW, LEAF_SPECK_COLOUR_HIGH, createWoodSpeckParticle } from "../../particles";
 import { playSoundOnHitbox } from "../../sound";
 import { TransformComponentArray } from "./TransformComponent";
-import { TreeComponentArray, TREE_HIT_SOUNDS, TREE_DESTROY_SOUNDS } from "./TreeComponent";
+import { TREE_HIT_SOUNDS, TREE_DESTROY_SOUNDS } from "./TreeComponent";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface PalmTreeComponentParams {}
 
@@ -35,11 +36,11 @@ function createParamsFromData(): PalmTreeComponentParams {
    return {};
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,
@@ -63,18 +64,15 @@ function padData(reader: PacketReader): void {}
 
 function updateFromData(reader: PacketReader): void {}
 
-function onHit(entity: Entity, hitData: HitData): void {
-      const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
-   
+function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point, hitFlags: number): void {
       const radius = (hitbox.box as CircularBox).radius;
    
       // @Cleanup: copy and paste
-      const isDamagingHit = (hitData.flags & HitFlags.NON_DAMAGING_HIT) === 0;
+      const isDamagingHit = (hitFlags & HitFlags.NON_DAMAGING_HIT) === 0;
       
       // Create leaf particles
       {
-         const moveDirection = 2 * Math.PI * Math.random();
+         const moveDirection = randAngle();
    
          const spawnPositionX = hitbox.box.position.x + radius * Math.sin(moveDirection);
          const spawnPositionY = hitbox.box.position.y + radius * Math.cos(moveDirection);
@@ -90,7 +88,7 @@ function onHit(entity: Entity, hitData: HitData): void {
    
       if (isDamagingHit) {
          // Create wood specks at the point of hit
-         const spawnOffsetDirection = angle(hitData.hitPosition[0] - hitbox.box.position.x, hitData.hitPosition[1] - hitbox.box.position.y);
+         const spawnOffsetDirection = hitbox.box.position.angleTo(hitPosition);
          const spawnPositionX = hitbox.box.position.x + (radius + 2) * Math.sin(spawnOffsetDirection);
          const spawnPositionY = hitbox.box.position.y + (radius + 2) * Math.cos(spawnOffsetDirection);
          for (let i = 0; i < 4; i++) {
@@ -106,14 +104,14 @@ function onHit(entity: Entity, hitData: HitData): void {
 
 function onDie(entity: Entity): void {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
    
       const radius = (hitbox.box as CircularBox).radius;
    
       const numLeaves = randInt(4, 5);
       for (let i = 0; i < numLeaves; i++) {
          const spawnOffsetMagnitude = radius * Math.random();
-         const spawnOffsetDirection = 2 * Math.PI * Math.random();
+         const spawnOffsetDirection = randAngle();
          const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
          const spawnPositionY = hitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
    

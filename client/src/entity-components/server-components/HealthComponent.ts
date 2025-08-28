@@ -7,8 +7,10 @@ import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { ComponentTint, createComponentTint } from "../../EntityRenderInfo";
 import { EntityParams, getEntityRenderInfo } from "../../world";
-import { HitData, HitFlags } from "../../../../shared/src/client-server-types";
+import { HitFlags } from "../../../../shared/src/client-server-types";
 import { playerInstance } from "../../player";
+import { Hitbox } from "../../hitboxes";
+import { Point } from "../../../../shared/src/utils";
 
 export interface HealthComponentParams {
    readonly health: number;
@@ -95,10 +97,10 @@ function onTick(entity: Entity): void {
    }
 }
 
-function onHit(entity: Entity, hitData: HitData): void {
+function onHit(entity: Entity, _hitbox: Hitbox, _hitPosition: Point, hitFlags: number): void {
    const healthComponent = HealthComponentArray.getComponent(entity);
       
-   const isDamagingHit = (hitData.flags & HitFlags.NON_DAMAGING_HIT) === 0;
+   const isDamagingHit = (hitFlags & HitFlags.NON_DAMAGING_HIT) === 0;
    if (isDamagingHit) {
       healthComponent.secondsSinceLastHit = 0;
    }

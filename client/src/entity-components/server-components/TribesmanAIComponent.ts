@@ -79,7 +79,7 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const tribeComponent = TribeComponentArray.getComponent(entity);
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(entity);

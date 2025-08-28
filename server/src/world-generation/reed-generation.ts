@@ -1,15 +1,13 @@
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import { ServerComponentType } from "battletribes-shared/components";
 import { createReedConfig } from "../entities/reed";
-import { createEntity } from "../Entity";
 import { WaterTileGenerationInfo } from "./river-generation";
 import { distance, getTileIndexIncludingEdges, Point } from "battletribes-shared/utils";
 import { generateOctavePerlinNoise } from "../perlin-noise";
 import { isTooCloseToSteppingStone } from "../entity-spawn-info";
-import { pushJoinBuffer } from "../world";
 import Layer from "../Layer";
 import { Biome } from "../../../shared/src/biomes";
+import { createEntityImmediate } from "../world";
 
 const enum Vars {
    MAX_DENSITY_PER_TILE = 35
@@ -70,10 +68,8 @@ export function generateReeds(surfaceLayer: Layer, riverMainTiles: ReadonlyArray
                continue;
             }
             const config = createReedConfig(new Point(x, y), 0);
-            createEntity(config, surfaceLayer, 0);
+            createEntityImmediate(config, surfaceLayer);
          }
       }
    }
-
-   pushJoinBuffer(false);
 }

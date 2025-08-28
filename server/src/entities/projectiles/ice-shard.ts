@@ -8,13 +8,13 @@ import { addHitboxToTransformComponent, TransformComponent } from "../../compone
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { IceShardComponent } from "../../components/IceShardComponent";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 export function createIceShardConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
    transformComponent.collisionMask = DEFAULT_COLLISION_MASK & ~CollisionBit.planterBox;
 
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 24, 24), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 24, 24), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();

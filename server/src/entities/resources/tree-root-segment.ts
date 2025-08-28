@@ -11,19 +11,18 @@ import { LootComponent, registerEntityLootOnDeath } from "../../components/LootC
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { TreeRootSegmentComponent } from "../../components/TreeRootSegmentComponent";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
-registerEntityLootOnDeath(EntityType.treeRootSegment, [
-   {
-      itemType: ItemType.wood,
-      getAmount: () => randInt(1, 2)
-   }
-]);
+registerEntityLootOnDeath(EntityType.treeRootSegment, {
+   itemType: ItemType.wood,
+   getAmount: () => randInt(1, 2)
+});
    
 export function createTreeRootSegmentConfig(position: Point, rotation: number, root: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 24, 40), 0.75, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 24, 40), 0.75, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(10);

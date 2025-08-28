@@ -11,16 +11,16 @@ import { addHitboxToTransformComponent, TransformComponent } from "../../compone
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 export function createPebblumConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
    
    // Body
-   const bodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, -4), rotation, 10 * 2), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const bodyHitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, -4), rotation, 10 * 2), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, bodyHitbox);
    // Nose
-   const noseHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(new Point(0, 0), new Point(0, 6), 0, 8 * 2), 0.3, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const noseHitbox = new Hitbox(transformComponent, bodyHitbox, true, new CircularBox(new Point(0, 0), new Point(0, 6), 0, 8 * 2), 0.3, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, noseHitbox);
    
    const physicsComponent = new PhysicsComponent();

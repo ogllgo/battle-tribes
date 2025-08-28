@@ -2,7 +2,7 @@ import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collis
 import { ScarInfo, ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { TRIBE_INFO_RECORD, TribeType } from "battletribes-shared/tribes";
-import { randInt, Point } from "battletribes-shared/utils";
+import { randInt, Point, randAngle } from "battletribes-shared/utils";
 import { TribesmanAIComponent } from "../../components/TribesmanAIComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import { EntityConfig } from "../../components";
@@ -22,10 +22,14 @@ import { AIAssignmentComponent } from "../../components/AIAssignmentComponent";
 import { PatrolAI } from "../../ai/PatrolAI";
 import { generateTribesmanName } from "../../tribesman-names";
 import { TribesmanComponent } from "../../components/TribesmanComponent";
-import { createHitbox, Hitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 import { AIPathfindingComponent } from "../../components/AIPathfindingComponent";
 
-const move = () => {
+const moveFunc = () => {
+   throw new Error();
+}
+
+const turnFunc = () => {
    throw new Error();
 }
 
@@ -37,7 +41,7 @@ const generateScars = (): ReadonlyArray<ScarInfo> => {
 
    const scars = new Array<ScarInfo>();
    for (let i = 0; i < numScars; i++) {
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const offsetMagnitude = 20 * Math.random();
       scars.push({
          offsetX: offsetMagnitude * Math.sin(offsetDirection),
@@ -66,7 +70,7 @@ const getHitboxRadius = (tribeType: TribeType): number => {
 export function createTribeWarriorConfig(position: Point, rotation: number, tribe: Tribe): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, getHitboxRadius(tribe.tribeType)), 1.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, getHitboxRadius(tribe.tribeType)), 1.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();
@@ -85,7 +89,7 @@ export function createTribeWarriorConfig(position: Point, rotation: number, trib
    
    const tribesmanAIComponent = new TribesmanAIComponent();
 
-   const aiHelperComponent = new AIHelperComponent(transformComponent.children[0] as Hitbox, 560, move);
+   const aiHelperComponent = new AIHelperComponent(transformComponent.hitboxes[0], 560, moveFunc, turnFunc);
    aiHelperComponent.ais[AIType.patrol] = new PatrolAI();
    
    const aiPathfindingComponent = new AIPathfindingComponent();

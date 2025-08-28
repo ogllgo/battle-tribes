@@ -1,5 +1,5 @@
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
-import { Point, lerp, randFloat, randItem } from "battletribes-shared/utils";
+import { Point, lerp, randAngle, randFloat, randItem } from "battletribes-shared/utils";
 import { BlockType, ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -14,13 +14,13 @@ import { VisualRenderPart, RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { Hotbar_updateRightThrownBattleaxeItemID } from "../../components/game/inventories/Hotbar";
-import { BLOCKING_LIMB_STATE, createZeroedLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, SPEAR_CHARGED_LIMB_STATE, interpolateLimbState } from "battletribes-shared/attack-patterns";
+import { BLOCKING_LIMB_STATE, createZeroedLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, SPEAR_CHARGED_LIMB_STATE, interpolateLimbState, copyLimbState } from "battletribes-shared/attack-patterns";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { playSound } from "../../sound";
 import { EntityParams, getEntityRenderInfo } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
-import { attachLightToRenderPart, createLight, Light, removeLight } from "../../lights";
+import { Light, removeLight } from "../../lights";
 import { getRenderPartRenderPosition } from "../../rendering/render-part-matrices";
 import { getHumanoidRadius } from "./TribesmanComponent";
 import { playerInstance } from "../../player";
@@ -133,6 +133,7 @@ const CROSSBOW_CHARGE_TEXTURE_SOURCES: ReadonlyArray<string> = [
 
 type FilterHealingItemTypes<T extends ItemType> = (typeof ITEM_TYPE_RECORD)[T] extends "healing" ? never : T;
 
+// @Robustness: this should be determined automatically
 const FOOD_EATING_COLOURS: { [T in ItemType as Exclude<T, FilterHealingItemTypes<T>>]: Array<ParticleColour> } = {
    [ItemType.berry]: [
       [222/255, 57/255, 42/255],
@@ -226,6 +227,37 @@ const FOOD_EATING_COLOURS: { [T in ItemType as Exclude<T, FilterHealingItemTypes
       [217/255, 124/255, 124/255],
       [217/255, 173/255, 173/255]
    ],
+   [ItemType.dustfleaEgg]: [
+      [166/255, 84/255, 156/255],
+      [190/255, 96/255, 166/255],
+      [211/255, 107/255, 184/255],
+      [216/255, 127/255, 201/255],
+   ],
+   [ItemType.snowberry]: [
+      [160/255, 216/255, 237/255],
+      [118/255, 195/255, 223/255],
+      [111/255, 107/255, 184/255],
+   ],
+   [ItemType.rawSnobeMeat]: [
+      [184/255, 78/255, 97/255],
+      [217/255, 92/255, 111/255],
+      [217/255, 151/255, 161/255],
+   ],
+   [ItemType.snobeStew]: [
+      [184/255, 78/255, 97/255],
+      [217/255, 92/255, 111/255],
+      [217/255, 151/255, 161/255],
+   ],
+   [ItemType.rawTukmokMeat]: [
+      [184/255, 78/255, 97/255],
+      [217/255, 92/255, 111/255],
+      [217/255, 151/255, 161/255],
+   ],
+   [ItemType.cookedTukmokMeat]: [
+      [184/255, 78/255, 97/255],
+      [217/255, 92/255, 111/255],
+      [217/255, 151/255, 161/255],
+   ],
 };
 
 const BOW_CHARGE_DOMINANT_START_LIMB_STATE: LimbState = {
@@ -254,13 +286,13 @@ const BOW_CHARGE_NON_DOMINANT_LIMB_STATE: LimbState = {
 type InventoryUseEntityType = EntityType.player | EntityType.tribeWorker | EntityType.tribeWarrior | EntityType.zombie;
 
 export function getCurrentLimbState(limb: LimbInfo): LimbState {
-   let progress = limb.currentActionElapsedTicks / limb.currentActionDurationTicks;
-   if (progress > 1) {
-      progress = 1;
-   } else if (progress < 0) {
-      progress = 0;
+   if (limb.currentActionDurationTicks === 0 || limb.currentActionElapsedTicks >= limb.currentActionDurationTicks) {
+      // If the action has duration 0, assume that it is finished
+      return copyLimbState(limb.currentActionEndLimbState);
+   } else {
+      const progress = limb.currentActionElapsedTicks / limb.currentActionDurationTicks;
+      return interpolateLimbState(limb.currentActionStartLimbState, limb.currentActionEndLimbState, progress);
    }
-   return interpolateLimbState(limb.currentActionStartLimbState, limb.currentActionEndLimbState, progress);
 }
 
 const createZeroedLimbInfo = (inventoryName: InventoryName): LimbInfo => {
@@ -404,6 +436,14 @@ const updateHeldItemRenderPartForAttack = (inventoryUseComponent: InventoryUseCo
    let rotation: number;
    let showLargeTexture: boolean;
 
+   // @HACK
+   if (heldItemType === ItemType.ivoryTusk) {
+      offsetX = 12;
+      offsetY = 24;
+      rotation = 0;
+      showLargeTexture = true;
+   } else {
+   // @Shit
    switch (ITEM_TYPE_RECORD[heldItemType]) {
       case "shield": {
          offsetX = 8;
@@ -442,6 +482,13 @@ const updateHeldItemRenderPartForAttack = (inventoryUseComponent: InventoryUseCo
          showLargeTexture = true;
          break;
       }
+      case "spear": {
+         offsetX = 4;
+         offsetY = 20;
+         rotation = 0;
+         showLargeTexture = true;
+         break;
+      }
       default: {
          offsetX = 8;
          offsetY = 8;
@@ -449,6 +496,7 @@ const updateHeldItemRenderPartForAttack = (inventoryUseComponent: InventoryUseCo
          showLargeTexture = false;
          break;
       }
+   }
    }
 
    updateHeldItemRenderPart(inventoryUseComponent, entity, limbIdx, heldItemType, offsetX, offsetY, rotation, showLargeTexture);
@@ -589,7 +637,7 @@ function onTick(entity: Entity): void {
       }
 
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       const velocity = getHitboxVelocity(hitbox);
 
       switch (limbInfo.heldItemType) {
@@ -613,13 +661,13 @@ function onTick(entity: Entity): void {
                let spawnPositionY = renderPosition.y;
       
                const spawnOffsetMagnitude = 7 * Math.random();
-               const spawnOffsetDirection = 2 * Math.PI * Math.random();
+               const spawnOffsetDirection = randAngle();
                spawnPositionX += spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
                spawnPositionY += spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
       
                const vx = velocity.x;
                const vy = velocity.y;
-               createEmberParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(80, 120), vx, vy);
+               createEmberParticle(spawnPositionX, spawnPositionY, randAngle(), randFloat(80, 120), vx, vy);
             }
 
             // Smoke particles
@@ -627,7 +675,7 @@ function onTick(entity: Entity): void {
                const renderPosition = getRenderPartRenderPosition(activeItemRenderPart);
 
                const spawnOffsetMagnitude = 5 * Math.random();
-               const spawnOffsetDirection = 2 * Math.PI * Math.random();
+               const spawnOffsetDirection = randAngle();
                const spawnPositionX = renderPosition.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
                const spawnPositionY = renderPosition.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
                createSmokeParticle(spawnPositionX, spawnPositionY, 24);
@@ -648,11 +696,11 @@ function onTick(entity: Entity): void {
                let spawnPositionY = renderPosition.y;
 
                const spawnOffsetMagnitude = 7 * Math.random();
-               const spawnOffsetDirection = 2 * Math.PI * Math.random();
+               const spawnOffsetDirection = randAngle();
                spawnPositionX += spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
                spawnPositionY += spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 
-               createSlurbParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(80, 120), 0, 0);
+               createSlurbParticle(spawnPositionX, spawnPositionY, randAngle(), randFloat(80, 120), 0, 0);
             }
          }
       }
@@ -665,15 +713,15 @@ function onTick(entity: Entity): void {
             let spawnPositionY = hitbox.box.position.y + 37 * Math.cos(hitbox.box.angle);
 
             const spawnOffsetMagnitude = randFloat(0, 6);
-            const spawnOffsetDirection = 2 * Math.PI * Math.random();
+            const spawnOffsetDirection = randAngle();
             spawnPositionX += spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
             spawnPositionY += spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
 
             let velocityMagnitude = randFloat(130, 170);
-            const velocityDirection = 2 * Math.PI * Math.random();
+            const velocityDirection = randAngle();
             const velocityX = velocityMagnitude * Math.sin(velocityDirection) + velocity.x;
             const velocityY = velocityMagnitude * Math.cos(velocityDirection) + velocity.y;
-            velocityMagnitude += velocity.length();
+            velocityMagnitude += velocity.magnitude();
             
             const lifetime = randFloat(0.3, 0.4);
 
@@ -693,7 +741,7 @@ function onTick(entity: Entity): void {
                velocityX, velocityY,
                0, 0,
                velocityMagnitude / lifetime / 1.3,
-               2 * Math.PI * Math.random(),
+               randAngle(),
                0,
                0,
                0,
@@ -890,8 +938,9 @@ const updateLimbTorch = (limb: LimbInfo, heldItemRenderPart: RenderPart, entity:
       
       if (hasLight) {
          if (limb.torchLight === null) {
-            limb.torchLight = createLight(new Point(0, 0), lightIntensity, lightStrength, lightRadius, lightR, lightG, lightB);
-            attachLightToRenderPart(limb.torchLight, heldItemRenderPart, entity);
+            // @INCOMPLETE
+            // limb.torchLight = createLight(new Point(0, 0), lightIntensity, lightStrength, lightRadius, lightR, lightG, lightB);
+            // attachLightToRenderPart(limb.torchLight, heldItemRenderPart, entity);
          } else {
             limb.torchLight.intensity = lightIntensity;
             limb.torchLight.strength = lightStrength;
@@ -902,7 +951,7 @@ const updateLimbTorch = (limb: LimbInfo, heldItemRenderPart: RenderPart, entity:
          }
 
          if (Board.tickIntervalHasPassed(0.15) && heldItemType === ItemType.fireTorch) {
-            limb.torchLight.radius = lightRadius + randFloat(-7, 7);
+            // limb.torchLight.radius = lightRadius + randFloat(-7, 7);
          }
          
          return;
@@ -1117,45 +1166,6 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
          removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
          break;
       }
-      case LimbAction.engageBlock: {
-         // @Copynpaste
-         const secondsIntoAnimation = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
-         let animationProgress = secondsIntoAnimation * Settings.TPS / limb.currentActionDurationTicks;
-
-         // @Copynpaste
-         const endState = heldItemType !== null && ITEM_TYPE_RECORD[heldItemType] === "shield" ? SHIELD_BLOCKING_LIMB_STATE : BLOCKING_LIMB_STATE
-         lerpThingBetweenStates(entity, attachPoint, RESTING_LIMB_STATES[limbConfiguration], endState, animationProgress);
-         resetThing(limbRenderPart);
-         updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
-         removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
-         
-         break;
-      }
-      case LimbAction.block: {
-         // @Copynpaste
-         const state = heldItemType !== null && ITEM_TYPE_RECORD[heldItemType] === "shield" ? SHIELD_BLOCKING_LIMB_STATE : BLOCKING_LIMB_STATE
-         setThingToState(getHumanoidRadius(entity), attachPoint, state);
-         resetThing(limbRenderPart);
-         updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
-         removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
-         break;
-      }
-      case LimbAction.returnBlockToRest: {
-         // @Copynpaste
-         const secondsIntoAnimation = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
-         let animationProgress = secondsIntoAnimation * Settings.TPS / limb.currentActionDurationTicks;
-         if (animationProgress > 1) {
-            animationProgress = 1;
-         }
-
-         // @Copynpaste
-         const startState = heldItemType !== null && ITEM_TYPE_RECORD[heldItemType] === "shield" ? SHIELD_BLOCKING_LIMB_STATE : BLOCKING_LIMB_STATE
-         lerpThingBetweenStates(entity, attachPoint, startState, RESTING_LIMB_STATES[limbConfiguration], animationProgress);
-         resetThing(limbRenderPart);
-         updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);
-         removeArrowRenderPart(inventoryUseComponent, entity, limbIdx);
-         break;
-      }
       case LimbAction.chargeSpear: {
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
          const chargeProgress = secondsSinceLastAction < 3 ? 1 - Math.pow(secondsSinceLastAction / 3 - 1, 2) : 1;
@@ -1168,6 +1178,9 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
          attachPoint.shakeAmount = chargeProgress * 1.5;
          break;
       }
+      case LimbAction.engageBlock:
+      case LimbAction.block:
+      case LimbAction.returnBlockToRest:
       case LimbAction.engageBow:
       case LimbAction.moveLimbToQuiver:
       case LimbAction.moveLimbFromQuiver:
@@ -1245,7 +1258,10 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
             if (textureIdx >= textureSourceArray.length) {
                textureIdx = textureSourceArray.length - 1;
             }
-            inventoryUseComponent.activeItemRenderParts[limbIdx].switchTextureSource(textureSourceArray[textureIdx]);
+            // @HACK
+            if (typeof inventoryUseComponent.activeItemRenderParts[limbIdx] !== "undefined") {
+               inventoryUseComponent.activeItemRenderParts[limbIdx].switchTextureSource(textureSourceArray[textureIdx]);
+            }
          } else if (limb.action === LimbAction.mainArrowReleased) {
             // @Cleanup @Hack @Robustness
             let textureSourceArray: ReadonlyArray<string>;
@@ -1463,7 +1479,7 @@ const playBlockEffects = (x: number, y: number, blockType: BlockType): void => {
    
    for (let i = 0; i < 8; i++) {
       const offsetMagnitude = randFloat(0, 18);
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const particleX = x + offsetMagnitude * Math.sin(offsetDirection);
       const particleY = y + offsetMagnitude * Math.cos(offsetDirection);
       createBlockParticle(particleX, particleY, blockType);

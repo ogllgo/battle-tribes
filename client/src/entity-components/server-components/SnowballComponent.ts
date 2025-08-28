@@ -1,7 +1,7 @@
-import { Entity, SNOWBALL_SIZES, SnowballSize } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
-import { randFloat, randInt } from "battletribes-shared/utils";
+import { randAngle, randFloat, randInt } from "battletribes-shared/utils";
 import Board from "../../Board";
 import { createSnowParticle } from "../../particles";
 import { TransformComponentArray } from "./TransformComponent";
@@ -10,18 +10,18 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import Particle from "../../Particle";
 import { addMonocolourParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { getHitboxVelocity, Hitbox } from "../../hitboxes";
+import CircularBox from "../../../../shared/src/boxes/CircularBox";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface SnowballComponentParams {
-   readonly size: SnowballSize;
+   readonly size: number;
 }
 
 interface IntermediateInfo {}
 
-export interface SnowballComponent {
-   readonly size: SnowballSize;
-}
+export interface SnowballComponent {}
 
 export const SnowballComponentArray = new ServerComponentArray<SnowballComponent, SnowballComponentParams, IntermediateInfo>(ServerComponentType.snowball, true, {
    createParamsFromData: createParamsFromData,
@@ -43,40 +43,26 @@ function createParamsFromData(reader: PacketReader): SnowballComponentParams {
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    const snowballComponentParams = entityParams.serverComponentParams[ServerComponentType.snowball]!;
-   
-   let textureSource: string;
-   switch (snowballComponentParams.size) {
-      case SnowballSize.small: {
-         textureSource = "entities/snowball/snowball-small.png";
-         break;
-      }
-      case SnowballSize.large: {
-         textureSource = "entities/snowball/snowball-large.png";
-         break;
-      }
-   }
 
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,
          0,
-         getTextureArrayIndex(textureSource)
+         getTextureArrayIndex("entities/snowball/size-" + (snowballComponentParams.size + 1) + ".png")
       )
    );
 
    return {};
 }
    
-function createComponent(entityParams: EntityParams): SnowballComponent {
-   return {
-      size: entityParams.serverComponentParams[ServerComponentType.snowball]!.size
-   };
+function createComponent(): SnowballComponent {
+   return {};
 }
 
 function getMaxRenderParts(): number {
@@ -85,9 +71,9 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    const velocity = getHitboxVelocity(hitbox);
-   if (velocity.length() > 50) {
+   if (velocity.magnitude() > 50) {
       if (Board.tickIntervalHasPassed(0.05)) {
          createSnowParticle(hitbox.box.position.x, hitbox.box.position.y, randFloat(40, 60));
       }
@@ -108,7 +94,7 @@ const createSnowSpeckParticle = (spawnPositionX: number, spawnPositionY: number)
    const pixelSize = randInt(4, 8);
 
    const velocityMagnitude = randFloat(40, 80);
-   const velocityDirection = 2 * Math.PI * Math.random();
+   const velocityDirection = randAngle();
    const velocityX = velocityMagnitude * Math.sin(velocityDirection);
    const velocityY = velocityMagnitude * Math.cos(velocityDirection);
 
@@ -127,7 +113,7 @@ const createSnowSpeckParticle = (spawnPositionX: number, spawnPositionY: number)
       velocityX, velocityY,
       0, 0,
       velocityMagnitude / lifetime / 1.2,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       0,
       0,
       0,
@@ -136,34 +122,27 @@ const createSnowSpeckParticle = (spawnPositionX: number, spawnPositionY: number)
    Board.lowMonocolourParticles.push(particle);
 }
 
-function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-   const snowballComponent = SnowballComponentArray.getComponent(entity);
-   
+function onHit(entity: Entity, hitbox: Hitbox): void {
    // Create a bunch of snow particles at the point of hit
-   const numParticles = snowballComponent.size === SnowballSize.large ? 10 : 7;
+   const radius = (hitbox.box as CircularBox).radius;
+   const numParticles = Math.floor(radius / 3);
    for (let i = 0; i < numParticles; i++) {
-      const pixelSize = SNOWBALL_SIZES[snowballComponent.size];
-      
-      const position = hitbox.box.position.offset(pixelSize / 2, 2 * Math.PI * Math.random());
+      const position = hitbox.box.position.offset(radius, randAngle());
       createSnowSpeckParticle(position.x, position.y);
    }
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-   const snowballComponent = SnowballComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
 
    // Create a bunch of snow particles throughout the snowball
-   const numParticles = snowballComponent.size === SnowballSize.large ? 25 : 15;
+   const radius = (hitbox.box as CircularBox).radius;
+   const numParticles = Math.floor(radius / 1.2);
    for (let i = 0; i < numParticles; i++) {
-      const pixelSize = SNOWBALL_SIZES[snowballComponent.size];
-      
-      const offsetDirection = 2 * Math.PI * Math.random();
-      const spawnPositionX = hitbox.box.position.x + pixelSize / 2 * Math.sin(offsetDirection);
-      const spawnPositionY = hitbox.box.position.y + pixelSize / 2 * Math.cos(offsetDirection);
+      const offsetDirection = randAngle();
+      const spawnPositionX = hitbox.box.position.x + radius * Math.sin(offsetDirection);
+      const spawnPositionY = hitbox.box.position.y + radius * Math.cos(offsetDirection);
       createSnowSpeckParticle(spawnPositionX, spawnPositionY);
    }
 }

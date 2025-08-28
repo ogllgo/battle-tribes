@@ -34,7 +34,7 @@ function getMaxRenderParts(): number {
 
 const playWhoosh = (entity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox("air-whoosh.mp3", 0.25, 1, entity, hitbox, true);
 }
 

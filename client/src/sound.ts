@@ -3,7 +3,7 @@ import { assert, Point, randInt } from "battletribes-shared/utils";
 import { TileType } from "battletribes-shared/tiles";
 import Camera from "./Camera";
 import { getCurrentLayer, getEntityLayer } from "./world";
-import { entityChildIsHitbox, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { Entity } from "../../shared/src/entities";
 import Layer from "./Layer";
 import { Hitbox } from "./hitboxes";
@@ -292,7 +292,47 @@ export async function loadSoundEffects(): Promise<void> {
       "tongue-grab.mp3",
       "okren-tongue-launch.mp3",
       "okren-tongue-lick.mp3",
-      "dustflea-egg-pop.mp3"
+      "dustflea-egg-pop.mp3",
+      "okren-eye-hit.mp3",
+      "dustflea-hit.mp3",
+      "food-burp.mp3",
+      "food-munch-1.mp3",
+      "food-munch-2.mp3",
+      "food-munch-3.mp3",
+      "food-munch-4.mp3",
+      "food-munch-5.mp3",
+      "taming-skill-acquire.mp3",
+      "snobe-hit-1.mp3",
+      "snobe-hit-2.mp3",
+      "snobe-hit-3.mp3",
+      "snobe-death-1.mp3",
+      "snobe-death-2.mp3",
+      "snobe-death-3.mp3",
+      "snobe-ambient-1.mp3",
+      "snobe-ambient-2.mp3",
+      "snobe-ambient-3.mp3",
+      "snobe-ambient-4.mp3",
+      "wraith-pant-1.mp3",
+      "wraith-pant-2.mp3",
+      "wraith-pant-3.mp3",
+      "wraith-pant-4.mp3",
+      "wraith-angry-leap.mp3",
+      "ingu-serpent-hit.mp3",
+      "ingu-serpent-death.mp3",
+      "ingu-serpent-angry-1.mp3",
+      "ingu-serpent-angry-2.mp3",
+      "ingu-serpent-leap.mp3",
+      "tukmok-bone-hit.mp3",
+      "tukmok-hit-flesh-1.mp3",
+      "tukmok-hit-flesh-2.mp3",
+      "tukmok-hit-flesh-3.mp3",
+      "tukmok-hit-flesh-4.mp3",
+      "tukmok-angry-1.mp3",
+      "tukmok-angry-2.mp3",
+      "tukmok-angry-3.mp3",
+      "tukmok-death.mp3",
+      "taming-tier-complete.mp3",
+      "lazur.mp3"
    ];
 
    const tempAudioBuffers: Partial<Record<string, AudioBuffer>> = {};
@@ -311,7 +351,7 @@ export async function loadSoundEffects(): Promise<void> {
 
 const calculateSoundVolume = (volume: number, position: Point): number => {
    // Calculate final volume accounting for distance
-   let distanceFromPlayer = Camera.position.calculateDistanceBetween(position);
+   let distanceFromPlayer = Camera.position.distanceTo(position);
    distanceFromPlayer /= 150;
    if (distanceFromPlayer < 1) {
       distanceFromPlayer = 1;
@@ -419,11 +459,7 @@ export function playSoundOnHitbox(filePath: string, volume: number, pitchMultipl
 
 export function removeEntitySounds(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   for (const hitbox of transformComponent.children) {
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
-      
+   for (const hitbox of transformComponent.hitboxes) {
       const entityAttachedSounds = soundsAttachedToHitboxes.get(hitbox)!;
       if (typeof entityAttachedSounds === "undefined") {
          return;

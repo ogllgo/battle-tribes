@@ -8,7 +8,8 @@ import { AIPlanType, assert } from "../../../shared/src/utils";
 import { AIAssignmentComponentArray, clearAssignment } from "../components/AIAssignmentComponent";
 import { getInventory, InventoryComponentArray, inventoryHasItemType } from "../components/InventoryComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
-import { getLightIntensityAtPos } from "../light-levels";
+import { entityHasWeapon } from "../entities/tribes/tribesman-ai/tribesman-combat-ai";
+import { getLightIntensityAtPos } from "../lights";
 import Tribe from "../Tribe";
 import { getEntityType } from "../world";
 import { updateBuildingLayer } from "./ai-building";
@@ -136,7 +137,8 @@ const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
    [ItemType.gathering_gloves]: null,
    [ItemType.throngler]: null,
    [ItemType.leather_armour]: null,
-   [ItemType.spear]: null,
+   [ItemType.woodenSpear]: null,
+   [ItemType.stoneSpear]: null,
    [ItemType.paper]: null,
    [ItemType.research_bench]: null,
    [ItemType.wooden_wall]: null,
@@ -189,6 +191,21 @@ const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
    [ItemType.pricklyPear]: null,
    [ItemType.rawCrabMeat]: null,
    [ItemType.cookedCrabMeat]: null,
+   [ItemType.chitin]: null,
+   [ItemType.crabplateArmour]: null,
+   [ItemType.dustfleaEgg]: null,
+   [ItemType.snowberry]: "sword",
+   [ItemType.rawSnobeMeat]: "sword",
+   [ItemType.snobeStew]: null,
+   [ItemType.snobeHide]: null,
+   [ItemType.inguSerpentTooth]: "sword",
+   [ItemType.iceWringer]: null,
+   [ItemType.rawTukmokMeat]: "sword",
+   [ItemType.cookedTukmokMeat]: null,
+   [ItemType.tukmokFurHide]: "sword",
+   [ItemType.winterskinArmour]: null,
+   [ItemType.ivoryTusk]: "sword",
+   [ItemType.ivorySpear]: null,
 };
 
 const createAssignment = <T extends AIPlan>(plan: T, children: Array<AIPlanAssignment>): AIPlanAssignment<T> => {
@@ -569,7 +586,7 @@ export function createPersonalAssignment(entity: Entity, assignment: AIPlanAssig
                   break;
                }
                case "sword": {
-                  if (!inventoryHasItemType(hotbarInventory, ItemType.wooden_sword)) {
+                  if (!entityHasWeapon(entity)) {
                      children.push(
                         planToGetItem(tribeComponent.tribe, ItemType.wooden_sword, 1)
                      );

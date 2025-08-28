@@ -6,7 +6,7 @@ import { Settings } from "battletribes-shared/settings";
 import { angle, Point, randFloat, randInt } from "battletribes-shared/utils";
 import { getEntityAgeTicks, destroyEntity } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { applyKnockback, getHitboxVelocity, Hitbox } from "../hitboxes";
 
 export class GuardianGemFragmentProjectileComponent {
@@ -34,10 +34,14 @@ function onWallCollision(fragment: Entity): void {
    destroyEntity(fragment);
 }
 
-function onHitboxCollision(fragment: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntity = collidingHitbox.entity;
+   
    if (!HealthComponentArray.hasComponent(collidingEntity)) {
       return;
    }
+
+   const fragment = hitbox.entity;
 
    // Destroyed regardless of whether it actually damages the entity
    destroyEntity(fragment);
@@ -47,14 +51,14 @@ function onHitboxCollision(fragment: Entity, collidingEntity: Entity, affectedHi
       return;
    }
    
-   const fragmentHitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
-   applyKnockback(collidingEntity, collidingHitbox, 50, fragmentHitDirection);
+   const fragmentHitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
+   applyKnockback(collidingHitbox, 50, fragmentHitDirection);
 
-   hitEntity(collidingEntity, fragment, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingEntity, collidingHitbox, fragment, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    
-   const affectedHitboxVelocity = getHitboxVelocity(affectedHitbox);
+   const affectedHitboxVelocity = getHitboxVelocity(hitbox);
    const knockbackDirection = angle(affectedHitboxVelocity.x, affectedHitboxVelocity.y);
-   applyKnockback(collidingEntity, collidingHitbox, affectedHitboxVelocity.length(), knockbackDirection);
+   applyKnockback(collidingHitbox, affectedHitboxVelocity.magnitude(), knockbackDirection);
    
    addLocalInvulnerabilityHash(collidingEntity, "gemFragmentProjectile", 0.166);
 }

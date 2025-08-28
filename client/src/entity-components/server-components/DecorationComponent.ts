@@ -5,8 +5,9 @@ import ServerComponentArray from "../ServerComponentArray";
 import { Entity } from "../../../../shared/src/entities";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface DecorationComponentParams {
    readonly decorationType: DecorationType;
@@ -27,9 +28,6 @@ const DECORATION_RENDER_INFO: Record<DecorationType, string> = {
    [DecorationType.sandstoneRockDark]: "decorations/sandstone-rock-dark.png",
    [DecorationType.sandstoneRockDarkBig1]: "decorations/sandstone-rock-dark-big1.png",
    [DecorationType.sandstoneRockDarkBig2]: "decorations/sandstone-rock-dark-big2.png",
-   [DecorationType.blackRockSmall]: "decorations/black-rock-small.png",
-   [DecorationType.blackRock]: "decorations/black-rock.png",
-   [DecorationType.snowPile]: "decorations/snow-pile.png",
    [DecorationType.flower1]: "decorations/flower1.png",
    [DecorationType.flower2]: "decorations/flower2.png",
    [DecorationType.flower3]: "decorations/flower3.png",
@@ -53,13 +51,13 @@ function createParamsFromData(reader: PacketReader): DecorationComponentParams {
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const decorationComponentParams = entityParams.serverComponentParams[ServerComponentType.decoration]!;
    
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,

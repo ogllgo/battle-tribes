@@ -1,13 +1,12 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
-import { Point } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
-import { createLight } from "../../lights";
 import { createGenericGemParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
@@ -32,9 +31,9 @@ function createParamsFromData(): GuardianSpikyBallComponentParams {
    return {};
 }
 
-function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -42,21 +41,7 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
       0,
       getTextureArrayIndex("entities/guardian-spiky-ball/guardian-spiky-ball.png")
    );
-   intermediateInfo.renderInfo.attachRenderPart(renderPart);
-
-   const light = createLight(
-      new Point(0, 0),
-      0.4,
-      0.3,
-      20,
-      0.9,
-      0.2,
-      0.9
-   );
-   intermediateInfo.lights.push({
-      light: light,
-      attachedRenderPart: renderPart
-   });
+   renderInfo.attachRenderPart(renderPart);
 
    return {};
 }
@@ -71,7 +56,7 @@ function getMaxRenderParts(): number {
 
 function onLoad(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox("guardian-spiky-ball-spawn.mp3", 0.4, 1, entity, hitbox, false);
 }
 
@@ -81,7 +66,7 @@ function updateFromData(): void {}
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    playSoundOnHitbox("guardian-spiky-ball-death.mp3", 0.4, 1, entity, hitbox, false);
 

@@ -3,106 +3,99 @@ import { RIVER_STEPPING_STONE_SIZES } from "../../shared/src/client-server-types
 import { CollisionBit } from "../../shared/src/collision";
 import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
-import { TileType, TILE_MOVE_SPEED_MULTIPLIERS, TILE_FRICTIONS } from "../../shared/src/tiles";
-import { assert, getAngleDiff, getTileIndexIncludingEdges, Point, TileIndex } from "../../shared/src/utils";
+import { TILE_PHYSICS_INFO_RECORD, TileType } from "../../shared/src/tiles";
+import { getAngleDiff, getTileIndexIncludingEdges, Point, polarVec2, TileIndex } from "../../shared/src/utils";
 import { PhysicsComponentArray } from "./components/PhysicsComponent";
-import { EntityAttachInfo, entityChildIsEntity, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
+import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { registerPlayerKnockback } from "./server/player-clients";
+import { HitboxTether } from "./tethers";
 import { getEntityLayer, getEntityType } from "./world";
-
-export interface HitboxTether {
-   readonly originHitbox: Hitbox;
-   
-   readonly idealDistance: number;
-   readonly springConstant: number;
-   readonly damping: number;
-
-   readonly affectsOriginHitbox: boolean;
-
-   // Used for verlet integration
-   previousPositionX: number;
-   previousPositionY: number;
-}
 
 export interface HitboxAngularTether {
    readonly originHitbox: Hitbox;
+   readonly idealAngle: number;
    readonly springConstant: number;
    readonly damping: number;
    /** Radians either side of the ideal angle for which the link is allowed to be in without being pulled */
    readonly padding: number;
+
+   // @HACK: haven't fully thought this through; it's extremely unclear what this is
+   readonly idealHitboxAngleOffset: number;
+
+   /** If true, then the tether will be as effective at maintaining the restriction at long distances as it is at short distances. If false then the force used to correct the restriction will be the same regardless of distance between the hitboxes. */
+   readonly useLeverage: boolean;
 }
 
-export interface Hitbox {
-   readonly localID: number;
+/** Puts an angular spring on the hitbox's relative angle. */
+export interface HitboxRelativeAngleConstraint {
+   readonly idealAngle: number;
+   readonly springConstant: number;
+   readonly damping: number;
+}
+
+export class Hitbox {
+   public readonly localID: number;
+
+   // THESE BOTH START AT 0 BUT WILL BE FILLED BY THE TRANSFORM COMPONENT'S INITIALISATION
+   /** The entity the hitbox belongs to. */
+   // @Cleanup would be really nice to make the entity field readonly, but rn it has to be set when it's initialised so idk how that would work
+   public entity: Entity = 0;
+   public rootEntity: Entity = 0;
    
-   parent: Hitbox | null;
-   readonly children: Array<Hitbox | EntityAttachInfo>;
+   public parent: Hitbox | null;
+   /** If true, the hitbox will be considered like it and its parent are part of the same thing, regardless even of if they belong to different entities. */
+   public isPartOfParent: boolean;
+
+   public readonly children = new Array<Hitbox>();
    
-   readonly box: Box;
+   public readonly box: Box;
    
-   readonly previousPosition: Point;
-   readonly acceleration: Point;
-   readonly tethers: Array<HitboxTether>;
+   public readonly previousPosition: Point;
+   public readonly acceleration = new Point(0, 0);
+   // @Incomplete: make it impossible to add or remove from here
+   public readonly tethers = new Array<HitboxTether>();
    
-   previousRelativeAngle: number;
-   angularAcceleration: number;
-   readonly angularTethers: Array<HitboxAngularTether>;
+   public previousRelativeAngle: number;
+   public angularAcceleration = 0;
+   public readonly angularTethers = new Array<HitboxAngularTether>();
+   public readonly relativeAngleConstraints = new Array<HitboxRelativeAngleConstraint>();
    
-   mass: number;
-   collisionType: HitboxCollisionType;
-   readonly collisionBit: CollisionBit;
-   readonly collisionMask: number;
-   readonly flags: ReadonlyArray<HitboxFlag>;
+   public mass: number;
+   public collisionType: HitboxCollisionType;
+   public readonly collisionBit: CollisionBit;
+   // @Temporary: this isn't readonly so that snobes can temporarily not collide with snowballs when digging
+   public collisionMask: number;
+   public readonly flags: ReadonlyArray<HitboxFlag>;
 
    // @Memory: entities without physics components don't need these 4.
-   boundsMinX: number;
-   boundsMaxX: number;
-   boundsMinY: number;
-   boundsMaxY: number;
-}
+   public boundsMinX = 0;
+   public boundsMaxX = 0;
+   public boundsMinY = 0;
+   public boundsMaxY = 0;
 
-export function createHitboxTether(hitbox: Hitbox, otherHitbox: Hitbox, idealDistance: number, springConstant: number, damping: number, affectsOriginHitbox: boolean): HitboxTether {
-   const tether: HitboxTether = {
-      originHitbox: otherHitbox,
-      idealDistance: idealDistance,
-      springConstant: springConstant,
-      damping: damping,
-      affectsOriginHitbox: affectsOriginHitbox,
-      previousPositionX: hitbox.box.position.x,
-      previousPositionY: hitbox.box.position.y
-   };
-   return tether;
-}
+   /** If true, the entity will not be pushed around by collisions or be able to be moved. */
+   public isStatic = false;
 
-export function createHitbox(transformComponent: TransformComponent, parent: Hitbox | null, box: Box, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
-   const localID = transformComponent.nextHitboxLocalID++;
+   constructor(transformComponent: TransformComponent, parent: Hitbox | null, isPartOfParent: boolean, box: Box, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>) {
+      this.localID = transformComponent.nextHitboxLocalID++;
+      this.parent = parent;
+      this.isPartOfParent = isPartOfParent;
+      this.box = box;
    
-   return {
-      localID: localID,
-      parent: parent,
-      children: [],
-      box: box,
-      previousPosition: box.position.copy(),
-      acceleration: new Point(0, 0),
-      tethers: [],
-      previousRelativeAngle: box.relativeAngle,
-      angularAcceleration: 0,
-      angularTethers: [],
-      mass: mass,
-      collisionType: collisionType,
-      collisionBit: collisionBit,
-      collisionMask: collisionMask,
-      flags: flags,
-      boundsMinX: 0,
-      boundsMaxX: 0,
-      boundsMinY: 0,
-      boundsMaxY: 0
-   };
+      this.previousPosition = box.position.copy();
+      this.previousRelativeAngle = box.relativeAngle;
+
+      this.mass = mass;
+      this.collisionType = collisionType;
+      this.collisionBit = collisionBit;
+      this.collisionMask = collisionMask;
+      this.flags = flags;
+   }
 }
 
 /** Returns a deep-clone of the hitbox. */
 export function cloneHitbox(transformComponent: TransformComponent, hitbox: Hitbox): Hitbox {
-   return createHitbox(transformComponent, hitbox.parent, cloneBox(hitbox.box), hitbox.mass, hitbox.collisionType, hitbox.collisionBit, hitbox.collisionMask, hitbox.flags);
+   return new Hitbox(transformComponent, hitbox.parent, hitbox.isPartOfParent, cloneBox(hitbox.box), hitbox.mass, hitbox.collisionType, hitbox.collisionBit, hitbox.collisionMask, hitbox.flags);
 }
 
 export function getHitboxVelocity(hitbox: Hitbox): Point {
@@ -133,41 +126,39 @@ export function getRootHitbox(hitbox: Hitbox): Hitbox {
    return currentHitbox;
 }
 
-export function addHitboxVelocity(hitbox: Hitbox, pushX: number, pushY: number): void {
-   const pushedHitbox = getRootHitbox(hitbox);
-   pushedHitbox.box.position.x += pushX / Settings.TPS;
-   pushedHitbox.box.position.y += pushY / Settings.TPS;
+export function addHitboxVelocity(hitbox: Hitbox, addVec: Point): void {
+   const rootHitbox = getRootHitbox(hitbox);
+   if (!rootHitbox.isStatic) {
+      rootHitbox.box.position.x += addVec.x / Settings.TPS;
+      rootHitbox.box.position.y += addVec.y / Settings.TPS;
+   }
 }
 
-export function translateHitbox(hitbox: Hitbox, translationX: number, translationY: number): void {
+export function translateHitbox(hitbox: Hitbox, transformComponent: TransformComponent, translation: Point): void {
    const pushedHitbox = getRootHitbox(hitbox);
-   pushedHitbox.box.position.x += translationX;
-   pushedHitbox.box.position.y += translationY;
-   hitbox.previousPosition.x += translationX;
-   hitbox.previousPosition.y += translationY;
+   pushedHitbox.box.position.x += translation.x;
+   pushedHitbox.box.position.y += translation.y;
+   hitbox.previousPosition.x += translation.x;
+   hitbox.previousPosition.y += translation.y;
+
+   transformComponent.isDirty = true;
 }
 
-export function getTotalMass(node: Hitbox | Entity): number {
-   let totalMass = 0;
-   if (typeof node === "number") {
-      const transformComponent = TransformComponentArray.getComponent(node);
-      for (const child of transformComponent.children) {
-         if (entityChildIsEntity(child)) {
-            totalMass += getTotalMass(child.attachedEntity);
-         } else {
-            totalMass += getTotalMass(child);
-         }
-      }
-   } else {
-      const hitbox = node;
-      totalMass += hitbox.mass;
+export function teleportHitbox(hitbox: Hitbox, transformComponent: TransformComponent, pos: Point): void {
+   const pushedHitbox = getRootHitbox(hitbox);
+   pushedHitbox.box.position.x = pos.x;
+   pushedHitbox.box.position.y = pos.y;
+   hitbox.previousPosition.x = pos.x;
+   hitbox.previousPosition.y = pos.y;
 
-      for (const child of hitbox.children) {
-         if (entityChildIsEntity(child)) {
-            totalMass += getTotalMass(child.attachedEntity);
-         } else {
-            totalMass += getTotalMass(child);
-         }
+   transformComponent.isDirty = true;
+}
+
+export function getHitboxTotalMassIncludingChildren(hitbox: Hitbox): number {
+   let totalMass = hitbox.mass;
+   for (const childHitbox of hitbox.children) {
+      if (childHitbox.isPartOfParent) {
+         totalMass += getHitboxTotalMassIncludingChildren(childHitbox);
       }
    }
    return totalMass;
@@ -175,86 +166,116 @@ export function getTotalMass(node: Hitbox | Entity): number {
 
 export function getHitboxConnectedMass(hitbox: Hitbox): number {
    const rootHitbox = getRootHitbox(hitbox);
-   return getTotalMass(rootHitbox);
+   return getHitboxTotalMassIncludingChildren(rootHitbox);
 }
 
-export function applyKnockback(entity: Entity, hitbox: Hitbox, knockback: number, knockbackDirection: number): void {
-   if (!PhysicsComponentArray.hasComponent(entity)) {
+export function applyKnockback(hitbox: Hitbox, knockback: number, knockbackDirection: number): void {
+   // @CLEANUP this is literally just addHItboxVelocity, but also registering it to the player.....
+   
+   const rootHitbox = getRootHitbox(hitbox);
+   if (rootHitbox.isStatic) {
       return;
    }
 
    // @Speed: should take in knockback as knockbackX and knockbackY instead of in polar form...
 
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
-   if (physicsComponent.isImmovable) {
+   const totalMass = getHitboxConnectedMass(rootHitbox);
+   if (totalMass === 0) {
       return;
    }
-   
-   const totalMass = getHitboxConnectedMass(hitbox);
-   assert(totalMass !== 0);
    const knockbackForce = knockback / totalMass;
-
-   const rootHitbox = getRootHitbox(hitbox);
-   addHitboxVelocity(rootHitbox, knockbackForce * Math.sin(knockbackDirection), knockbackForce * Math.cos(knockbackDirection));
+   addHitboxVelocity(rootHitbox, polarVec2(knockbackForce, knockbackDirection));
 
    // @Hack?
-   if (getEntityType(entity) === EntityType.player) {
-      registerPlayerKnockback(entity, knockback, knockbackDirection);
+   if (getEntityType(hitbox.entity) === EntityType.player) {
+      registerPlayerKnockback(hitbox.entity, knockback, knockbackDirection);
    }
 }
 
 // @Cleanup: Should be combined with previous function
-export function applyAbsoluteKnockback(entity: Entity, hitbox: Hitbox, knockback: number, knockbackDirection: number): void {
-   if (!PhysicsComponentArray.hasComponent(entity)) {
+export function applyAbsoluteKnockback(hitbox: Hitbox, knockback: Point): void {
+   const rootHitbox = getRootHitbox(hitbox);
+   if (rootHitbox.isStatic) {
       return;
    }
 
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
-   if (physicsComponent.isImmovable) {
-      return;
-   }
-   
-   const rootHitbox = getRootHitbox(hitbox);
-   addHitboxVelocity(rootHitbox, knockback * Math.sin(knockbackDirection), knockback * Math.cos(knockbackDirection));
+   addHitboxVelocity(rootHitbox, knockback);
 
    // @Hack?
-   if (getEntityType(entity) === EntityType.player) {
-      registerPlayerKnockback(entity, knockback, knockbackDirection);
+   if (getEntityType(hitbox.entity) === EntityType.player) {
+      // @Hack
+      const polarKnockback = knockback.convertToVector();
+      registerPlayerKnockback(hitbox.entity, polarKnockback.magnitude, polarKnockback.direction);
+   }
+}
+
+export function applyAcceleration(hitbox: Hitbox, acc: Point): void {
+   const rootHitbox = getRootHitbox(hitbox);
+   if (!rootHitbox.isStatic) {
+      rootHitbox.acceleration.x += acc.x;
+      rootHitbox.acceleration.y += acc.y;
+   }
+}
+
+export function applyForce(hitbox: Hitbox, force: Point): void {
+   const rootHitbox = getRootHitbox(hitbox);
+   if (!rootHitbox.isStatic) {
+      const hitboxConnectedMass = getHitboxTotalMassIncludingChildren(rootHitbox);
+      if (hitboxConnectedMass !== 0) {
+         rootHitbox.acceleration.x += force.x / hitboxConnectedMass;
+         rootHitbox.acceleration.y += force.y / hitboxConnectedMass;
+      }
    }
 }
 
 // @Cleanup: Passing in hitbox really isn't the best, ideally hitbox should self-contain all the necessary info... but is that really good? + memory efficient?
-export function applyAccelerationFromGround(entity: Entity, hitbox: Hitbox, accelerationX: number, accelerationY: number): void {
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
+export function applyAccelerationFromGround(hitbox: Hitbox, acceleration: Point): void {
+   const entity = hitbox.entity;
    
+   const physicsComponent = PhysicsComponentArray.getComponent(entity);
+
    const tileIndex = getHitboxTile(hitbox);
-   const tileType = getEntityLayer(entity).tileTypes[tileIndex];
+   const tileType = getEntityLayer(entity).getTileType(tileIndex);
+   const tilePhysicsInfo = TILE_PHYSICS_INFO_RECORD[tileType];
    
    // @Speed: very complicated logic
    let moveSpeedMultiplier: number;
    if (physicsComponent.overrideMoveSpeedMultiplier || !physicsComponent.isAffectedByGroundFriction) {
       moveSpeedMultiplier = 1;
-   } else if (tileType === TileType.water && !hitboxIsInRiver(entity, hitbox)) {
+   } else if (tileType === TileType.water && !hitboxIsInRiver(hitbox)) {
       moveSpeedMultiplier = physicsComponent.moveSpeedMultiplier;
    } else {
-      moveSpeedMultiplier = TILE_MOVE_SPEED_MULTIPLIERS[tileType] * physicsComponent.moveSpeedMultiplier;
+      moveSpeedMultiplier = tilePhysicsInfo.moveSpeedMultiplier * physicsComponent.moveSpeedMultiplier;
    }
 
-   const tileFriction = TILE_FRICTIONS[tileType];
-   
    // Calculate the desired velocity based on acceleration
-   const desiredVelocityX = accelerationX * tileFriction * moveSpeedMultiplier;
-   const desiredVelocityY = accelerationY * tileFriction * moveSpeedMultiplier;
+   const tileFriction = tilePhysicsInfo.friction;
+   const desiredVelocityX = acceleration.x * tileFriction * moveSpeedMultiplier;
+   const desiredVelocityY = acceleration.y * tileFriction * moveSpeedMultiplier;
 
    const currentVelocity = getHitboxVelocity(hitbox);
 
-   hitbox.acceleration.x += (desiredVelocityX - currentVelocity.x) * physicsComponent.traction;
-   hitbox.acceleration.y += (desiredVelocityY - currentVelocity.y) * physicsComponent.traction;
+   applyAcceleration(hitbox, new Point((desiredVelocityX - currentVelocity.x) * physicsComponent.traction, (desiredVelocityY - currentVelocity.y) * physicsComponent.traction));
 }
 
-export function applyAcceleration(hitbox: Hitbox, accX: number, accY: number): void {
-   hitbox.acceleration.x += accX;
-   hitbox.acceleration.y += accY;
+/** Makes the hitboxes' angle be that as specified, by only changing its relative angle */
+export function setHitboxAngle(hitbox: Hitbox, angle: number): void {
+   const add = angle - hitbox.box.angle;
+   hitbox.box.relativeAngle += add;
+   hitbox.previousRelativeAngle += add;
+
+   const transformComponent = TransformComponentArray.getComponent(hitbox.entity);
+   transformComponent.isDirty = true;
+}
+
+/** Makes the hitboxes' angle be that as specified, by only changing its relative angle */
+export function setHitboxRelativeAngle(hitbox: Hitbox, angle: number): void {
+   const add = angle - hitbox.box.relativeAngle;
+   hitbox.box.relativeAngle += add;
+   hitbox.previousRelativeAngle += add;
+
+   const transformComponent = TransformComponentArray.getComponent(hitbox.entity);
+   transformComponent.isDirty = true;
 }
 
 const cleanAngle = (hitbox: Hitbox): void => {
@@ -276,6 +297,8 @@ const cleanRelativeAngle = (hitbox: Hitbox): void => {
 }
 
 export function getHitboxAngularVelocity(hitbox: Hitbox): number {
+   // Here we don't use getAngleDiff but just subtract them, so that e.g. adding 2pi to the relative angle will register as some angular velocity
+   // return 
    return getAngleDiff(hitbox.previousRelativeAngle, hitbox.box.relativeAngle) * Settings.TPS;
 }
 
@@ -287,7 +310,7 @@ export function addHitboxAngularAcceleration(hitbox: Hitbox, acceleration: numbe
    hitbox.angularAcceleration += acceleration;
 }
 
-export function turnHitboxToAngle(hitbox: Hitbox, idealAngle: number, acceleration: number, damping: number, idealAngleIsRelative: boolean): void {
+export function turnHitboxToAngle(hitbox: Hitbox, idealAngle: number, turnSpeed: number, damping: number, idealAngleIsRelative: boolean): void {
    cleanAngle(hitbox);
    cleanRelativeAngle(hitbox);
 
@@ -299,33 +322,24 @@ export function turnHitboxToAngle(hitbox: Hitbox, idealAngle: number, accelerati
       idealRelativeAngle = idealAngle - parentAngle;
    }
       
-   let clockwiseDist = idealRelativeAngle - hitbox.box.relativeAngle;
-   while (clockwiseDist < 0) {
-      clockwiseDist += 2 * Math.PI;
-   }
-   while (clockwiseDist >= 2 * Math.PI) {
-      clockwiseDist -= 2 * Math.PI;
-   }
-   
-   const shortestAngleDiff = clockwiseDist <= Math.PI ? clockwiseDist : clockwiseDist - 2 * Math.PI;
-   const springForce = shortestAngleDiff * acceleration; // 'acceleration' is really a spring constant now
+   const angleDiff = getAngleDiff(hitbox.box.relativeAngle, idealRelativeAngle);
+   const springForce = angleDiff * turnSpeed; // 'turn speed' is really a spring constant now
    
    const angularVelocity = getHitboxAngularVelocity(hitbox);
-   const adjustedDamping = damping * acceleration; // The damping parameter is a proportion of the acceleration
-   const dampingForce = -angularVelocity * adjustedDamping;
+   const dampingForce = -angularVelocity * damping;
 
    hitbox.angularAcceleration += springForce + dampingForce;
 }
 
-// @Location?
 export function getHitboxTile(hitbox: Hitbox): TileIndex {
    const tileX = Math.floor(hitbox.box.position.x / Settings.TILE_SIZE);
    const tileY = Math.floor(hitbox.box.position.y / Settings.TILE_SIZE);
    return getTileIndexIncludingEdges(tileX, tileY);
 }
 
-// @Cleanup: having to pass in entity is SHIT!
-export function hitboxIsInRiver(entity: Entity, hitbox: Hitbox): boolean {
+export function hitboxIsInRiver(hitbox: Hitbox): boolean {
+   const entity = hitbox.entity;
+   
    const tileIndex = getHitboxTile(hitbox);
    const layer = getEntityLayer(entity);
 

@@ -12,9 +12,9 @@ import { createTranslationMatrix, matrixMultiplyInPlace } from "../../rendering/
 import { playSound } from "../../sound";
 import { GameInteractState } from "./GameScreen";
 import { playerInstance } from "../../player";
-import { getRootEntity, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
-import { Hitbox } from "../../hitboxes";
+import { hasTamingSkill, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
 import { setShittyCarrier } from "./GameInteractableLayer";
+import { TamingSkillID } from "../../../../shared/src/taming";
 
 export const enum AnimalStaffCommandType {
    follow,
@@ -115,16 +115,14 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
 
    const updateFromEntity = (entity: Entity): void => {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
 
       const screenX = Camera.calculateXScreenPos(hitbox.box.position.x);
       const screenY = Camera.calculateYScreenPos(hitbox.box.position.y);
       setX(screenX);
       setY(screenY);
 
-      // @HACK: FOR GLURB GARBAGE
-      const rootEntity = getRootEntity(entity);
-      const tamingComponent = TamingComponentArray.getComponent(rootEntity);
+      const tamingComponent = TamingComponentArray.getComponent(entity);
       setFollowOptionIsSelected(tamingComponent.isFollowing);
    }
    
@@ -196,15 +194,25 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
       }
    }, [entity]);
    
-   if (!isVisible || entity === null) {
+   if (!isVisible || entity === null || !entityExists(entity)) {
       return null;
    }
 
+   const tamingComponent = TamingComponentArray.getComponent(entity);
+
    return <div id="animal-staff-options" style={{left: x + "px", bottom: y + "px"}} onContextMenu={e => e.preventDefault()} onMouseOver={onMouseOver} onMouseMove={onMouseMove} onMouseOut={onMouseOut}>
-      <div className={`option follow${followOptionIsSelected ? " active" : ""}`} onClick={pressFollowOption}></div>
-      <div className="option move" onClick={pressMoveOption}></div>
-      <div className="option carry" onClick={pressCarryOption}></div>
-      <div className="option attack" onClick={pressAttackOption}></div>
+      {hasTamingSkill(tamingComponent, TamingSkillID.follow) ? (
+         <div className={`option follow${followOptionIsSelected ? " active" : ""}`} onClick={pressFollowOption}></div>
+      ) : null}
+      {hasTamingSkill(tamingComponent, TamingSkillID.move) ? (
+         <div className="option move" onClick={pressMoveOption}></div>
+      ) : null}
+      {hasTamingSkill(tamingComponent, TamingSkillID.carry) ? (
+         <div className="option carry" onClick={pressCarryOption}></div>
+      ) : null}
+      {hasTamingSkill(tamingComponent, TamingSkillID.attack) ? (
+         <div className="option attack" onClick={pressAttackOption}></div>
+      ) : null}
    </div>;
 }
 

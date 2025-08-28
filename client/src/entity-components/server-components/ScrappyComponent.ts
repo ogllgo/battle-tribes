@@ -5,8 +5,9 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { updateLimb_TEMP } from "./InventoryUseComponent";
 import { LimbConfiguration } from "../../../../shared/src/attack-patterns";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface ScrappyComponentParams {}
 
@@ -27,11 +28,11 @@ function createParamsFromData(): ScrappyComponentParams {
    return {};
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          // @Copynpaste @Hack
@@ -49,7 +50,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0
    );
    attachPoint.addTag("inventoryUseComponent:attachPoint");
-   entityIntermediateInfo.renderInfo.attachRenderPart(attachPoint);
+   renderInfo.attachRenderPart(attachPoint);
    
    const handRenderPart = new TexturedRenderPart(
       attachPoint,
@@ -58,7 +59,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       getTextureArrayIndex("entities/scrappy/hand.png")
    );
    handRenderPart.addTag("inventoryUseComponent:hand");
-   entityIntermediateInfo.renderInfo.attachRenderPart(handRenderPart);
+   renderInfo.attachRenderPart(handRenderPart);
 
    // @Temporary: so that the hand shows correctly when the player is placing a scrappy
    updateLimb_TEMP(handRenderPart, attachPoint, 20, LimbConfiguration.singleHanded);

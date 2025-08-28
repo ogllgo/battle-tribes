@@ -2,7 +2,7 @@ import { CollisionBit } from "battletribes-shared/collision";
 import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { EntityConfig } from "../components";
-import { addHitboxToTransformComponent, entityChildIsHitbox, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { HealthComponent } from "../components/HealthComponent";
 import { BlueprintComponent } from "../components/BlueprintComponent";
 import Tribe from "../Tribe";
@@ -12,7 +12,7 @@ import { StructureComponent } from "../components/StructureComponent";
 import { VirtualStructure } from "../tribesman-ai/building-plans/TribeBuildingLayer";
 import { Point } from "../../../shared/src/utils";
 import { cloneHitbox } from "../hitboxes";
-import { createStructureConfig } from "../structure-placement";
+import { createStructureConfig, StructureConnection } from "../structure-placement";
 
 // @Incomplete: Remove if the associated entity is removed
 
@@ -40,19 +40,17 @@ export function getBlueprintEntityType(blueprintType: BlueprintType): EntityType
    }
 }
 
-export function createBlueprintEntityConfig(position: Point, rotation: number, tribe: Tribe, blueprintType: BlueprintType, associatedEntityID: Entity, virtualStructure: VirtualStructure | null): EntityConfig {
-   const transformComponent = new TransformComponent();
-   transformComponent.collisionBit = CollisionBit.none;
-   transformComponent.collisionMask = 0;
+export function createBlueprintEntityConfig(position: Point, rotation: number, tribe: Tribe, blueprintType: BlueprintType, associatedEntityID: Entity, virtualStructure: VirtualStructure | null, connections: Array<StructureConnection>): EntityConfig {
+   let transformComponent: TransformComponent;
 
    if (associatedEntityID !== 0) {
       const structureTransformComponent = TransformComponentArray.getComponent(associatedEntityID);
+      
+      transformComponent = new TransformComponent();
+      transformComponent.collisionBit = CollisionBit.none;
+      transformComponent.collisionMask = 0;
 
-      for (const structureHitbox of structureTransformComponent.children) {
-         if (!entityChildIsHitbox(structureHitbox)) {
-            continue;
-         }
-
+      for (const structureHitbox of structureTransformComponent.hitboxes) {
          const hitbox = cloneHitbox(transformComponent, structureHitbox);
          hitbox.mass = 0;
          hitbox.collisionType = HitboxCollisionType.soft;
@@ -62,22 +60,17 @@ export function createBlueprintEntityConfig(position: Point, rotation: number, t
       const entityType = getBlueprintEntityType(blueprintType);
       const entityConfig = createStructureConfig(tribe, entityType, position, rotation, []);
 
-      const transformComponentParams = entityConfig.components[ServerComponentType.transform]!;
-      for (const hitbox of transformComponentParams.children) {
-         if (!entityChildIsHitbox(hitbox)) {
-            continue;
-         }
-         
+      transformComponent = entityConfig.components[ServerComponentType.transform]!;
+
+      for (const hitbox of transformComponent.hitboxes) {
          hitbox.mass = 0;
          hitbox.collisionType = HitboxCollisionType.soft;
-         addHitboxToTransformComponent(transformComponent, hitbox);
       }
    }
 
    const healthComponent = new HealthComponent(5);
    
-   // @Incomplete: connection info?
-   const structureComponent = new StructureComponent([], virtualStructure);
+   const structureComponent = new StructureComponent(connections, virtualStructure);
    
    const blueprintComponent = new BlueprintComponent(blueprintType, associatedEntityID);
 

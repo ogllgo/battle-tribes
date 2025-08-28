@@ -4,7 +4,7 @@ import { PathfindingSettings, Settings } from "battletribes-shared/settings";
 import { angle, calculateDistanceSquared, distance, distBetweenPointAndRectangularBox, getTileX, getTileY, Point, TileIndex } from "battletribes-shared/utils";
 import PathfindingHeap from "./PathfindingHeap";
 import { TribeComponentArray } from "./components/TribeComponent";
-import { entityChildIsHitbox, TransformComponent, TransformComponentArray } from "./components/TransformComponent";
+import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { ProjectileComponentArray } from "./components/ProjectileComponent";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { boxIsCircular, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -36,16 +36,16 @@ export interface Path {
    readonly isFailed: boolean;
 }
 
-export const enum PathfindingFailureDefault {
+export const enum PathfindFailureDefault {
    /** Default */
    none,
    /** Returns the path to the node which was closest to the goal */
    returnClosest
 }
 
-export interface PathfindingQueryOptions {
+export interface PathfindOptions {
    readonly goalRadius: number;
-   readonly failureDefault: PathfindingFailureDefault;
+   readonly failureDefault: PathfindFailureDefault;
    /** Determines the node budget used when finding a path. If not present, an appropriate node budget will be automatically determined. */
    readonly nodeBudget?: number;
 }
@@ -350,7 +350,7 @@ export function positionIsAccessible(layer: Layer, x: number, y: number, ignored
 
 export function getAngleToNode(transformComponent: TransformComponent, node: PathfindingNodeIndex): number {
    // @Hack
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const x = (node % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1) * PathfindingSettings.NODE_SEPARATION;
    const y = (Math.floor(node / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1) * PathfindingSettings.NODE_SEPARATION;
@@ -378,7 +378,7 @@ export function getDistBetweenNodes(node1: PathfindingNodeIndex, node2: Pathfind
 
 export function entityHasReachedNode(transformComponent: TransformComponent, node: PathfindingNodeIndex): boolean {
    // @Hack
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const x = (node % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1) * PathfindingSettings.NODE_SEPARATION;
    const y = (Math.floor(node / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1) * PathfindingSettings.NODE_SEPARATION;
@@ -453,7 +453,7 @@ const reconstructRawPath = (finalNode: PathfindingNodeIndex, cameFrom: Record<Pa
  * Attempts to find a path from one position to another in a single layer. Uses A* pathfinding.
  * @param pathfindingEntityFootprint Radius of the entity's footprint in nodes
  */
-export function findSingleLayerPath(layer: Layer, startX: number, startY: number, goalX: number, goalY: number, ignoredGroupID: number, pathfindingEntityFootprint: number, options: PathfindingQueryOptions): Path {
+export function findSingleLayerPath(layer: Layer, startX: number, startY: number, goalX: number, goalY: number, ignoredGroupID: number, pathfindingEntityFootprint: number, options: PathfindOptions): Path {
    const start = getClosestPathfindNode(startX, startY);
    const goal = getClosestPathfindNode(goalX, goalY);
 
@@ -538,7 +538,7 @@ export function findSingleLayerPath(layer: Layer, startX: number, startY: number
    }
 
    switch (options.failureDefault) {
-      case PathfindingFailureDefault.returnClosest: {
+      case PathfindFailureDefault.returnClosest: {
          const evaluatedNodes = Object.keys(gScore);
 
          if (evaluatedNodes.length === 0) {
@@ -576,7 +576,7 @@ export function findSingleLayerPath(layer: Layer, startX: number, startY: number
             isFailed: false
          };
       }
-      case PathfindingFailureDefault.none: {
+      case PathfindFailureDefault.none: {
          return {
             layer: layer,
             goalX: goalX,
@@ -590,7 +590,7 @@ export function findSingleLayerPath(layer: Layer, startX: number, startY: number
    }
 }
 
-export function findMultiLayerPath(startLayer: Layer, endLayer: Layer, startX: number, startY: number, endX: number, endY: number, ignoredGroupID: number, pathfindingEntityFootprint: number, options: PathfindingQueryOptions): Array<Path> {
+export function findMultiLayerPath(startLayer: Layer, endLayer: Layer, startX: number, startY: number, endX: number, endY: number, ignoredGroupID: number, pathfindingEntityFootprint: number, options: PathfindOptions): Array<Path> {
    const paths = new Array<Path>();
    
    let x1: number;
@@ -605,10 +605,10 @@ export function findMultiLayerPath(startLayer: Layer, endLayer: Layer, startX: n
       x1 = (tileX + 0.5) * Settings.TILE_SIZE;
       y1 = (tileY + 0.5) * Settings.TILE_SIZE;
 
-      const changeLayerOptions: PathfindingQueryOptions = {
+      const changeLayerOptions: PathfindOptions = {
          // Should move right on the goal
          goalRadius: 0,
-         failureDefault: PathfindingFailureDefault.none
+         failureDefault: PathfindFailureDefault.none
       };
       const path = findSingleLayerPath(startLayer, startX, startY, x1, y1, ignoredGroupID, pathfindingEntityFootprint, changeLayerOptions);
 
@@ -784,10 +784,8 @@ export function updateEntityPathfindingNodeOccupance(entity: Entity): void {
    const occupiedPathfindingNodes = transformComponent.occupiedPathfindingNodes;
    const entityType = getEntityType(entity);
    
-   for (const hitbox of transformComponent.children) {
-      if (entityChildIsHitbox(hitbox)) {
-         addHitboxOccupiedNodes(layer, occupiedPathfindingNodes, pathfindingGroupID, hitbox, entityType);
-      }
+   for (const hitbox of transformComponent.hitboxes) {
+      addHitboxOccupiedNodes(layer, occupiedPathfindingNodes, pathfindingGroupID, hitbox, entityType);
    }
 }
 

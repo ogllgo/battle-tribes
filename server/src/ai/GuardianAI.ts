@@ -23,13 +23,13 @@ const entityIsTargetted = (guardianComponent: GuardianComponent, target: Entity,
    }
    
    // @Hack
-   const hitbox = targetTransformComponent.children[0] as Hitbox;
+   const hitbox = targetTransformComponent.hitboxes[0];
    const entityTile = getHitboxTile(hitbox);
    return guardianComponent.homeTiles.includes(entityTile);
 }
 
 const getTarget = (transformComponent: TransformComponent, guardianComponent: GuardianComponent, aiHelperComponent: AIHelperComponent): Entity | null => {
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    let target: Entity | null = null;
    let minDist = Number.MAX_SAFE_INTEGER;
@@ -38,9 +38,9 @@ const getTarget = (transformComponent: TransformComponent, guardianComponent: Gu
       const entity = aiHelperComponent.visibleEntities[i];
 
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
-      const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+      const entityHitbox = entityTransformComponent.hitboxes[0];
       
-      const dist = hitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+      const dist = hitbox.box.position.distanceTo(entityHitbox.box.position);
       if (dist < minDist && entityIsTargetted(guardianComponent, entity, entityTransformComponent)) {
          minDist = dist;
          target = entity;

@@ -1,17 +1,16 @@
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
-import { randFloat, randInt } from "battletribes-shared/utils";
+import { randAngle, randFloat, randInt } from "battletribes-shared/utils";
 import { playSoundOnHitbox } from "./sound";
 import { ItemType } from "battletribes-shared/items/items";
 import { entityExists } from "./world";
 import { Entity } from "../../shared/src/entities";
 import { getRandomPositionOnBoxEdge, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { createHotSparkParticle } from "./particles";
-import { Hitbox } from "./hitboxes";
 
 export function playBowFireSound(sourceEntity: Entity, bowItemType: ItemType): void {
    // @Hack
    const transformComponent = TransformComponentArray.getComponent(sourceEntity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    switch (bowItemType) {
       case ItemType.wooden_bow: {
@@ -32,7 +31,7 @@ export function playBowFireSound(sourceEntity: Entity, bowItemType: ItemType): v
 const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
    // @Hack
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    switch (tickEvent.type) {
       case EntityTickEventType.cowFart: {
@@ -52,7 +51,7 @@ const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
 
          for (let i = 0; i < 5; i++) {
             const spawnOffsetRange = 6;
-            const spawnOffsetDirection = 2 * Math.PI * Math.random();
+            const spawnOffsetDirection = randAngle();
             const spawnPositionX = position.x + spawnOffsetRange * Math.sin(spawnOffsetDirection);
             const spawnPositionY = position.y + spawnOffsetRange * Math.cos(spawnOffsetDirection);
             createHotSparkParticle(spawnPositionX, spawnPositionY);
@@ -82,6 +81,30 @@ const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
       }
       case EntityTickEventType.dustfleaEggPop: {
          playSoundOnHitbox("dustflea-egg-pop.mp3", 0.4, 1, entity, hitbox, true);
+         break;
+      }
+      case EntityTickEventType.okrenEyeHitSound: {
+         playSoundOnHitbox("okren-eye-hit.mp3", 1.5, 0.6, entity, hitbox, true);
+         break;
+      }
+      case EntityTickEventType.foodMunch: {
+         playSoundOnHitbox("food-munch-" + randInt(1, 5) + ".mp3", 0.4, randFloat(0.9, 1.1), entity, hitbox, true);
+         break;
+      }
+      case EntityTickEventType.foodBurp: {
+         playSoundOnHitbox("food-burp.mp3", 0.5, randFloat(0.9, 1.1), entity, hitbox, true);
+         break;
+      }
+      case EntityTickEventType.inguSerpentAngry: {
+         playSoundOnHitbox("ingu-serpent-angry-" + randInt(1, 2) + ".mp3", 0.5, randFloat(0.95, 1.05) * 1.3, entity, hitbox, true);
+         break;
+      }
+      case EntityTickEventType.inguSerpentLeap: {
+         playSoundOnHitbox("ingu-serpent-leap.mp3", 0.5, randFloat(0.95, 1.05) * 1.3, entity, hitbox, true);
+         break;
+      }
+      case EntityTickEventType.tukmokAngry: {
+         playSoundOnHitbox("tukmok-angry-" + randInt(1, 3) + ".mp3", 0.5, randFloat(0.95, 1.05), entity, hitbox, true);
          break;
       }
    }

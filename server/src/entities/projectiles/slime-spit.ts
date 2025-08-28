@@ -8,13 +8,13 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 export function createSlimeSpitConfig(position: Point, rotation: number, size: number): EntityConfig {
    const transformComponent = new TransformComponent();
 
    const hitboxSize = size === 0 ? 20 : 30;
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, hitboxSize, hitboxSize), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, hitboxSize, hitboxSize), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const physicsComponent = new PhysicsComponent();

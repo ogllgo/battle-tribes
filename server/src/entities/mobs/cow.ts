@@ -1,7 +1,7 @@
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collision";
 import { CowSpecies, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { angle, getAbsAngleDiff, lerp, Point, randInt, UtilVars } from "battletribes-shared/utils";
+import { lerp, Point, polarVec2, randInt } from "battletribes-shared/utils";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
@@ -25,17 +25,10 @@ import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { applyAccelerationFromGround, createHitbox, createHitboxTether, Hitbox } from "../../hitboxes";
-import { findAngleAlignment, cleanAngleNEW } from "../../ai-shared";
-
-const enum Vars {
-   HEAD_TURN_SPEED = 0.75 * UtilVars.PI
-}
-
-export const enum CowVars {
-   MIN_GRAZE_COOLDOWN = 15 * Settings.TPS,
-   MAX_GRAZE_COOLDOWN = 30 * Settings.TPS
-}
+import { applyAcceleration, applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../hitboxes";
+import { tetherHitboxes } from "../../tethers";
+import { findAngleAlignment } from "../../ai-shared";
+import { createNormalisedPivotPoint } from "../../../../shared/src/boxes/BaseBox";
 
 registerEntityTamingSpec(EntityType.cow, {
    maxTamingTier: 3,
@@ -43,32 +36,44 @@ registerEntityTamingSpec(EntityType.cow, {
       {
          skill: getTamingSkill(TamingSkillID.follow),
          x: 0,
-         y: 10
+         y: 10,
+         parent: null,
+         requiredTamingTier: 1
       },
       {
          skill: getTamingSkill(TamingSkillID.riding),
          x: -18,
-         y: 30
+         y: 30,
+         parent: TamingSkillID.follow,
+         requiredTamingTier: 2
       },
       {
          skill: getTamingSkill(TamingSkillID.move),
          x: 18,
-         y: 30
+         y: 30,
+         parent: TamingSkillID.follow,
+         requiredTamingTier: 2
       },
       {
          skill: getTamingSkill(TamingSkillID.carry),
          x: -30,
-         y: 50
+         y: 50,
+         parent: TamingSkillID.riding,
+         requiredTamingTier: 3
       },
       {
          skill: getTamingSkill(TamingSkillID.attack),
          x: 6,
-         y: 50
+         y: 50,
+         parent: TamingSkillID.move,
+         requiredTamingTier: 3
       },
       {
          skill: getTamingSkill(TamingSkillID.shatteredWill),
          x: 30,
-         y: 50
+         y: 50,
+         parent: TamingSkillID.move,
+         requiredTamingTier: 3
       }
    ],
    foodItemType: ItemType.berry,
@@ -80,42 +85,79 @@ registerEntityTamingSpec(EntityType.cow, {
    }
 });
 
-registerEntityLootOnDeath(EntityType.cow, [
-   {
-      itemType: ItemType.raw_beef,
-      getAmount: () => randInt(2, 3)
-   },
-   {
-      itemType: ItemType.leather,
-      getAmount: () => randInt(1, 2)
-   }
-]);
+// @SQUEAM
+// registerEntityLootOnDeath(EntityType.cow, {
+//    itemType: ItemType.raw_beef,
+//    getAmount: () => randInt(2, 3)
+// });
+// registerEntityLootOnDeath(EntityType.cow, {
+//    itemType: ItemType.leather,
+//    getAmount: () => randInt(1, 2)
+// });
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return layer.getBiomeAtPosition(x, y) === Biome.grasslands;
 }
 
-const move = (cow: Entity, acceleration: number, _turnSpeed: number, turnTargetX: number, turnTargetY: number): void => {
-   throw new Error();
+const moveFunc = (cow: Entity, pos: Point, accelerationMagnitude: number): void => {
+   const transformComponent = TransformComponentArray.getComponent(cow);
+   const cowBodyHitbox = transformComponent.rootHitboxes[0];
+
+   const bodyToTargetDirection = cowBodyHitbox.box.position.angleTo(pos);
+
+   // Move whole cow to the target
+   const alignmentToTarget = findAngleAlignment(cowBodyHitbox.box.angle, bodyToTargetDirection);
+   const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget);
+   applyAccelerationFromGround(cowBodyHitbox, polarVec2(accelerationMagnitude * accelerationMultiplier, bodyToTargetDirection));
+   
+   // Move head to the target
+   const headHitbox = transformComponent.hitboxes[1];
+   const headToTargetDirection = headHitbox.box.position.angleTo(pos);
+   // @Hack?
+   const headForce = accelerationMagnitude * 1.6;
+   applyAcceleration(headHitbox, polarVec2(headForce, headToTargetDirection));
+}
+
+const turnFunc = (cow: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
+   const transformComponent = TransformComponentArray.getComponent(cow);
+   const cowBodyHitbox = transformComponent.rootHitboxes[0];
+
+   const bodyToTargetDirection = cowBodyHitbox.box.position.angleTo(pos);
+   // @HACK
+   const turnSpeed2 = turnSpeed * 0.6;
+   turnHitboxToAngle(cowBodyHitbox, bodyToTargetDirection, turnSpeed2, turnDamping, false);
+   
+   // Turn the head to face the target
+   const headHitbox = transformComponent.hitboxes[1];
+   const headToTargetDirection = headHitbox.box.position.angleTo(pos);
+   turnHitboxToAngle(headHitbox, headToTargetDirection, 5 * Math.PI, 2.5, false);
 }
 
 export function createCowConfig(position: Point, angle: number, species: CowSpecies): EntityConfig {
    const transformComponent = new TransformComponent();
 
    // Body hitbox
-   const bodyHitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, -20), angle, 50, 80), 1.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_BODY]);
+   const bodyHitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, -20), angle, 50, 80), 1.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_BODY]);
    addHitboxToTransformComponent(transformComponent, bodyHitbox);
  
+   const idealHeadDist = 50;
+
    // Head hitbox
-   const headHitbox = createHitbox(transformComponent, bodyHitbox, new CircularBox(new Point(0, 0), new Point(0, 30), 0, 30), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
+   const headPosition = position.offset(idealHeadDist, angle);
+   const headHitbox = new Hitbox(transformComponent, null, true, new CircularBox(headPosition, new Point(0, 0), 0, 30), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
+   headHitbox.box.pivot = createNormalisedPivotPoint(0, -0.5);
    addHitboxToTransformComponent(transformComponent, headHitbox);
 
-   headHitbox.tethers.push(createHitboxTether(headHitbox, bodyHitbox, 50, 5/60, 0.4, true));
+   tetherHitboxes(headHitbox, bodyHitbox, idealHeadDist, 35, 1);
+   // @Hack: method of adding
    headHitbox.angularTethers.push({
       originHitbox: bodyHitbox,
-      springConstant: 5/60,
+      idealAngle: 0,
+      springConstant: 50,
       damping: 0,
-      padding: Math.PI * 0.1
+      padding: Math.PI * 0.05,
+      idealHitboxAngleOffset: 0,
+      useLeverage: true
    });
 
    const physicsComponent = new PhysicsComponent();
@@ -124,15 +166,15 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
 
    const statusEffectComponent = new StatusEffectComponent(0);
 
-   const aiHelperComponent = new AIHelperComponent(headHitbox, 320, move);
-   aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI, 0.6, positionIsValidCallback)
-   aiHelperComponent.ais[AIType.escape] = new EscapeAI(650, Math.PI, 1);
+   const aiHelperComponent = new AIHelperComponent(headHitbox, 320, moveFunc, turnFunc);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI, 0.4, 0.6, positionIsValidCallback)
+   aiHelperComponent.ais[AIType.escape] = new EscapeAI(650, Math.PI, 0.4, 1);
    aiHelperComponent.ais[AIType.follow] = new FollowAI(15 * Settings.TPS, 30 * Settings.TPS, 0.2, 60);
    
    const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
    
    const rideableComponent = new RideableComponent();
-   rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, 0, -14, 48, 0));
+   rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, new Point(0, -14), new Point(48, 0)));
    
    const lootComponent = new LootComponent();
    

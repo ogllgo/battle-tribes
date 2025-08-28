@@ -115,10 +115,6 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
    },
-   [EntityType.frozenYeti]: {
-      effectiveDamageTypes: [DamageType.weapon],
-      stoppedDamageTypes: []
-   },
    [EntityType.fish]: {
       effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
@@ -156,10 +152,6 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       stoppedDamageTypes: []
    },
    [EntityType.iceShardProjectile]: {
-      effectiveDamageTypes: [],
-      stoppedDamageTypes: []
-   },
-   [EntityType.rockSpikeProjectile]: {
       effectiveDamageTypes: [],
       stoppedDamageTypes: []
    },
@@ -323,10 +315,6 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       effectiveDamageTypes: [],
       stoppedDamageTypes: []
    },
-   [EntityType.glurb]: {
-      effectiveDamageTypes: [],
-      stoppedDamageTypes: []
-   },
    [EntityType.glurbBodySegment]: {
       effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
@@ -435,6 +423,10 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       effectiveDamageTypes: [DamageType.weapon],
       stoppedDamageTypes: []
    },
+   [EntityType.okrenClaw]: {
+      effectiveDamageTypes: [DamageType.weapon],
+      stoppedDamageTypes: []
+   },
    [EntityType.dustfleaMorphCocoon]: {
       effectiveDamageTypes: [DamageType.weapon, DamageType.axe, DamageType.pickaxe],
       stoppedDamageTypes: []
@@ -451,18 +443,66 @@ const ENTITY_DAMAGE_INFO_RECORD: Record<EntityType, EntityDamageInfo> = {
       effectiveDamageTypes: [DamageType.weapon, DamageType.axe, DamageType.pickaxe],
       stoppedDamageTypes: []
    },
-   [EntityType.okrenTongueSegment]: {
-      effectiveDamageTypes: [DamageType.weapon, DamageType.axe, DamageType.pickaxe],
-      stoppedDamageTypes: []
-   },
-   [EntityType.okrenTongueTip]: {
-      effectiveDamageTypes: [DamageType.weapon, DamageType.axe, DamageType.pickaxe],
-      stoppedDamageTypes: []
-   },
    [EntityType.dustfleaEgg]: {
       effectiveDamageTypes: [DamageType.weapon, DamageType.axe, DamageType.pickaxe],
       stoppedDamageTypes: []
    },
+   [EntityType.spruceTree]: {
+      effectiveDamageTypes: [DamageType.axe],
+      stoppedDamageTypes: []
+   },
+   [EntityType.tundraRock]: {
+      effectiveDamageTypes: [DamageType.pickaxe],
+      stoppedDamageTypes: []
+   },
+   [EntityType.tundraRockFrozen]: {
+      effectiveDamageTypes: [DamageType.pickaxe],
+      stoppedDamageTypes: []
+   },
+   [EntityType.snowberryBush]: {
+      effectiveDamageTypes: [DamageType.weapon],
+      stoppedDamageTypes: []
+   },
+   [EntityType.snobe]: {
+      effectiveDamageTypes: [DamageType.weapon],
+      stoppedDamageTypes: []
+   },
+   [EntityType.snobeMound]: {
+      effectiveDamageTypes: [],
+      stoppedDamageTypes: []
+   },
+   [EntityType.inguSerpent]: {
+      effectiveDamageTypes: [DamageType.weapon],
+      stoppedDamageTypes: []
+   },
+   [EntityType.tukmok]: {
+      effectiveDamageTypes: [DamageType.weapon],
+      stoppedDamageTypes: []
+   },
+   [EntityType.tukmokTrunk]: {
+      effectiveDamageTypes: [DamageType.weapon],
+      stoppedDamageTypes: []
+   },
+   [EntityType.tukmokTailClub]: {
+      effectiveDamageTypes: [DamageType.weapon],
+      stoppedDamageTypes: []
+   },
+   [EntityType.tukmokSpur]: {
+      effectiveDamageTypes: [DamageType.weapon],
+      stoppedDamageTypes: []
+   },
+   [EntityType.inguYetuksnoglurblidokowflea]: {
+      effectiveDamageTypes: [DamageType.weapon],
+      stoppedDamageTypes: []
+   },
+   [EntityType.inguYetuksnoglurblidokowfleaSeekerHead]: {
+      effectiveDamageTypes: [DamageType.weapon],
+      stoppedDamageTypes: []
+   },
+   [EntityType.inguYetukLaser]: {
+      effectiveDamageTypes: [DamageType.weapon],
+      stoppedDamageTypes: []
+   }
 };
 
 const getItemDamageTypes = (item: Item | null): ReadonlyArray<DamageType> => {

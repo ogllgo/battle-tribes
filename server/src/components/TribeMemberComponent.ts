@@ -7,7 +7,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import { getEntityLayer, getEntityType } from "../world";
 import { tribeMemberCanPickUpItem, VACUUM_RANGE } from "../entities/tribes/tribe-member";
 import { Settings } from "../../../shared/src/settings";
-import { lerp } from "../../../shared/src/utils";
+import { lerp, Point, polarVec2 } from "../../../shared/src/utils";
 import { itemEntityCanBePickedUp, ItemComponentArray } from "./ItemComponent";
 import { TribesmanComponentArray } from "./TribesmanComponent";
 import { registerPlayerDroppedItemPickup } from "../server/player-clients";
@@ -47,7 +47,7 @@ function onJoin(entity: Entity): void {
 
 function onTick(tribeMember: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(tribeMember);
-   const tribeMemberHitbox = transformComponent.children[0] as Hitbox;
+   const tribeMemberHitbox = transformComponent.hitboxes[0];
    
    const layer = getEntityLayer(tribeMember);
    
@@ -72,16 +72,16 @@ function onTick(tribeMember: Entity): void {
             }
 
             const itemEntityTransformComponent = TransformComponentArray.getComponent(itemEntity);
-            const itemEntityHitbox = itemEntityTransformComponent.children[0] as Hitbox;
+            const itemEntityHitbox = itemEntityTransformComponent.hitboxes[0];
             
-            const distance = tribeMemberHitbox.box.position.calculateDistanceBetween(itemEntityHitbox.box.position);
+            const distance = tribeMemberHitbox.box.position.distanceTo(itemEntityHitbox.box.position);
             if (distance <= VACUUM_RANGE) {
                // @Temporary
                let forceMult = 1 - distance / VACUUM_RANGE;
                forceMult = lerp(0.5, 1, forceMult);
 
-               const vacuumDirection = itemEntityHitbox.box.position.calculateAngleBetween(tribeMemberHitbox.box.position);
-               addHitboxVelocity(itemEntityHitbox, Vars.VACUUM_STRENGTH * forceMult * Math.sin(vacuumDirection), Vars.VACUUM_STRENGTH * forceMult * Math.cos(vacuumDirection));
+               const vacuumDirection = itemEntityHitbox.box.position.angleTo(tribeMemberHitbox.box.position);
+               addHitboxVelocity(itemEntityHitbox, polarVec2(Vars.VACUUM_STRENGTH * forceMult, vacuumDirection));
             }
          }
       }

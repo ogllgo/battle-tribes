@@ -8,8 +8,10 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { DOOR_TEXTURE_SOURCES } from "./BuildingMaterialComponent";
 import { createLightWoodSpeckParticle, createWoodShardParticle } from "../../particles";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { randAngle } from "../../../../shared/src/utils";
 
 export interface DoorComponentParams {
    readonly toggleType: DoorToggleType;
@@ -51,9 +53,9 @@ function createParamsFromData(reader: PacketReader): DoorComponentParams {
    return fillParams(toggleType, openProgress);
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const buildingMaterialComponentParams = entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!;
 
@@ -65,7 +67,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
    );
    renderPart.addTag("buildingMaterialComponent:material");
 
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {};
 }
@@ -89,7 +91,7 @@ function padData(reader: PacketReader): void {
 
 function updateFromData(reader: PacketReader, entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const toggleType = reader.readNumber();
    const openProgress = reader.readNumber();
@@ -105,10 +107,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    doorComponent.openProgress = openProgress;
 }
 
-function onHit(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-
+function onHit(entity: Entity, hitbox: Hitbox): void {
    playSoundOnHitbox("wooden-wall-hit.mp3", 0.3, 1, entity, hitbox, false);
 
    for (let i = 0; i < 4; i++) {
@@ -116,14 +115,14 @@ function onHit(entity: Entity): void {
    }
 
    for (let i = 0; i < 7; i++) {
-      const position = hitbox.box.position.offset(20, 2 * Math.PI * Math.random());
+      const position = hitbox.box.position.offset(20, randAngle());
       createLightWoodSpeckParticle(position.x, position.y, 5);
    }
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    playSoundOnHitbox("wooden-wall-break.mp3", 0.4, 1, entity, hitbox, false);
 

@@ -10,11 +10,11 @@ import { HealthComponent } from "../components/HealthComponent";
 import { StatusEffectComponent } from "../components/StatusEffectComponent";
 import { StatusEffect } from "../../../shared/src/status-effects";
 import { SpikyBastardComponent } from "../components/SpikyBastardComponent";
-import { createHitbox } from "../hitboxes";
+import { Hitbox } from "../hitboxes";
    
 export function createSpikyBastardConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 16, 32), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 16, 32), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    const healthComponent = new HealthComponent(5);

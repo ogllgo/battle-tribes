@@ -168,8 +168,8 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
       product: ItemType.frostArmour,
       yield: 1,
       ingredients: createTallyFromRecord({
-         [ItemType.frostcicle]: 20,
-         [ItemType.yeti_hide]: 10
+         [ItemType.snobeHide]: 15,
+         [ItemType.inguSerpentTooth]: 10
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
       craftingStation: CraftingStation.frostshaper
@@ -249,7 +249,15 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
       craftingStation: CraftingStation.water
    },
    {
-      product: ItemType.spear,
+      product: ItemType.woodenSpear,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.wood]: 10
+      }),
+      aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME
+   },
+   {
+      product: ItemType.stoneSpear,
       yield: 1,
       ingredients: createTallyFromRecord({
          [ItemType.wood]: 10,
@@ -516,6 +524,54 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
       craftingStation: CraftingStation.automatonAssembler
+   },
+   {
+      product: ItemType.crabplateArmour,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.chitin]: 15
+      }),
+      aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
+      craftingStation: CraftingStation.mithrilAnvil
+   },
+   // @Temporary: this makes no sense to be made in the workbench but thats all that can be done rn
+   {
+      product: ItemType.snobeStew,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.rawSnobeMeat]: 5
+      }),
+      aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
+      craftingStation: CraftingStation.workbench
+   },
+   {
+      product: ItemType.iceWringer,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.inguSerpentTooth]: 10,
+         [ItemType.frostcicle]: 20
+      }),
+      aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
+      craftingStation: CraftingStation.frostshaper
+   },
+   {
+      product: ItemType.winterskinArmour,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.tukmokFurHide]: 10
+      }),
+      aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
+      craftingStation: CraftingStation.workbench
+   },
+   {
+      product: ItemType.ivorySpear,
+      yield: 1,
+      ingredients: createTallyFromRecord({
+         [ItemType.ivoryTusk]: 1,
+         [ItemType.wood]: 10
+      }),
+      aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
+      craftingStation: CraftingStation.workbench
    },
 ];
 

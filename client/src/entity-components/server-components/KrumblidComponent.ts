@@ -2,16 +2,16 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { HitData } from "../../../../shared/src/client-server-types";
 import { Entity } from "../../../../shared/src/entities";
-import { angle, randFloat, randInt } from "../../../../shared/src/utils";
+import { Point, randAngle, randFloat, randInt } from "../../../../shared/src/utils";
 import { createBloodPoolParticle, createBloodParticle, BloodParticleSize, createBloodParticleFountain, createKrumblidChitinParticle } from "../../particles";
-import { entityChildIsHitbox, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 import { playSoundOnHitbox } from "../../sound";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { HealthComponentArray } from "./HealthComponent";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface KrumblidComponentParams {}
 
@@ -34,15 +34,11 @@ function createParamsFromData(): KrumblidComponentParams {
    return {};
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   for (const hitbox of transformComponentParams.children) {
-      if (!entityChildIsHitbox(hitbox)) {
-         continue;
-      }
-
+   for (const hitbox of transformComponentParams.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.KRUMBLID_BODY)) {
-         entityIntermediateInfo.renderInfo.attachRenderPart(
+         renderInfo.attachRenderPart(
             new TexturedRenderPart(
                hitbox,
                1,
@@ -51,7 +47,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
             )
          );
       } else {
-         entityIntermediateInfo.renderInfo.attachRenderPart(
+         renderInfo.attachRenderPart(
             new TexturedRenderPart(
                hitbox,
                0,
@@ -77,20 +73,17 @@ function padData(): void {}
 
 function updateFromData(): void {}
 
-function onHit(krumblid: Entity, hitData: HitData): void {
-   const transformComponent = TransformComponentArray.getComponent(krumblid);
-   const hitbox = transformComponent.children[0] as Hitbox;
-   
+function onHit(krumblid: Entity, hitbox: Hitbox, hitPosition: Point): void {
    createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 20);
    
    // Blood particles
    for (let i = 0; i < 5; i++) {
-      let offsetDirection = angle(hitData.hitPosition[0] - hitbox.box.position.x, hitData.hitPosition[1] - hitbox.box.position.y);
+      let offsetDirection = hitbox.box.position.angleTo(hitPosition);
       offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
 
       const spawnPositionX = hitbox.box.position.x + 32 * Math.sin(offsetDirection);
       const spawnPositionY = hitbox.box.position.y + 32 * Math.cos(offsetDirection);
-      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(150, 250), true);
+      createBloodParticle(Math.random() < 0.6 ? BloodParticleSize.small : BloodParticleSize.large, spawnPositionX, spawnPositionY, randAngle(), randFloat(150, 250), true);
    }
 
    playSoundOnHitbox("krumblid-hit-shell.mp3", 0.6, randFloat(0.9, 1.1), krumblid, hitbox, false);
@@ -104,7 +97,7 @@ function onDie(krumblid: Entity): void {
    }
    
    const transformComponent = TransformComponentArray.getComponent(krumblid);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 2; i++) {
       createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 35);
@@ -113,7 +106,7 @@ function onDie(krumblid: Entity): void {
    createBloodParticleFountain(krumblid, 0.1, 0.8);
 
    for (let i = 0; i < 10; i++) {
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const spawnPositionX = hitbox.box.position.x + 20 * Math.sin(offsetDirection);
       const spawnPositionY = hitbox.box.position.y + 20 * Math.cos(offsetDirection);
       createKrumblidChitinParticle(spawnPositionX, spawnPositionY);

@@ -81,7 +81,7 @@ export function getMouseTargetEntity(): Entity | null {
          for (const entity of chunk.nonGrassEntities) {
             const transformComponent = TransformComponentArray.getComponent(entity);
             // @Hack
-            const hitbox = transformComponent.children[0] as Hitbox;
+            const hitbox = transformComponent.hitboxes[0];
             
             const distanceFromCursor = Math.sqrt(Math.pow(Game.cursorX - hitbox.box.position.x, 2) + Math.pow(Game.cursorY - hitbox.box.position.y, 2))
             if (distanceFromCursor <= CLIENT_SETTINGS.CURSOR_TOOLTIP_HOVER_RANGE && distanceFromCursor < minDistance) {
@@ -124,7 +124,7 @@ export function renderCursorTooltip(): void {
    const renderInfo = getEntityRenderInfo(targetEntity);
    // @Hack
    const transformComponent = TransformComponentArray.getComponent(targetEntity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    // @Incomplete: doesn't account for render position
    const entityScreenPositionX = Camera.calculateXScreenPos(hitbox.box.position.x);
    const entityScreenPositionY = Camera.calculateYScreenPos(hitbox.box.position.y);

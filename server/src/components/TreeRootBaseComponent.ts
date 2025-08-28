@@ -2,13 +2,12 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
-import { getAbsAngleDiff, Point, randFloat, randInt } from "../../../shared/src/utils";
+import { getAbsAngleDiff, Point, randAngle, randFloat, randInt } from "../../../shared/src/utils";
 import { createTreeRootBaseConfig } from "../entities/resources/tree-root-base";
 import { createTreeRootSegmentConfig } from "../entities/resources/tree-root-segment";
-import { createEntity } from "../Entity";
 import { Hitbox } from "../hitboxes";
 import Layer from "../Layer";
-import { destroyEntity, getEntityLayer } from "../world";
+import { createEntity, destroyEntity, getEntityLayer } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
@@ -55,7 +54,7 @@ const segmentWillBeInWall = (rootLayer: Layer, rootX: number, rootY: number, off
 
 function onJoin(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const treeRootHitbox = transformComponent.children[0] as Hitbox;
+   const treeRootHitbox = transformComponent.hitboxes[0];
    
    const layer = getEntityLayer(entity);
 
@@ -63,7 +62,7 @@ function onJoin(entity: Entity): void {
 
    const maxSegments = Math.random() < 2/3 ? 2 : 3;
    for (let i = 0, attempts = 0; i < maxSegments && attempts < 50; attempts++) {
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
 
       // Make sure the segment won't spawn too close to another segment
       let isValid = true;
@@ -99,10 +98,10 @@ function onJoin(entity: Entity): void {
 
 function preRemove(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const treeRootHitbox = transformComponent.children[0] as Hitbox;
+   const treeRootHitbox = transformComponent.hitboxes[0];
 
    // Respawn the tree root after a while
-   const config = createTreeRootBaseConfig(treeRootHitbox.box.position.copy(), 2 * Math.PI * Math.random());
+   const config = createTreeRootBaseConfig(treeRootHitbox.box.position.copy(), randAngle());
    createEntity(config, getEntityLayer(entity), randInt(60, 90) * Settings.TPS);
 
    const treeRootBaseComponent = TreeRootBaseComponentArray.getComponent(entity);

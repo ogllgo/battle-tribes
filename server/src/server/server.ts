@@ -1,29 +1,28 @@
 import { VisibleChunkBounds } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { TribeType } from "battletribes-shared/tribes";
-import { Point, randAngle, randInt } from "battletribes-shared/utils";
+import { lerp, Point, randAngle, randFloat, randInt, smoothstep, unitsToChunksClamped } from "battletribes-shared/utils";
 import { PacketReader, PacketType } from "battletribes-shared/packets";
 import WebSocket, { Server } from "ws";
 import { runSpawnAttempt, spawnInitialEntities } from "../entity-spawning";
 import Tribe from "../Tribe";
 import SRandom from "../SRandom";
 import { updateDynamicPathfindingNodes } from "../pathfinding";
-import { updateGrassBlockers } from "../grass-blockers";
+import { createGrassBlocker, updateGrassBlockers } from "../grass-blockers";
 import { createGameDataPacket, createSyncDataPacket, createSyncPacket } from "./packet-creation";
 import PlayerClient, { PlayerClientVars } from "./PlayerClient";
 import { addPlayerClient, generatePlayerSpawnPosition, getPlayerClients, handlePlayerDisconnect, resetDirtyEntities } from "./player-clients";
 import { createPlayerConfig } from "../entities/tribes/player";
-import { createEntity } from "../Entity";
 import { generateGrassStrands } from "../world-generation/grass-generation";
-import { processAcquireTamingSkillPacket, processAnimalStaffFollowCommandPacket, processAscendPacket, processCompleteTamingTierPacket, processDevGiveItemPacket, processDevSetViewedSpawnDistribution, processDismountCarrySlotPacket, processEntitySummonPacket, processForceAcquireTamingSkillPacket, processForceCompleteTamingTierPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processModifyBuildingPacket, processMountCarrySlotPacket, processPickUpArrowPacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRespawnPacket, processSelectTechPacket, processSetAttackTargetPacket, processSetAutogiveBaseResourcesPacket, processSetCarryTargetPacket, processSetMoveTargetPositionPacket, processSetSignMessagePacket, processSetSpectatingPositionPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processTechStudyPacket, processTechUnlockPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
-import { Entity, EntityType } from "battletribes-shared/entities";
+import { processAcquireTamingSkillPacket, processAnimalStaffFollowCommandPacket, processAscendPacket, processCompleteTamingTierPacket, processDevGiveItemPacket, processDevSetViewedSpawnDistribution, processDismountCarrySlotPacket, processEntitySummonPacket, processForceAcquireTamingSkillPacket, processForceCompleteTamingTierPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processModifyBuildingPacket, processMountCarrySlotPacket, processPickUpEntityPacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRenameAnimalPacket, processRespawnPacket, processSelectTechPacket, processSetAttackTargetPacket, processSetAutogiveBaseResourcesPacket, processSetCarryTargetPacket, processSetMoveTargetPositionPacket, processSetSignMessagePacket, processSetSpectatingPositionPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processTechStudyPacket, processTechUnlockPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
+import { CowSpecies, Entity, EntityType, TreeSize } from "battletribes-shared/entities";
 import { SpikesComponentArray } from "../components/SpikesComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
-import { entityChildIsEntity, TransformComponentArray } from "../components/TransformComponent";
+import { TransformComponentArray } from "../components/TransformComponent";
 import { generateDecorations } from "../world-generation/decoration-generation";
 import { forceMaxGrowAllIceSpikes } from "../components/IceSpikesComponent";
 import { sortComponentArrays } from "../components/ComponentArray";
-import { destroyFlaggedEntities, entityExists, getEntityLayer, pushJoinBuffer, tickGameTime, tickEntities, generateLayers, getEntityType, preDestroyFlaggedEntities } from "../world";
+import { destroyFlaggedEntities, entityExists, getEntityLayer, pushEntityJoinBuffer, tickGameTime, tickEntities, generateLayers, getEntityType, preDestroyFlaggedEntities, getGameTicks, createEntity, destroyEntity, createEntityImmediate } from "../world";
 import { resolveEntityCollisions } from "../collision-detection";
 import { runCollapses } from "../collapses";
 import { updateTribes } from "../tribes";
@@ -39,7 +38,27 @@ import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
 import { createTribeWarriorConfig } from "../entities/tribes/tribe-warrior";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { SubtileType } from "../../../shared/src/tiles";
+import { applyTethers } from "../tethers";
+import { getEntityCount } from "../census";
+import { damageEntity } from "../components/HealthComponent";
+import { createWallConfig } from "../entities/structures/wall";
+import { BuildingMaterial, DecorationType, ServerComponentType } from "../../../shared/src/components";
+import { createDoorConfig } from "../entities/structures/door";
+import { createTukmokConfig } from "../entities/tundra/tukmok";
+import { createInguSerpentConfig } from "../entities/tundra/ingu-serpent";
+import { createBarrelConfig } from "../entities/structures/barrel";
+import { mountCarrySlot, RideableComponentArray } from "../components/RideableComponent";
+import { createInguYetuksnoglurblidokowfleaConfig } from "../entities/wtf/ingu-yetuksnoglurblidokowflea";
+import { createFenceConfig } from "../entities/structures/fence";
+import { StructureConnection } from "../structure-placement";
+import { createEmbrasureConfig } from "../entities/structures/embrasure";
+import { createFenceGateConfig } from "../entities/structures/fence-gate";
 import { createCowConfig } from "../entities/mobs/cow";
+import { createTreeConfig } from "../entities/resources/tree";
+import { createDecorationConfig } from "../entities/decoration";
+import CircularBox from "../../../shared/src/boxes/CircularBox";
+import { createItemEntityConfig } from "../entities/item-entity";
+import { ItemType } from "../../../shared/src/items/items";
 
 /*
 
@@ -64,12 +83,13 @@ const entityIsHiddenFromPlayer = (entity: Entity, playerTribe: Tribe): boolean =
 const addEntityHierarchy = (playerClient: PlayerClient, entitiesToSend: Set<Entity>, entity: Entity): void => {
    entitiesToSend.add(entity);
 
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   for (const child of transformComponent.children) {
-      if (entityChildIsEntity(child)) {
-         addEntityHierarchy(playerClient, entitiesToSend, child.attachedEntity);
-      }
-   }
+   // @INCOMPLETE
+   // const transformComponent = TransformComponentArray.getComponent(entity);
+   // for (const child of transformComponent.children) {
+   //    if (entityChildIsEntity(child)) {
+   //       addEntityHierarchy(playerClient, entitiesToSend, child.attachedEntity);
+   //    }
+   // }
 }
 
 const getPlayerVisibleEntities = (playerClient: PlayerClient): Set<Entity> => {
@@ -93,12 +113,14 @@ const getPlayerVisibleEntities = (playerClient: PlayerClient): Set<Entity> => {
 
             const transformComponent = TransformComponentArray.getComponent(entity);
             // @Hack @Temporary
-            if (!TransformComponentArray.hasComponent(transformComponent.rootEntity)) {
-               continue;
-            }
+            // if (!TransformComponentArray.hasComponent(transformComponent.rootEntity)) {
+            //    continue;
+            // }
             if (transformComponent.boundingAreaMinX <= maxVisibleX && transformComponent.boundingAreaMaxX >= minVisibleX && transformComponent.boundingAreaMinY <= maxVisibleY && transformComponent.boundingAreaMaxY >= minVisibleY) {
                // @Speed?
-               addEntityHierarchy(playerClient, visibleEntities, transformComponent.rootEntity);
+               // addEntityHierarchy(playerClient, visibleEntities, transformComponent.rootEntity);
+               // @INCOMPLETE: NOT ADDING ROOT!
+               addEntityHierarchy(playerClient, visibleEntities, entity);
             }
          }
       }
@@ -144,40 +166,41 @@ class GameServer {
       // } else {
       //    SRandom.seed(randInt(0, 9999999999));
       // }
-      SRandom.seed(3520905774);
+      SRandom.seed(9079734040);
+      // : the one with the tundra colliding the top and bottom world borders @Squeam
+      // SRandom.seed(5128141131);
 
       const builtinRandomFunc = Math.random;
       Math.random = () => SRandom.next();
 
-      let a = performance.now();
-      console.log("start",a)
+      let _SHITTYCUMMERY = performance.now();
+      console.log("start",_SHITTYCUMMERY)
 
       // Setup
       sortComponentArrays();
       console.log("Generating terrain...")
       generateLayers();
-      console.log("terrain",performance.now() - a)
-      a = performance.now();
+      console.log("terrain",performance.now() - _SHITTYCUMMERY)
+      _SHITTYCUMMERY = performance.now();
 
-      console.log("resources",performance.now() - a)
-      a = performance.now();
+      console.log("resources",performance.now() - _SHITTYCUMMERY)
+      _SHITTYCUMMERY = performance.now();
       
       generateReeds(surfaceLayer, riverMainTiles);
 
       console.log("Spawning entities...");
       spawnInitialEntities();
-      console.log("initial entities",performance.now() - a)
-      a = performance.now();
+      console.log("initial entities",performance.now() - _SHITTYCUMMERY)
+      _SHITTYCUMMERY = performance.now();
       forceMaxGrowAllIceSpikes();
-      console.log("ice spikes",performance.now() - a)
-      a = performance.now();
+      console.log("ice spikes",performance.now() - _SHITTYCUMMERY)
+      _SHITTYCUMMERY = performance.now();
       generateGrassStrands();
-      console.log("grass",performance.now() - a)
-      a = performance.now();
-      // @Temporary
-      // generateDecorations();
-      console.log("decorations",performance.now() - a)
-      a = performance.now();
+      console.log("grass",performance.now() - _SHITTYCUMMERY)
+      _SHITTYCUMMERY = performance.now();
+      generateDecorations();
+      console.log("decorations",performance.now() - _SHITTYCUMMERY)
+      _SHITTYCUMMERY = performance.now();
       // spawnGuardians();
       // console.log("guardians",performance.now() - a)
       // a = performance.now();
@@ -205,7 +228,9 @@ class GameServer {
 
             if (packetType === PacketType.initialPlayerData) {
                const username = reader.readString();
+               // @Temporary
                const tribeType = reader.readNumber() as TribeType;
+               const tribeType2 = TribeType.goblins;
                const screenWidth = reader.readNumber();
                const screenHeight = reader.readNumber();
 
@@ -231,18 +256,18 @@ class GameServer {
                   createEntity(config, layer, 0);
                }
 
-               // @Temporary
-               // setTimeout(() => {
-               //    const pos1 = spawnPosition.copy();
-               //    pos1.x -= 50;
-               //    const t1 = createTribeWorkerConfig(pos1, 0, tribe);
-               //    createEntity(t1, layer, 0);
+               // @SQUEAM
+               setTimeout(() => {
+                  if (1+1===2)return;
+                  
+               // // const trib = new Tribe(TribeType.plainspeople, false, spawnPosition.copy());
+
+                  const tukConfig = createTukmokConfig(new Point(spawnPosition.x + 150, spawnPosition.y - 50), Math.PI * 1.25);
+                  for (const c of tukConfig) {
+                     createEntity(c, layer, 0);
+                  }
 
                //    setTimeout(() => {
-               //       const pos2 = spawnPosition.copy();
-               //       pos2.x -= 100;
-               //       const t2 = createTribeWorkerConfig(pos2, 0, tribe);
-               //       createEntity(t2, layer, 0);
                //    }, 100)
 
                //    setTimeout(() => {
@@ -258,7 +283,28 @@ class GameServer {
                //       const t4 = createTribeWorkerConfig(pos4, 0, tribe);
                //       createEntity(t4, layer, 0);
                //    }, 602)
-               // }, 10000);
+
+                  setTimeout(() => {
+                     const p = spawnPosition.copy();
+                     p.y -= 300;
+                     const tribe = new Tribe(TribeType.barbarians, false, p);
+                     
+                     const pos2 = p.copy();
+                     pos2.x -= 100;
+                     pos2.y += randFloat(-30, 30);
+                     const t2 = createTribeWorkerConfig(pos2, 0, tribe);
+                     createEntity(t2, layer, 0);
+
+                     setTimeout(() => {
+                        const pos3 = p.copy();
+                        pos3.x += 375;
+                        pos3.y -= 80;
+                        pos3.y -= randFloat(-30, 30);
+                        const t3 = createTribeWorkerConfig(pos3, 0, tribe);
+                        createEntity(t3, layer, 0);
+                     }, 4000)
+                  }, 5000);
+               }, 6000);
                
                addPlayerClient(playerClient, surfaceLayer, spawnPosition);
 
@@ -390,8 +436,8 @@ class GameServer {
                   processDismountCarrySlotPacket(playerClient);
                   break;
                }
-               case PacketType.pickUpArrow: {
-                  processPickUpArrowPacket(playerClient, reader);
+               case PacketType.pickUpEntity: {
+                  processPickUpEntityPacket(playerClient, reader);
                   break;
                }
                case PacketType.modifyBuilding: {
@@ -438,6 +484,10 @@ class GameServer {
                   processSetSignMessagePacket(reader);
                   break;
                }
+               case PacketType.renameAnimal: {
+                  processRenameAnimalPacket(reader);
+                  break;
+               }
                default: {
                   console.log("Unknown packet type: " + packetType);
                }
@@ -455,7 +505,7 @@ class GameServer {
 
    private async tick(): Promise<void> {
       // These are done before each tick to account for player packets causing entities to be removed/added between ticks.
-      pushJoinBuffer(false);
+      pushEntityJoinBuffer(false);
       preDestroyFlaggedEntities();
       destroyFlaggedEntities();
 
@@ -468,6 +518,7 @@ class GameServer {
          updateWind();
          
          tickEntities();
+         applyTethers();
          updateDynamicPathfindingNodes();
 
          for (const layer of layers) {
@@ -483,7 +534,7 @@ class GameServer {
          // @Bug @Incomplete: Called twice!!!!
          updateTribes();
          
-         pushJoinBuffer(true);
+         pushEntityJoinBuffer(true);
       }
       preDestroyFlaggedEntities();
 
@@ -515,7 +566,7 @@ class GameServer {
          // Update player client info
          if (entityExists(viewedEntity)) {
             const transformComponent = TransformComponentArray.getComponent(viewedEntity);
-            const hitbox = transformComponent.children[0] as Hitbox;
+            const hitbox = transformComponent.hitboxes[0];
             playerClient.updatePosition(hitbox.box.position.x, hitbox.box.position.y);
 
             playerClient.lastLayer = getEntityLayer(viewedEntity);

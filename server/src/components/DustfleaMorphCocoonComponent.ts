@@ -3,9 +3,8 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
 import { createKrumblidConfig } from "../entities/mobs/krumblid";
-import { createEntity } from "../Entity";
 import { Hitbox } from "../hitboxes";
-import { destroyEntity, getEntityAgeTicks, getEntityLayer, ticksToGameHours } from "../world";
+import { createEntity, destroyEntity, getEntityAgeTicks, getEntityLayer, ticksToGameHours } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
@@ -33,7 +32,7 @@ function onTick(cocoon: Entity): void {
       destroyEntity(cocoon);
 
       const transformComponent = TransformComponentArray.getComponent(cocoon);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       
       const krumblidConfig = createKrumblidConfig(hitbox.box.position.copy(), hitbox.box.angle);
       createEntity(krumblidConfig, getEntityLayer(cocoon), 0);
@@ -41,7 +40,7 @@ function onTick(cocoon: Entity): void {
       dustfleaMorphCocoonComponent.stage = stage;
 
       const transformComponent = TransformComponentArray.getComponent(cocoon);
-      const hitbox = transformComponent.children[0] as Hitbox;
+      const hitbox = transformComponent.hitboxes[0];
       (hitbox.box as CircularBox).radius += 4;
       transformComponent.isDirty = true;
    }

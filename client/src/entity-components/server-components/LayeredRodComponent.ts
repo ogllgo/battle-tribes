@@ -4,11 +4,12 @@ import { Colour, getTileIndexIncludingEdges, hueShift, lerp, multiColourLerp } f
 import { Settings } from "battletribes-shared/settings";
 import { PacketReader } from "battletribes-shared/packets";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo, getEntityType, surfaceLayer } from "../../world";
+import { EntityParams, getEntityRenderInfo, getEntityType, surfaceLayer } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { Hitbox } from "../../hitboxes";
 import { TileType } from "../../../../shared/src/tiles";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 const enum Vars {
    NATURAL_DRIFT = 20 / Settings.TPS
@@ -81,7 +82,7 @@ const getLayerColour = (entityParams: EntityParams, r: number, g: number, b: num
          // @Speed: a lot of this is shared for all strands
          
          const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-         const hitbox = transformComponentParams.children[0] as Hitbox;
+         const hitbox = transformComponentParams.hitboxes[0];
    
          const tileX = Math.floor(hitbox.box.position.x / Settings.TILE_SIZE);
          const tileY = Math.floor(hitbox.box.position.y / Settings.TILE_SIZE);
@@ -165,9 +166,9 @@ function createParamsFromData(reader: PacketReader): LayeredRodComponentParams {
    };
 }
 
-function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    const layeredRodComponentParams = entityParams.serverComponentParams[ServerComponentType.layeredRod]!;
 
@@ -189,7 +190,7 @@ function populateIntermediateInfo(intermediateInfo: EntityIntermediateInfo, enti
       renderPart.offset.x = naturalBendX * layer;
       renderPart.offset.y = naturalBendY * layer;
 
-      intermediateInfo.renderInfo.attachRenderPart(renderPart);
+      renderInfo.attachRenderPart(renderPart);
    }
 
    return {};
@@ -265,7 +266,7 @@ function onCollision(entity: Entity, collidingEntity: Entity, affectedHitbox: Hi
    const layeredRodComponent = LayeredRodComponentArray.getComponent(entity);
    LayeredRodComponentArray.activateComponent(layeredRodComponent, entity);
    
-   const directionFromCollidingEntity = collidingHitbox.box.position.calculateAngleBetween(affectedHitbox.box.position);
+   const directionFromCollidingEntity = collidingHitbox.box.position.angleTo(affectedHitbox.box.position);
 
    let existingPushX = bendToPushAmount(layeredRodComponent.bendX);
    let existingPushY = bendToPushAmount(layeredRodComponent.bendY);

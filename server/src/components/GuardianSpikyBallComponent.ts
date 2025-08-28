@@ -4,7 +4,7 @@ import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { Point, randFloat } from "battletribes-shared/utils";
-import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { destroyEntity, getEntityAgeTicks, getEntityType } from "../world";
 import { Settings } from "battletribes-shared/settings";
 import { applyKnockback, Hitbox } from "../hitboxes";
@@ -35,7 +35,9 @@ function onWallCollision(spikyBall: Entity): void {
    spikyBallComponent.lifetime -= Math.floor(Settings.TPS * randFloat(0.2, 0.4));
 }
 
-function onHitboxCollision(spikyBall: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntity = collidingHitbox.entity;
+   
    const entityType = getEntityType(collidingEntity);
    if (entityType === EntityType.guardianSpikyBall || entityType === EntityType.guardian) {
       return;
@@ -47,10 +49,10 @@ function onHitboxCollision(spikyBall: Entity, collidingEntity: Entity, affectedH
          return;
       }
 
-      const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+      const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
 
-      hitEntity(collidingEntity, spikyBall, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
-      applyKnockback(collidingEntity, collidingHitbox, 100, hitDirection);
+      damageEntity(collidingEntity, collidingHitbox, hitbox.entity, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+      applyKnockback(collidingHitbox, 100, hitDirection);
       addLocalInvulnerabilityHash(collidingEntity, "gemSpikyBall", 0.5);
    }
 }

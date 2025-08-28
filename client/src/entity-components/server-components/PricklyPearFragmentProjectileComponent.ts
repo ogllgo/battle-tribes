@@ -3,14 +3,14 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { Entity } from "../../../../shared/src/entities";
-import { randFloat } from "../../../../shared/src/utils";
+import { randAngle, randFloat } from "../../../../shared/src/utils";
 import { createPricklyPearParticle } from "../../particles";
 import { TransformComponentArray } from "./TransformComponent";
 import { playSoundOnHitbox } from "../../sound";
-import { HealthComponentArray } from "./HealthComponent";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface PricklyPearFragmentProjectileComponentParams {
    readonly variant: number;
@@ -37,13 +37,13 @@ function createParamsFromData(reader: PacketReader): PricklyPearFragmentProjecti
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    const pricklyPearFragmentProjectileComponentParams = entityParams.serverComponentParams[ServerComponentType.pricklyPearFragmentProjectile]!;
 
-   entityIntermediateInfo.renderInfo.attachRenderPart(
+   renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,
@@ -73,15 +73,15 @@ function updateFromData(reader: PacketReader): void {
 
 function onDie(fragment: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(fragment);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    playSoundOnHitbox("prickly-pear-fragment-projectile-explode.mp3", 0.4, randFloat(0.9, 1.1), fragment, hitbox, false);
    
    for (let i = 0; i < 4; i++) {
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const offsetMagnitude = randFloat(4, 8);
       const x = hitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
       const y = hitbox.box.position.y + offsetMagnitude * Math.cos(offsetDirection);
-      createPricklyPearParticle(x, y, 2 * Math.PI * Math.random());
+      createPricklyPearParticle(x, y, randAngle());
    }
 }

@@ -3,15 +3,15 @@ import { ComponentArray } from "./ComponentArray";
 import { Settings } from "battletribes-shared/settings";
 import { Entity, EntityType, PlantedEntityType } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./TransformComponent";
-import { createEntity } from "../Entity";
 import { Packet } from "battletribes-shared/packets";
-import { destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
+import { createEntity, destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
 import { PlantedComponentArray } from "./PlantedComponent";
 import { EntityConfig } from "../components";
 import { createTreePlantedConfig } from "../entities/resources/tree-planted";
 import { createIceSpikesPlantedConfig } from "../entities/resources/ice-spikes-planted";
 import { createBerryBushPlantedConfig } from "../entities/resources/berry-bush-planted";
 import { Hitbox } from "../hitboxes";
+import { randAngle } from "../../../shared/src/utils";
 
 const enum Vars {
    FERTILISER_DURATION_TICKS = 300 * Settings.TPS
@@ -73,21 +73,21 @@ function addDataToComponent(packet: Packet, entity: Entity): void {
 export function placePlantInPlanterBox(planterBox: Entity, plantedEntityType: PlantedEntityType): void {
    const planterBoxComponent = PlanterBoxComponentArray.getComponent(planterBox);
    const transformComponent = TransformComponentArray.getComponent(planterBox);
-   const planterBoxHitbox = transformComponent.children[0] as Hitbox;
+   const planterBoxHitbox = transformComponent.hitboxes[0];
 
    // Create plant
    let config: EntityConfig;
    switch (plantedEntityType) {
       case EntityType.treePlanted: {
-         config = createTreePlantedConfig(planterBoxHitbox.box.position.copy(), 2 * Math.PI * Math.random(), planterBox);
+         config = createTreePlantedConfig(planterBoxHitbox.box.position.copy(), randAngle(), planterBox);
          break;
       }
       case EntityType.berryBushPlanted: {
-         config = createBerryBushPlantedConfig(planterBoxHitbox.box.position.copy(), 2 * Math.PI * Math.random(), planterBox);
+         config = createBerryBushPlantedConfig(planterBoxHitbox.box.position.copy(), randAngle(), planterBox);
          break;
       }
       case EntityType.iceSpikesPlanted: {
-         config = createIceSpikesPlantedConfig(planterBoxHitbox.box.position.copy(), 2 * Math.PI * Math.random(), planterBox);
+         config = createIceSpikesPlantedConfig(planterBoxHitbox.box.position.copy(), randAngle(), planterBox);
          break;
       }
    }

@@ -2,7 +2,7 @@ import { BuildingMaterial, ServerComponentType } from "battletribes-shared/compo
 import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
-import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, hitEntity } from "../../components/HealthComponent";
+import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
 import { EntityRelationship, getEntityRelationship, TribeComponent } from "../../components/TribeComponent";
 import { SpikesComponent, SpikesComponentArray } from "../../components/SpikesComponent";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
@@ -15,7 +15,7 @@ import Tribe from "../../Tribe";
 import { BuildingMaterialComponent } from "../../components/BuildingMaterialComponent";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { StructureConnection } from "../../structure-placement";
@@ -26,7 +26,8 @@ export function createFloorSpikesConfig(position: Point, rotation: number, tribe
    const transformComponent = new TransformComponent();
    
    const box = new RectangularBox(position, new Point(0, 0), rotation, 48, 48);
-   const hitbox = createHitbox(transformComponent, null, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   const hitbox = new Hitbox(transformComponent, null, true, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const healthComponent = new HealthComponent(HEALTHS[material]);
@@ -60,7 +61,7 @@ export function createWallSpikesConfig(position: Point, rotation: number, tribe:
    const transformComponent = new TransformComponent();
    
    const box = new RectangularBox(position, new Point(0, 0), rotation, 56, 28);
-   const hitbox = createHitbox(transformComponent, null, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   const hitbox = new Hitbox(transformComponent, null, true, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const healthComponent = new HealthComponent(HEALTHS[material]);
@@ -117,6 +118,7 @@ export function onSpikesCollision(spikes: Entity, collidingEntity: Entity, colli
    }
    
    // @Incomplete: Cause of death
-   hitEntity(collidingEntity, spikes, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   // @INCOMPLETE
+   // hitEntity(collidingEntity, spikes, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    addLocalInvulnerabilityHash(collidingEntity, "woodenSpikes", 0.3);
 }

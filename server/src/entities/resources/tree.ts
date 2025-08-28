@@ -11,45 +11,42 @@ import { TreeComponent, TreeComponentArray } from "../../components/TreeComponen
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 const TREE_MAX_HEALTHS = [10, 15];
 
-registerEntityLootOnDeath(EntityType.tree, [
-   {
-      itemType: ItemType.wood,
-      getAmount: (tree: Entity) => {
-         const treeComponent = TreeComponentArray.getComponent(tree);
-         switch (treeComponent.treeSize) {
-            case TreeSize.small: return randInt(2, 4);
-            case TreeSize.large: return randInt(5, 7);
-         }
-      }
-   },
-   {
-      itemType: ItemType.seed,
-      getAmount: (tree: Entity) => {
-         const treeComponent = TreeComponentArray.getComponent(tree);
-
-         let dropChance: number;
-         switch (treeComponent.treeSize) {
-            case TreeSize.small: dropChance = 0.25; break;
-            case TreeSize.large: dropChance = 0.5; break;
-         }
-
-         return Math.random() < dropChance ? 1 : 0;
+registerEntityLootOnDeath(EntityType.tree, {
+   itemType: ItemType.wood,
+   getAmount: (tree: Entity) => {
+      const treeComponent = TreeComponentArray.getComponent(tree);
+      switch (treeComponent.treeSize) {
+         case TreeSize.small: return randInt(2, 4);
+         case TreeSize.large: return randInt(5, 7);
       }
    }
-]);
+});
+registerEntityLootOnDeath(EntityType.tree, {
+   itemType: ItemType.seed,
+   getAmount: (tree: Entity) => {
+      const treeComponent = TreeComponentArray.getComponent(tree);
+
+      let dropChance: number;
+      switch (treeComponent.treeSize) {
+         case TreeSize.small: dropChance = 0.25; break;
+         case TreeSize.large: dropChance = 0.5; break;
+      }
+
+      return Math.random() < dropChance ? 1 : 0;
+   }
+});
 
 const TREE_RADII: ReadonlyArray<number> = [40, 50];
 
-export function createTreeConfig(position: Point, rotation: number): EntityConfig {
-   const size: TreeSize = Math.random() > 1/3 ? 1 : 0;
-   
+export function createTreeConfig(position: Point, angle: number, size: TreeSize): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, TREE_RADII[size]), 1.25 + size * 0.25, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), angle, TREE_RADII[size]), 1.25 + size * 0.25, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionBit = CollisionBit.plants;
    

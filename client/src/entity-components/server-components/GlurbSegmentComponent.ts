@@ -1,18 +1,18 @@
-import { HitData } from "../../../../shared/src/client-server-types";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { Settings } from "../../../../shared/src/settings";
-import { randFloat, Point } from "../../../../shared/src/utils";
+import { randFloat, Point, randAngle } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
 import { createSlurbParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { coatSlimeTrails } from "../../rendering/webgl/slime-trail-rendering";
 import { playSound, playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams, getEntityLayer, getEntityRenderInfo } from "../../world";
+import { EntityParams, getEntityLayer, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { entityIsVisibleToCamera, TransformComponentArray, getRandomPositionInBox, entityChildIsHitbox } from "./TransformComponent";
+import { entityIsVisibleToCamera, TransformComponentArray, getRandomPositionInBox } from "./TransformComponent";
 
 export interface GlurbSegmentComponentParams {
    readonly mossBallCompleteness: number;
@@ -68,16 +68,16 @@ const createMossBallRenderPart = (mossBallCompleteness: number, parentHitbox: Hi
    return renderPart;
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const glurbSegmentComponentParams = entityParams.serverComponentParams[ServerComponentType.glurbSegment]!;
 
    let renderPart: TexturedRenderPart | null;
    if (glurbSegmentComponentParams.mossBallCompleteness > 0) {
       const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-      const hitbox = transformComponentParams.children[0] as Hitbox;
+      const hitbox = transformComponentParams.hitboxes[0];
    
       renderPart = createMossBallRenderPart(glurbSegmentComponentParams.mossBallCompleteness, hitbox);
-      entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+      renderInfo.attachRenderPart(renderPart);
    } else {
       renderPart = null;
    }
@@ -115,7 +115,7 @@ function updateFromData(reader: PacketReader, glurbSegment: Entity): void {
    } else {
       if (glurbSegmentComponent.mossBallRenderPart === null) {
          const transformComponent = TransformComponentArray.getComponent(glurbSegment);
-         const hitbox = transformComponent.children[0] as Hitbox;
+         const hitbox = transformComponent.hitboxes[0];
          
          glurbSegmentComponent.mossBallRenderPart = createMossBallRenderPart(mossBallCompleteness, hitbox);
          const renderInfo = getEntityRenderInfo(glurbSegment);
@@ -131,10 +131,8 @@ function onTick(glurb: Entity): void {
    if (entityIsVisibleToCamera(glurb)) {
       const layer = getEntityLayer(glurb);
       const transformComponent = TransformComponentArray.getComponent(glurb);
-      for (const hitbox of transformComponent.children) {
-         if (entityChildIsHitbox(hitbox)) {
-            coatSlimeTrails(layer, hitbox.box);
-         }
+      for (const hitbox of transformComponent.hitboxes) {
+         coatSlimeTrails(layer, hitbox.box);
       }
    }
 
@@ -145,23 +143,21 @@ function onTick(glurb: Entity): void {
    }
 }
 
-function onHit(entity: Entity, hitData: HitData): void {
+function onHit(entity: Entity, _hitbox: Hitbox, hitPosition: Point): void {
    for (let i = 0; i < 10; i++) {
-      const spawnPositionX = hitData.hitPosition[0];
-      const spawnPositionY = hitData.hitPosition[1];
-      createSlurbParticle(spawnPositionX, spawnPositionY, 2 * Math.PI * Math.random(), randFloat(80, 120), 0, 0);
+      createSlurbParticle(hitPosition.x, hitPosition.y, randAngle(), randFloat(80, 120), 0, 0);
    }
 
-   playSound("glurb-hit.mp3", 0.4, randFloat(0.9, 1.2), Point.unpackage(hitData.hitPosition), getEntityLayer(entity));
+   playSound("glurb-hit.mp3", 0.4, randFloat(0.9, 1.2), hitPosition, getEntityLayer(entity));
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 3; i++) {
       const pos = getRandomPositionInBox(hitbox.box);
-      createSlurbParticle(pos.x, pos.y, 2 * Math.PI * Math.random(), randFloat(80, 120), 0, 0);
+      createSlurbParticle(pos.x, pos.y, randAngle(), randFloat(80, 120), 0, 0);
    }
 
    playSoundOnHitbox("glurb-death.mp3", 0.2, 1, entity, hitbox, false);

@@ -7,9 +7,8 @@ import { TribeComponentArray } from "./TribeComponent";
 import { BuildingMaterialComponentArray, upgradeMaterial } from "./BuildingMaterialComponent";
 import { HutComponentArray } from "./HutComponent";
 import { ITEM_INFO_RECORD, HammerItemType } from "battletribes-shared/items/items";
-import { TransformComponentArray } from "./TransformComponent";
+import { getHitboxesByFlag, TransformComponentArray } from "./TransformComponent";
 import { createDoorConfig } from "../entities/structures/door";
-import { createEntity } from "../Entity";
 import { createEmbrasureConfig } from "../entities/structures/embrasure";
 import { createBallistaConfig } from "../entities/structures/ballista";
 import { createSlingTurretConfig } from "../entities/structures/sling-turret";
@@ -17,12 +16,15 @@ import { createTunnelConfig } from "../entities/structures/tunnel";
 import { createFenceGateConfig } from "../entities/structures/fence-gate";
 import { createWarriorHutConfig } from "../entities/structures/warrior-hut";
 import { Packet } from "battletribes-shared/packets";
-import { destroyEntity, getEntityLayer } from "../world";
+import { createEntity, destroyEntity, getEntityLayer } from "../world";
 import { createScrappyConfig } from "../entities/tribes/automatons/scrappy";
 import { createCogwalkerConfig } from "../entities/tribes/automatons/cogwalker";
 import { registerDirtyEntity } from "../server/player-clients";
 import { calculateEntityPlaceInfo } from "../structure-placement";
 import { Hitbox } from "../hitboxes";
+import { HitboxFlag } from "../../../shared/src/boxes/boxes";
+import { averageVec2 } from "../../../shared/src/utils";
+import { createWallConfig } from "../entities/structures/wall";
 
 const STRUCTURE_WORK_REQUIRED: Record<BlueprintType, number> = {
    [BlueprintType.woodenDoor]: 3,
@@ -80,7 +82,7 @@ const upgradeBuilding = (building: Entity): void => {
 const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: BlueprintComponent): void => {
    const transformComponent = TransformComponentArray.getComponent(blueprintEntity);
    // @Hack
-   const blueprintEntityHitbox = transformComponent.children[0] as Hitbox;
+   const blueprintEntityHitbox = transformComponent.hitboxes[0];
    
    const tribeComponent = TribeComponentArray.getComponent(blueprintEntity);
    const tribe = tribeComponent.tribe;
@@ -90,7 +92,7 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
    const entityType = getBlueprintEntityType(blueprintComponent.blueprintType);
 
    // @Hack
-   const originHitbox = transformComponent.children[0] as Hitbox;
+   const originHitbox = transformComponent.hitboxes[0];
    const position = originHitbox.box.position.copy();
    const layer = getEntityLayer(blueprintEntity);
 
@@ -149,10 +151,22 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
          return;
       }
       case BlueprintType.fenceGate: {
-         const config = createFenceGateConfig(position, blueprintEntityHitbox.box.angle, tribe, placeInfo.connections, null);
+         const blueprintStructureComponent = StructureComponentArray.getComponent(blueprintEntity);
+         
+         // @HACK
+         const connections = blueprintStructureComponent.connections;
+
+         // @HACK: cuz the fence gate doesn't have a root hitbox on its 'core' position
+         const sideHitboxes = getHitboxesByFlag(transformComponent, HitboxFlag.FENCE_GATE_SIDE);
+         const side1 = sideHitboxes[0];
+         const side2 = sideHitboxes[1];
+         const position = averageVec2(side1.box.position, side2.box.position);
+
+         const config = createFenceGateConfig(position, blueprintEntityHitbox.box.angle, tribe, connections, null);
          createEntity(config, getEntityLayer(blueprintEntity), 0);
 
-         destroyEntity(blueprintComponent.associatedEntityID);
+         // @TEMPORARY @HACK cuz ive made fence gate blueprints destroy the fence they were on when they are first created
+         // destroyEntity(blueprintComponent.associatedEntityID);
          
          return;
       }
@@ -172,7 +186,12 @@ const completeBlueprint = (blueprintEntity: Entity, blueprintComponent: Blueprin
 
          return;
       }
-      case BlueprintType.stoneWall:
+      // @HACK cuz it no longer upgrades the existing wall, it destroys it and then when finished its a new stone wall
+      case BlueprintType.stoneWall: {
+         const config = createWallConfig(position, blueprintEntityHitbox.box.angle, tribe, BuildingMaterial.stone, placeInfo.connections, null);
+         createEntity(config, getEntityLayer(blueprintEntity), 0);
+         return;
+      }
       case BlueprintType.stoneDoorUpgrade:
       case BlueprintType.stoneEmbrasureUpgrade:
       case BlueprintType.stoneTunnelUpgrade:

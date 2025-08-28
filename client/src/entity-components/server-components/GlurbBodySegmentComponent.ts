@@ -2,11 +2,9 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { Point } from "../../../../shared/src/utils";
-import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
-import { createLight } from "../../lights";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface GlurbBodySegmentComponentParams {}
 
@@ -31,40 +29,18 @@ function createParamsFromData(): GlurbBodySegmentComponentParams {
    return createGlurbHeadSegmentComponentParams();
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
-
-   let textureSource: string;
-   let lightIntensity: number;
-   let lightRadius: number;
-   if (hitbox.flags.includes(HitboxFlag.GLURB_TAIL_SEGMENT)) {
-      // Tail segment
-      lightIntensity = 0.3;
-      lightRadius = 4;
-      textureSource = "entities/glurb/glurb-tail-segment.png";
-   } else {
-      // Middle segment
-      lightIntensity = 0.4;
-      lightRadius = 8;
-      textureSource = "entities/glurb/glurb-middle-segment.png";
-   }
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
       hitbox,
       // @Hack: 0.1 so that the moss ball can be z-index 0
       0.1,
       0,
-      getTextureArrayIndex(textureSource)
+      getTextureArrayIndex("entities/glurb/glurb-middle-segment.png")
    );
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
-      
-   // Attach light to the render part
-   const light = createLight(new Point(0, 0), lightIntensity, 0.8, lightRadius, 1, 0.2, 0.9);
-   entityIntermediateInfo.lights.push({
-      light: light,
-      attachedRenderPart: renderPart
-   });
+   renderInfo.attachRenderPart(renderPart);
 
    return {};
 }

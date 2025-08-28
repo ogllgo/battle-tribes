@@ -1,26 +1,24 @@
-import { Biome } from "../../../shared/src/biomes";
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 import { Settings } from "../../../shared/src/settings";
-import { assert, randInt } from "../../../shared/src/utils";
+import { randInt } from "../../../shared/src/utils";
 import { runHibernateAI } from "../ai/DustfleaHibernateAI";
 import { runEscapeAI } from "../ai/EscapeAI";
-import { updateFollowAIComponent, entityWantsToFollow, followAISetFollowTarget } from "../ai/FollowAI";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { addHitboxAngularAcceleration, getHitboxTile, getHitboxVelocity, Hitbox } from "../hitboxes";
+import { getHitboxVelocity } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
-import { entityExists, getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks, ticksToGameHours } from "../world";
+import { getEntityAgeTicks, getEntityType, getGameTicks, ticksToGameHours } from "../world";
 import { AIHelperComponent, AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
-import { HealthComponentArray, hitEntity } from "./HealthComponent";
-import { PhysicsComponentArray } from "./PhysicsComponent";
-import { attachEntity, getTransformComponentFirstHitbox, removeAttachedEntity, TransformComponentArray } from "./TransformComponent";
+import { getEntityFullness } from "./EnergyStomachComponent";
+import { damageEntity } from "./HealthComponent";
+import { attachHitbox, detachHitbox, TransformComponentArray } from "./TransformComponent";
 import { TribeMemberComponentArray } from "./TribeMemberComponent";
 
-const MIN_OBSTACLE_SIT_MODE_TICKS = 25 * Settings.TPS;
-const MAX_OBSTACLE_SIT_MODE_TICKS = 40 * Settings.TPS;
+const MIN_OBSTACLE_SIT_MODE_TICKS = 8 * Settings.TPS;
+const MAX_OBSTACLE_SIT_MODE_TICKS = 16 * Settings.TPS;
 
 export class DustfleaComponent {
    public obstacleSitModeRemainingTicks = randInt(MIN_OBSTACLE_SIT_MODE_TICKS, MAX_OBSTACLE_SIT_MODE_TICKS);
@@ -34,49 +32,9 @@ DustfleaComponentArray.onTick = {
 };
 DustfleaComponentArray.onWallCollision = onWallCollision;
 
-const entityIsFollowable = (entity: Entity): boolean => {
-   if (!HealthComponentArray.hasComponent(entity)) {
-      return false;
-   }
-
-   // don't follow the same entity type
-   if (getEntityType(entity) === EntityType.dustflea) {
-      return false;
-   }
-
-   // Don't follow non-sentient entities
-   if (!AIHelperComponentArray.hasComponent(entity)&& getEntityType(entity) !== EntityType.player) {
-      return false;
-   }
-    
-   if (!PhysicsComponentArray.hasComponent(entity)) {
-      return false;
-   }
-
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
-   if (physicsComponent.isImmovable) {
-      // So it isn't interested in trees n shit
-      // @Incomplete: what about mobs which don't move? those should be interesting
-      return false;
-   }
-   
-   // Not interested in entities outside of the desert
-   // @Incomplete: should be interested in entities oustide of the desert, just won't walk out of the desert!
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = getTransformComponentFirstHitbox(transformComponent);
-   assert(hitbox !== null);
-   const entityTile = getHitboxTile(hitbox);
-   const layer = getEntityLayer(entity);
-   if (layer.getTileBiome(entityTile) !== Biome.desert) {
-      return false;
-   }
-   
-   return true;
-}
-
 const getSitTarget = (dustflea: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
    const dustfleaTransformComponent = TransformComponentArray.getComponent(dustflea);
-   const dustfleaHitbox = dustfleaTransformComponent.children[0] as Hitbox;
+   const dustfleaHitbox = dustfleaTransformComponent.hitboxes[0];
    
    let minDist = Number.MAX_SAFE_INTEGER;
    let target: Entity | null = null;
@@ -87,9 +45,9 @@ const getSitTarget = (dustflea: Entity, aiHelperComponent: AIHelperComponent): E
       }
       
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
-      const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+      const entityHitbox = entityTransformComponent.hitboxes[0];
 
-      const dist = dustfleaHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+      const dist = dustfleaHitbox.box.position.distanceTo(entityHitbox.box.position);
       if (dist < minDist) {
          minDist = dist;
          target = entity;
@@ -106,7 +64,7 @@ const entityIsSuckTarget = (entity: Entity): boolean => {
 
 const getSuckTarget = (dustflea: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
    const dustfleaTransformComponent = TransformComponentArray.getComponent(dustflea);
-   const dustfleaHitbox = dustfleaTransformComponent.children[0] as Hitbox;
+   const dustfleaHitbox = dustfleaTransformComponent.hitboxes[0];
    
    let minDist = Number.MAX_SAFE_INTEGER;
    let target: Entity | null = null;
@@ -116,9 +74,33 @@ const getSuckTarget = (dustflea: Entity, aiHelperComponent: AIHelperComponent): 
       }
       
       const entityTransformComponent = TransformComponentArray.getComponent(entity);
-      const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+      const entityHitbox = entityTransformComponent.hitboxes[0];
 
-      const dist = dustfleaHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position);
+      const dist = dustfleaHitbox.box.position.distanceTo(entityHitbox.box.position);
+      if (dist < minDist) {
+         minDist = dist;
+         target = entity;
+      }
+   }
+
+   return target;
+}
+
+const getTargetPoopoosqueam = (dustflea: Entity, aiHelperComponent: AIHelperComponent): Entity | null => {
+   const dustfleaTransformComponent = TransformComponentArray.getComponent(dustflea);
+   const dustfleaHitbox = dustfleaTransformComponent.hitboxes[0];
+   
+   let minDist = Number.MAX_SAFE_INTEGER;
+   let target: Entity | null = null;
+   for (const entity of aiHelperComponent.visibleEntities) {
+      if (!TribeMemberComponentArray.hasComponent(entity)) {
+         continue;
+      }
+      
+      const entityTransformComponent = TransformComponentArray.getComponent(entity);
+      const entityHitbox = entityTransformComponent.hitboxes[0];
+
+      const dist = dustfleaHitbox.box.position.distanceTo(entityHitbox.box.position);
       if (dist < minDist) {
          minDist = dist;
          target = entity;
@@ -131,9 +113,23 @@ const getSuckTarget = (dustflea: Entity, aiHelperComponent: AIHelperComponent): 
 function onTick(dustflea: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(dustflea);
    const dustfleaTransformComponent = TransformComponentArray.getComponent(dustflea);
+   const dustfleaHitbox = dustfleaTransformComponent.hitboxes[0];
+
+   // @SQUEAM
+   {
+      const target = getTargetPoopoosqueam(dustflea, aiHelperComponent);
+      if (target !== null) {
+         const targetTransformComponent = TransformComponentArray.getComponent(target);
+         const targetHitbox = targetTransformComponent.hitboxes[0];
+         aiHelperComponent.moveFunc(dustflea, targetHitbox.box.position, 250);
+         aiHelperComponent.turnFunc(dustflea, targetHitbox.box.position, 16 * Math.PI, 0.25);
+         return;
+      }
+   }
 
    // If the dustflea is attached to something, don't escape at all. (To prevent it trying to hop around in escape, while on an okren, causing the okren to hop around)
-   if (dustfleaTransformComponent.rootEntity === dustflea) {
+   // @HACK???
+   if (dustfleaHitbox.parent !== null) {
       const escapeAI = aiHelperComponent.getEscapeAI();
       if (runEscapeAI(dustflea, aiHelperComponent, escapeAI)) {
          return;
@@ -142,67 +138,84 @@ function onTick(dustflea: Entity): void {
 
    const ageTicks = getEntityAgeTicks(dustflea);
    const ageHours = ticksToGameHours(ageTicks);
-   if (ageHours >= 12) {
+   if (ageHours >= 8) {
       const hibernateAI = aiHelperComponent.getDustfleaHibernateAI();
       runHibernateAI(dustflea, aiHelperComponent, hibernateAI);
       return;
    }
 
-   const dustfleaHitbox = dustfleaTransformComponent.children[0] as Hitbox;
 
+   // If hungry, look for a target to suck
    // Find some targets to suckle
-   const suckTarget = getSuckTarget(dustflea, aiHelperComponent);
-   if (suckTarget !== null && dustfleaTransformComponent.rootEntity !== dustflea && entityExists(dustfleaTransformComponent.rootEntity) && !entityIsSuckTarget(dustfleaTransformComponent.rootEntity)) {
-      removeAttachedEntity(dustfleaTransformComponent.rootEntity, dustflea);
-   }
-   if (dustfleaTransformComponent.rootEntity === dustflea) {
+   if (getEntityFullness(dustflea) < 0.5) {
+      const suckTarget = getSuckTarget(dustflea, aiHelperComponent);
       if (suckTarget !== null) {
-         const targetTransformComponent = TransformComponentArray.getComponent(suckTarget);
-         const targetHitbox = targetTransformComponent.children[0] as Hitbox;
-         aiHelperComponent.move(dustflea, 250, 2 * Math.PI, targetHitbox.box.position.x, targetHitbox.box.position.y);
-         if (entitiesAreColliding(dustflea, suckTarget) !== CollisionVars.NO_COLLISION && getHitboxVelocity(dustfleaHitbox).calculateDistanceBetween(getHitboxVelocity(targetHitbox)) < 125) {
-            attachEntity(dustflea, suckTarget, targetHitbox, false);
-
-            const tickEvent: EntityTickEvent = {
-               type: EntityTickEventType.dustfleaLatch,
-               data: 0,
-               entityID: dustflea
-            };
-            registerEntityTickEvent(dustflea, tickEvent);
-
-            const dustfleaComponent = DustfleaComponentArray.getComponent(dustflea);
-            dustfleaComponent.latchTicks = getGameTicks() + randInt(0, Settings.TPS - 1);
+         if (dustfleaHitbox.parent !== null && !entityIsSuckTarget(dustfleaHitbox.parent.entity)) {
+            // If the dustflea is attached to something which isn't the suck target (like a rock or something), unattach
+            detachHitbox(dustfleaHitbox);
          }
-         return;
+         if (dustfleaHitbox.parent === null) {
+            const targetTransformComponent = TransformComponentArray.getComponent(suckTarget);
+            const targetHitbox = targetTransformComponent.hitboxes[0];
+            aiHelperComponent.moveFunc(dustflea, targetHitbox.box.position, 250);
+            aiHelperComponent.turnFunc(dustflea, targetHitbox.box.position, 16 * Math.PI, 0.25);
+            if (entitiesAreColliding(dustflea, suckTarget) !== CollisionVars.NO_COLLISION && getHitboxVelocity(dustfleaHitbox).distanceTo(getHitboxVelocity(targetHitbox)) < 125) {
+               attachHitbox(dustfleaHitbox, targetHitbox, false);
+
+               const tickEvent: EntityTickEvent = {
+                  type: EntityTickEventType.dustfleaLatch,
+                  data: 0,
+                  entityID: dustflea
+               };
+               registerEntityTickEvent(dustflea, tickEvent);
+
+               const dustfleaComponent = DustfleaComponentArray.getComponent(dustflea);
+               dustfleaComponent.latchTicks = getGameTicks() + randInt(0, Settings.TPS - 1);
+            }
+            return;
+         }
       }
-   } else if (entityExists(dustfleaTransformComponent.rootEntity) && HealthComponentArray.hasComponent(dustfleaTransformComponent.rootEntity) && entityIsSuckTarget(dustfleaTransformComponent.rootEntity)) {
-      // wriggle around
-      const ageTicks = getEntityAgeTicks(dustflea);
-      addHitboxAngularAcceleration(dustfleaHitbox, 8 * Math.sin((ageTicks / Settings.TPS) * 40));
-      
-      const dustfleaComponent = DustfleaComponentArray.getComponent(dustflea);
-      const ticksSinceLatch = ageTicks - dustfleaComponent.latchTicks;
-      if (ticksSinceLatch % (Settings.TPS * 2) === 0) {
-         hitEntity(dustfleaTransformComponent.rootEntity, dustflea, 1, 0, AttackEffectiveness.effective, dustfleaHitbox.box.position.copy(), 0)
-      }
-      return;
    }
+
+   // If attached, suck
+   // @TEMPORARY @HACK @Incomplete cuz this crashing rn????????
+   // if (dustfleaHitbox.parent !== null && entityIsSuckTarget(dustfleaHitbox.parent.entity)) {
+   //    // wriggle around
+   //    const ageTicks = getEntityAgeTicks(dustflea);
+   //    addHitboxAngularAcceleration(dustfleaHitbox, 8 * Math.sin((ageTicks / Settings.TPS) * 40));
+      
+   //    // Suck
+   //    const dustfleaComponent = DustfleaComponentArray.getComponent(dustflea);
+   //    const ticksSinceLatch = ageTicks - dustfleaComponent.latchTicks;
+   //    if (ticksSinceLatch % (Settings.TPS * 2) === 0) {
+   //       damageEntity(dustfleaHitbox.parent.entity, dustfleaHitbox, dustflea, 1, 0, AttackEffectiveness.effective, dustfleaHitbox.box.position.copy(), 0)
+   //       addHungerEnergy(dustflea, 10);
+   //    }
+      
+   //    // Unlatch when full
+   //    if (getEntityFullness(dustflea) > 0.8) {
+   //       detachHitbox(dustfleaHitbox);
+   //    }
+
+   //    return;
+   // }
+   
 
    const dustfleaComponent = DustfleaComponentArray.getComponent(dustflea);
    if (dustfleaComponent.obstacleSitModeRemainingTicks > 0) {
-      // dustfleaComponent.obstacleSitModeRemainingTicks--;
+      dustfleaComponent.obstacleSitModeRemainingTicks--;
 
       // obstacle site mode
 
-      const transformComponent = TransformComponentArray.getComponent(dustflea);
-      if (transformComponent.rootEntity === dustflea) {
+      if (dustfleaHitbox.parent === null) {
          const sitTarget = getSitTarget(dustflea, aiHelperComponent);
          if (sitTarget !== null) {
             const targetTransformComponent = TransformComponentArray.getComponent(sitTarget);
-            const targetHitbox = targetTransformComponent.children[0] as Hitbox;
-            aiHelperComponent.move(dustflea, 250, 2 * Math.PI, targetHitbox.box.position.x, targetHitbox.box.position.y);
+            const targetHitbox = targetTransformComponent.hitboxes[0];
+            aiHelperComponent.moveFunc(dustflea, targetHitbox.box.position, 250);
+            aiHelperComponent.turnFunc(dustflea, targetHitbox.box.position, 2 * Math.PI, 0.25);
             if (entitiesAreColliding(dustflea, sitTarget) !== CollisionVars.NO_COLLISION) {
-               attachEntity(dustflea, sitTarget, targetHitbox, false);
+               attachHitbox(dustfleaHitbox, targetHitbox, false);
             }
             return;
          }
@@ -216,53 +229,26 @@ function onTick(dustflea: Entity): void {
       }
    }
 
-   if (dustfleaTransformComponent.parentEntity !== dustflea) {
-      // . what
-      if (TransformComponentArray.hasComponent(dustfleaTransformComponent.parentEntity)) {
-         removeAttachedEntity(dustfleaTransformComponent.parentEntity, dustflea);
-      }
-   }
-
-   // Follow AI
-   const followAI = aiHelperComponent.getFollowAI();
-   updateFollowAIComponent(followAI, aiHelperComponent.visibleEntities, 5);
-
-   const followedEntity = followAI.followTargetID;
-   if (entityExists(followedEntity)) {
-      const followedEntityTransformComponent = TransformComponentArray.getComponent(followedEntity);
-      // @Hack
-      const followedEntityHitbox = followedEntityTransformComponent.children[0] as Hitbox;
-      
-      // Continue following the entity
-      aiHelperComponent.move(dustflea, 250, 2 * Math.PI, followedEntityHitbox.box.position.x, followedEntityHitbox.box.position.y);
-      return;
-   } else if (entityWantsToFollow(followAI)) {
-      for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
-         const entity = aiHelperComponent.visibleEntities[i];
-         if (entityIsFollowable(entity)) {
-            // Follow the entity
-            followAISetFollowTarget(followAI, entity, true);
-            // @Incomplete: movement isn't accounted for!
-            return;
-         }
-      }
+   if (dustfleaHitbox.parent !== null) {
+      detachHitbox(dustfleaHitbox);
    }
    
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(dustflea);
-   if (wanderAI.targetPositionX !== -1) {
-      aiHelperComponent.move(dustflea, 250, 2 * Math.PI, wanderAI.targetPositionX, wanderAI.targetPositionY);
+   if (wanderAI.targetPosition !== null) {
+      aiHelperComponent.moveFunc(dustflea, wanderAI.targetPosition, wanderAI.acceleration);
+      aiHelperComponent.turnFunc(dustflea, wanderAI.targetPosition, wanderAI.turnSpeed, wanderAI.turnDamping);
    }
 }
 
 function onWallCollision(dustflea: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(dustflea);
+   const dustfleaHitbox = transformComponent.hitboxes[0];
 
    // Die when crushed against a wall
-   if (transformComponent.rootEntity !== dustflea) {
-      const hitbox = getTransformComponentFirstHitbox(transformComponent);
-      hitEntity(dustflea, null, 999, 0, AttackEffectiveness.effective, hitbox!.box.position.copy(), 0);
+   if (dustfleaHitbox.parent !== null) {
+      damageEntity(dustflea, dustfleaHitbox, null, 999, 0, AttackEffectiveness.effective, dustfleaHitbox.box.position.copy(), 0);
    }
 }
 

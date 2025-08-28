@@ -116,7 +116,7 @@ export function generateRiverTiles(): RiverGenerationInfo {
          } else {
             const startPos = new Point(currentTileCoordinates.x, currentTileCoordinates.y);
             const endPos = new Point(minTileCoordinates.x, minTileCoordinates.y);
-            flowDirectionIdx = 1 + getFlowDirectionIdx(startPos.calculateAngleBetween(endPos));
+            flowDirectionIdx = 1 + getFlowDirectionIdx(startPos.angleTo(endPos));
          }
 
          rootTiles.push({

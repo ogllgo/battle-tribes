@@ -1,4 +1,4 @@
-import { Vector, Point } from "battletribes-shared/utils";
+import { Vector, Point, randAngle } from "battletribes-shared/utils";
 import SRandom from "./SRandom";
 
 const lerp = (start: number, end: number, amount: number): number => {
@@ -137,7 +137,7 @@ const calculatePointCornerDotProduct = (grid: Partial<Record<string, Point>>, sa
    let corner = grid[key];
    
    if (typeof corner === "undefined") {
-      const dir = 2 * Math.PI * Math.random();
+      const dir = randAngle();
       corner = new Point(Math.sin(dir), Math.cos(dir));
       grid[key] = corner;
    }

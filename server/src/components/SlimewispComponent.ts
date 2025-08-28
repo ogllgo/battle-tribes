@@ -3,14 +3,13 @@ import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType, SlimeSize } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import { Point, UtilVars } from "battletribes-shared/utils";
+import { Point, randAngle, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition } from "../ai-shared";
 import { createSlimeConfig } from "../entities/mobs/slime";
-import { createEntity } from "../Entity";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray } from "./TransformComponent";
-import { destroyEntity, entityIsFlaggedForDestruction, getEntityLayer, getEntityType } from "../world";
+import { createEntity, destroyEntity, entityIsFlaggedForDestruction, getEntityLayer, getEntityType } from "../world";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
 import { getHitboxTile, Hitbox } from "../hitboxes";
 
@@ -32,7 +31,7 @@ SlimewispComponentArray.onTick = {
 
 function onTick(slimewisp: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(slimewisp);
-   const slimewispHitbox = transformComponent.children[0] as Hitbox;
+   const slimewispHitbox = transformComponent.hitboxes[0];
 
    const tileIndex = getHitboxTile(slimewispHitbox);
    const layer = getEntityLayer(slimewisp);
@@ -50,7 +49,7 @@ function onTick(slimewisp: Entity): void {
       const mergingSlimewisp = aiHelperComponent.visibleEntities[i];
       if (getEntityType(mergingSlimewisp) === EntityType.slimewisp) {
          const mergingSlimewispTransformComponent = TransformComponentArray.getComponent(mergingSlimewisp);
-         const mergingSlimewispHitbox = mergingSlimewispTransformComponent.children[0] as Hitbox;
+         const mergingSlimewispHitbox = mergingSlimewispTransformComponent.hitboxes[0];
          
          moveEntityToPosition(slimewisp, mergingSlimewispHitbox.box.position.x, mergingSlimewispHitbox.box.position.y, Vars.ACCELERATION, Vars.TURN_SPEED, 1);
    
@@ -62,7 +61,7 @@ function onTick(slimewisp: Entity): void {
                const y = (slimewispHitbox.box.position.y + mergingSlimewispHitbox.box.position.y) / 2;
                
                // Create a slime between the two wisps
-               const config = createSlimeConfig(new Point(x, y), 2 * Math.PI * Math.random(), SlimeSize.small);
+               const config = createSlimeConfig(new Point(x, y), randAngle(), SlimeSize.small);
                createEntity(config, layer, 0);
             
                destroyEntity(slimewisp);
@@ -76,8 +75,8 @@ function onTick(slimewisp: Entity): void {
    // Wander AI
    const wanderAI = aiHelperComponent.getWanderAI();
    wanderAI.update(slimewisp);
-   if (wanderAI.targetPositionX !== -1) {
-      moveEntityToPosition(slimewisp, wanderAI.targetPositionX, wanderAI.targetPositionY, 100, Math.PI, 1);
+   if (wanderAI.targetPosition !== null) {
+      moveEntityToPosition(slimewisp, wanderAI.targetPosition.x, wanderAI.targetPosition.y, 100, Math.PI, 1);
    }
 }
 

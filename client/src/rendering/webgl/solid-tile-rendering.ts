@@ -14,7 +14,6 @@ export const FLOOR_TILE_TEXTURE_SOURCE_RECORD: Partial<Record<TileType, string |
    [TileType.snow]: "tiles/snow.png",
    [TileType.ice]: "tiles/ice.png",
    [TileType.permafrost]: "tiles/permafrost.png",
-   [TileType.fimbultur]: "tiles/fimbultur.png",
    [TileType.sandyDirt]: "tiles/sandy-dirt.png",
    [TileType.sandyDirtDark]: "tiles/sandy-dirt-dark.png",
    [TileType.sand]: "tiles/sand.png",
@@ -44,6 +43,7 @@ export const WALL_TILE_TEXTURE_SOURCE_RECORD: Partial<Record<SubtileType, Readon
    [SubtileType.rockWall]: ["tiles/dark-rock.png"],
    [SubtileType.sandstoneWall]: ["tiles/sandstone.png"],
    [SubtileType.stoneWall]: ["tiles/stone-wall-1.png", "tiles/stone-wall-2.png"],
+   [SubtileType.permafrostWall]: ["tiles/permafrost-wall.png"],
 };
 const WALL_SUBTILE_TO_TEXTURE_ARRAY_INDEX_RECORD: Partial<Record<SubtileType, Array<number>>> = {};
 (() => {

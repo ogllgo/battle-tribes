@@ -1,5 +1,5 @@
 import { LimbState } from "../../../shared/src/attack-patterns";
-import { assertBoxIsCircular } from "../../../shared/src/boxes/boxes";
+import { assertBoxIsCircular, HitboxFlag } from "../../../shared/src/boxes/boxes";
 import { HitFlags } from "../../../shared/src/client-server-types";
 import { ServerComponentType } from "../../../shared/src/components";
 import { DamageSource, Entity, EntityType } from "../../../shared/src/entities";
@@ -8,24 +8,23 @@ import { getItemType, HammerItemType, InventoryName, Item, ITEM_INFO_RECORD, Ite
 import { Settings } from "../../../shared/src/settings";
 import { StatusEffect } from "../../../shared/src/status-effects";
 import { TribesmanTitle } from "../../../shared/src/titles";
-import { lerp, Point } from "../../../shared/src/utils";
+import { lerp, Point, randAngle } from "../../../shared/src/utils";
 import { HitboxCollisionPair } from "../collision-detection";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { calculateItemKnockback } from "../entities/tribes/limb-use";
 import { calculateItemDamage } from "../entities/tribes/tribe-member";
 import { getHumanoidRadius } from "../entities/tribes/tribesman-ai/tribesman-ai-utils";
-import { createEntity } from "../Entity";
 import { applyKnockback, Hitbox } from "../hitboxes";
-import { destroyEntity, entityExists, entityIsFlaggedForDestruction, getEntityLayer, getEntityType } from "../world";
+import { createEntity, destroyEntity, entityExists, entityIsFlaggedForDestruction, getEntityLayer, getEntityType } from "../world";
 import { BerryBushComponentArray } from "./BerryBushComponent";
 import { BerryBushPlantedComponentArray } from "./BerryBushPlantedComponent";
 import { doBlueprintWork } from "./BlueprintComponent";
 import { ComponentArray } from "./ComponentArray";
-import { hitEntity, healEntity, HealthComponentArray, hitEntityWithoutDamage } from "./HealthComponent";
+import { damageEntity, healEntity, HealthComponentArray, hitEntityWithoutDamage } from "./HealthComponent";
 import { InventoryComponentArray, hasInventory, getInventory } from "./InventoryComponent";
-import { getHeldItem, LimbInfo } from "./InventoryUseComponent";
+import { getCurrentLimbState, getHeldItem, LimbInfo } from "./InventoryUseComponent";
 import { applyStatusEffect } from "./StatusEffectComponent";
-import { entityTreeHasComponent, TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { entitiesBelongToSameTribe, EntityRelationship, getEntityRelationship, TribeComponentArray } from "./TribeComponent";
 import { hasTitle } from "./TribesmanComponent";
 
@@ -48,35 +47,23 @@ SwingAttackComponentArray.onTick = {
 };
 SwingAttackComponentArray.onEntityCollision = onEntityCollision;
 
-const setHitbox = (ownerTransformComponent: TransformComponent, hitboxTransformComponent: TransformComponent, hitbox: Hitbox, limbDirection: number, extraOffset: number, limbAngle: number, extraOffsetX: number, extraOffsetY: number, isFlipped: boolean): void => {
+// @Cleanup: not just used in this file!!
+export function setHitboxToLimbState(ownerTransformComponent: TransformComponent, hitboxTransformComponent: TransformComponent, hitbox: Hitbox, limb: LimbState, isFlipped: boolean): void {
    const flipMultiplier = isFlipped ? -1 : 1;
 
-   const offset = extraOffset + getHumanoidRadius(ownerTransformComponent) + 2;
+   const offset = limb.extraOffset + getHumanoidRadius(ownerTransformComponent) + 2;
 
    const box = hitbox.box;
-   box.offset.x = offset * Math.sin(limbDirection * flipMultiplier) + extraOffsetX * flipMultiplier;
-   box.offset.y = offset * Math.cos(limbDirection * flipMultiplier) + extraOffsetY;
-   box.relativeAngle = limbAngle * flipMultiplier;
+   box.offset.x = offset * Math.sin(limb.direction * flipMultiplier) + limb.extraOffsetX * flipMultiplier;
+   box.offset.y = offset * Math.cos(limb.direction * flipMultiplier) + limb.extraOffsetY;
+   // box.relativeAngle = limb.angle * flipMultiplier;
 
    hitboxTransformComponent.isDirty = true;
 }
 
-export function lerpHitboxBetweenStates(ownerTransformComponent: TransformComponent, hitboxTransformComponent: TransformComponent, hitbox: Hitbox, startingLimbState: LimbState, targetLimbState: LimbState, progress: number, isFlipped: boolean): void {
-   const direction = lerp(startingLimbState.direction, targetLimbState.direction, progress);
-   const extraOffset = lerp(startingLimbState.extraOffset, targetLimbState.extraOffset, progress);
-   const angle = lerp(startingLimbState.angle, targetLimbState.angle, progress);
-   const extraOffsetX = lerp(startingLimbState.extraOffsetX, targetLimbState.extraOffsetX, progress);
-   const extraOffsetY = lerp(startingLimbState.extraOffsetY, targetLimbState.extraOffsetY, progress);
-   setHitbox(ownerTransformComponent, hitboxTransformComponent, hitbox, direction, extraOffset, angle, extraOffsetX, extraOffsetY, isFlipped);
-}
-
-export function setHitboxToState(transformComponent: TransformComponent, hitboxTransformComponent: TransformComponent, hitbox: Hitbox, state: LimbState, isFlipped: boolean): void {
-   setHitbox(transformComponent, hitboxTransformComponent, hitbox, state.direction, state.extraOffset, state.angle, state.extraOffsetX, state.extraOffsetY, isFlipped);
-}
-
 function onTick(swingAttack: Entity): void {
    const swingAttackTransformComponent = TransformComponentArray.getComponent(swingAttack);
-   const limbHitbox = swingAttackTransformComponent.children[0] as Hitbox;
+   const limbHitbox = swingAttackTransformComponent.hitboxes[0];
    
    const swingAttackComponent = SwingAttackComponentArray.getComponent(swingAttack);
    const limb = swingAttackComponent.limb;
@@ -85,11 +72,16 @@ function onTick(swingAttack: Entity): void {
    if (!entityExists(swingAttackComponent.owner)) {
       return;
    }
-   
+
    const isFlipped = limb.associatedInventory.name === InventoryName.offhand;
-   const swingProgress = limb.currentActionElapsedTicks / limb.currentActionDurationTicks;
    const ownerTransformComponent = TransformComponentArray.getComponent(swingAttackComponent.owner);
-   lerpHitboxBetweenStates(ownerTransformComponent, swingAttackTransformComponent, limbHitbox, limb.currentActionStartLimbState, limb.currentActionEndLimbState, swingProgress, isFlipped);
+   setHitboxToLimbState(ownerTransformComponent, swingAttackTransformComponent, limbHitbox, getCurrentLimbState(limb), isFlipped);
+   
+   const progress = limb.currentActionElapsedTicks / limb.currentActionDurationTicks;
+   // @HACK @INCOMPLETE
+   limbHitbox.box.relativeAngle = lerp(0, -1, progress);
+   // limbHitbox.box.relativeAngle = lerp(limb.currentActionStartLimbState.angle, limb.currentActionEndLimbState.angle, progress);
+   // console.log(lerp(limb.currentActionStartLimbState.angle, limb.currentActionEndLimbState.angle, progress));
 }
 
 function getDataLength(): number {
@@ -163,8 +155,9 @@ const getPlantGatherAmount = (tribeman: Entity, plant: Entity, gloves: Item | nu
    return amount;
 }
 
-const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void => {
+const gatherPlant = (plant: Entity, attacker: Entity, hitHitbox: Hitbox, gloves: Item | null): void => {
    const plantTransformComponent = TransformComponentArray.getComponent(plant);
+   const plantHitbox = plantTransformComponent.hitboxes[0];
    
    if (isBerryBushWithBerries(plant)) {
       const gatherMultiplier = getPlantGatherAmount(attacker, plant, gloves);
@@ -172,19 +165,20 @@ const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void
       // As hitting the bush will drop a berry regardless, only drop extra ones here
       for (let i = 0; i < gatherMultiplier - 1; i++) {
          // @HACK: hit position
-         hitEntityWithoutDamage(plant, attacker, new Point(0, 0), 0);
+         hitEntityWithoutDamage(plant, hitHitbox, attacker, new Point(0, 0));
       }
    } else {
-      const plantHitbox = plantTransformComponent.children[0] as Hitbox;
       assertBoxIsCircular(plantHitbox.box);
       const plantRadius = plantHitbox.box.radius;
 
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       const x = plantHitbox.box.position.x + (plantRadius - 7) * Math.sin(offsetDirection);
       const y = plantHitbox.box.position.y + (plantRadius - 7) * Math.cos(offsetDirection);
    
-      const config = createItemEntityConfig(new Point(x, y), 2 * Math.PI * Math.random(), ItemType.leaf, 1, null);
+      const config = createItemEntityConfig(new Point(x, y), randAngle(), ItemType.leaf, 1, null);
       createEntity(config, getEntityLayer(plant), 0);
+
+      hitEntityWithoutDamage(plant, hitHitbox, attacker, new Point(0, 0));
    }
 
    // @Hack
@@ -193,10 +187,10 @@ const gatherPlant = (plant: Entity, attacker: Entity, gloves: Item | null): void
    // @HACK
    const collisionPoint = new Point(0, 0);
 
-   hitEntity(plant, attacker, 0, 0, AttackEffectiveness.ineffective, collisionPoint, HitFlags.NON_DAMAGING_HIT);
+   damageEntity(plant, plantHitbox, attacker, 0, 0, AttackEffectiveness.ineffective, collisionPoint, HitFlags.NON_DAMAGING_HIT);
 }
 
-const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>): boolean => {
+const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, hitHitbox: Hitbox, collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>): boolean => {
    const swingAttackComponent = SwingAttackComponentArray.getComponent(swingAttack);
    const attacker = swingAttackComponent.owner;
    const attackingLimb = swingAttackComponent.limb;
@@ -214,7 +208,7 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, collidingHit
          const gloveInventory = getInventory(inventoryComponent, InventoryName.gloveSlot);
          const gloves = gloveInventory.itemSlots[1];
          if (typeof gloves !== "undefined" && (gloves.type === ItemType.gathering_gloves || gloves.type === ItemType.gardening_gloves)) {
-            gatherPlant(victim, attacker, gloves);
+            gatherPlant(victim, attacker, hitHitbox, gloves);
             return true;
          }
       }
@@ -227,22 +221,39 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, collidingHit
    for (const hitboxPair of collidingHitboxPairs) {
       const affectedHitbox = hitboxPair.affectedHitbox;
       const collidingHitbox = hitboxPair.collidingHitbox;
-      hitDirection += affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+      hitDirection += affectedHitbox.box.position.angleTo(collidingHitbox.box.position);
    }
    hitDirection /= collidingHitboxPairs.length;
 
    // @Hack
-   const victimTransformComponent = TransformComponentArray.getComponent(victim);
-   const victimHitbox = victimTransformComponent.children[0] as Hitbox;
+   const firstHitboxPair = collidingHitboxPairs[0];
+
+   const victimHitbox = firstHitboxPair.collidingHitbox;
    const collisionPoint = new Point((victimHitbox.box.position.x + victimHitbox.box.position.x) / 2, (victimHitbox.box.position.y + victimHitbox.box.position.y) / 2);
 
    // Register the hit
    const hitFlags = attackingItem !== null && attackingItem.type === ItemType.flesh_sword ? HitFlags.HIT_BY_FLESH_SWORD : 0;
-   hitEntity(victim, attacker, attackDamage, DamageSource.tribeMember, attackEffectiveness, collisionPoint, hitFlags);
-   applyKnockback(victim, collidingHitboxPairs[0].collidingHitbox, attackKnockback, hitDirection);
+   damageEntity(victim, victimHitbox, attacker, attackDamage, DamageSource.tribeMember, attackEffectiveness, collisionPoint, hitFlags);
+   // @SQUEAM
+   if (getEntityType(victimHitbox.entity) === EntityType.tukmokTailClub || victimHitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_MEDIUM) || victimHitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_BIG) || victimHitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_SMALL)) {
 
-   if (attackingItem !== null && attackingItem.type === ItemType.flesh_sword) {
-      applyStatusEffect(victim, StatusEffect.poisoned, 3 * Settings.TPS);
+   } else {
+      applyKnockback(victimHitbox, attackKnockback, hitDirection);
+   }
+
+   if (attackingItem !== null) {
+      // @HACK: shouldn't be hard-coded here!!
+      switch (attackingItem.type) {
+         case ItemType.flesh_sword: {
+            applyStatusEffect(victim, StatusEffect.poisoned, 3 * Settings.TPS);
+            break;
+         }
+         case ItemType.inguSerpentTooth:
+         case ItemType.iceWringer: {
+            applyStatusEffect(victim, StatusEffect.freezing, 3 * Settings.TPS);
+            break;
+         }
+      }
    }
 
    // Bloodaxes have a 20% chance to inflict bleeding on hit
@@ -263,14 +274,16 @@ function onEntityCollision(swingAttack: Entity, collidingEntity: Entity, collidi
    const owner = swingAttackComponent.owner;
    // @Temporary: remove when bug is fixed
    if (!entityExists(owner)) {
-      console.warn("OUSEOFJHOSJFOISDJF bad")
+      // @TEMPORARY
+      // console.warn("OUSEOFJHOSJFOISDJF bad")
       return;
    }
    // @Temporary: remove when bug is fixed
    // @Bug: Happens when a zombie swings !!!
    if (!TribeComponentArray.hasComponent(owner)) {
-      console.log(getEntityType(owner));
-      console.warn(getEntityType(owner));
+      // @TEMPORARY
+      // console.log(getEntityType(owner));
+      // console.warn(getEntityType(owner));
       return;
    }
    
@@ -291,7 +304,7 @@ function onEntityCollision(swingAttack: Entity, collidingEntity: Entity, collidi
       }
    }
 
-   if (!entityTreeHasComponent(HealthComponentArray, collidingEntity)) {
+   if (!HealthComponentArray.hasComponent(collidingEntity)) {
       return;
    }
 
@@ -301,7 +314,7 @@ function onEntityCollision(swingAttack: Entity, collidingEntity: Entity, collidi
       return;
    }
 
-   damageEntityFromSwing(swingAttack, collidingEntity, collidingHitboxPairs);
+   damageEntityFromSwing(swingAttack, collidingEntity, collidingHitboxPairs[0].collidingHitbox, collidingHitboxPairs);
 
    destroyEntity(swingAttack);
 }

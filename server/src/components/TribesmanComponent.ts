@@ -1,21 +1,25 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType, Entity, LimbAction } from "../../../shared/src/entities";
-import { BackpackItemInfo, ConsumableItemInfo, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD } from "../../../shared/src/items/items";
+import { BackpackItemInfo, ConsumableItemInfo, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType } from "../../../shared/src/items/items";
 import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
+import { TileType } from "../../../shared/src/tiles";
 import { TitleGenerationInfo, TRIBESMAN_TITLE_RECORD, TribesmanTitle } from "../../../shared/src/titles";
 import { TribeType } from "../../../shared/src/tribes";
 import { randInt } from "../../../shared/src/utils";
 import { EntityConfig } from "../components";
 import { onFishLeaderHurt } from "../entities/mobs/fish";
 import { useItem } from "../entities/tribes/tribe-member";
-import { getHitboxVelocity, Hitbox } from "../hitboxes";
+import { getHitboxTile, getHitboxVelocity, Hitbox } from "../hitboxes";
 import { addHumanoidInventories } from "../inventories";
+import { createItem } from "../items";
 import { generateTitle, TITLE_REWARD_CHANCES } from "../tribesman-title-generation";
-import { getEntityType, getGameTicks } from "../world";
+import { getEntityLayer, getEntityType, getGameTicks } from "../world";
 import { ComponentArray } from "./ComponentArray";
+import { HealthComponentArray } from "./HealthComponent";
 import { InventoryComponentArray, getInventory, resizeInventory } from "./InventoryComponent";
 import { LimbInfo, InventoryUseComponentArray } from "./InventoryUseComponent";
+import { PhysicsComponentArray } from "./PhysicsComponent";
 import { PlayerComponentArray } from "./PlayerComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { TribeComponentArray } from "./TribeComponent";
@@ -46,7 +50,7 @@ TribesmanComponentArray.onKill = onKill;
 TribesmanComponentArray.onTakeDamage = onTakeDamage;
 TribesmanComponentArray.onDealDamage = onDealDamage;
 
-function onInitialise(config: EntityConfig, _: unknown): void {
+function onInitialise(config: EntityConfig): void {
    // War paint type
    const tribesmanComponent = config.components[ServerComponentType.tribesman]!;
    const tribeComponent = config.components[ServerComponentType.tribe]!;
@@ -204,26 +208,32 @@ export function removeTitle(entityID: Entity, title: TribesmanTitle): void {
 }
 
 // @Cleanup: Move to tick function
-const tickInventoryUseInfo = (tribeMember: Entity, inventoryUseInfo: LimbInfo): void => {
-   switch (inventoryUseInfo.action) {
+const tickInventoryUseInfo = (tribeMember: Entity, limb: LimbInfo): void => {
+   switch (limb.action) {
       case LimbAction.eat:
       case LimbAction.useMedicine: {
-         inventoryUseInfo.foodEatingTimer -= Settings.I_TPS;
+         limb.foodEatingTimer -= Settings.I_TPS;
    
-         if (inventoryUseInfo.foodEatingTimer <= 0) {
-            const inventory = inventoryUseInfo.associatedInventory;
+         if (limb.foodEatingTimer <= 0) {
+            const inventory = limb.associatedInventory;
             
-            const selectedItem = inventory.itemSlots[inventoryUseInfo.selectedItemSlot];
+            const selectedItem = inventory.itemSlots[limb.selectedItemSlot];
             if (typeof selectedItem !== "undefined") {
                const itemCategory = ITEM_TYPE_RECORD[selectedItem.type];
                if (itemCategory === "healing") {
-                  useItem(tribeMember, selectedItem, inventory.name, inventoryUseInfo.selectedItemSlot);
+                  useItem(tribeMember, selectedItem, inventory.name, limb.selectedItemSlot);
    
                   const itemInfo = ITEM_INFO_RECORD[selectedItem.type] as ConsumableItemInfo;
-                  inventoryUseInfo.foodEatingTimer = itemInfo.consumeTime;
+                  limb.foodEatingTimer = itemInfo.consumeTime;
 
                   if (TribesmanAIComponentArray.hasComponent(tribeMember) && Math.random() < TITLE_REWARD_CHANCES.BERRYMUNCHER_REWARD_CHANCE) {
                      awardTitle(tribeMember, TribesmanTitle.berrymuncher);
+                  }
+
+                  // @HACK!!! so that they stop eating food when they dont need to
+                  const healthComponent = HealthComponentArray.getComponent(tribeMember);
+                  if (healthComponent.health >= healthComponent.maxHealth) {
+                     limb.action = LimbAction.none;
                   }
                }
             }
@@ -231,16 +241,16 @@ const tickInventoryUseInfo = (tribeMember: Entity, inventoryUseInfo: LimbInfo): 
          break;
       }
       case LimbAction.loadCrossbow: {
-         const loadProgress = inventoryUseInfo.crossbowLoadProgressRecord[inventoryUseInfo.selectedItemSlot];
+         const loadProgress = limb.crossbowLoadProgressRecord[limb.selectedItemSlot];
          if (typeof loadProgress === "undefined") {
-            inventoryUseInfo.crossbowLoadProgressRecord[inventoryUseInfo.selectedItemSlot] = Settings.I_TPS;
+            limb.crossbowLoadProgressRecord[limb.selectedItemSlot] = Settings.I_TPS;
          } else {
-            inventoryUseInfo.crossbowLoadProgressRecord[inventoryUseInfo.selectedItemSlot]! += Settings.I_TPS;
+            limb.crossbowLoadProgressRecord[limb.selectedItemSlot]! += Settings.I_TPS;
          }
          
-         if (inventoryUseInfo.crossbowLoadProgressRecord[inventoryUseInfo.selectedItemSlot]! >= 1) {
-            inventoryUseInfo.crossbowLoadProgressRecord[inventoryUseInfo.selectedItemSlot] = 1;
-            inventoryUseInfo.action = LimbAction.none;
+         if (limb.crossbowLoadProgressRecord[limb.selectedItemSlot]! >= 1) {
+            limb.crossbowLoadProgressRecord[limb.selectedItemSlot] = 1;
+            limb.action = LimbAction.none;
          }
          
          break;
@@ -250,9 +260,9 @@ const tickInventoryUseInfo = (tribeMember: Entity, inventoryUseInfo: LimbInfo): 
 
 function onTick(tribeMember: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(tribeMember);
-   const tribeMemberHitbox = transformComponent.children[0] as Hitbox;
+   const tribeMemberHitbox = transformComponent.hitboxes[0];
       
-   const chance = TITLE_REWARD_CHANCES.SPRINTER_REWARD_CHANCE_PER_SPEED * getHitboxVelocity(tribeMemberHitbox).length();
+   const chance = TITLE_REWARD_CHANCES.SPRINTER_REWARD_CHANCE_PER_SPEED * getHitboxVelocity(tribeMemberHitbox).magnitude();
    if (Math.random() < chance / Settings.TPS) {
       awardTitle(tribeMember, TribesmanTitle.sprinter);
    }
@@ -279,6 +289,15 @@ function onTick(tribeMember: Entity): void {
    } else {
       resizeInventory(inventoryComponent, InventoryName.backpack, 0, 0);
    }
+
+   const tribeMemberTile = getHitboxTile(tribeMemberHitbox);
+   const tileType = getEntityLayer(tribeMember).getTileType(tribeMemberTile);
+
+   const armourInventory = getInventory(inventoryComponent, InventoryName.armourSlot);
+   const armour = armourInventory.getItem(1);
+   
+   const physicsComponent = PhysicsComponentArray.getComponent(tribeMember);
+   physicsComponent.overrideMoveSpeedMultiplier = tileType === TileType.snow && armour !== null && (armour.type === ItemType.frostArmour || armour.type === ItemType.winterskinArmour);
 }
 
 function onDeath(entity: Entity, attackingEntity: Entity | null): void {
@@ -294,12 +313,10 @@ function onKill(entity: Entity, deadEntity: Entity): void {
       awardTitle(entity, TribesmanTitle.deathbringer);
    } else if (getEntityType(deadEntity) === EntityType.yeti && Math.random() < TITLE_REWARD_CHANCES.YETISBANE_REWARD_CHANCE) {
       awardTitle(entity, TribesmanTitle.yetisbane);
-   } else if (getEntityType(deadEntity) === EntityType.frozenYeti && Math.random() < TITLE_REWARD_CHANCES.WINTERSWRATH_REWARD_CHANCE) {
-      awardTitle(entity, TribesmanTitle.winterswrath);
    }
 }
 
-function onTakeDamage(tribeMember: Entity, attackingEntity: Entity | null): void {
+function onTakeDamage(tribeMember: Entity, _hitHitbox: Hitbox, attackingEntity: Entity | null): void {
    if (attackingEntity === null) {
       return;
    }

@@ -20,8 +20,42 @@ export const enum HitboxFlag {
    OKREN_ARM_SEGMENT_OF_SLASHING_AND_DESTRUCTION,
    OKREN_EYE,
    OKREN_MANDIBLE,
+   OKREN_TONGUE_SEGMENT_MIDDLE,
+   OKREN_TONGUE_SEGMENT_TIP,
    KRUMBLID_BODY,
-   KRUMBLID_MANDIBLE
+   KRUMBLID_MANDIBLE,
+   SNOBE_BODY,
+   SNOBE_BUTT,
+   SNOBE_EAR,
+   INGU_SERPENT_HEAD,
+   INGU_SERPENT_BODY_1,
+   INGU_SERPENT_BODY_2,
+   INGU_SERPENT_TAIL,
+   TUKMOK_BODY,
+   TUKMOK_HEAD,
+   TUKMOK_TAIL_MIDDLE_SEGMENT_SMALL,
+   TUKMOK_TAIL_MIDDLE_SEGMENT_MEDIUM,
+   TUKMOK_TAIL_MIDDLE_SEGMENT_BIG,
+   TUKMOK_TAIL_CLUB,
+   TUKMOK_TRUNK_HEAD,
+   TUKMOK_SPUR_HEAD,
+   TUKMOK_SPUR_SHOULDER_LEFT_FRONT,
+   TUKMOK_SPUR_SHOULDER_LEFT_BACK,
+   TUKMOK_SPUR_SHOULDER_RIGHT_FRONT,
+   TUKMOK_SPUR_SHOULDER_RIGHT_BACK,
+   YETUK_BODY_1,
+   YETUK_BODY_2,
+   YETUK_BODY_3,
+   YETUK_BODY_4,
+   YETUK_GLURB_SEGMENT,
+   YETUK_MANDIBLE_BIG,
+   YETUK_MANDIBLE_MEDIUM,
+   YETUK_TRUNK_HEAD,
+   YETUK_TRUNK_MIDDLE,
+   YETUK_DUSTFLEA_DISPENSION_PORT,
+   YETUK_SNOBE_TAIL,
+   FENCE_GATE_DOOR,
+   FENCE_GATE_SIDE,
 }
 
 export const enum HitboxCollisionType {
@@ -174,5 +208,13 @@ export function cloneBox(box: Box): Box {
       return new CircularBox(box.position.copy(), box.offset.copy(), box.angle, box.radius);
    } else {
       return new RectangularBox(box.position.copy(), box.offset.copy(), box.angle, box.width, box.height);
+   }
+}
+
+export function getBoxArea(box: Box): number {
+   if (boxIsCircular(box)) {
+      return Math.PI * box.radius * box.radius;
+   } else {
+      return box.width * box.height;
    }
 }

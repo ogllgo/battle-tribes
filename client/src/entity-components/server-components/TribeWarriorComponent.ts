@@ -5,8 +5,9 @@ import ServerComponentArray from "../ServerComponentArray";
 import { Entity } from "../../../../shared/src/entities";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface TribeWarriorComponentParams {
    readonly scars: Array<ScarInfo>;
@@ -49,9 +50,9 @@ function createParamsFromData(reader: PacketReader): TribeWarriorComponentParams
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
    
    const tribeWarriorComponentParams = entityParams.serverComponentParams[ServerComponentType.tribeWarrior]!;
    for (let i = 0; i < tribeWarriorComponentParams.scars.length; i++) {
@@ -66,7 +67,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       renderPart.offset.x = scarInfo.offsetX;
       renderPart.offset.y = scarInfo.offsetY;
 
-      entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+      renderInfo.attachRenderPart(renderPart);
    }
 
    return {};

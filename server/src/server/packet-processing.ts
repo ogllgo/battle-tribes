@@ -4,20 +4,19 @@ import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { BowItemInfo, ConsumableItemCategory, ConsumableItemInfo, getItemAttackInfo, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType } from "battletribes-shared/items/items";
 import { TribeType } from "battletribes-shared/tribes";
 import Layer from "../Layer";
-import { getHeldItem, InventoryUseComponentArray, setLimbActions } from "../components/InventoryUseComponent";
+import { getCurrentLimbState, getHeldItem, InventoryUseComponentArray, setLimbActions } from "../components/InventoryUseComponent";
 import { PlayerComponentArray } from "../components/PlayerComponent";
-import { changeEntityLayer, getFirstComponent, TransformComponentArray } from "../components/TransformComponent";
+import { changeEntityLayer, TransformComponentArray } from "../components/TransformComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
 import { startChargingSpear, startChargingBattleaxe, createPlayerConfig, modifyBuilding } from "../entities/tribes/player";
 import { placeBlueprint, throwItem, useItem } from "../entities/tribes/tribe-member";
 import { beginSwing } from "../entities/tribes/limb-use";
-import { InventoryComponentArray, getInventory, addItemToInventory, addItemToSlot, consumeItemFromSlot, consumeItemTypeFromInventory, craftRecipe, inventoryComponentCanAffordRecipe, recipeCraftingStationIsAvailable, addItem } from "../components/InventoryComponent";
+import { InventoryComponentArray, getInventory, addItemToInventory, addItemToSlot, consumeItemFromSlot, consumeItemTypeFromInventory, craftRecipe, inventoryComponentCanAffordRecipe, addItem } from "../components/InventoryComponent";
 import { BlueprintType } from "battletribes-shared/components";
-import { Point } from "battletribes-shared/utils";
-import { createEntity } from "../Entity";
+import { Point, randAngle } from "battletribes-shared/utils";
 import { generatePlayerSpawnPosition, registerDirtyEntity, registerPlayerDroppedItemPickup } from "./player-clients";
 import { createItem } from "../items";
-import { destroyEntity, entityExists, getEntityLayer, getEntityType, getTribe } from "../world";
+import { createEntity, destroyEntity, entityExists, getEntityLayer, getEntityType, getTribe } from "../world";
 import { createCowConfig } from "../entities/mobs/cow";
 import { SERVER } from "./server";
 import { EntityConfig } from "../components";
@@ -31,20 +30,16 @@ import { attemptToOccupyResearchBench } from "../components/ResearchBenchCompone
 import { toggleTunnelDoor } from "../components/TunnelComponent";
 import { Tech, TechID, getTechByID } from "../../../shared/src/techs";
 import { CowComponentArray } from "../components/CowComponent";
-import { dismountCarrySlot, mountCarrySlot, RideableComponentArray } from "../components/RideableComponent";
+import { dismountMount, mountCarrySlot, RideableComponentArray } from "../components/RideableComponent";
 import { BlockAttackComponentArray } from "../components/BlockAttackComponent";
 import { getTamingSkill, TamingSkillID, TamingTier } from "../../../shared/src/taming";
 import { getTamingSkillLearning, skillLearningIsComplete, TamingComponentArray } from "../components/TamingComponent";
 import { getTamingSpec } from "../taming-specs";
-import { getHitboxTile, getHitboxVelocity, Hitbox } from "../hitboxes";
+import { getHitboxTile, getHitboxVelocity } from "../hitboxes";
 import Tribe from "../Tribe";
 import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
 import { FloorSignComponentArray } from "../components/FloorSignComponent";
-
-/** How far away from the entity the attack is done */
-const ATTACK_OFFSET = 50;
-/** Max distance from the attack position that the attack will be registered from */
-const ATTACK_RADIUS = 50;
+import { BLOCKING_LIMB_STATE, copyLimbState, SHIELD_BLOCKING_LIMB_STATE } from "../../../shared/src/attack-patterns";
 
 // @Cleanup: Messy as fuck
 export function processPlayerDataPacket(playerClient: PlayerClient, reader: PacketReader): void {
@@ -54,7 +49,7 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
    }
 
    const transformComponent = TransformComponentArray.getComponent(player);
-   const playerHitbox = transformComponent.children[0] as Hitbox;
+   const playerHitbox = transformComponent.hitboxes[0];
 
    const playerComponent = PlayerComponentArray.getComponent(player);
 
@@ -64,8 +59,13 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
 
    playerHitbox.previousPosition.x = reader.readNumber();
    playerHitbox.previousPosition.y = reader.readNumber();
-   playerHitbox.acceleration.x = reader.readNumber();
-   playerHitbox.acceleration.y = reader.readNumber();
+   // Cuz i've got a thing going on where if a hitbox is carried, then it can't have any acceleration. and if it does then the game will crash when it tries to detach from its parent.
+   if (playerHitbox.parent === null) {
+      playerHitbox.acceleration.x = reader.readNumber();
+      playerHitbox.acceleration.y = reader.readNumber();
+   } else {
+      reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
+   }
 
    playerComponent.movementIntention.x = reader.readNumber();
    playerComponent.movementIntention.y = reader.readNumber();
@@ -75,10 +75,6 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
 
    const screenWidth = reader.readNumber();
    const screenHeight = reader.readNumber();
-   // const minVisibleChunkX = reader.readNumber();
-   // const maxVisibleChunkX = reader.readNumber();
-   // const minVisibleChunkY = reader.readNumber();
-   // const maxVisibleChunkY = reader.readNumber();
    
    const selectedHotbarItemSlot = reader.readNumber();
    const mainAction = reader.readNumber() as LimbAction;
@@ -93,10 +89,19 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
    registerDirtyEntity(player);
    playerHitbox.box.position.x = positionX;
    playerHitbox.box.position.y = positionY;
-   playerHitbox.box.angle = angle;
-   playerHitbox.box.relativeAngle = angle;
+   
+   // @Hack
+   if (playerHitbox.parent === null) {
+      playerHitbox.box.angle = angle;
+      playerHitbox.box.relativeAngle = angle;
 
-   // playerClient.visibleChunkBounds = [minVisibleChunkX, maxVisibleChunkX, minVisibleChunkY, maxVisibleChunkY];
+      playerHitbox.previousRelativeAngle = angle;
+   } else {
+      // @HACK cuz this is reaaally broken right now and i dont know what to do D:
+      playerHitbox.box.relativeAngle = angle;
+      playerHitbox.previousRelativeAngle = angle;
+   }
+
    playerClient.screenWidth = screenWidth;
    playerClient.screenHeight = screenHeight;
    playerClient.updatePosition(playerHitbox.box.position.x, playerHitbox.box.position.y);
@@ -179,10 +184,10 @@ export function processRespawnPacket(playerClient: PlayerClient): void {
    let layer: Layer;
    if (playerClient.tribe.totem !== null) {
       const totemTransformComponent = TransformComponentArray.getComponent(playerClient.tribe.totem);
-      const totemHitbox = totemTransformComponent.children[0] as Hitbox;
+      const totemHitbox = totemTransformComponent.hitboxes[0];
       
       spawnPosition = totemHitbox.box.position.copy();
-      const offsetDirection = 2 * Math.PI * Math.random();
+      const offsetDirection = randAngle();
       spawnPosition.x += 100 * Math.sin(offsetDirection);
       spawnPosition.y += 100 * Math.cos(offsetDirection);
       layer = getEntityLayer(playerClient.tribe.totem);
@@ -217,16 +222,21 @@ export function processStartItemUsePacket(playerClient: PlayerClient, reader: Pa
    const attackInfo = getItemAttackInfo(item.type);
    if (attackInfo.attackTimings.blockTimeTicks !== null) {
       const inventoryUseComponent = InventoryUseComponentArray.getComponent(player);
-      const limbInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
+      const limb = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
+      
+      const initialLimbState = getCurrentLimbState(limb);
 
       // @Cleanup: unneeded?
-      limbInfo.selectedItemSlot = itemSlot;
+      limb.selectedItemSlot = itemSlot;
       
       // Begin blocking
-      limbInfo.action = LimbAction.engageBlock;
-      limbInfo.currentActionElapsedTicks = 0;
-      limbInfo.currentActionDurationTicks = attackInfo.attackTimings.blockTimeTicks;
-      limbInfo.currentActionRate = 1;
+      limb.action = LimbAction.engageBlock;
+      limb.currentActionElapsedTicks = 0;
+      limb.currentActionDurationTicks = attackInfo.attackTimings.blockTimeTicks;
+      limb.currentActionRate = 1;
+      // @Speed: why are we copying?
+      limb.currentActionStartLimbState = copyLimbState(initialLimbState);
+      limb.currentActionEndLimbState = item.type !== null && ITEM_TYPE_RECORD[item.type] === "shield" ? SHIELD_BLOCKING_LIMB_STATE : BLOCKING_LIMB_STATE;
       return;
    }
 
@@ -326,9 +336,9 @@ export function processItemDropPacket(playerClient: PlayerClient, reader: Packet
 
    if (playerClient.username.includes("Dragon")) {
       const playerTransformComponent = TransformComponentArray.getComponent(playerClient.instance);
-      const playerHitbox = playerTransformComponent.children[0] as Hitbox;
+      const playerHitbox = playerTransformComponent.hitboxes[0];
       
-      const worker = createTribeWorkerConfig(playerHitbox.box.position.copy(), 2 * Math.PI * Math.random(), dwarfTribe);
+      const worker = createTribeWorkerConfig(playerHitbox.box.position.copy(), randAngle(), dwarfTribe);
       createEntity(worker, undergroundLayer, 0);
    }
 
@@ -447,9 +457,9 @@ export function processToggleSimulationPacket(playerClient: PlayerClient, reader
 // @Cleanup: name, and there is already a shared definition
 const snapRotationToPlayer = (player: Entity, placePosition: Point, rotation: number): number => {
    const transformComponent = TransformComponentArray.getComponent(player);
-   const playerHitbox = transformComponent.children[0] as Hitbox;
+   const playerHitbox = transformComponent.hitboxes[0];
    
-   const playerDirection = playerHitbox.box.position.calculateAngleBetween(placePosition);
+   const playerDirection = playerHitbox.box.position.angleTo(placePosition);
    let snapRotation = playerDirection - rotation;
 
    // Snap to nearest PI/2 interval
@@ -469,7 +479,7 @@ export function processPlaceBlueprintPacket(playerClient: PlayerClient, reader: 
 
    // @Cleanup: should not do this logic here.
    const structureTransformComponent = TransformComponentArray.getComponent(structure);
-   const structureHitbox = structureTransformComponent.children[0] as Hitbox;
+   const structureHitbox = structureTransformComponent.hitboxes[0];
    const rotation = snapRotationToPlayer(playerClient.instance, structureHitbox.box.position, structureHitbox.box.angle);
    placeBlueprint(playerClient.instance, structure, blueprintType, rotation);
 }
@@ -504,7 +514,7 @@ export function processAscendPacket(playerClient: PlayerClient): void {
    const currentLayer = getEntityLayer(player);
    if (currentLayer === undergroundLayer) {
       const transformComponent = TransformComponentArray.getComponent(player);
-      const playerHitbox = transformComponent.children[0] as Hitbox;
+      const playerHitbox = transformComponent.hitboxes[0];
       const tileAbove = getHitboxTile(playerHitbox);
       if (surfaceLayer.getTileType(tileAbove) === TileType.dropdown) {
          changeEntityLayer(player, surfaceLayer);
@@ -521,7 +531,7 @@ export function processTPToEntityPacket(playerClient: PlayerClient, reader: Pack
    const targetEntity = reader.readNumber() as Entity;
 
    const targetTransformComponent = TransformComponentArray.getComponent(targetEntity);
-   const targetHitbox = targetTransformComponent.children[0] as Hitbox;
+   const targetHitbox = targetTransformComponent.hitboxes[0];
 
    const packet = new Packet(PacketType.forcePositionUpdate, 3 * Float32Array.BYTES_PER_ELEMENT);
    packet.addNumber(targetHitbox.box.position.x);
@@ -667,7 +677,7 @@ export function processTechStudyPacket(playerClient: PlayerClient, reader: Packe
    
    if (tribeComponent.tribe.selectedTechID !== null) {
       const transformComponent = TransformComponentArray.getComponent(playerClient.instance);
-      const playerHitbox = transformComponent.children[0] as Hitbox;
+      const playerHitbox = transformComponent.hitboxes[0];
 
       const selectedTech = getTechByID(tribeComponent.tribe.selectedTechID);
       playerClient.tribe.studyTech(selectedTech, playerHitbox.box.position.x, playerHitbox.box.position.y, studyAmount);
@@ -684,7 +694,7 @@ export function processAnimalStaffFollowCommandPacket(playerClient: PlayerClient
       return;
    }
 
-   const tamingComponent = getFirstComponent(TamingComponentArray, entity);
+   const tamingComponent = TamingComponentArray.getComponent(entity);
    // Toggle the follow target
    if (!entityExists(tamingComponent.followTarget)) {
       tamingComponent.followTarget = playerClient.instance;
@@ -704,10 +714,11 @@ export function processMountCarrySlotPacket(playerClient: PlayerClient, reader: 
       return;
    }
 
-   const rideableComponent = RideableComponentArray.getComponent(mount);
-   const carrySlot = rideableComponent.carrySlots[0];
+   const carrySlotIdx = reader.readNumber();
 
-   mountCarrySlot(player, mount, carrySlot);
+   const rideableComponent = RideableComponentArray.getComponent(mount);
+   const carrySlot = rideableComponent.carrySlots[carrySlotIdx];
+   mountCarrySlot(player, carrySlot);
 }
 
 export function processDismountCarrySlotPacket(playerClient: PlayerClient): void {
@@ -717,28 +728,45 @@ export function processDismountCarrySlotPacket(playerClient: PlayerClient): void
    }
 
    const transformComponent = TransformComponentArray.getComponent(player);
-   if (entityExists(transformComponent.parentEntity)) {
-      dismountCarrySlot(player, transformComponent.parentEntity);
+   const playerHitbox = transformComponent.hitboxes[0];
+   if (playerHitbox.parent !== null) {
+      dismountMount(player, playerHitbox.parent.entity);
    }
 }
 
-export function processPickUpArrowPacket(playerClient: PlayerClient, reader: PacketReader): void {
+export function processPickUpEntityPacket(playerClient: PlayerClient, reader: PacketReader): void {
    const player = playerClient.instance;
    if (!entityExists(player)) {
       return;
    }
 
-   const arrow = reader.readNumber() as Entity;
+   const entity = reader.readNumber() as Entity;
 
-   const transformComponent = TransformComponentArray.getComponent(arrow);
-   const hitbox = transformComponent.children[0] as Hitbox;
-   if (getHitboxVelocity(hitbox).length() < 1) {
-      destroyEntity(arrow);
-      
-      const inventoryComponent = InventoryComponentArray.getComponent(player);
-      addItem(player, inventoryComponent, ItemType.woodenArrow, 1);
-      // @Hack: should be detected in addItem or something. shuldn't have to be manually done at the place of calling, yknow?
-      registerPlayerDroppedItemPickup(player);
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+   switch (getEntityType(entity)) {
+      case EntityType.woodenArrow: {
+         if (getHitboxVelocity(hitbox).magnitude() < 1) {
+            destroyEntity(entity);
+            
+            const inventoryComponent = InventoryComponentArray.getComponent(player);
+            addItem(player, inventoryComponent, ItemType.woodenArrow, 1);
+            // @Hack: should be detected in addItem or something. shuldn't have to be manually done at the place of calling, yknow?
+            registerPlayerDroppedItemPickup(player);
+         }
+         break;
+      }
+      case EntityType.dustfleaEgg: {
+         // @Copynpaste
+
+         destroyEntity(entity);
+
+         const inventoryComponent = InventoryComponentArray.getComponent(player);
+         addItem(player, inventoryComponent, ItemType.dustfleaEgg, 1);
+         // @Hack: should be detected in addItem or something. shuldn't have to be manually done at the place of calling, yknow?
+         registerPlayerDroppedItemPickup(player);
+         break;
+      }
    }
 }
 
@@ -756,7 +784,7 @@ export function processModifyBuildingPacket(playerClient: PlayerClient, reader: 
 export function processSetMoveTargetPositionPacket(playerClient: PlayerClient, reader: PacketReader): void {
    if (!entityExists(playerClient.instance)) {
       return;
-   }
+   } 
 
    const entity = reader.readNumber() as Entity;
    const targetX = reader.readNumber();
@@ -774,7 +802,7 @@ export function processSetCarryTargetPacket(playerClient: PlayerClient, reader: 
    const entity = reader.readNumber() as Entity;
    const carryTarget = reader.readNumber();
    
-   const tamingComponent = getFirstComponent(TamingComponentArray, entity);
+   const tamingComponent = TamingComponentArray.getComponent(entity);
    tamingComponent.carryTarget = carryTarget;
 }
 
@@ -786,8 +814,11 @@ export function processSetAttackTargetPacket(playerClient: PlayerClient, reader:
    const entity = reader.readNumber() as Entity;
    const attackTarget = reader.readNumber();
    
-   const cowComponent = CowComponentArray.getComponent(entity);
-   cowComponent.attackTarget = attackTarget;
+   if (!TamingComponentArray.hasComponent(entity)) {
+      return;
+   }
+   const tamingComponent = TamingComponentArray.getComponent(entity);
+   tamingComponent.attackTarget = attackTarget;
 }
 
 export function processCompleteTamingTierPacket(playerClient: PlayerClient, reader: PacketReader): void {
@@ -796,7 +827,7 @@ export function processCompleteTamingTierPacket(playerClient: PlayerClient, read
    }
 
    const entity = reader.readNumber() as Entity;
-   const tamingComponent = getFirstComponent(TamingComponentArray, entity);
+   const tamingComponent = TamingComponentArray.getComponent(entity);
 
    // @Hack
    const foodRequired: number | undefined = getTamingSpec(entity).tierFoodRequirements[(tamingComponent.tamingTier + 1) as TamingTier];
@@ -814,7 +845,7 @@ export function processForceCompleteTamingTierPacket(playerClient: PlayerClient,
    }
 
    const entity = reader.readNumber() as Entity;
-   const tamingComponent = getFirstComponent(TamingComponentArray, entity);
+   const tamingComponent = TamingComponentArray.getComponent(entity);
    // @Cleanup @Copynpaste
    tamingComponent.tamingTier++;
    tamingComponent.foodEatenInTier = 0;
@@ -829,7 +860,7 @@ export function processAcquireTamingSkillPacket(playerClient: PlayerClient, read
    const entity = reader.readNumber() as Entity;
    const skillID = reader.readNumber() as TamingSkillID;
    
-   const tamingComponent = getFirstComponent(TamingComponentArray, entity);
+   const tamingComponent = TamingComponentArray.getComponent(entity);
    const skillLearning = getTamingSkillLearning(tamingComponent, skillID);
    if (skillLearning !== null && skillLearningIsComplete(skillLearning)) {
       const skill = getTamingSkill(skillID);
@@ -847,7 +878,7 @@ export function processForceAcquireTamingSkillPacket(playerClient: PlayerClient,
    
    const skill = getTamingSkill(skillID);
    
-   const tamingComponent = getFirstComponent(TamingComponentArray, entity);
+   const tamingComponent = TamingComponentArray.getComponent(entity);
    tamingComponent.acquiredSkills.push(skill);
 }
 
@@ -868,4 +899,18 @@ export function processSetSignMessagePacket(reader: PacketReader): void {
 
    const floorSignComponent = FloorSignComponentArray.getComponent(entity);
    floorSignComponent.message = message;
+   registerDirtyEntity(entity);
+}
+
+export function processRenameAnimalPacket(reader: PacketReader): void {
+   const entity = reader.readNumber();
+   const name = reader.readString();
+
+   if (!TamingComponentArray.hasComponent(entity)) {
+      return;
+   }
+
+   const tamingComponent = TamingComponentArray.getComponent(entity);
+   tamingComponent.name = name;
+   registerDirtyEntity(entity);
 }

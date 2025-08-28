@@ -4,30 +4,30 @@ import { CollisionGroup, getEntityCollisionGroup } from "../../../shared/src/col
 import { Entity } from "../../../shared/src/entities";
 import { Settings } from "../../../shared/src/settings";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
-import { clampToSubtileBoardDimensions, distance, Point, positionIsInWorld, randFloat } from "../../../shared/src/utils";
+import { clampToSubtileBoardDimensions, distance, Point, positionIsInWorld, randAngle, randFloat } from "../../../shared/src/utils";
 import { getEntitiesInRange } from "../ai-shared";
 import { AIHelperComponent } from "../components/AIHelperComponent";
-import { removeAttachedEntity, TransformComponentArray } from "../components/TransformComponent";
+import { detachHitbox, TransformComponentArray } from "../components/TransformComponent";
 import { createDustfleaMorphCocoonConfig } from "../entities/desert/dustflea-morph-cocoon";
-import { createEntity } from "../Entity";
-import { Hitbox } from "../hitboxes";
-import { destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
+import { createEntity, destroyEntity, getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 
 export class DustfleaHibernateAI {
    public readonly acceleration: number;
    public readonly turnSpeed: number;
+   public readonly turnDamping: number;
    
    public hibernateTargetPosition: Point | null = null;
 
-   constructor(acceleration: number, turnSpeed: number) {
+   constructor(acceleration: number, turnSpeed: number, turnDamping: number) {
       this.acceleration = acceleration;
       this.turnSpeed = turnSpeed;
+      this.turnDamping = turnDamping;
    }
 }
 
 const getRandomNearbyPosition = (dustflea: Entity): Point => {
    const dustfleaTransformComponent = TransformComponentArray.getComponent(dustflea);
-   const dustfleaHitbox = dustfleaTransformComponent.children[0] as Hitbox;
+   const dustfleaHitbox = dustfleaTransformComponent.hitboxes[0];
 
    const RANGE = 600;
    
@@ -144,41 +144,46 @@ const isValidHibernatePosition = (dustflea: Entity, position: Point): boolean =>
    return true;
 }
 
-export function runHibernateAI(dustflea: Entity, aiHelperComponent: AIHelperComponent, hibernateAI: DustfleaHibernateAI): void {
+export function runHibernateAI(dustflea: Entity, aiHelperComponent: AIHelperComponent, ai: DustfleaHibernateAI): void {
    // When the dustflea doesn't have a valid hibernate target position, go look for one
-   if (hibernateAI.hibernateTargetPosition === null && getEntityAgeTicks(dustflea) % Math.floor(Settings.TPS / 4) === 0) {
+   if (ai.hibernateTargetPosition === null && getEntityAgeTicks(dustflea) % Math.floor(Settings.TPS / 4) === 0) {
       const potentialPosition = getRandomNearbyPosition(dustflea);
       if (isValidHibernatePosition(dustflea, potentialPosition)) {
-         hibernateAI.hibernateTargetPosition = potentialPosition;
+         ai.hibernateTargetPosition = potentialPosition;
       }
    }
 
    const dustfleaTransformComponent = TransformComponentArray.getComponent(dustflea);
+   const dustfleaHitbox = dustfleaTransformComponent.hitboxes[0];
+
    // if the dustflea was previously latched onto a target or sitting on an object, unattach.
-   if (dustfleaTransformComponent.rootEntity !== dustflea) {
-      removeAttachedEntity(dustfleaTransformComponent.rootEntity, dustflea);
+   if (dustfleaHitbox.parent !== null) {
+      detachHitbox(dustfleaHitbox);
    }
 
-   if (hibernateAI.hibernateTargetPosition !== null) {
+   if (ai.hibernateTargetPosition !== null) {
       // go to it!
-      aiHelperComponent.move(dustflea, hibernateAI.acceleration, hibernateAI.turnSpeed, hibernateAI.hibernateTargetPosition.x, hibernateAI.hibernateTargetPosition.y);
+      aiHelperComponent.moveFunc(dustflea, ai.hibernateTargetPosition, ai.acceleration);
+      aiHelperComponent.turnFunc(dustflea, ai.hibernateTargetPosition, ai.turnSpeed, ai.turnDamping);
 
-      const dustfleaHitbox = dustfleaTransformComponent.children[0] as Hitbox;
-      if (dustfleaHitbox.box.position.calculateDistanceBetween(hibernateAI.hibernateTargetPosition) < 1) {
+      if (dustfleaHitbox.box.position.distanceTo(ai.hibernateTargetPosition) < 1) {
          destroyEntity(dustflea);
 
-         const cocoonConfig = createDustfleaMorphCocoonConfig(dustfleaHitbox.box.position.copy(), 2 * Math.PI * Math.random());
+         const cocoonConfig = createDustfleaMorphCocoonConfig(dustfleaHitbox.box.position.copy(), randAngle());
          createEntity(cocoonConfig, getEntityLayer(dustflea), 0);
       }
    } else {
       // wandah
       
+      // @Cleanup: would be better to just do nothing and the dustflea will fall back to its wander patterns
+      
       // @Copynpaste!!
       // Wander AI
       const wanderAI = aiHelperComponent.getWanderAI();
       wanderAI.update(dustflea);
-      if (wanderAI.targetPositionX !== -1) {
-         aiHelperComponent.move(dustflea, 250, 2 * Math.PI, wanderAI.targetPositionX, wanderAI.targetPositionY);
+      if (wanderAI.targetPosition !== null) {
+         aiHelperComponent.moveFunc(dustflea, wanderAI.targetPosition, wanderAI.acceleration);
+         aiHelperComponent.turnFunc(dustflea, wanderAI.targetPosition, wanderAI.turnSpeed, wanderAI.turnDamping);
       }
    }
 }

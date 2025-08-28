@@ -1,41 +1,45 @@
+import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/boxes";
+import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
-import { Point } from "../../../../shared/src/utils";
+import { Point, polarVec2 } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { OkrenTongueComponent } from "../../components/OkrenTongueComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
-import { TransformComponent } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { addHitboxVelocity, Hitbox, HitboxAngularTether } from "../../hitboxes";
-import { createOkrenTongueTipConfig } from "./okren-tongue-tip";
 
 export function createOkrenTongueConfig(position: Point, angle: number, okrenHitbox: Hitbox, target: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
       
+   // Only the tongue tip at first
+   const tongueTipHitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), angle, 16, 24), 0.9, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_TONGUE_SEGMENT_TIP]);
+   addHitboxToTransformComponent(transformComponent, tongueTipHitbox);
+   
+   // Restrict the new base entity to match the direction of the okren
+   // @Copynpaste
+   const angularTether: HitboxAngularTether = {
+      originHitbox: okrenHitbox,
+      idealAngle: 0,
+      springConstant: 1/60,
+      damping: 0.5,
+      padding: 0,
+      idealHitboxAngleOffset: 0,
+      useLeverage: false
+   };
+   tongueTipHitbox.angularTethers.push(angularTether);
+
    const physicsComponent = new PhysicsComponent();
    
    const healthComponent = new HealthComponent(99);
 
    const okrenTongueComponent = new OkrenTongueComponent(target);
    
-   const tongueTipConfig = createOkrenTongueTipConfig(position, angle);
-
-   // Restrict the new base entity to match the direction of the okren
-   const tongueTipHitbox = tongueTipConfig.components[ServerComponentType.transform]!.children[0] as Hitbox;
-   // @Copynpaste
-   const angularTether: HitboxAngularTether = {
-      originHitbox: okrenHitbox,
-      springConstant: 1/60,
-      damping: 0.5,
-      padding: 0
-   };
-   tongueTipHitbox.angularTethers.push(angularTether);
-   
    // @Copynpaste
    // Apply some initial velocity
-   const vx = 200 * Math.sin(okrenHitbox.box.angle);
-   const vy = 200 * Math.cos(okrenHitbox.box.angle);
-   addHitboxVelocity(tongueTipHitbox, vx, vy);
+   addHitboxVelocity(tongueTipHitbox, polarVec2(200, okrenHitbox.box.angle));
    
    return {
       entityType: EntityType.okrenTongue,
@@ -45,7 +49,6 @@ export function createOkrenTongueConfig(position: Point, angle: number, okrenHit
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.okrenTongue]: okrenTongueComponent
       },
-      lights: [],
-      childConfigs: [tongueTipConfig]
+      lights: []
    };
 }

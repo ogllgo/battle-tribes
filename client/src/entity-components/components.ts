@@ -25,7 +25,6 @@ import { FenceComponent, FenceComponentArray, FenceComponentParams } from "./ser
 import { FenceGateComponent, FenceGateComponentArray, FenceGateComponentParams } from "./server-components/FenceGateComponent";
 import { FireTorchComponent, FireTorchComponentArray, FireTorchComponentParams } from "./server-components/FireTorchComponent";
 import { FishComponent, FishComponentArray, FishComponentParams } from "./server-components/FishComponent";
-import { FrozenYetiComponent, FrozenYetiComponentArray, FrozenYetiComponentParams } from "./server-components/FrozenYetiComponent";
 import { FurnaceComponent, FurnaceComponentArray, FurnaceComponentParams } from "./server-components/FurnaceComponent";
 import { GlurbHeadSegmentComponent, GlurbHeadSegmentComponentArray, GlurbHeadSegmentComponentParams } from "./server-components/GlurbHeadSegmentComponent";
 import { GolemComponent, GolemComponentArray, GolemComponentParams } from "./server-components/GolemComponent";
@@ -53,7 +52,6 @@ import { PlanterBoxComponent, PlanterBoxComponentArray, PlanterBoxComponentParam
 import { PlayerComponent, PlayerComponentArray, PlayerComponentParams } from "./server-components/PlayerComponent";
 import { PunjiSticksComponent, PunjiSticksComponentArray, PunjiSticksComponentParams } from "./server-components/PunjiSticksComponent";
 import { ResearchBenchComponent, ResearchBenchComponentArray, ResearchBenchComponentParams } from "./server-components/ResearchBenchComponent";
-import { RockSpikeComponent, RockSpikeComponentArray, RockSpikeComponentParams } from "./server-components/RockSpikeComponent";
 import { ScrappyComponent, ScrappyComponentArray, ScrappyComponentParams } from "./server-components/ScrappyComponent";
 import { SlimeComponent, SlimeComponentArray, SlimeComponentParams } from "./server-components/SlimeComponent";
 import { SlimeSpitComponent, SlimeSpitComponentArray, SlimeSpitComponentParams } from "./server-components/SlimeSpitComponent";
@@ -116,7 +114,6 @@ import { WarriorHutComponentArray } from "./client-components/WarriorHutComponen
 import { WoodenArrowComponentArray } from "./client-components/WoodenArrowComponent";
 import { WorkbenchComponentArray } from "./client-components/WorkbenchComponent";
 import { WorkerHutComponentArray } from "./client-components/WorkerHutComponent";
-import { GlurbComponent, GlurbComponentArray, GlurbComponentParams } from "./server-components/GlurbComponent";
 import { FloorSignComponent, FloorSignComponentArray, FloorSignComponentParams } from "./server-components/FloorSignComponent";
 import { DesertBushLivelyComponent, DesertBushLivelyComponentArray, DesertBushLivelyComponentParams } from "./server-components/DesertBushLivelyComponent";
 import { DesertBushSandyComponent, DesertBushSandyComponentArray, DesertBushSandyComponentParams } from "./server-components/DesertBushSandyComponent";
@@ -128,7 +125,7 @@ import { TumbleweedDeadComponent, TumbleweedDeadComponentArray, TumbleweedDeadCo
 import { PalmTreeComponent, PalmTreeComponentArray, PalmTreeComponentParams } from "./server-components/PalmTreeComponent";
 import { PricklyPearComponent, PricklyPearComponentArray, PricklyPearComponentParams } from "./server-components/PricklyPearComponent";
 import { PricklyPearFragmentProjectileComponent, PricklyPearFragmentProjectileComponentArray, PricklyPearFragmentProjectileComponentParams } from "./server-components/PricklyPearFragmentProjectileComponent";
-import { HungerComponent, HungerComponentArray, HungerComponentParams } from "./server-components/HungerComponent";
+import { EnergyStomachComponent, EnergyStomachComponentArray, EnergyStomachComponentParams } from "./server-components/EnergyStomachComponent";
 import { EnergyStoreComponent, EnergyStoreComponentArray, EnergyStoreComponentParams } from "./server-components/EnergyStoreComponent";
 import { DustfleaComponent, DustfleaComponentArray, DustfleaComponentParams } from "./server-components/DustfleaComponent";
 import { SandstoneRockComponent, SandstoneRockComponentArray, SandstoneRockComponentParams } from "./server-components/SandstoneRockComponent";
@@ -136,11 +133,24 @@ import { OkrenComponent, OkrenComponentArray, OkrenComponentParams } from "./ser
 import { DustfleaMorphCocoonComponent, DustfleaMorphCocoonComponentArray, DustfleaMorphCocoonComponentParams } from "./server-components/DustfleaMorphCocoonComponent";
 import { SandBallComponent, SandBallComponentArray, SandBallComponentParams } from "./server-components/SandBallComponent";
 import { KrumblidMorphCocoonComponent, KrumblidMorphCocoonComponentArray, KrumblidMorphCocoonComponentParams } from "./server-components/KrumblidMorphCocoonComponent";
-import { OkrenTongueSegmentComponent, OkrenTongueSegmentComponentArray, OkrenTongueSegmentComponentParams } from "./server-components/OkrenTongueSegmentComponent";
-import { OkrenTongueTipComponent, OkrenTongueTipComponentArray, OkrenTongueTipComponentParams } from "./server-components/OkrenTongueTipComponent";
 import { OkrenTongueComponent, OkrenTongueComponentArray, OkrenTongueComponentParams } from "./server-components/OkrenTongueComponent";
 import { AIPathfindingComponent, AIPathfindingComponentArray, AIPathfindingComponentParams } from "./server-components/AIPathfindingComponent";
 import { DustfleaEggComponent, DustfleaEggComponentArray, DustfleaEggComponentParams } from "./server-components/DustfleaEggComponent";
+import { OkrenClawComponent, OkrenClawComponentArray, OkrenClawComponentParams } from "./server-components/OkrenClawComponent";
+import { SpruceTreeComponent, SpruceTreeComponentArray, SpruceTreeComponentParams } from "./server-components/SpruceTreeComponent";
+import { TundraRockComponent, TundraRockComponentArray, TundraRockComponentParams } from "./server-components/TundraRockComponent";
+import { SnowberryBushComponent, SnowberryBushComponentArray, SnowberryBushComponentParams } from "./server-components/SnowberryBushComponent";
+import { SnobeComponent, SnobeComponentArray, SnobeComponentParams } from "./server-components/SnobeComponent";
+import { SnobeMoundComponent, SnobeMoundComponentArray, SnobeMoundComponentParams } from "./server-components/SnobeMoundComponent";
+import { TundraRockFrozenComponent, TundraRockFrozenComponentArray, TundraRockFrozenComponentParams } from "./server-components/TundraRockFrozenComponent";
+import { InguSerpentComponent, InguSerpentComponentArray, InguSerpentComponentParams } from "./server-components/InguSerpentComponent";
+import { TukmokComponent, TukmokComponentArray, TukmokComponentParams } from "./server-components/TukmokComponent";
+import { TukmokTrunkComponent, TukmokTrunkComponentArray, TukmokTrunkComponentParams } from "./server-components/TukmokTrunkComponent";
+import { TukmokTailClubComponent, TukmokTailClubComponentArray, TukmokTailClubComponentParams } from "./server-components/TukmokTailClubComponent";
+import { TukmokSpurComponent, TukmokSpurComponentArray, TukmokSpurComponentParams } from "./server-components/TukmokSpurComponent";
+import { InguYetuksnoglurblidokowfleaComponent, InguYetuksnoglurblidokowfleaComponentArray, InguYetuksnoglurblidokowfleaComponentParams } from "./server-components/InguYetuksnoglurblidokowfleaComponent";
+import { InguYetuksnoglurblidokowfleaSeekerHeadComponent, InguYetuksnoglurblidokowfleaSeekerHeadComponentArray, InguYetuksnoglurblidokowfleaSeekerHeadComponentParams } from "./server-components/InguYetuksnoglurblidokowfleaSeekerHeadComponent";
+import { InguYetukLaserComponent, InguYetukLaserComponentArray, InguYetukLaserComponentParams } from "./server-components/InguYetukLaserComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -193,13 +203,11 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.projectile]: ProjectileComponentArray,
    [ServerComponentType.iceArrow]: IceArrowComponentArray,
    [ServerComponentType.yeti]: YetiComponentArray,
-   [ServerComponentType.frozenYeti]: FrozenYetiComponentArray,
    [ServerComponentType.totemBanner]: TotemBannerComponentArray,
    [ServerComponentType.cooking]: CookingComponentArray,
    [ServerComponentType.hut]: HutComponentArray,
    [ServerComponentType.snowball]: SnowballComponentArray,
    [ServerComponentType.fish]: FishComponentArray,
-   [ServerComponentType.rockSpike]: RockSpikeComponentArray,
    [ServerComponentType.slimeSpit]: SlimeSpitComponentArray,
    [ServerComponentType.door]: DoorComponentArray,
    [ServerComponentType.tribesman]: TribesmanComponentArray,
@@ -245,10 +253,9 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.furnace]: FurnaceComponentArray,
    [ServerComponentType.fireTorch]: FireTorchComponentArray,
    [ServerComponentType.spikyBastard]: SpikyBastardComponentArray,
-   [ServerComponentType.glurb]: GlurbComponentArray,
-   [ServerComponentType.glurbSegment]: GlurbSegmentComponentArray,
    [ServerComponentType.glurbBodySegment]: GlurbBodySegmentComponentArray,
    [ServerComponentType.glurbHeadSegment]: GlurbHeadSegmentComponentArray,
+   [ServerComponentType.glurbSegment]: GlurbSegmentComponentArray,
    [ServerComponentType.slurbTorch]: SlurbTorchComponentArray,
    [ServerComponentType.attackingEntities]: AttackingEntitiesComponentArray,
    [ServerComponentType.aiAssignment]: AIAssignmentComponentArray,
@@ -277,19 +284,32 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.palmTree]: PalmTreeComponentArray,
    [ServerComponentType.pricklyPear]: PricklyPearComponentArray,
    [ServerComponentType.pricklyPearFragmentProjectile]: PricklyPearFragmentProjectileComponentArray,
-   [ServerComponentType.hunger]: HungerComponentArray,
    [ServerComponentType.energyStore]: EnergyStoreComponentArray,
+   [ServerComponentType.energyStomach]: EnergyStomachComponentArray,
    [ServerComponentType.dustflea]: DustfleaComponentArray,
    [ServerComponentType.sandstoneRock]: SandstoneRockComponentArray,
    [ServerComponentType.okren]: OkrenComponentArray,
+   [ServerComponentType.okrenClaw]: OkrenClawComponentArray,
    [ServerComponentType.dustfleaMorphCocoon]: DustfleaMorphCocoonComponentArray,
    [ServerComponentType.sandBall]: SandBallComponentArray,
    [ServerComponentType.krumblidMorphCocoon]: KrumblidMorphCocoonComponentArray,
    [ServerComponentType.okrenTongue]: OkrenTongueComponentArray,
-   [ServerComponentType.okrenTongueSegment]: OkrenTongueSegmentComponentArray,
-   [ServerComponentType.okrenTongueTip]: OkrenTongueTipComponentArray,
    [ServerComponentType.aiPathfinding]: AIPathfindingComponentArray,
    [ServerComponentType.dustfleaEgg]: DustfleaEggComponentArray,
+   [ServerComponentType.spruceTree]: SpruceTreeComponentArray,
+   [ServerComponentType.tundraRock]: TundraRockComponentArray,
+   [ServerComponentType.tundraRockFrozen]: TundraRockFrozenComponentArray,
+   [ServerComponentType.snowberryBush]: SnowberryBushComponentArray,
+   [ServerComponentType.snobe]: SnobeComponentArray,
+   [ServerComponentType.snobeMound]: SnobeMoundComponentArray,
+   [ServerComponentType.inguSerpent]: InguSerpentComponentArray,
+   [ServerComponentType.tukmok]: TukmokComponentArray,
+   [ServerComponentType.tukmokTrunk]: TukmokTrunkComponentArray,
+   [ServerComponentType.tukmokTailClub]: TukmokTailClubComponentArray,
+   [ServerComponentType.tukmokSpur]: TukmokSpurComponentArray,
+   [ServerComponentType.inguYetuksnoglurblidokowflea]: InguYetuksnoglurblidokowfleaComponentArray,
+   [ServerComponentType.inguYetuksnoglurblidokowfleaSeekerHead]: InguYetuksnoglurblidokowfleaSeekerHeadComponentArray,
+   [ServerComponentType.inguYetukLaser]: InguYetukLaserComponentArray,
 };
 
 const ServerComponentRecord = {
@@ -318,13 +338,11 @@ const ServerComponentRecord = {
    [ServerComponentType.projectile]: (): ProjectileComponent => 0 as any,
    [ServerComponentType.iceArrow]: (): IceArrowComponent => 0 as any,
    [ServerComponentType.yeti]: (): YetiComponent => 0 as any,
-   [ServerComponentType.frozenYeti]: (): FrozenYetiComponent => 0 as any,
    [ServerComponentType.totemBanner]: (): TotemBannerComponent => 0 as any,
    [ServerComponentType.cooking]: (): CookingComponent => 0 as any,
    [ServerComponentType.hut]: (): HutComponent => 0 as any,
    [ServerComponentType.snowball]: (): SnowballComponent => 0 as any,
    [ServerComponentType.fish]: (): FishComponent => 0 as any,
-   [ServerComponentType.rockSpike]: (): RockSpikeComponent => 0 as any,
    [ServerComponentType.slimeSpit]: (): SlimeSpitComponent => 0 as any,
    [ServerComponentType.door]: (): DoorComponent => 0 as any,
    [ServerComponentType.tribesman]: (): TribesmanComponent => 0 as any,
@@ -370,10 +388,9 @@ const ServerComponentRecord = {
    [ServerComponentType.furnace]: (): FurnaceComponent => 0 as any,
    [ServerComponentType.fireTorch]: (): FireTorchComponent => 0 as any,
    [ServerComponentType.spikyBastard]: (): SpikyBastardComponent => 0 as any,
-   [ServerComponentType.glurb]: (): GlurbComponent => 0 as any,
-   [ServerComponentType.glurbSegment]: (): GlurbSegmentComponent => 0 as any,
-   [ServerComponentType.glurbBodySegment]: (): GlurbBodySegmentComponent => 0 as any,
    [ServerComponentType.glurbHeadSegment]: (): GlurbHeadSegmentComponent => 0 as any,
+   [ServerComponentType.glurbBodySegment]: (): GlurbBodySegmentComponent => 0 as any,
+   [ServerComponentType.glurbSegment]: (): GlurbSegmentComponent => 0 as any,
    [ServerComponentType.slurbTorch]: (): SlurbTorchComponent => 0 as any,
    [ServerComponentType.attackingEntities]: (): AttackingEntitiesComponent => 0 as any,
    [ServerComponentType.aiAssignment]: (): AIAssignmentComponent => 0 as any,
@@ -402,19 +419,32 @@ const ServerComponentRecord = {
    [ServerComponentType.palmTree]: (): PalmTreeComponent => 0 as any,
    [ServerComponentType.pricklyPear]: (): PricklyPearComponent => 0 as any,
    [ServerComponentType.pricklyPearFragmentProjectile]: (): PricklyPearFragmentProjectileComponent => 0 as any,
-   [ServerComponentType.hunger]: (): HungerComponent => 0 as any,
    [ServerComponentType.energyStore]: (): EnergyStoreComponent => 0 as any,
+   [ServerComponentType.energyStomach]: (): EnergyStomachComponent => 0 as any,
    [ServerComponentType.dustflea]: (): DustfleaComponent => 0 as any,
    [ServerComponentType.sandstoneRock]: (): SandstoneRockComponent => 0 as any,
    [ServerComponentType.okren]: (): OkrenComponent => 0 as any,
+   [ServerComponentType.okrenClaw]: (): OkrenClawComponent => 0 as any,
    [ServerComponentType.dustfleaMorphCocoon]: (): DustfleaMorphCocoonComponent => 0 as any,
    [ServerComponentType.sandBall]: (): SandBallComponent => 0 as any,
    [ServerComponentType.krumblidMorphCocoon]: (): KrumblidMorphCocoonComponent => 0 as any,
    [ServerComponentType.okrenTongue]: (): OkrenTongueComponent => 0 as any,
-   [ServerComponentType.okrenTongueSegment]: (): OkrenTongueSegmentComponent => 0 as any,
-   [ServerComponentType.okrenTongueTip]: (): OkrenTongueTipComponent => 0 as any,
    [ServerComponentType.aiPathfinding]: (): AIPathfindingComponent => 0 as any,
    [ServerComponentType.dustfleaEgg]: (): DustfleaEggComponent => 0 as any,
+   [ServerComponentType.spruceTree]: (): SpruceTreeComponent => 0 as any,
+   [ServerComponentType.tundraRock]: (): TundraRockComponent => 0 as any,
+   [ServerComponentType.tundraRockFrozen]: (): TundraRockFrozenComponent => 0 as any,
+   [ServerComponentType.snowberryBush]: (): SnowberryBushComponent => 0 as any,
+   [ServerComponentType.snobe]: (): SnobeComponent => 0 as any,
+   [ServerComponentType.snobeMound]: (): SnobeMoundComponent => 0 as any,
+   [ServerComponentType.inguSerpent]: (): InguSerpentComponent => 0 as any,
+   [ServerComponentType.tukmok]: (): TukmokComponent => 0 as any,
+   [ServerComponentType.tukmokTrunk]: (): TukmokTrunkComponent => 0 as any,
+   [ServerComponentType.tukmokTailClub]: (): TukmokTailClubComponent => 0 as any,
+   [ServerComponentType.tukmokSpur]: (): TukmokSpurComponent => 0 as any,
+   [ServerComponentType.inguYetuksnoglurblidokowflea]: (): InguYetuksnoglurblidokowfleaComponent => 0 as any,
+   [ServerComponentType.inguYetuksnoglurblidokowfleaSeekerHead]: (): InguYetuksnoglurblidokowfleaSeekerHeadComponent => 0 as any,
+   [ServerComponentType.inguYetukLaser]: (): InguYetukLaserComponent => 0 as any,
 } satisfies Record<ServerComponentType, () => unknown>;
 
 export type ServerComponent<T extends ServerComponentType> = ReturnType<typeof ServerComponentRecord[T]>;
@@ -445,13 +475,11 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.projectile]: (): ProjectileComponentParams => 0 as any,
    [ServerComponentType.iceArrow]: (): IceArrowComponentParams => 0 as any,
    [ServerComponentType.yeti]: (): YetiComponentParams => 0 as any,
-   [ServerComponentType.frozenYeti]: (): FrozenYetiComponentParams => 0 as any,
    [ServerComponentType.totemBanner]: (): TotemBannerComponentParams => 0 as any,
    [ServerComponentType.cooking]: (): CookingComponentParams => 0 as any,
    [ServerComponentType.hut]: (): HutComponentParams => 0 as any,
    [ServerComponentType.snowball]: (): SnowballComponentParams => 0 as any,
    [ServerComponentType.fish]: (): FishComponentParams => 0 as any,
-   [ServerComponentType.rockSpike]: (): RockSpikeComponentParams => 0 as any,
    [ServerComponentType.slimeSpit]: (): SlimeSpitComponentParams => 0 as any,
    [ServerComponentType.door]: (): DoorComponentParams => 0 as any,
    [ServerComponentType.tribesman]: (): TribesmanComponentParams => 0 as any,
@@ -497,10 +525,9 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.furnace]: (): FurnaceComponentParams => 0 as any,
    [ServerComponentType.fireTorch]: (): FireTorchComponentParams => 0 as any,
    [ServerComponentType.spikyBastard]: (): SpikyBastardComponentParams => 0 as any,
-   [ServerComponentType.glurb]: (): GlurbComponentParams => 0 as any,
-   [ServerComponentType.glurbSegment]: (): GlurbSegmentComponentParams => 0 as any,
-   [ServerComponentType.glurbBodySegment]: (): GlurbBodySegmentComponentParams => 0 as any,
    [ServerComponentType.glurbHeadSegment]: (): GlurbHeadSegmentComponentParams => 0 as any,
+   [ServerComponentType.glurbBodySegment]: (): GlurbBodySegmentComponentParams => 0 as any,
+   [ServerComponentType.glurbSegment]: (): GlurbSegmentComponentParams => 0 as any,
    [ServerComponentType.slurbTorch]: (): SlurbTorchComponentParams => 0 as any,
    [ServerComponentType.attackingEntities]: (): AttackingEntitiesComponentParams => 0 as any,
    [ServerComponentType.aiAssignment]: (): AIAssignmentComponentParams => 0 as any,
@@ -529,19 +556,32 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.palmTree]: (): PalmTreeComponentParams => 0 as any,
    [ServerComponentType.pricklyPear]: (): PricklyPearComponentParams => 0 as any,
    [ServerComponentType.pricklyPearFragmentProjectile]: (): PricklyPearFragmentProjectileComponentParams => 0 as any,
-   [ServerComponentType.hunger]: (): HungerComponentParams => 0 as any,
    [ServerComponentType.energyStore]: (): EnergyStoreComponentParams => 0 as any,
+   [ServerComponentType.energyStomach]: (): EnergyStomachComponentParams => 0 as any,
    [ServerComponentType.dustflea]: (): DustfleaComponentParams => 0 as any,
    [ServerComponentType.sandstoneRock]: (): SandstoneRockComponentParams => 0 as any,
    [ServerComponentType.okren]: (): OkrenComponentParams => 0 as any,
+   [ServerComponentType.okrenClaw]: (): OkrenClawComponentParams => 0 as any,
    [ServerComponentType.dustfleaMorphCocoon]: (): DustfleaMorphCocoonComponentParams => 0 as any,
    [ServerComponentType.sandBall]: (): SandBallComponentParams => 0 as any,
    [ServerComponentType.krumblidMorphCocoon]: (): KrumblidMorphCocoonComponentParams => 0 as any,
    [ServerComponentType.okrenTongue]: (): OkrenTongueComponentParams => 0 as any,
-   [ServerComponentType.okrenTongueSegment]: (): OkrenTongueSegmentComponentParams => 0 as any,
-   [ServerComponentType.okrenTongueTip]: (): OkrenTongueTipComponentParams => 0 as any,
    [ServerComponentType.aiPathfinding]: (): AIPathfindingComponentParams => 0 as any,
    [ServerComponentType.dustfleaEgg]: (): DustfleaEggComponentParams => 0 as any,
+   [ServerComponentType.spruceTree]: (): SpruceTreeComponentParams => 0 as any,
+   [ServerComponentType.tundraRock]: (): TundraRockComponentParams => 0 as any,
+   [ServerComponentType.tundraRockFrozen]: (): TundraRockFrozenComponentParams => 0 as any,
+   [ServerComponentType.snowberryBush]: (): SnowberryBushComponentParams => 0 as any,
+   [ServerComponentType.snobe]: (): SnobeComponentParams => 0 as any,
+   [ServerComponentType.snobeMound]: (): SnobeMoundComponentParams => 0 as any,
+   [ServerComponentType.inguSerpent]: (): InguSerpentComponentParams => 0 as any,
+   [ServerComponentType.tukmok]: (): TukmokComponentParams => 0 as any,
+   [ServerComponentType.tukmokTrunk]: (): TukmokTrunkComponentParams => 0 as any,
+   [ServerComponentType.tukmokTailClub]: (): TukmokTailClubComponentParams => 0 as any,
+   [ServerComponentType.tukmokSpur]: (): TukmokSpurComponentParams => 0 as any,
+   [ServerComponentType.inguYetuksnoglurblidokowflea]: (): InguYetuksnoglurblidokowfleaComponentParams => 0 as any,
+   [ServerComponentType.inguYetuksnoglurblidokowfleaSeekerHead]: (): InguYetuksnoglurblidokowfleaSeekerHeadComponentParams => 0 as any,
+   [ServerComponentType.inguYetukLaser]: (): InguYetukLaserComponentParams => 0 as any,
 } satisfies Record<ServerComponentType, object>;
 
 export type ServerComponentParams<T extends ServerComponentType> = ReturnType<typeof ServerComponentParamsRecord[T]>;

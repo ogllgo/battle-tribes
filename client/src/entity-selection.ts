@@ -1,5 +1,5 @@
 import { Entity, EntityType, PlantedEntityType } from "battletribes-shared/entities";
-import { Point } from "battletribes-shared/utils";
+import { assert, distance, Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { TunnelDoorSide } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import Game from "./Game";
@@ -20,10 +20,10 @@ import { TunnelComponentArray } from "./entity-components/server-components/Tunn
 import { PlanterBoxComponentArray } from "./entity-components/server-components/PlanterBoxComponent";
 import { CraftingStationComponentArray } from "./entity-components/server-components/CraftingStationComponent";
 import { getLimbByInventoryName, InventoryUseComponentArray } from "./entity-components/server-components/InventoryUseComponent";
-import { entityChildIsHitbox, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { TransformComponent, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { TribeComponentArray } from "./entity-components/server-components/TribeComponent";
 import { playerTribe } from "./tribes";
-import { sendMountCarrySlotPacket, sendPickUpArrowPacket, sendStructureInteractPacket, sendModifyBuildingPacket, sendSetCarryTargetPacket, sendSetAttackTargetPacket } from "./networking/packet-creation";
+import { sendMountCarrySlotPacket, sendPickUpEntityPacket, sendStructureInteractPacket, sendModifyBuildingPacket, sendSetCarryTargetPacket, sendSetAttackTargetPacket } from "./networking/packet-creation";
 import { AnimalStaffCommandType, AnimalStaffOptions_isHovering, AnimalStaffOptions_setEntity, AnimalStaffOptions_setIsVisible, createControlCommandParticles } from "./components/game/AnimalStaffOptions";
 import { EntityRenderInfo } from "./EntityRenderInfo";
 import { RideableComponentArray } from "./entity-components/server-components/RideableComponent";
@@ -32,14 +32,15 @@ import { getTextureArrayIndex } from "./texture-atlases/texture-atlases";
 import { GameInteractState } from "./components/game/GameScreen";
 import { playerInstance } from "./player";
 import { HealthComponentArray } from "./entity-components/server-components/HealthComponent";
-import { TamingMenu_setEntity, TamingMenu_setVisibility } from "./components/game/TamingMenu";
+import { TamingMenu_setEntity, TamingMenu_setVisibility } from "./components/game/taming-menu/TamingMenu";
 import { addMenuCloseFunction } from "./menus";
-import { entityIsTameableByPlayer } from "./entity-components/server-components/TamingComponent";
-import { createHitbox, createHitboxQuick, getHitboxVelocity, Hitbox } from "./hitboxes";
+import { entityIsTameableByPlayer, hasTamingSkill, TamingComponentArray } from "./entity-components/server-components/TamingComponent";
+import { createHitboxQuick, getHitboxVelocity, Hitbox } from "./hitboxes";
 import CircularBox from "../../shared/src/boxes/CircularBox";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../shared/src/collision";
 import { SignInscribeMenu_setEntity } from "./components/game/SignInscribeMenu";
 import { FloorSignComponentArray } from "./entity-components/server-components/FloorSignComponent";
+import { TamingSkillID } from "../../shared/src/taming";
 
 const enum Vars {
    DEFAULT_INTERACT_RANGE = 150
@@ -56,11 +57,12 @@ const enum InteractActionType {
    openCraftingStation,
    openAnimalStaffMenu,
    mountCarrySlot,
-   pickUpArrow,
+   pickUpEntity,
    setCarryTarget,
    selectAttackTarget,
    openTamingMenu,
-   inscribeFloorSign
+   inscribeFloorSign,
+   pickUpDustfleaEgg
 }
 
 interface BaseInteractAction {
@@ -111,10 +113,11 @@ interface OpenAnimalStaffMenuAction extends BaseInteractAction {
 
 interface MountCarrySlotAction extends BaseInteractAction {
    readonly type: InteractActionType.mountCarrySlot;
+   readonly carrySlotIdx: number;
 }
 
-interface PickUpArrowAction extends BaseInteractAction {
-   readonly type: InteractActionType.pickUpArrow;
+interface PickUpEntityAction extends BaseInteractAction {
+   readonly type: InteractActionType.pickUpEntity;
 }
 
 interface SetCarryTargetAction extends BaseInteractAction {
@@ -133,7 +136,11 @@ interface InscribeFloorSignAction extends BaseInteractAction {
    readonly type: InteractActionType.inscribeFloorSign;
 }
 
-type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction | OpenAnimalStaffMenuAction | MountCarrySlotAction | PickUpArrowAction | SetCarryTargetAction | SelectAttackTargetAction | OpenTamingMenuAction | InscribeFloorSignAction;
+interface PickUpDustfleaEggAction extends BaseInteractAction {
+   readonly type: InteractActionType.pickUpDustfleaEgg;
+}
+
+type InteractAction = OpenBuildMenuAction | PlantSeedAction | UseFertiliserAction | ToggleTunnelDoorAction | StartResearchingAction | ToggleDoorAction | OpenInventoryAction | OpenCraftingMenuAction | OpenAnimalStaffMenuAction | MountCarrySlotAction | PickUpEntityAction | SetCarryTargetAction | SelectAttackTargetAction | OpenTamingMenuAction | InscribeFloorSignAction | PickUpDustfleaEggAction;
 
 const HIGHLIGHT_CURSOR_RANGE = 75;
 
@@ -188,6 +195,34 @@ const getTunnelDoorSide = (groupNum: number): TunnelDoorSide => {
       case 2: return 0b10;
       default: throw new Error();
    }
+}
+
+const getSelectedCarrySlotIdx = (entity: Entity): number | null => {
+   if (Game.cursorX === null || Game.cursorY === null) {
+      return null;
+   }
+   
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+
+   const rideableComponent = RideableComponentArray.getComponent(entity);
+
+   let minDist = Number.MAX_SAFE_INTEGER;
+   let closestCarrySlotIdx: number | null = null;
+   
+   for (let i = 0; i < rideableComponent.carrySlots.length; i++) {
+      const carrySlot = rideableComponent.carrySlots[i];
+      const x = hitbox.box.position.x + rotateXAroundOrigin(carrySlot.offsetX, carrySlot.offsetY, hitbox.box.angle);
+      const y = hitbox.box.position.y + rotateYAroundOrigin(carrySlot.offsetX, carrySlot.offsetY, hitbox.box.angle);
+
+      const dist = distance(x, y, Game.cursorX, Game.cursorY);
+      if (dist < minDist) {
+         minDist = dist;
+         closestCarrySlotIdx = i;
+      }
+   }
+
+   return closestCarrySlotIdx;
 }
 
 const getEntityInteractAction = (gameInteractState: GameInteractState, entity: Entity): InteractAction | null => {
@@ -307,38 +342,63 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
       };
    // Rideable entities
    } else if (RideableComponentArray.hasComponent(entity)) {
-      const rideableComponent = RideableComponentArray.getComponent(entity);
-      const carrySlot = rideableComponent.carrySlots[0];
-      if (!entityExists(carrySlot.occupiedEntity)) {
-         return {
-            type: InteractActionType.mountCarrySlot,
-            interactEntity: entity,
-            interactRange: Vars.DEFAULT_INTERACT_RANGE
-         };
+      // If the entity requires taming before it is rideable, make sure it has the appropriate skill
+      let isRideable = true;
+      if (TamingComponentArray.hasComponent(entity)) {
+         const tamingComponent = TamingComponentArray.getComponent(entity);
+         if (!hasTamingSkill(tamingComponent, TamingSkillID.riding)) {
+            isRideable = false;
+         }
+      }
+      
+      if (isRideable) {
+         const carrySlotIdx = getSelectedCarrySlotIdx(entity);
+         if (carrySlotIdx !== null) {
+            // @Hack
+            const rideableComponent = RideableComponentArray.getComponent(entity);
+            const carrySlot = rideableComponent.carrySlots[carrySlotIdx];
+            if (!entityExists(carrySlot.occupiedEntity)) {
+               return {
+                  type: InteractActionType.mountCarrySlot,
+                  interactEntity: entity,
+                  interactRange: Vars.DEFAULT_INTERACT_RANGE,
+                  carrySlotIdx: carrySlotIdx
+               };
+            }
+         }
       }
    }
 
    // Pick up arrows
    if (entityType === EntityType.woodenArrow) {
       const transformComponent = TransformComponentArray.getComponent(entity);
-      const hitbox = transformComponent.children[0] as Hitbox;
-      if (getHitboxVelocity(hitbox).length() < 1) {
+      const hitbox = transformComponent.hitboxes[0];
+      if (getHitboxVelocity(hitbox).magnitude() < 1) {
          return {
-            type: InteractActionType.pickUpArrow,
+            type: InteractActionType.pickUpEntity,
             interactEntity: entity,
             interactRange: Vars.DEFAULT_INTERACT_RANGE
          };
       }
    }
 
+   // Pick up dustflea eggs
+   if (entityType === EntityType.dustfleaEgg) {
+      return {
+         type: InteractActionType.pickUpEntity,
+         interactEntity: entity,
+         interactRange: Vars.DEFAULT_INTERACT_RANGE
+      };
+   }
+
    // Inscribe signs
-if (FloorSignComponentArray.hasComponent(entity)) {
-   return {
-      type: InteractActionType.inscribeFloorSign,
-      interactEntity: entity,
-      interactRange: Vars.DEFAULT_INTERACT_RANGE
-   };
-}
+   if (FloorSignComponentArray.hasComponent(entity)) {
+      return {
+         type: InteractActionType.inscribeFloorSign,
+         interactEntity: entity,
+         interactRange: Vars.DEFAULT_INTERACT_RANGE
+      };
+   }
 
    const inventoryMenuType = getInventoryMenuType(entity);
    if (inventoryMenuType !== null) {
@@ -364,24 +424,27 @@ const createInteractRenderInfo = (interactAction: InteractAction): EntityRenderI
       case InteractActionType.openInventory:
       case InteractActionType.openCraftingStation:
       case InteractActionType.openAnimalStaffMenu:
-      case InteractActionType.pickUpArrow:
+      case InteractActionType.pickUpEntity:
       case InteractActionType.setCarryTarget:
       case InteractActionType.selectAttackTarget:
       case InteractActionType.openTamingMenu:
-      case InteractActionType.inscribeFloorSign: {
+      case InteractActionType.inscribeFloorSign:
+      case InteractActionType.pickUpDustfleaEgg: {
          return getEntityRenderInfo(interactAction.interactEntity);
       }
       case InteractActionType.mountCarrySlot: {
          const transformComponent = TransformComponentArray.getComponent(interactAction.interactEntity);
-         const interactEntityHitbox = transformComponent.children[0] as Hitbox;
          
          const renderInfo = new EntityRenderInfo(0, 0, 0, 1);
 
          const rideableComponent = RideableComponentArray.getComponent(interactAction.interactEntity);
-         const carrySlot = rideableComponent.carrySlots[0];
+         const carrySlot = rideableComponent.carrySlots[interactAction.carrySlotIdx];
+
+         const carryingHitbox = transformComponent.hitboxMap.get(carrySlot.hitboxLocalID);
+         assert(typeof carryingHitbox !== "undefined");
 
          // @HACK
-         const box = new CircularBox(interactEntityHitbox.box.position.copy(), new Point(0, 0), interactEntityHitbox.box.angle, 0);
+         const box = new CircularBox(carryingHitbox.box.position.copy(), new Point(0, 0), carryingHitbox.box.angle, 0);
          const hitbox = createHitboxQuick(0, null, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
 
          const renderPart = new TexturedRenderPart(
@@ -477,11 +540,11 @@ const interactWithEntity = (setGameInteractState: (state: GameInteractState) => 
          break;
       }
       case InteractActionType.mountCarrySlot: {
-         sendMountCarrySlotPacket(entity);
+         sendMountCarrySlotPacket(entity, action.carrySlotIdx);
          break;
       }
-      case InteractActionType.pickUpArrow: {
-         sendPickUpArrowPacket(entity);
+      case InteractActionType.pickUpEntity: {
+         sendPickUpEntityPacket(entity);
          break;
       }
       case InteractActionType.setCarryTarget: {
@@ -515,6 +578,9 @@ const interactWithEntity = (setGameInteractState: (state: GameInteractState) => 
             deselectSelectedEntity();
             SignInscribeMenu_setEntity(null);
          });
+         break;
+      }
+      case InteractActionType.pickUpDustfleaEgg: {
          break;
       }
       default: {
@@ -576,7 +642,7 @@ export function deselectHighlightedEntity(): void {
 // @Cleanup: name
 const getEntityID = (gameInteractState: GameInteractState, doPlayerProximityCheck: boolean, doCanSelectCheck: boolean): number => {
    const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
-   const playerHitbox = playerTransformComponent.children[0] as Hitbox;
+   const playerHitbox = playerTransformComponent.hitboxes[0];
    const layer = getEntityLayer(playerInstance!);
    
    const minChunkX = Math.max(Math.floor((Game.cursorX! - HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), 0);
@@ -599,17 +665,17 @@ const getEntityID = (gameInteractState: GameInteractState, doPlayerProximityChec
 
             const entityTransformComponent = TransformComponentArray.getComponent(currentEntity);
             if (doPlayerProximityCheck && doCanSelectCheck) {
-               const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+               const entityHitbox = entityTransformComponent.hitboxes[0];
                // @Incomplete: Should do it based on the distance from the closest hitbox rather than distance from player center
-               if (playerHitbox.box.position.calculateDistanceBetween(entityHitbox.box.position) > interactAction!.interactRange) {
+               if (playerHitbox.box.position.distanceTo(entityHitbox.box.position) > interactAction!.interactRange) {
                   continue;
                }
             }
             
             // Distance from cursor
-            for (const hitbox of entityTransformComponent.children) {
-               if (entityChildIsHitbox(hitbox) && boxIsWithinRange(hitbox.box, cursorPosition, HIGHLIGHT_CURSOR_RANGE)) {
-                  const distance = cursorPosition.calculateDistanceBetween(hitbox.box.position);
+            for (const hitbox of entityTransformComponent.hitboxes) {
+               if (boxIsWithinRange(hitbox.box, cursorPosition, HIGHLIGHT_CURSOR_RANGE)) {
+                  const distance = cursorPosition.distanceTo(hitbox.box.position);
                   if (distance < minDist) {
                      minDist = distance;
                      entityID = currentEntity;
@@ -660,7 +726,7 @@ const updateHighlightedEntity = (gameInteractState: GameInteractState, entity: E
    highlightedRenderInfo = createInteractRenderInfo(interactAction);
    
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = entityTransformComponent.children[0] as Hitbox;
+   const entityHitbox = entityTransformComponent.hitboxes[0];
    
    switch (interactAction.type) {
       case InteractActionType.plantSeed: {

@@ -4,14 +4,15 @@ import { PacketReader } from "../../../../shared/src/packets";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
-import { HitData, HitFlags } from "../../../../shared/src/client-server-types";
-import { randFloat, angle, randItem, randInt } from "../../../../shared/src/utils";
+import { HitFlags } from "../../../../shared/src/client-server-types";
+import { randFloat, randItem, randInt, Point, randAngle } from "../../../../shared/src/utils";
 import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle, LEAF_SPECK_COLOUR_LOW, LEAF_SPECK_COLOUR_HIGH, createWoodSpeckParticle } from "../../particles";
 import { playSoundOnHitbox } from "../../sound";
 import { TREE_HIT_SOUNDS, TREE_DESTROY_SOUNDS } from "./TreeComponent";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface TreePlantedComponentParams {
    readonly growthProgress: number;
@@ -51,9 +52,9 @@ function createParamsFromData(reader: PacketReader): TreePlantedComponentParams 
    };
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    const growthProgress = entityParams.serverComponentParams[ServerComponentType.treePlanted]!.growthProgress;
    
@@ -63,7 +64,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       0,
       getTextureArrayIndex(getTextureSource(growthProgress))
    );
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {
       renderPart: renderPart
@@ -93,20 +94,17 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    treePlantedComponent.renderPart.switchTextureSource(getTextureSource(treePlantedComponent.growthProgress));
 }
 
-function onHit(entity: Entity, hitData: HitData): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
-   
+function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point, hitFlags: number): void {
    const treePlantedComponent = TreePlantedComponentArray.getComponent(entity);
    
    const radius = Math.floor(treePlantedComponent.growthProgress * 10);
 
    // @Cleanup: copy and paste
-   const isDamagingHit = (hitData.flags & HitFlags.NON_DAMAGING_HIT) === 0;
+   const isDamagingHit = (hitFlags & HitFlags.NON_DAMAGING_HIT) === 0;
    
    // Create leaf particles
    {
-      const moveDirection = 2 * Math.PI * Math.random();
+      const moveDirection = randAngle();
 
       const spawnPositionX = hitbox.box.position.x + radius * Math.sin(moveDirection);
       const spawnPositionY = hitbox.box.position.y + radius * Math.cos(moveDirection);
@@ -123,7 +121,7 @@ function onHit(entity: Entity, hitData: HitData): void {
    if (isDamagingHit) {
       // Create wood specks at the point of hit
 
-      let offsetDirection = angle(hitData.hitPosition[0] - hitbox.box.position.x, hitData.hitPosition[1] - hitbox.box.position.y);
+      let offsetDirection = hitbox.box.position.angleTo(hitPosition);
       offsetDirection += 0.2 * Math.PI * (Math.random() - 0.5);
 
       const spawnPositionX = hitbox.box.position.x + (radius + 2) * Math.sin(offsetDirection);
@@ -141,6 +139,6 @@ function onHit(entity: Entity, hitData: HitData): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox(randItem(TREE_DESTROY_SOUNDS), 0.5, 1, entity, hitbox, false);
 }

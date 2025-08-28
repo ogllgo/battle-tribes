@@ -7,7 +7,7 @@ import { setTechTreeX, setTechTreeY, setTechTreeZoom, techIsDirectlyAccessible }
 import OPTIONS from "../../../options";
 import { countItemTypesInInventory } from "../../../inventory-manipulation";
 import { createTechTreeItem } from "../../../rendering/webgl/tech-tree-item-rendering";
-import { Point, randFloat } from "battletribes-shared/utils";
+import { Point, randAngle, randFloat } from "battletribes-shared/utils";
 import Camera from "../../../Camera";
 import { playSound } from "../../../sound";
 import TechTreeProgressBar from "./TechTreeProgressBar";
@@ -176,7 +176,7 @@ const addResearchedItems = (techInfo: Tech, researchTally: ItemTally2): void => 
 
       for (let i = 0; i < entry.count; i++) {
          // @Speed
-         const position = new Point(techInfo.positionX, techInfo.positionY).offset(randFloat(0, 3.5), 2 * Math.PI * Math.random());
+         const position = new Point(techInfo.positionX, techInfo.positionY).offset(randFloat(0, 3.5), randAngle());
          createTechTreeItem(entry.itemType, position);
       }
    }

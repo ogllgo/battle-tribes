@@ -10,7 +10,17 @@ export function getTamingSpecsMap(): ReadonlyMap<EntityType, EntityTamingSpec> {
    return tamingSpecsMap;
 }
 
+const validateTamingSpec = (spec: EntityTamingSpec): void => {
+   for (const skillNode of spec.skillNodes) {
+      if (skillNode.parent === skillNode.skill.id) {
+         throw new Error("Nodes can't parent themselves!");
+      }
+   }
+}
+
 export function registerEntityTamingSpec(entityType: EntityType, spec: EntityTamingSpec): void {
+   validateTamingSpec(spec);
+   
    tamingSpecsMap.set(entityType, spec);
 }
 
@@ -24,7 +34,7 @@ export function getTamingSpec(entity: Entity): EntityTamingSpec {
 export function getTamingSpecDataLength(tamingSpec: EntityTamingSpec): number {
    let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
 
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT + 3 * Float32Array.BYTES_PER_ELEMENT * tamingSpec.skillNodes.length;
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT + 5 * Float32Array.BYTES_PER_ELEMENT * tamingSpec.skillNodes.length;
 
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
 
@@ -41,6 +51,8 @@ export function addTamingSpecToData(packet: Packet, tamingSpec: EntityTamingSpec
       packet.addNumber(skillNode.skill.id);
       packet.addNumber(skillNode.x);
       packet.addNumber(skillNode.y);
+      packet.addNumber(skillNode.parent !== null ? skillNode.parent : -1);
+      packet.addNumber(skillNode.requiredTamingTier);
    }
 
    packet.addNumber(tamingSpec.foodItemType);

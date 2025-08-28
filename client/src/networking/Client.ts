@@ -99,7 +99,7 @@ abstract class Client {
 
    public static connectToServer(setAppState: (appState: AppState) => void, setLoadingScreenStatus: (status: LoadingScreenStatus) => void): Promise<boolean> {
       return new Promise(resolve => {
-         this.socket = new WebSocket(`ws://localhost:${Settings.SERVER_PORT}`);
+         this.socket = new WebSocket(`ws://127.0.0.1:${Settings.SERVER_PORT}`);
          this.socket.binaryType = "arraybuffer";
 
          this.socket.onopen = () => {
@@ -281,56 +281,9 @@ abstract class Client {
 
       HealthBar_setHasFrostShield(gameDataPacket.hasFrostShield);
 
-      // Register hits
-      for (const hitData of gameDataPacket.visibleHits) {
-         // Register hit
-         const hitEntity = hitData.hitEntityID;
-         if (entityExists(hitEntity)) {
-            if (hitData.attackEffectiveness === AttackEffectiveness.stopped) {
-               // Register stopped hit
-                        
-               const transformComponent = TransformComponentArray.getComponent(hitEntity);
-               const hitbox = transformComponent.children[0] as Hitbox;
-               for (let i = 0; i < 6; i++) {
-                  const position = hitbox.box.position.offset(randFloat(0, 6), 2 * Math.PI * Math.random());
-                  createSparkParticle(position.x, position.y);
-               }
-            } else {
-               // Register hit
-
-               // If the entity is hit by a flesh sword, create slime puddles
-               if (hitData.flags & HitFlags.HIT_BY_FLESH_SWORD) {
-                  const transformComponent = TransformComponentArray.getComponent(hitEntity);
-                  const hitbox = transformComponent.children[0] as Hitbox;
-                  for (let i = 0; i < 2; i++) {
-                     createSlimePoolParticle(hitbox.box.position.x, hitbox.box.position.y, 32);
-                  }
-               }
-
-               // @Incomplete @Hack
-               if (hitData.flags & HitFlags.HIT_BY_SPIKES) {
-                  playSound("spike-stab.mp3", 0.3, 1, Point.unpackage(hitData.hitPosition), getEntityLayer(hitEntity));
-               }
-
-               // @Speed
-               const componentArrays = getComponentArrays();
-               for (let i = 0; i < componentArrays.length; i++) {
-                  const componentArray = componentArrays[i];
-                  if (typeof componentArray.onHit !== "undefined" && componentArray.hasComponent(hitEntity)) {
-                     componentArray.onHit(hitEntity, hitData);
-                  }
-               }
-            }
-         }
-
-         if (hitData.damage > 0 && hitData.shouldShowDamageNumber) {
-            createDamageNumber(hitData.hitPosition[0], hitData.hitPosition[1], hitData.damage);
-         }
-      }
-
       if (playerInstance !== null) {
          const transformComponent = TransformComponentArray.getComponent(playerInstance);
-         const playerHitbox = transformComponent.children[0] as Hitbox;
+         const playerHitbox = transformComponent.hitboxes[0];
          // Register player knockback
          for (let i = 0; i < gameDataPacket.playerKnockbacks.length; i++) {
             const knockbackData = gameDataPacket.playerKnockbacks[i];

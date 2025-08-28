@@ -6,7 +6,7 @@ import { Point, randInt } from "../../../shared/src/utils";
 import { Hitbox, applyKnockback, getHitboxVelocity } from "../hitboxes";
 import { destroyEntity } from "../world";
 import { ComponentArray } from "./ComponentArray";
-import { addLocalInvulnerabilityHash, canDamageEntity, HealthComponentArray, hitEntity } from "./HealthComponent";
+import { addLocalInvulnerabilityHash, canDamageEntity, HealthComponentArray, damageEntity } from "./HealthComponent";
 import { TransformComponentArray } from "./TransformComponent";
 
 export class PricklyPearFragmentProjectileComponent {
@@ -27,9 +27,9 @@ PricklyPearFragmentProjectileComponentArray.onHitboxCollision = onHitboxCollisio
 
 function onTick(fragment: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(fragment);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
-   if (getHitboxVelocity(hitbox).length() < 200) {
+   if (getHitboxVelocity(hitbox).magnitude() < 200) {
       destroyEntity(fragment);
    }
 }
@@ -43,10 +43,14 @@ function addDataToPacket(packet: Packet, fragment: Entity): void {
    packet.addNumber(pricklyPearFragmentProjectileComponent.variant);
 }
 
-function onHitboxCollision(fragment: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntity = collidingHitbox.entity;
+   
    if (!HealthComponentArray.hasComponent(collidingEntity)) {
       return;
    }
+
+   const fragment = hitbox.entity;
 
    const pricklyPearFragmentProjectileComponent = PricklyPearFragmentProjectileComponentArray.getComponent(fragment);
    if (collidingEntity === pricklyPearFragmentProjectileComponent.parentCactus) {
@@ -59,9 +63,9 @@ function onHitboxCollision(fragment: Entity, collidingEntity: Entity, affectedHi
       return;
    }
 
-   const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
 
-   hitEntity(collidingEntity, fragment, 3, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
-   applyKnockback(collidingEntity, collidingHitbox, 100, hitDirection);
+   damageEntity(collidingEntity, collidingHitbox, fragment, 3, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   applyKnockback(collidingHitbox, 100, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, fragment.toString(), 0.3);
 }

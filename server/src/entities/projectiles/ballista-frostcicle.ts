@@ -10,17 +10,17 @@ import { ProjectileComponent } from "../../components/ProjectileComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import Tribe from "../../Tribe";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
 export function createBallistaFrostcicleConfig(position: Point, rotation: number, tribe: Tribe, creator: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 12, 80), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.arrowPassable, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 12, 80), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.arrowPassable, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const physicsComponent = new PhysicsComponent();
    physicsComponent.isAffectedByGroundFriction = false;
-   physicsComponent.isImmovable = true;
 
    const tribeComponent = new TribeComponent(tribe);
 
@@ -75,7 +75,7 @@ export function createBallistaFrostcicleConfig(position: Point, rotation: number
 //       const ammoInfo = AMMO_INFO_RECORD[ItemType.frostcicle];
 
 //       const owner = validateEntity(projectileComponent.creator);
-//       const hitDirection = transformComponent.position.calculateAngleBetween(collidingEntityTransformComponent.position);
+//       const hitDirection = transformComponent.position.angleTo(collidingEntityTransformComponent.position);
       
 //       damageEntity(collidingEntity, owner, ammoInfo.damage, DamageSource.arrow, AttackEffectiveness.effective, collisionPoint, 0);
 //       applyKnockback(collidingEntity, ammoInfo.knockback, hitDirection);

@@ -15,21 +15,25 @@ import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { SlimewispComponent } from "../../components/SlimewispComponent";
-import { createHitbox } from "../../hitboxes";
-import { moveEntityToPosition } from "../../ai-shared";
+import { Hitbox } from "../../hitboxes";
+import { accelerateEntityToPosition, turnToPosition } from "../../ai-shared";
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return layer.getBiomeAtPosition(x, y) === Biome.swamp;
 }
 
-const move = (slimewisp: Entity, x: number, y: number): void => {
-   moveEntityToPosition(slimewisp, x, y, 100, Math.PI, 1);
+const moveFunc = (slimewisp: Entity, pos: Point, acceleration: number): void => {
+   accelerateEntityToPosition(slimewisp, pos, acceleration);
+}
+
+const turnFunc = (slimewisp: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
+   turnToPosition(slimewisp, pos, turnSpeed, turnDamping);
 }
 
 export function createSlimewispConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 16), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 16), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const physicsComponent = new PhysicsComponent();
@@ -38,8 +42,8 @@ export function createSlimewispConfig(position: Point, rotation: number): Entity
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.poisoned);
    
-   const aiHelperComponent = new AIHelperComponent(hitbox, 100, move);
-   aiHelperComponent.ais[AIType.wander] = new WanderAI(100, Math.PI, 99999, positionIsValidCallback);
+   const aiHelperComponent = new AIHelperComponent(hitbox, 100, moveFunc, turnFunc);
+   aiHelperComponent.ais[AIType.wander] = new WanderAI(100, Math.PI, 1, 99999, positionIsValidCallback);
    
    const slimewispComponent = new SlimewispComponent();
    

@@ -2,15 +2,14 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
-import { destroyEntity, getEntityLayer, getEntityType } from "../world";
+import { createEntity, destroyEntity, getEntityLayer, getEntityType } from "../world";
 import { TransformComponentArray } from "./TransformComponent";
 import { createSpitPoisonAreaConfig } from "../entities/projectiles/spit-poison-area";
-import { createEntity } from "../Entity";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
 import { Settings } from "../../../shared/src/settings";
 import { StatusEffect } from "../../../shared/src/status-effects";
-import { Point } from "../../../shared/src/utils";
-import { HealthComponentArray, hitEntity } from "./HealthComponent";
+import { Point, randAngle } from "../../../shared/src/utils";
+import { HealthComponentArray, damageEntity } from "./HealthComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "./StatusEffectComponent";
 import { applyKnockback, getHitboxVelocity, Hitbox } from "../hitboxes";
 
@@ -36,8 +35,8 @@ SlimeSpitComponentArray.preRemove = preRemove;
 
 function onTick(spit: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(spit);
-   const hitbox = transformComponent.children[0] as Hitbox;
-   if (getHitboxVelocity(hitbox).length() <= Vars.BREAK_VELOCITY) {
+   const hitbox = transformComponent.hitboxes[0];
+   if (getHitboxVelocity(hitbox).magnitude() <= Vars.BREAK_VELOCITY) {
       destroyEntity(spit);
    }
 }
@@ -55,26 +54,30 @@ function preRemove(spit: Entity): void {
    const spitComponent = SlimeSpitComponentArray.getComponent(spit);
    if (spitComponent.size === 1) {
       const transformComponent = TransformComponentArray.getComponent(spit);
-      const spitHitbox = transformComponent.children[0] as Hitbox;
+      const spitHitbox = transformComponent.hitboxes[0];
 
-      const config = createSpitPoisonAreaConfig(spitHitbox.box.position.copy(), 2 * Math.PI * Math.random());
+      const config = createSpitPoisonAreaConfig(spitHitbox.box.position.copy(), randAngle());
       createEntity(config, getEntityLayer(spit), 0);
    }
 }
 
-function onHitboxCollision(spit: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntity = collidingHitbox.entity;
+   
    const collidingEntityType = getEntityType(collidingEntity);
    if (collidingEntityType === EntityType.slime || collidingEntityType === EntityType.slimewisp || !HealthComponentArray.hasComponent(collidingEntity)) {
       return;
    }
 
+   const spit = hitbox.entity;
+
    const spitComponent = SlimeSpitComponentArray.getComponent(spit);
    const damage = spitComponent.size === 0 ? 2 : 3;
 
-   const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
 
-   hitEntity(collidingEntity, spit, damage, DamageSource.poison, AttackEffectiveness.effective, collisionPoint, 0);
-   applyKnockback(collidingEntity, collidingHitbox, 150, hitDirection);
+   damageEntity(collidingEntity, collidingHitbox, spit, damage, DamageSource.poison, AttackEffectiveness.effective, collisionPoint, 0);
+   applyKnockback(collidingHitbox, 150, hitDirection);
    
    if (StatusEffectComponentArray.hasComponent(collidingEntity)) {
       applyStatusEffect(collidingEntity, StatusEffect.poisoned, 2 * Settings.TPS);

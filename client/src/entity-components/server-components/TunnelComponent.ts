@@ -2,12 +2,13 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { angle, lerp } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityParams, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TUNNEL_TEXTURE_SOURCES } from "./BuildingMaterialComponent";
 import { TransformComponentArray } from "./TransformComponent";
@@ -84,9 +85,9 @@ function createParamsFromData(reader: PacketReader): TunnelComponentParams {
    return fillParams(doorBitset, topDoorOpenProgress, bottomDoorOpenProgress);
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    const buildingMaterialComponentParams = entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!;
 
@@ -97,7 +98,7 @@ function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo
       getTextureArrayIndex(TUNNEL_TEXTURE_SOURCES[buildingMaterialComponentParams.material])
    );
 
-   entityIntermediateInfo.renderInfo.attachRenderPart(renderPart);
+   renderInfo.attachRenderPart(renderPart);
 
    return {};
 }
@@ -119,7 +120,7 @@ function getMaxRenderParts(): number {
 
 const addDoor = (tunnelComponent: TunnelComponent, entity: Entity, doorBit: number): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -166,7 +167,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    }
 
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    // Play open/close sounds
    if ((topDoorOpenProgress > 0 && tunnelComponent.topDoorOpenProgress === 0) || (bottomDoorOpenProgress > 0 && tunnelComponent.bottomDoorOpenProgress === 0)) {

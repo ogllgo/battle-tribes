@@ -25,7 +25,6 @@ export const enum EntityType {
    furnace,
    snowball,
    krumblid,
-   frozenYeti,
    fish,
    itemEntity,
    fleshSwordItemEntity,
@@ -36,7 +35,6 @@ export const enum EntityType {
    ballistaFrostcicle,
    slingTurretRock,
    iceShardProjectile,
-   rockSpikeProjectile,
    spearProjectile,
    researchBench,
    wall,
@@ -77,10 +75,9 @@ export const enum EntityType {
    bracings,
    fireTorch,
    spikyBastard,
-   glurbBodySegment,
    glurbHeadSegment,
+   glurbBodySegment,
    glurbTailSegment,
-   glurb,
    slurbTorch,
    treeRootBase,
    treeRootSegment,
@@ -105,13 +102,26 @@ export const enum EntityType {
    dustflea,
    sandstoneRock,
    okren,
+   okrenClaw,
    dustfleaMorphCocoon,
    sandBall,
    krumblidMorphCocoon,
    okrenTongue,
-   okrenTongueSegment,
-   okrenTongueTip,
-   dustfleaEgg
+   dustfleaEgg,
+   spruceTree,
+   tundraRock,
+   tundraRockFrozen,
+   snowberryBush,
+   snobe,
+   snobeMound,
+   inguSerpent,
+   tukmok,
+   tukmokTrunk,
+   tukmokTailClub,
+   tukmokSpur,
+   inguYetuksnoglurblidokowflea,
+   inguYetuksnoglurblidokowfleaSeekerHead,
+   inguYetukLaser
 }
 
 export const EntityTypeString: Record<EntityType, string> = {
@@ -138,7 +148,6 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.furnace]: "furnace",
    [EntityType.snowball]: "snowball",
    [EntityType.krumblid]: "krumblid",
-   [EntityType.frozenYeti]: "frozenYeti",
    [EntityType.fish]: "fish",
    [EntityType.itemEntity]: "Item Entity",
    [EntityType.fleshSwordItemEntity]: "Flesh Sword Item Entity",
@@ -149,7 +158,6 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.ballistaFrostcicle]: "ballistaFrostcicle",
    [EntityType.slingTurretRock]: "slingTurretRock",
    [EntityType.iceShardProjectile]: "iceShardProjectile",
-   [EntityType.rockSpikeProjectile]: "rockSpikeProjectile",
    [EntityType.spearProjectile]: "spearProjectile",
    [EntityType.researchBench]: "researchBench",
    [EntityType.wall]: "wall",
@@ -190,9 +198,8 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.bracings]: "bracings",
    [EntityType.fireTorch]: "fireTorch",
    [EntityType.spikyBastard]: "spikyBastard",
-   [EntityType.glurb]: "glurb",
-   [EntityType.glurbBodySegment]: "Glurb Body Segment",
    [EntityType.glurbHeadSegment]: "Glurb Head Segment",
+   [EntityType.glurbBodySegment]: "Glurb Body Segment",
    [EntityType.glurbTailSegment]: "Glurb Tail Segment",
    [EntityType.slurbTorch]: "slurbTorch",
    [EntityType.treeRootBase]: "treeRootBase",
@@ -218,13 +225,26 @@ export const EntityTypeString: Record<EntityType, string> = {
    [EntityType.dustflea]: "Dustflea",
    [EntityType.sandstoneRock]: "Sandstone Rock",
    [EntityType.okren]: "Okren",
+   [EntityType.okrenClaw]: "Okren Claw",
    [EntityType.dustfleaMorphCocoon]: "Dustflea Morph Cocoon",
    [EntityType.sandBall]: "Sand Ball",
    [EntityType.krumblidMorphCocoon]: "Krumblid Morph Cocoon",
    [EntityType.okrenTongue]: "Okren Tongue",
-   [EntityType.okrenTongueSegment]: "Okren Tongue Segment",
-   [EntityType.okrenTongueTip]: "Okren Tongue Tip",
    [EntityType.dustfleaEgg]: "Dustflea Egg",
+   [EntityType.spruceTree]: "Spruce Tree",
+   [EntityType.tundraRock]: "Tundra Rock",
+   [EntityType.tundraRockFrozen]: "Tundra Frozen Rock",
+   [EntityType.snowberryBush]: "Snowberry Bush",
+   [EntityType.snobe]: "Snobe",
+   [EntityType.snobeMound]: "Snobe Mound",
+   [EntityType.inguSerpent]: "Ingu Serpent",
+   [EntityType.tukmok]: "Tukmok",
+   [EntityType.tukmokTrunk]: "Tukmok Trunk",
+   [EntityType.tukmokTailClub]: "Tukmok Tail Club",
+   [EntityType.tukmokSpur]: "Tukmok Spur",
+   [EntityType.inguYetuksnoglurblidokowflea]: "Ingu-Yetuksnoglurblidokowflea",
+   [EntityType.inguYetuksnoglurblidokowfleaSeekerHead]: "Ingu-Yetuksnoglurblidokowflea Seeker Head",
+   [EntityType.inguYetukLaser]: "Ingu-Yetuk Laser",
 };
 
 export const NUM_ENTITY_TYPES = Object.keys(EntityTypeString).length;
@@ -239,9 +259,6 @@ export function getEntityTypeFromString(entityTypeString: string): EntityType | 
    return null;
 }
    
-export const RESOURCE_ENTITY_TYPES: ReadonlyArray<EntityType> = [EntityType.tree, EntityType.berryBush, EntityType.iceSpikes, EntityType.cactus, EntityType.boulder];
-export const MOB_ENTITY_TYPES: ReadonlyArray<EntityType> = [EntityType.cow, EntityType.zombie, EntityType.yeti, EntityType.slime, EntityType.slimewisp, EntityType.krumblid, EntityType.frozenYeti];
-
 // @Cleanup: move all of this
 
 export enum CowSpecies {
@@ -271,16 +288,6 @@ export interface TribeTotemBanner {
    readonly layer: number;
    readonly direction: number;
 }
-
-export enum SnowballSize {
-   small,
-   large
-}
-
-export const SNOWBALL_SIZES: Record<SnowballSize, number> = {
-   [SnowballSize.small]: 44,
-   [SnowballSize.large]: 60
-};
 
 export enum DamageSource {
    yeti,

@@ -1,16 +1,16 @@
-import { updateBox, boxIsCircular } from "../../shared/src/boxes/boxes";
+import { boxIsCircular } from "../../shared/src/boxes/boxes";
 import RectangularBox from "../../shared/src/boxes/RectangularBox";
 import { boxIsCollidingWithSubtile } from "../../shared/src/collision";
 import { getEntityCollisionGroup, CollisionGroup } from "../../shared/src/collision-groups";
-import { Entity, EntityType, EntityTypeString } from "../../shared/src/entities";
+import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { STRUCTURE_TYPES, StructureType } from "../../shared/src/structures";
 import { getSubtileIndex, subtileIsInWorld, getSubtileX, getSubtileY } from "../../shared/src/subtiles";
 import { SubtileType } from "../../shared/src/tiles";
-import { Point, alignAngleToClosestAxis, getAbsAngleDiff, distance, getTileIndexIncludingEdges } from "../../shared/src/utils";
+import { Point, alignAngleToClosestAxis, getAbsAngleDiff, distance, getTileIndexIncludingEdges, polarVec2 } from "../../shared/src/utils";
 import { Hitbox } from "./hitboxes";
 import { ItemComponentArray } from "./entity-components/server-components/ItemComponent";
-import { entityChildIsHitbox, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import Layer from "./Layer";
 import { EntityParams, getEntityType } from "./world";
 import { playerTribe } from "./tribes";
@@ -90,7 +90,7 @@ export function entityIsStructure(entityType: EntityType): entityType is Structu
 
 const calculateRelativeOffsetDirection = (entityPosition: Point, entityRotation: number, connectingEntityPosition: Point): number => {
    // Relative rotation of the offset (relative to the entity)
-   let relativeOffsetDirection = entityPosition.calculateAngleBetween(connectingEntityPosition);
+   let relativeOffsetDirection = entityPosition.angleTo(connectingEntityPosition);
    // Account for the entity rotaiton
    relativeOffsetDirection -= entityRotation;
    return relativeOffsetDirection;
@@ -277,7 +277,7 @@ const structurePlaceIsValid = (hitboxes: ReadonlyArray<Hitbox>, layer: Layer): b
 const calculateRegularPlacePosition = (placeOrigin: Point, placingEntityRotation: number, entityType: EntityType): Point => {
    // @Hack?
    if (entityType === EntityType.bracings) {
-      const placePosition = Point.fromVectorForm(Vars.STRUCTURE_PLACE_DISTANCE + Settings.TILE_SIZE * 0.5, placingEntityRotation);
+      const placePosition = polarVec2(Vars.STRUCTURE_PLACE_DISTANCE + Settings.TILE_SIZE * 0.5, placingEntityRotation);
       placePosition.add(placeOrigin);
       return placePosition;
    }
@@ -285,15 +285,14 @@ const calculateRegularPlacePosition = (placeOrigin: Point, placingEntityRotation
    // @SUPAHACK!!!!
    const entityParams = createStructureConfig(entityType, new Point(0, 0), 0);
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitboxes = transformComponentParams.children.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>;
 
    let entityMinX = Number.MAX_SAFE_INTEGER;
    let entityMaxX = Number.MIN_SAFE_INTEGER;
    let entityMinY = Number.MAX_SAFE_INTEGER;
    let entityMaxY = Number.MIN_SAFE_INTEGER;
    
-   for (let i = 0; i < hitboxes.length; i++) {
-      const hitbox = hitboxes[i];
+   for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
+      const hitbox = transformComponentParams.hitboxes[i];
       const box = hitbox.box;
 
       const minX = box.calculateBoundsMinX();
@@ -318,7 +317,7 @@ const calculateRegularPlacePosition = (placeOrigin: Point, placingEntityRotation
    const boundingAreaHeight = entityMaxY - entityMinY;
    const placeOffsetY = boundingAreaHeight * 0.5;
    
-   const placePosition = Point.fromVectorForm(Vars.STRUCTURE_PLACE_DISTANCE + placeOffsetY, placingEntityRotation);
+   const placePosition = polarVec2(Vars.STRUCTURE_PLACE_DISTANCE + placeOffsetY, placingEntityRotation);
    placePosition.add(placeOrigin);
    return placePosition;
 }
@@ -326,7 +325,7 @@ const calculateRegularPlacePosition = (placeOrigin: Point, placingEntityRotation
 const getStructureSnapOrigin = (structure: Entity): Point => {
    // @Hack
    const transformComponent = TransformComponentArray.getComponent(structure);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
    
    const snapOrigin = hitbox.box.position.copy();
    if (getEntityType(structure) === EntityType.embrasure) {
@@ -343,7 +342,7 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
    // @SUPAHACK!!!!
    const entityParams = createStructureConfig(entityType, new Point(0, 0), 0);
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const placingEntityHitboxes = transformComponentParams.children.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>;
+   const placingEntityHitboxes = transformComponentParams.hitboxes;
    const snapOrigin = getStructureSnapOrigin(connectingEntity);
    
    const snapPositions = new Array<SnapCandidate>();
@@ -369,11 +368,7 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
          placingEntityHitboxHalfHeight += 20;
       }
       
-      for (const connectingEntityHitbox of connectingEntityTransformComponent.children) {
-         if (!entityChildIsHitbox(connectingEntityHitbox)) {
-            continue;
-         }
-         
+      for (const connectingEntityHitbox of connectingEntityTransformComponent.hitboxes) {
          const box = connectingEntityHitbox.box;
       
          let hitboxHalfWidth: number;
@@ -395,7 +390,7 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
 
          // Add snap positions for each direction off the connecting entity hitbox
          for (let i = 0; i < 4; i++) {
-            const offsetDirection = connectingEntityHitbox.box.angle + i * Math.PI / 2;
+            const offsetDir = connectingEntityHitbox.box.angle + i * Math.PI / 2;
       
             const connectingEntityOffset = i % 2 === 0 ? hitboxHalfHeight : hitboxHalfWidth;
    
@@ -403,7 +398,7 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
             
             let placingEntityOffset: number;
             // Direction to the snapping entity is opposite of the offset from the snapping entity
-            const angleDiff = getAbsAngleDiff(offsetDirection + Math.PI, placingEntityAngle);
+            const angleDiff = getAbsAngleDiff(offsetDir + Math.PI, placingEntityAngle);
             if (angleDiff < Math.PI * 0.5) {
                // Top or bottom is bing connected
                placingEntityOffset = placingEntityHitboxHalfHeight;
@@ -418,17 +413,17 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
             for (let xi = -1; xi <= 1; xi++) {
                const sideOffset = (maxLength - minLength) * 0.5 * xi;
                
-               const position = Point.fromVectorForm(connectingEntityOffset + placingEntityOffset, offsetDirection);
+               const position = polarVec2(connectingEntityOffset + placingEntityOffset, offsetDir);
                position.add(snapOrigin);
-               position.x += sideOffset * Math.sin(offsetDirection + Math.PI * 0.5);
-               position.y += sideOffset * Math.cos(offsetDirection + Math.PI * 0.5);
+               position.x += sideOffset * Math.sin(offsetDir + Math.PI * 0.5);
+               position.y += sideOffset * Math.cos(offsetDir + Math.PI * 0.5);
                positions.push(position);
             }
 
             let position!: Point;
             let minDist = Number.MAX_SAFE_INTEGER;
             for (const currentPosition of positions) {
-               const dist = currentPosition.calculateDistanceBetween(desiredPlacePosition);
+               const dist = currentPosition.distanceTo(desiredPlacePosition);
                if (dist < minDist) {
                   minDist = dist;
                   position = currentPosition;
@@ -438,7 +433,7 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
             // @SUPAHACK!!!!
             const entityParams = createStructureConfig(entityType, position, placingEntityAngle);
             const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-            const hitboxes = transformComponentParams.children.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>;
+            const hitboxes = transformComponentParams.hitboxes;
             
             // Don't add the position if it would be colliding with the connecting entity
             let isValid = true;
@@ -462,7 +457,7 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
 
             // // If the hitbox is circular, add the free position
             // if (hitboxIsCircular(hitbox)) {
-            //    const offsetDirection = connectingEntity.position.calculateAngleBetween(desiredPlacePosition);
+            //    const offsetDirection = connectingEntity.position.angleTo(desiredPlacePosition);
             //    // @Copynpaste
    
                
@@ -584,7 +579,7 @@ const groupTransforms = (transforms: ReadonlyArray<SnapCandidate>, entityType: E
       for (const transform of group) {
          // @Hack
          const connectingEntityTransformComponent = TransformComponentArray.getComponent(transform.connectedEntity);
-         const connectingEntityHitbox = connectingEntityTransformComponent.children[0] as Hitbox;
+         const connectingEntityHitbox = connectingEntityTransformComponent.hitboxes[0];
          
          const relativeOffsetDirection = calculateRelativeOffsetDirection(transform.position, transform.angle, connectingEntityHitbox.box.position);
          const connection = createStructureConnection(transform.connectedEntity, relativeOffsetDirection);
@@ -609,7 +604,7 @@ const filterCandidatePositions = (candidates: Array<SnapCandidate>, regularPlace
    for (let i = 0; i < candidates.length; i++) {
       const transform = candidates[i];
 
-      if (transform.position.calculateDistanceBetween(regularPlacePosition) > Settings.STRUCTURE_POSITION_SNAP) {
+      if (transform.position.distanceTo(regularPlacePosition) > Settings.STRUCTURE_POSITION_SNAP) {
          candidates.splice(i, 1);
          i--;
       }
@@ -733,7 +728,7 @@ const getBracingsPlaceInfo = (regularPlacePosition: Point, layer: Layer): Struct
    // @SUPAHACK!!!!
    const entityParams = createStructureConfig(EntityType.bracings, position, rotation);
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitboxes = transformComponentParams.children.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>;
+   const hitboxes = transformComponentParams.hitboxes;
    
    if (structureIntersectsWithBuildingBlockingTiles(layer, hitboxes)) {
       isValid = false;
@@ -763,7 +758,7 @@ const calculatePlaceInfo = (desiredPlacePosition: Point, desiredPlaceAngle: numb
       // @SUPAHACK!!!!
       const entityParams = createStructureConfig(entityType, desiredPlacePosition.copy(), desiredPlaceAngle);
       const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-      const hitboxes = transformComponentParams.children.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>;
+      const hitboxes = transformComponentParams.hitboxes;
 
       // If no connections are found, use the regular place position
       return {

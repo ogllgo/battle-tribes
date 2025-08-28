@@ -14,7 +14,6 @@ import { TechID } from "../../../shared/src/techs";
 import { playerInstance } from "../player";
 import { TamingSkillID } from "../../../shared/src/taming";
 import Camera from "../Camera";
-import { Hitbox } from "../hitboxes";
 
 export function createPlayerDataPacket(): ArrayBuffer {
    // Position, rotation
@@ -37,10 +36,10 @@ export function createPlayerDataPacket(): ArrayBuffer {
    const packet = new Packet(PacketType.playerData, lengthBytes);
    
    const transformComponent = TransformComponentArray.getComponent(playerInstance!);
-   const playerHitbox = transformComponent.children[0] as Hitbox;
+   const playerHitbox = transformComponent.hitboxes[0];
    packet.addNumber(playerHitbox.box.position.x);
    packet.addNumber(playerHitbox.box.position.y);
-   packet.addNumber(playerHitbox.box.angle);
+   packet.addNumber(playerHitbox.box.relativeAngle);
 
    packet.addNumber(playerHitbox.previousPosition.x);
    packet.addNumber(playerHitbox.previousPosition.y);
@@ -116,7 +115,7 @@ export function createSyncRequestPacket(): ArrayBuffer {
 
 export function createAttackPacket(): ArrayBuffer {
    const transformComponent = TransformComponentArray.getComponent(playerInstance!);
-   const playerHitbox = transformComponent.children[0] as Hitbox;
+   const playerHitbox = transformComponent.hitboxes[0];
    
    const packet = new Packet(PacketType.attack, 3 * Float32Array.BYTES_PER_ELEMENT);
 
@@ -297,9 +296,10 @@ export function sendAnimalStaffFollowCommandPacket(entity: Entity): void {
    Client.sendPacket(packet.buffer);
 }
 
-export function sendMountCarrySlotPacket(mount: Entity): void {
-   const packet = new Packet(PacketType.mountCarrySlot, 2 * Float32Array.BYTES_PER_ELEMENT);
+export function sendMountCarrySlotPacket(mount: Entity, carrySlotIdx: number): void {
+   const packet = new Packet(PacketType.mountCarrySlot, 3 * Float32Array.BYTES_PER_ELEMENT);
    packet.addNumber(mount);
+   packet.addNumber(carrySlotIdx);
    Client.sendPacket(packet.buffer);
 }
 
@@ -308,9 +308,9 @@ export function sendDismountCarrySlotPacket(): void {
    Client.sendPacket(packet.buffer);
 }
 
-export function sendPickUpArrowPacket(arrow: Entity): void {
-   const packet = new Packet(PacketType.pickUpArrow, 2 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(arrow);
+export function sendPickUpEntityPacket(entity: Entity): void {
+   const packet = new Packet(PacketType.pickUpEntity, 2 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(entity);
    Client.sendPacket(packet.buffer);
 }
 
@@ -386,5 +386,12 @@ export function sendSetSignMessagePacket(entity: Entity, message: string): void 
    const packet = new Packet(PacketType.setSignMessage, 2 * Float32Array.BYTES_PER_ELEMENT + getStringLengthBytes(message));
    packet.addNumber(entity);
    packet.addString(message);
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendRenameAnimalPacket(entity: Entity, name: string): void {
+   const packet = new Packet(PacketType.renameAnimal, 2 * Float32Array.BYTES_PER_ELEMENT + getStringLengthBytes(name));
+   packet.addNumber(entity);
+   packet.addString(name);
    Client.sendPacket(packet.buffer);
 }

@@ -1,26 +1,25 @@
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { Point } from "battletribes-shared/utils";
+import { Point, randAngle } from "battletribes-shared/utils";
 import { ItemComponent } from "../components/ItemComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig, LightCreationInfo } from "../components";
 import { ItemType } from "battletribes-shared/items/items";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
-import { addHitboxToTransformComponent, getRandomPositionInEntity, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
+import { addHitboxToTransformComponent, getRandomPositionInBox, getRandomWeightedHitbox, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { PhysicsComponent } from "../components/PhysicsComponent";
 import Layer from "../Layer";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
-import { getEntityLayer } from "../world";
-import { createEntity } from "../Entity";
-import { createHitbox } from "../hitboxes";
-import { createLight } from "../light-levels";
+import { createEntity, getEntityLayer } from "../world";
+import { Hitbox } from "../hitboxes";
+import { createLight } from "../lights";
 
 export function createItemEntityConfig(position: Point, rotation: number, itemType: ItemType, amount: number, throwingEntity: Entity | null): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = createHitbox(transformComponent, null, new RectangularBox(position, new Point(0, 0), rotation, 16, 16), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 16, 16), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionMask = DEFAULT_COLLISION_MASK & ~CollisionBit.planterBox;
    
@@ -49,9 +48,17 @@ export function createItemEntityConfig(position: Point, rotation: number, itemTy
    };
 }
 
-const generateItemEntitySpawnPosition = (entityLayer: Layer, transformComponent: TransformComponent): Point | null => {
+const generateItemEntitySpawnPosition = (entityLayer: Layer, transformComponent: TransformComponent, hitboxIdx?: number): Point | null => {
    for (let attempts = 0; attempts < 50; attempts++) {
-      const position = getRandomPositionInEntity(transformComponent);
+      // @Speed: if hitboxIdx is defined, then this does the same thing every loop. also this condition is checked every time
+      let hitbox: Hitbox;
+      if (typeof hitboxIdx !== "undefined") {
+         hitbox = transformComponent.hitboxes[hitboxIdx];
+      } else {
+         hitbox = getRandomWeightedHitbox(transformComponent);
+      }
+      
+      const position = getRandomPositionInBox(hitbox.box);
 
       const subtileIndex = getSubtileIndex(Math.floor(position.x / Settings.SUBTILE_SIZE), Math.floor(position.y / Settings.SUBTILE_SIZE));
       // Don't spawn item entities in walls otherwise they can get stuck in the wall
@@ -63,18 +70,18 @@ const generateItemEntitySpawnPosition = (entityLayer: Layer, transformComponent:
    return null;
 }
 
-export function createItemsOverEntity(entity: Entity, itemType: ItemType, amount: number): void {
+export function createItemsOverEntity(entity: Entity, itemType: ItemType, amount: number, hitboxIdx?: number): void {
    const layer = getEntityLayer(entity);
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    for (let i = 0; i < amount; i++) {
-      const spawnPosition = generateItemEntitySpawnPosition(layer, transformComponent);
+      const spawnPosition = generateItemEntitySpawnPosition(layer, transformComponent, hitboxIdx);
       if (spawnPosition === null) {
          continue;
       }
       
       // Create item entity
-      const config = createItemEntityConfig(spawnPosition, 2 * Math.PI * Math.random(), itemType, 1, null);
+      const config = createItemEntityConfig(spawnPosition, randAngle(), itemType, 1, null);
       createEntity(config, getEntityLayer(entity), 0);
    }
 }

@@ -6,7 +6,7 @@ import { turnEntityToEntity } from "../../../ai-shared";
 import { recipeCraftingStationIsAvailable, InventoryComponentArray, craftRecipe, InventoryComponent, countItemType } from "../../../components/InventoryComponent";
 import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
 import { TribesmanPathType, TribesmanAIComponentArray } from "../../../components/TribesmanAIComponent";
-import { PathfindingFailureDefault } from "../../../pathfinding";
+import { PathfindFailureDefault } from "../../../pathfinding";
 import { getAvailableCraftingStations } from "../tribe-member";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { CraftingStation, CRAFTING_RECIPES, CRAFTING_STATION_ITEM_TYPE_RECORD } from "battletribes-shared/items/crafting-recipes";
@@ -28,7 +28,7 @@ const getClosestCraftingStation = (tribesman: Entity, tribe: Tribe, craftingStat
    // @Incomplete: slime
 
    const transformComponent = TransformComponentArray.getComponent(tribesman);
-   const tribesmanHitbox = transformComponent.children[0] as Hitbox;
+   const tribesmanHitbox = transformComponent.hitboxes[0];
    
    // @Speed
    let closestStation: Entity | undefined;
@@ -38,9 +38,9 @@ const getClosestCraftingStation = (tribesman: Entity, tribe: Tribe, craftingStat
 
       if (buildingMatchesCraftingStation(building, craftingStation)) {
          const buildingTransformComponent = TransformComponentArray.getComponent(building);
-         const buildingHitbox = buildingTransformComponent.children[0] as Hitbox;
+         const buildingHitbox = buildingTransformComponent.hitboxes[0];
          
-         const dist = tribesmanHitbox.box.position.calculateDistanceBetween(buildingHitbox.box.position);
+         const dist = tribesmanHitbox.box.position.distanceTo(buildingHitbox.box.position);
          if (dist < minDist) {
             minDist = dist;
             closestStation = building;
@@ -82,9 +82,9 @@ export function goCraftItem(tribesman: Entity, plan: AICraftRecipePlan, tribe: T
 
       if (!recipeCraftingStationIsAvailable(availableCraftingStations, recipe)) {
          const craftingStationTransformComponent = TransformComponentArray.getComponent(craftingStation);
-         const craftingStationHitbox = craftingStationTransformComponent.children[0] as Hitbox;
+         const craftingStationHitbox = craftingStationTransformComponent.hitboxes[0];
          
-         const isFinished = pathfindTribesman(tribesman, craftingStationHitbox.box.position.x, craftingStationHitbox.box.position.y, getEntityLayer(craftingStation), craftingStation, TribesmanPathType.default, Math.floor(Settings.MAX_CRAFTING_STATION_USE_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindingFailureDefault.none);
+         const isFinished = pathfindTribesman(tribesman, craftingStationHitbox.box.position.x, craftingStationHitbox.box.position.y, getEntityLayer(craftingStation), craftingStation, TribesmanPathType.default, Math.floor(Settings.MAX_CRAFTING_STATION_USE_DISTANCE / PathfindingSettings.NODE_SEPARATION), PathfindFailureDefault.none);
          if (!isFinished) {
             const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
             const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);

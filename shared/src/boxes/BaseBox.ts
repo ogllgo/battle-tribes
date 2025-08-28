@@ -3,6 +3,7 @@ import { Point } from "../utils";
 import { Box } from "./boxes";
 
 export const enum PivotPointType {
+   // @Cleanup: normalised is the wrong kind of term I feel]
    /** Coordinates normalised to the hitboxes' size. (-0.5, -0.5) = bottom left, (0, 0) = middle, (0.5, 0.5) = top right */
    normalised,
    /** Coordinates taken as an offset from the hitboxes' position. */

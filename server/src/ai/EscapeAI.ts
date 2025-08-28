@@ -11,6 +11,7 @@ export type ExtraEscapeCondition = (entity: Entity, escapeTarget: Entity) => boo
 export class EscapeAI {
    public readonly acceleration: number;
    public readonly turnSpeed: number;
+   public readonly turnDamping: number;
 
    public readonly escapeTargetRememberTime: number;
    public lastEscapeTargetPosition = new Point(0, 0);
@@ -18,9 +19,10 @@ export class EscapeAI {
    
    public readonly extraEscapeCondition?: ExtraEscapeCondition;
 
-   constructor(acceleration: number, turnSpeed: number, escapeTargetRememberTime: number, extraEscapeCondition?: ExtraEscapeCondition) {
+   constructor(acceleration: number, turnSpeed: number, turnDamping: number, escapeTargetRememberTime: number, extraEscapeCondition?: ExtraEscapeCondition) {
       this.acceleration = acceleration;
       this.turnSpeed = turnSpeed;
+      this.turnDamping = turnDamping;
       this.escapeTargetRememberTime = escapeTargetRememberTime;
       this.extraEscapeCondition = extraEscapeCondition;
    }
@@ -34,7 +36,7 @@ export function shouldRunEscapeAI(entity: Entity): boolean {
 const getEscapeTarget = (entity: Entity, escapeAI: EscapeAI): Entity | null => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    // @Hack
-   const entityHitbox = transformComponent.children[0] as Hitbox;
+   const entityHitbox = transformComponent.hitboxes[0];
    
    const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(entity);
    const aiHelperComponent = AIHelperComponentArray.getComponent(entity);
@@ -52,9 +54,9 @@ const getEscapeTarget = (entity: Entity, escapeAI: EscapeAI): Entity | null => {
       
       const attackingEntityTransformComponent = TransformComponentArray.getComponent(attackingEntity);
       // @Hack
-      const attackingEntityHitbox = attackingEntityTransformComponent.children[0] as Hitbox;
+      const attackingEntityHitbox = attackingEntityTransformComponent.hitboxes[0];
       
-      const distance = entityHitbox.box.position.calculateDistanceBetween(attackingEntityHitbox.box.position);
+      const distance = entityHitbox.box.position.distanceTo(attackingEntityHitbox.box.position);
       if (distance < minDistance) {
          minDistance = distance;
          escapeEntity = attackingEntity;
@@ -69,9 +71,9 @@ const getEscapeTarget = (entity: Entity, escapeAI: EscapeAI): Entity | null => {
       
          const escapeTargetTransformComponent = TransformComponentArray.getComponent(escapeTarget);
          // @Hack
-         const escapeTargetHitbox = escapeTargetTransformComponent.children[0] as Hitbox;
+         const escapeTargetHitbox = escapeTargetTransformComponent.hitboxes[0];
          
-         const distance = entityHitbox.box.position.calculateDistanceBetween(escapeTargetHitbox.box.position);
+         const distance = entityHitbox.box.position.distanceTo(escapeTargetHitbox.box.position);
          if (distance < minDistance) {
             minDistance = distance;
             escapeEntity = escapeTarget;
@@ -88,7 +90,7 @@ export function runEscapeAI(entity: Entity, aiHelperComponent: AIHelperComponent
    let escapePosition: Point;
    if (escapeTarget !== null) {
       const escapeTargetTransformComponent = TransformComponentArray.getComponent(escapeTarget);
-      const escapeTargetHitbox = escapeTargetTransformComponent.children[0] as Hitbox;
+      const escapeTargetHitbox = escapeTargetTransformComponent.hitboxes[0];
       escapePosition = escapeTargetHitbox.box.position.copy();
       escapeAI.lastEscapeTargetPosition = escapePosition;
       escapeAI.remainingRememberTicks = escapeAI.escapeTargetRememberTime * Settings.TPS;
@@ -105,12 +107,14 @@ export function runEscapeAI(entity: Entity, aiHelperComponent: AIHelperComponent
    aiHelperComponent.currentAIType = AIType.escape;
 
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.children[0] as Hitbox;
+   const hitbox = transformComponent.hitboxes[0];
 
    const targetX = hitbox.box.position.x * 2 - escapePosition.x;
    const targetY = hitbox.box.position.y * 2 - escapePosition.y;
+   const targetPos = new Point(targetX, targetY);
 
-   aiHelperComponent.move(entity, escapeAI.acceleration, escapeAI.turnSpeed, targetX, targetY);
+   aiHelperComponent.moveFunc(entity, targetPos, escapeAI.acceleration);
+   aiHelperComponent.turnFunc(entity, targetPos, escapeAI.turnSpeed, escapeAI.turnDamping);
 
    return true;
 }

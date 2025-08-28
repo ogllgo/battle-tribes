@@ -1,6 +1,6 @@
 import { StatusEffectData } from "./client-server-types";
 import { CraftingStation } from "./items/crafting-recipes";
-import { CowSpecies, DeathInfo, DoorToggleType, FishColour, FrozenYetiAttackType, RockSpikeProjectileSize, SlimeSize, SnowballSize, TreeSize, LimbAction, TribeTotemBanner, EntityType } from "./entities";
+import { CowSpecies, DeathInfo, DoorToggleType, FishColour, SlimeSize, TreeSize, TribeTotemBanner, EntityType } from "./entities";
 import { Inventory, InventoryName, ItemType } from "./items/items";
 import { Settings } from "./settings";
 import { StatusEffect } from "./status-effects";
@@ -25,7 +25,6 @@ export enum ServerComponentType {
    cow,
    door,
    fish,
-   frozenYeti,
    golem,
    health,
    hut,
@@ -38,7 +37,6 @@ export enum ServerComponentType {
    pebblum,
    physics,
    player,
-   rockSpike,
    slime,
    slimeSpit,
    slimewisp,
@@ -94,10 +92,9 @@ export enum ServerComponentType {
    furnace,
    fireTorch,
    spikyBastard,
-   glurb,
-   glurbSegment,
-   glurbBodySegment,
    glurbHeadSegment,
+   glurbBodySegment,
+   glurbSegment,
    slurbTorch,
    attackingEntities,
    aiAssignment,
@@ -126,19 +123,32 @@ export enum ServerComponentType {
    palmTree,
    pricklyPear,
    pricklyPearFragmentProjectile,
-   hunger,
    energyStore,
+   energyStomach,
    dustflea,
    sandstoneRock,
    okren,
+   okrenClaw,
    dustfleaMorphCocoon,
    sandBall,
    krumblidMorphCocoon,
    okrenTongue,
-   okrenTongueSegment,
-   okrenTongueTip,
    aiPathfinding,
    dustfleaEgg,
+   spruceTree,
+   tundraRock,
+   tundraRockFrozen,
+   snowberryBush,
+   snobe,
+   snobeMound,
+   inguSerpent,
+   tukmok,
+   tukmokTrunk,
+   tukmokTailClub,
+   tukmokSpur,
+   inguYetuksnoglurblidokowflea,
+   inguYetuksnoglurblidokowfleaSeekerHead,
+   inguYetukLaser,
 }
 
 export const ServerComponentTypeString: Record<ServerComponentType, string> = {
@@ -151,7 +161,6 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.cow]: "Cow Component",
    [ServerComponentType.door]: "Foor Component",
    [ServerComponentType.fish]: "Fish Component",
-   [ServerComponentType.frozenYeti]: "Frozen Yeti Component",
    [ServerComponentType.golem]: "Golem Component",
    [ServerComponentType.health]: "Health Component",
    [ServerComponentType.hut]: "Hut Component",
@@ -164,7 +173,6 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.pebblum]: "Pebblum Component",
    [ServerComponentType.physics]: "Physics Component",
    [ServerComponentType.player]: "Player Component",
-   [ServerComponentType.rockSpike]: "Rock Spike Component",
    [ServerComponentType.slime]: "Slime Component",
    [ServerComponentType.slimeSpit]: "Slime Spit Component",
    [ServerComponentType.slimewisp]: "Slimewisp Component",
@@ -225,10 +233,9 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.furnace]: "Furnace Component",
    [ServerComponentType.fireTorch]: "Fire Torch Component",
    [ServerComponentType.spikyBastard]: "Spiky Bastard Component",
-   [ServerComponentType.glurb]: "Glurb Component",
-   [ServerComponentType.glurbSegment]: "Glurb Segment Component",
-   [ServerComponentType.glurbBodySegment]: "Glurb Body Segment Component",
    [ServerComponentType.glurbHeadSegment]: "Glurb Head Segment Component",
+   [ServerComponentType.glurbBodySegment]: "Glurb Body Segment Component",
+   [ServerComponentType.glurbSegment]: "Glurb Segment Component",
    [ServerComponentType.slurbTorch]: "Slurb Torch Component",
    [ServerComponentType.attackingEntities]: "Attacking Entities Component",
    [ServerComponentType.aiAssignment]: "AI Assignment Component",
@@ -257,19 +264,32 @@ export const ServerComponentTypeString: Record<ServerComponentType, string> = {
    [ServerComponentType.palmTree]: "Palm Tree Component",
    [ServerComponentType.pricklyPear]: "Prickly Pear Component",
    [ServerComponentType.pricklyPearFragmentProjectile]: "Prickly Pear Fragment Projectile Component",
-   [ServerComponentType.hunger]: "Hunger Component",
    [ServerComponentType.energyStore]: "Energy Store Component",
+   [ServerComponentType.energyStomach]: "Energy Stomach Component",
    [ServerComponentType.dustflea]: "Dustflea Component",
    [ServerComponentType.sandstoneRock]: "Sandstone Rock Component",
    [ServerComponentType.okren]: "Okren Component",
+   [ServerComponentType.okrenClaw]: "Okren Claw Component",
    [ServerComponentType.dustfleaMorphCocoon]: "Dustflea Morph Cocoon Component",
    [ServerComponentType.sandBall]: "Sand Ball Component",
    [ServerComponentType.krumblidMorphCocoon]: "Krumblid Morph Cocoon Component",
    [ServerComponentType.okrenTongue]: "Okren Tongue Component",
-   [ServerComponentType.okrenTongueSegment]: "Okren Tongue Segment Component",
-   [ServerComponentType.okrenTongueTip]: "Okren Tongue Tip Component",
    [ServerComponentType.aiPathfinding]: "AI Pathfinding Component",
    [ServerComponentType.dustfleaEgg]: "Dustflea Egg Component",
+   [ServerComponentType.spruceTree]: "Spruce Tree Component",
+   [ServerComponentType.tundraRock]: "Tundra Rock Component",
+   [ServerComponentType.tundraRockFrozen]: "Tundra Frozen Rock Component",
+   [ServerComponentType.snowberryBush]: "Snowberry Bush Component",
+   [ServerComponentType.snobe]: "Snobe Component",
+   [ServerComponentType.snobeMound]: "Snobe Mound Component",
+   [ServerComponentType.inguSerpent]: "Ingu Serpent Component",
+   [ServerComponentType.tukmok]: "Tukmok Component",
+   [ServerComponentType.tukmokTrunk]: "Tukmok Trunk Component",
+   [ServerComponentType.tukmokTailClub]: "Tukmok Tail Component",
+   [ServerComponentType.tukmokSpur]: "Tukmok Spur Component",
+   [ServerComponentType.inguYetuksnoglurblidokowflea]: "Ingu-Yetuksnoglurblidokowflea Component",
+   [ServerComponentType.inguYetuksnoglurblidokowfleaSeekerHead]: "Ingu-Yetuksnoglurblidokowflea Seeker Head Component",
+   [ServerComponentType.inguYetukLaser]: "Ingu-Yetuk Laser Component",
 };
 
 export const NUM_COMPONENTS = Object.keys(ServerComponentTypeString).length;
@@ -299,7 +319,6 @@ export const EntityComponents = {
    [EntityType.furnace]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.inventory, ServerComponentType.cooking, ServerComponentType.furnace] as const,
    [EntityType.snowball]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.snowball] as const,
    [EntityType.krumblid]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.aiHelper, ServerComponentType.krumblid] as const,
-   [EntityType.frozenYeti]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.frozenYeti, ServerComponentType.aiHelper] as const,
    [EntityType.fish]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.aiHelper, ServerComponentType.fish] as const,
    [EntityType.itemEntity]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.item] as const,
    [EntityType.fleshSwordItemEntity]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.item] as const,
@@ -310,7 +329,6 @@ export const EntityComponents = {
    [EntityType.ballistaFrostcicle]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.tribe] as const,
    [EntityType.slingTurretRock]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.tribe] as const,
    [EntityType.iceShardProjectile]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.iceShard] as const,
-   [EntityType.rockSpikeProjectile]: [ServerComponentType.transform, ServerComponentType.rockSpike] as const,
    [EntityType.spearProjectile]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.throwingProjectile, ServerComponentType.spearProjectile] as const,
    [EntityType.researchBench]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.researchBench] as const,
    [EntityType.wall]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.buildingMaterial] as const,
@@ -354,7 +372,6 @@ export const EntityComponents = {
    [EntityType.glurbBodySegment]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.glurbHeadSegment],
    [EntityType.glurbHeadSegment]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.glurbHeadSegment],
    [EntityType.glurbTailSegment]: [],
-   [EntityType.glurb]: [ServerComponentType.transform, ServerComponentType.physics, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.glurbHeadSegment],
    [EntityType.slurbTorch]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.structure, ServerComponentType.tribe, ServerComponentType.slurbTorch],
    [EntityType.treeRootBase]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.treeRootBase],
    [EntityType.treeRootSegment]: [ServerComponentType.transform, ServerComponentType.health, ServerComponentType.statusEffect, ServerComponentType.treeRootSegment],
@@ -379,13 +396,26 @@ export const EntityComponents = {
    [EntityType.dustflea]: [],
    [EntityType.sandstoneRock]: [],
    [EntityType.okren]: [],
+   [EntityType.okrenClaw]: [],
    [EntityType.dustfleaMorphCocoon]: [],
    [EntityType.sandBall]: [],
    [EntityType.krumblidMorphCocoon]: [],
    [EntityType.okrenTongue]: [],
-   [EntityType.okrenTongueSegment]: [],
-   [EntityType.okrenTongueTip]: [],
    [EntityType.dustfleaEgg]: [],
+   [EntityType.spruceTree]: [],
+   [EntityType.tundraRock]: [],
+   [EntityType.tundraRockFrozen]: [],
+   [EntityType.snowberryBush]: [],
+   [EntityType.snobe]: [],
+   [EntityType.snobeMound]: [],
+   [EntityType.inguSerpent]: [],
+   [EntityType.tukmok]: [],
+   [EntityType.tukmokTailClub]: [],
+   [EntityType.tukmokTrunk]: [],
+   [EntityType.tukmokSpur]: [],
+   [EntityType.inguYetuksnoglurblidokowflea]: [],
+   [EntityType.inguYetuksnoglurblidokowfleaSeekerHead]: [],
+   [EntityType.inguYetukLaser]: [],
 } satisfies Record<EntityType, ReadonlyArray<ServerComponentType>>;
 
 export type EntityComponentTypes<T extends EntityType> = typeof EntityComponents[T];
@@ -476,16 +506,6 @@ export interface FishComponentData extends BaseComponentData {
    readonly colour: FishColour;
 }
 
-/* Frozen Yeti Component */
-
-export interface FrozenYetiComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.frozenYeti;
-   readonly attackType: FrozenYetiAttackType;
-   readonly attackStage: number;
-   readonly stageProgress: number;
-   readonly rockSpikePositions: Array<[number, number]>;
-}
-
 /* Golem Component */
 
 export interface GolemComponentData extends BaseComponentData {
@@ -560,14 +580,6 @@ export interface PlayerComponentData extends BaseComponentData {
    readonly username: string;
 }
 
-/* Rock Spike Component */
-
-export interface RockSpikeProjectileComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.rockSpike;
-   readonly size: RockSpikeProjectileSize;
-   readonly lifetime: number;
-}
-
 /* Slime Component */
 
 export interface SlimeComponentData extends BaseComponentData {
@@ -590,13 +602,6 @@ export interface SlimeSpitComponentData extends BaseComponentData {
 
 export interface SlimewispComponentData extends BaseComponentData {
    readonly componentType: ServerComponentType.slimewisp;
-}
-
-/* Snowball Component */
-
-export interface SnowballComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.snowball;
-   readonly size: SnowballSize;
 }
 
 /* Status Effect Component */
@@ -853,9 +858,6 @@ export enum DecorationType {
    sandstoneRockDark,
    sandstoneRockDarkBig1,
    sandstoneRockDarkBig2,
-   blackRockSmall,
-   blackRock,
-   snowPile,
    flower1,
    flower2,
    flower3,

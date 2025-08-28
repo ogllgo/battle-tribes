@@ -13,30 +13,29 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { LootComponent, registerEntityLootOnHit } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerDirtyEntity } from "../../server/player-clients";
-import { createHitbox } from "../../hitboxes";
+import { Hitbox } from "../../hitboxes";
 
-registerEntityLootOnHit(EntityType.berryBush, [
-   {
-      itemType: ItemType.berry,
-      getAmount: (berryBush: Entity) => {
-         const berryBushComponent = BerryBushComponentArray.getComponent(berryBush);
-         return berryBushComponent.numBerries > 0 ? 1 : 0;
-      },
-      onItemDrop: (berryBush: Entity) => {
-         // @Hack: this type of logic feels like it should be done in a component
-         const berryBushComponent = BerryBushComponentArray.getComponent(berryBush);
-         if (berryBushComponent.numBerries > 0) {
-            berryBushComponent.numBerries--;
-            registerDirtyEntity(berryBush);
-         }
+registerEntityLootOnHit(EntityType.berryBush, {
+   itemType: ItemType.berry,
+   getAmount: (berryBush: Entity) => {
+      const berryBushComponent = BerryBushComponentArray.getComponent(berryBush);
+      return berryBushComponent.numBerries > 0 ? 1 : 0;
+   },
+   onItemDrop: (berryBush: Entity) => {
+      // @Hack: this type of logic feels like it should be done in a component
+      const berryBushComponent = BerryBushComponentArray.getComponent(berryBush);
+      if (berryBushComponent.numBerries > 0) {
+         berryBushComponent.numBerries--;
+         registerDirtyEntity(berryBush);
       }
    }
-]);
+});
 
 export function createBerryBushConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   const hitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), rotation, 40), 1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 40), 1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionBit = CollisionBit.plants;
    

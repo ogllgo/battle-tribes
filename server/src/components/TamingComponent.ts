@@ -8,7 +8,6 @@ import { ComponentArray } from "./ComponentArray";
 import { getTamingSkill, TamingSkill, TamingSkillID, TamingTier } from "battletribes-shared/taming";
 import { PlayerComponentArray } from "./PlayerComponent";
 import { TransformComponentArray } from "./TransformComponent";
-import { Hitbox } from "../hitboxes";
 
 interface TamingSkillLearning {
    readonly skill: TamingSkill;
@@ -26,12 +25,33 @@ export class TamingComponent {
 
    public readonly acquiredSkills = new Array<TamingSkill>();
    public readonly skillLearningArray = new Array<TamingSkillLearning>();
+
+   // @Temporary
+   public attackTarget: Entity = 0;
    
    // @Temporary
    public carryTarget: Entity = 0;
    
    // @Temporary
    public followTarget: Entity = 0;
+
+   constructor() {
+      const follow = getTamingSkill(TamingSkillID.follow);
+      this.skillLearningArray.push({
+         skill: follow,
+         requirementProgressArray: [follow.requirements[0].amountRequired]
+      })
+      const move = getTamingSkill(TamingSkillID.move);
+      this.skillLearningArray.push({
+         skill: move,
+         requirementProgressArray: [move.requirements[0].amountRequired]
+      })
+      const attack = getTamingSkill(TamingSkillID.attack);
+      this.skillLearningArray.push({
+         skill: attack,
+         requirementProgressArray: [attack.requirements[0].amountRequired]
+      })
+   }
 }
 
 export const TamingComponentArray = new ComponentArray<TamingComponent>(ServerComponentType.taming, true, getDataLength, addDataToPacket);
@@ -50,7 +70,7 @@ function getDataLength(entity: Entity): number {
       lengthBytes += Float32Array.BYTES_PER_ELEMENT * skillLearning.requirementProgressArray.length;
    }
 
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    
    return lengthBytes;
 }
@@ -75,6 +95,9 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
          packet.addNumber(requirementProgress);
       }
    }
+
+   packet.addBoolean(entityExists(tamingComponent.attackTarget));
+   packet.padOffset(3);
    
    packet.addBoolean(entityExists(tamingComponent.followTarget));
    packet.padOffset(3);
@@ -138,7 +161,7 @@ export function getRiderTargetPosition(rider: Entity): Point | null {
       
       if (playerComponent.movementIntention.x !== 0 || playerComponent.movementIntention.y !== 0) {
          const transformComponent = TransformComponentArray.getComponent(rider);
-         const playerHitbox = transformComponent.children[0] as Hitbox;
+         const playerHitbox = transformComponent.hitboxes[0];
    
          const x = playerHitbox.box.position.x + 400 * playerComponent.movementIntention.x;
          const y = playerHitbox.box.position.y + 400 * playerComponent.movementIntention.y;
@@ -147,4 +170,13 @@ export function getRiderTargetPosition(rider: Entity): Point | null {
    }
 
    return null;
+}
+
+export function hasTamingSkill(tamingComponent: TamingComponent, skillID: TamingSkillID): boolean {
+   for (const skill of tamingComponent.acquiredSkills) {
+      if (skill.id === skillID) {
+         return true;
+      }
+   }
+   return false;
 }

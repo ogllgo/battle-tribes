@@ -1,4 +1,4 @@
-import { rotateXAroundPoint, rotateYAroundPoint } from "battletribes-shared/utils";
+import { assert, rotateXAroundPoint, rotateYAroundPoint } from "battletribes-shared/utils";
 import { createWebGLProgram, gl } from "../../webgl";
 import { getEntityTextureAtlas } from "../../texture-atlases/texture-atlases";
 import { bindUBOToProgram, getEntityTextureAtlasUBO, UBOBindingIndex } from "../ubos";
@@ -61,6 +61,14 @@ export function createRenderPartOverlayGroup(entity: Entity, textureSource: stri
 }
 
 export async function createEntityOverlayShaders(): Promise<void> {
+   // @HACK cuz this crashes right now. For some reason when the following lines are both used in the shader it doesnt compile:
+   /*
+      vec4 entityColour = texture(u_entityTextureAtlas, vec2(u, v));
+      vec4 overlayColour = texture(u_overlayTextures, vec3(uv, v_overlayTextureArrayIndex));
+
+   */
+   if(1+1===2)return;
+   
    const vertexShaderText = `#version 300 es
    precision highp float;
    
@@ -96,9 +104,9 @@ export async function createEntityOverlayShaders(): Promise<void> {
    const fragmentShaderText = `#version 300 es
    precision highp float;
 
-   uniform sampler2D u_entityTextureAtlas;
    ${getEntityTextureAtlasUBO()}
    
+   uniform sampler2D u_entityTextureAtlas;
    uniform highp sampler2DArray u_overlayTextures;
    
    in vec2 v_relativePosition;
@@ -136,8 +144,10 @@ export async function createEntityOverlayShaders(): Promise<void> {
    bindUBOToProgram(gl, program, UBOBindingIndex.CAMERA);
    bindUBOToProgram(gl, program, UBOBindingIndex.ENTITY_TEXTURE_ATLAS);
 
-   const entityTextureUniformLocation = gl.getUniformLocation(program, "u_entityTextureAtlas")!;
-   const overlayTextureUniformLocation = gl.getUniformLocation(program, "u_overlayTextures")!;
+   const entityTextureUniformLocation = gl.getUniformLocation(program, "u_entityTextureAtlas");
+   const overlayTextureUniformLocation = gl.getUniformLocation(program, "u_overlayTextures");
+   assert(entityTextureUniformLocation !== null);
+   assert(overlayTextureUniformLocation !== null);
 
    gl.useProgram(program);
    gl.uniform1i(entityTextureUniformLocation, 0);
@@ -147,23 +157,25 @@ export async function createEntityOverlayShaders(): Promise<void> {
    // Create texture array
    // 
 
-   overlayTextureArray = gl.createTexture()!;
-   gl.bindTexture(gl.TEXTURE_2D_ARRAY, overlayTextureArray);
-   gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 5, gl.RGBA8, 16, 16, OVERLAY_TEXTURE_SOURCES.length);
+   // gl.activeTexture(gl.TEXTURE1);
+   // gl.bindTexture(gl.TEXTURE_2D, null);
 
-   gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-   gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+   // overlayTextureArray = gl.createTexture()!;
+   // gl.bindTexture(gl.TEXTURE_2D_ARRAY, overlayTextureArray);
+   // gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 5, gl.RGBA8, 16, 16, OVERLAY_TEXTURE_SOURCES.length);
+
+   // gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+   // gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
    
-   // Set all texture units
-   for (let i = 0; i < OVERLAY_TEXTURE_SOURCES.length; i++) {
-      const textureSource = OVERLAY_TEXTURE_SOURCES[i];
-      const image = await createImage(textureSource);
+   // // Set all texture units
+   // for (let i = 0; i < OVERLAY_TEXTURE_SOURCES.length; i++) {
+   //    const textureSource = OVERLAY_TEXTURE_SOURCES[i];
+   //    const image = await createImage(textureSource);
 
-      gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, 16, 16, 1, gl.RGBA, gl.UNSIGNED_BYTE, image);
-   }
+   //    gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, 16, 16, 1, gl.RGBA, gl.UNSIGNED_BYTE, image);
+   // }
 
-   // @Cleanup: why do we do this? shouldn't we not need mipmaps?
-   gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+   // gl.activeTexture(gl.TEXTURE0);
 
    // 
    // Create VAO
@@ -196,116 +208,116 @@ export async function createEntityOverlayShaders(): Promise<void> {
 export function renderEntityOverlay(overlay: RenderPartOverlayGroup): void {
    // @Bug: interacts weirdly with transparency. as it uses depth, the overlays need to be drawn during the entity-rendering loop. somehow, even though they have different shaders
    
-   const numParts = overlay.renderParts.length;
-   if (numParts === 0) return;
+   // const numParts = overlay.renderParts.length;
+   // if (numParts === 0) return;
 
-   const entityTextureAtlas = getEntityTextureAtlas();
+   // const entityTextureAtlas = getEntityTextureAtlas();
 
-   const vertexData = new Float32Array(numParts * 4 * Vars.ATTRIBUTES_PER_VERTEX);
-   const indicesData = new Uint16Array(numParts * 6);
+   // const vertexData = new Float32Array(numParts * 4 * Vars.ATTRIBUTES_PER_VERTEX);
+   // const indicesData = new Uint16Array(numParts * 6);
 
-   const overlayTextureArrayIndex = OVERLAY_TEXTURE_SOURCES.indexOf(overlay.textureSource);
+   // const overlayTextureArrayIndex = OVERLAY_TEXTURE_SOURCES.indexOf(overlay.textureSource);
 
-   for (let i = 0; i < overlay.renderParts.length; i++) {
-      const renderPart = overlay.renderParts[i];
+   // for (let i = 0; i < overlay.renderParts.length; i++) {
+   //    const renderPart = overlay.renderParts[i];
 
-      // @Hack
-      if (!renderPartIsTextured(renderPart)) {
-         return;
-      }
+   //    // @Hack
+   //    if (!renderPartIsTextured(renderPart)) {
+   //       return;
+   //    }
 
-      const entityTextureArrayIndex = renderPart.textureArrayIndex;
+   //    const entityTextureArrayIndex = renderPart.textureArrayIndex;
 
-      const width = entityTextureAtlas.textureWidths[entityTextureArrayIndex] * 4;
-      const height = entityTextureAtlas.textureHeights[entityTextureArrayIndex] * 4;
+   //    const width = entityTextureAtlas.textureWidths[entityTextureArrayIndex] * 4;
+   //    const height = entityTextureAtlas.textureHeights[entityTextureArrayIndex] * 4;
 
-      const x1 = renderPart.renderPosition.x - width / 2 * renderPart.scale;
-      const x2 = renderPart.renderPosition.x + width / 2 * renderPart.scale;
-      const y1 = renderPart.renderPosition.y - height / 2 * renderPart.scale;
-      const y2 = renderPart.renderPosition.y + height / 2 * renderPart.scale;
+   //    const x1 = renderPart.renderPosition.x - width / 2 * renderPart.scale;
+   //    const x2 = renderPart.renderPosition.x + width / 2 * renderPart.scale;
+   //    const y1 = renderPart.renderPosition.y - height / 2 * renderPart.scale;
+   //    const y2 = renderPart.renderPosition.y + height / 2 * renderPart.scale;
 
-      // Rotate the render part to match its rotation
-      // @Speed: hopefully remove the need for this with instanced rendering
-      const topLeftX = rotateXAroundPoint(x1, y2, renderPart.renderPosition.x, renderPart.renderPosition.y, renderPart.totalParentRotation + renderPart.angle);
-      const topLeftY = rotateYAroundPoint(x1, y2, renderPart.renderPosition.x, renderPart.renderPosition.y, renderPart.totalParentRotation + renderPart.angle);
-      const topRightX = rotateXAroundPoint(x2, y2, renderPart.renderPosition.x, renderPart.renderPosition.y, renderPart.totalParentRotation + renderPart.angle);
-      const topRightY = rotateYAroundPoint(x2, y2, renderPart.renderPosition.x, renderPart.renderPosition.y, renderPart.totalParentRotation + renderPart.angle);
-      const bottomLeftX = rotateXAroundPoint(x1, y1, renderPart.renderPosition.x, renderPart.renderPosition.y, renderPart.totalParentRotation + renderPart.angle);
-      const bottomLeftY = rotateYAroundPoint(x1, y1, renderPart.renderPosition.x, renderPart.renderPosition.y, renderPart.totalParentRotation + renderPart.angle);
-      const bottomRightX = rotateXAroundPoint(x2, y1, renderPart.renderPosition.x, renderPart.renderPosition.y, renderPart.totalParentRotation + renderPart.angle);
-      const bottomRightY = rotateYAroundPoint(x2, y1, renderPart.renderPosition.x, renderPart.renderPosition.y, renderPart.totalParentRotation + renderPart.angle);
+   //    // Rotate the render part to match its rotation
+   //    // @Speed: hopefully remove the need for this with instanced rendering
+   //    const topLeftX = rotateXAroundPoint(x1, y2, renderPart.renderPosition.x, renderPart.renderPosition.y, renderPart.totalParentRotation + renderPart.angle);
+   //    const topLeftY = rotateYAroundPoint(x1, y2, renderPart.renderPosition.x, renderPart.renderPosition.y, renderPart.totalParentRotation + renderPart.angle);
+   //    const topRightX = rotateXAroundPoint(x2, y2, renderPart.renderPosition.x, renderPart.renderPosition.y, renderPart.totalParentRotation + renderPart.angle);
+   //    const topRightY = rotateYAroundPoint(x2, y2, renderPart.renderPosition.x, renderPart.renderPosition.y, renderPart.totalParentRotation + renderPart.angle);
+   //    const bottomLeftX = rotateXAroundPoint(x1, y1, renderPart.renderPosition.x, renderPart.renderPosition.y, renderPart.totalParentRotation + renderPart.angle);
+   //    const bottomLeftY = rotateYAroundPoint(x1, y1, renderPart.renderPosition.x, renderPart.renderPosition.y, renderPart.totalParentRotation + renderPart.angle);
+   //    const bottomRightX = rotateXAroundPoint(x2, y1, renderPart.renderPosition.x, renderPart.renderPosition.y, renderPart.totalParentRotation + renderPart.angle);
+   //    const bottomRightY = rotateYAroundPoint(x2, y1, renderPart.renderPosition.x, renderPart.renderPosition.y, renderPart.totalParentRotation + renderPart.angle);
 
-      const vertexDataOffset = i * 4 * Vars.ATTRIBUTES_PER_VERTEX;
+   //    const vertexDataOffset = i * 4 * Vars.ATTRIBUTES_PER_VERTEX;
 
-      vertexData[vertexDataOffset] = bottomLeftX;
-      vertexData[vertexDataOffset + 1] = bottomLeftY;
-      vertexData[vertexDataOffset + 2] = renderPart.renderPosition.x;
-      vertexData[vertexDataOffset + 3] = renderPart.renderPosition.y;
-      vertexData[vertexDataOffset + 4] = 0;
-      vertexData[vertexDataOffset + 5] = 0;
-      vertexData[vertexDataOffset + 6] = overlayTextureArrayIndex;
-      vertexData[vertexDataOffset + 7] = entityTextureArrayIndex;
+   //    vertexData[vertexDataOffset] = bottomLeftX;
+   //    vertexData[vertexDataOffset + 1] = bottomLeftY;
+   //    vertexData[vertexDataOffset + 2] = renderPart.renderPosition.x;
+   //    vertexData[vertexDataOffset + 3] = renderPart.renderPosition.y;
+   //    vertexData[vertexDataOffset + 4] = 0;
+   //    vertexData[vertexDataOffset + 5] = 0;
+   //    vertexData[vertexDataOffset + 6] = overlayTextureArrayIndex;
+   //    vertexData[vertexDataOffset + 7] = entityTextureArrayIndex;
 
-      vertexData[vertexDataOffset + 8] = bottomRightX;
-      vertexData[vertexDataOffset + 9] = bottomRightY;
-      vertexData[vertexDataOffset + 10] = renderPart.renderPosition.x;
-      vertexData[vertexDataOffset + 11] = renderPart.renderPosition.y;
-      vertexData[vertexDataOffset + 12] = 1;
-      vertexData[vertexDataOffset + 13] = 0;
-      vertexData[vertexDataOffset + 14] = overlayTextureArrayIndex;
-      vertexData[vertexDataOffset + 15] = entityTextureArrayIndex;
+   //    vertexData[vertexDataOffset + 8] = bottomRightX;
+   //    vertexData[vertexDataOffset + 9] = bottomRightY;
+   //    vertexData[vertexDataOffset + 10] = renderPart.renderPosition.x;
+   //    vertexData[vertexDataOffset + 11] = renderPart.renderPosition.y;
+   //    vertexData[vertexDataOffset + 12] = 1;
+   //    vertexData[vertexDataOffset + 13] = 0;
+   //    vertexData[vertexDataOffset + 14] = overlayTextureArrayIndex;
+   //    vertexData[vertexDataOffset + 15] = entityTextureArrayIndex;
 
-      vertexData[vertexDataOffset + 16] = topLeftX;
-      vertexData[vertexDataOffset + 17] = topLeftY;
-      vertexData[vertexDataOffset + 18] = renderPart.renderPosition.x;
-      vertexData[vertexDataOffset + 19] = renderPart.renderPosition.y;
-      vertexData[vertexDataOffset + 20] = 0;
-      vertexData[vertexDataOffset + 21] = 1;
-      vertexData[vertexDataOffset + 22] = overlayTextureArrayIndex;
-      vertexData[vertexDataOffset + 23] = entityTextureArrayIndex;
+   //    vertexData[vertexDataOffset + 16] = topLeftX;
+   //    vertexData[vertexDataOffset + 17] = topLeftY;
+   //    vertexData[vertexDataOffset + 18] = renderPart.renderPosition.x;
+   //    vertexData[vertexDataOffset + 19] = renderPart.renderPosition.y;
+   //    vertexData[vertexDataOffset + 20] = 0;
+   //    vertexData[vertexDataOffset + 21] = 1;
+   //    vertexData[vertexDataOffset + 22] = overlayTextureArrayIndex;
+   //    vertexData[vertexDataOffset + 23] = entityTextureArrayIndex;
 
-      vertexData[vertexDataOffset + 24] = topRightX;
-      vertexData[vertexDataOffset + 25] = topRightY;
-      vertexData[vertexDataOffset + 26] = renderPart.renderPosition.x;
-      vertexData[vertexDataOffset + 27] = renderPart.renderPosition.y;
-      vertexData[vertexDataOffset + 28] = 1;
-      vertexData[vertexDataOffset + 29] = 1;
-      vertexData[vertexDataOffset + 30] = overlayTextureArrayIndex;
-      vertexData[vertexDataOffset + 31] = entityTextureArrayIndex;
+   //    vertexData[vertexDataOffset + 24] = topRightX;
+   //    vertexData[vertexDataOffset + 25] = topRightY;
+   //    vertexData[vertexDataOffset + 26] = renderPart.renderPosition.x;
+   //    vertexData[vertexDataOffset + 27] = renderPart.renderPosition.y;
+   //    vertexData[vertexDataOffset + 28] = 1;
+   //    vertexData[vertexDataOffset + 29] = 1;
+   //    vertexData[vertexDataOffset + 30] = overlayTextureArrayIndex;
+   //    vertexData[vertexDataOffset + 31] = entityTextureArrayIndex;
 
-      const indicesDataOffset = i * 6;
+   //    const indicesDataOffset = i * 6;
 
-      indicesData[indicesDataOffset] = i * 4;
-      indicesData[indicesDataOffset + 1] = i * 4 + 1;
-      indicesData[indicesDataOffset + 2] = i * 4 + 2;
-      indicesData[indicesDataOffset + 3] = i * 4 + 2;
-      indicesData[indicesDataOffset + 4] = i * 4 + 1;
-      indicesData[indicesDataOffset + 5] = i * 4 + 3;
-   }
+   //    indicesData[indicesDataOffset] = i * 4;
+   //    indicesData[indicesDataOffset + 1] = i * 4 + 1;
+   //    indicesData[indicesDataOffset + 2] = i * 4 + 2;
+   //    indicesData[indicesDataOffset + 3] = i * 4 + 2;
+   //    indicesData[indicesDataOffset + 4] = i * 4 + 1;
+   //    indicesData[indicesDataOffset + 5] = i * 4 + 3;
+   // }
 
-   gl.useProgram(program);
+   // gl.useProgram(program);
 
-   gl.enable(gl.BLEND);
-   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+   // gl.enable(gl.BLEND);
+   // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-   // Bind texture atlases
-   gl.activeTexture(gl.TEXTURE0);
-   gl.bindTexture(gl.TEXTURE_2D, entityTextureAtlas.texture);
-   gl.activeTexture(gl.TEXTURE1);
-   gl.bindTexture(gl.TEXTURE_2D_ARRAY, overlayTextureArray);
+   // // Bind texture atlases
+   // gl.activeTexture(gl.TEXTURE0);
+   // gl.bindTexture(gl.TEXTURE_2D, entityTextureAtlas.texture);
+   // gl.activeTexture(gl.TEXTURE1);
+   // gl.bindTexture(gl.TEXTURE_2D_ARRAY, overlayTextureArray);
 
-   gl.bindVertexArray(vao);
+   // gl.bindVertexArray(vao);
 
-   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-   gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW);
+   // gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+   // gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW);
 
-   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indicesData, gl.STATIC_DRAW);
+   // gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+   // gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indicesData, gl.STATIC_DRAW);
    
-   gl.drawElements(gl.TRIANGLES, numParts * 6, gl.UNSIGNED_SHORT, 0);
+   // gl.drawElements(gl.TRIANGLES, numParts * 6, gl.UNSIGNED_SHORT, 0);
 
-   gl.disable(gl.BLEND);
-   gl.blendFunc(gl.ONE, gl.ZERO);
+   // gl.disable(gl.BLEND);
+   // gl.blendFunc(gl.ONE, gl.ZERO);
 
-   gl.bindVertexArray(null);
+   // gl.bindVertexArray(null);
 }

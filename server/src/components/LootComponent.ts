@@ -4,21 +4,23 @@ import { ITEM_TYPE_RECORD, ItemType } from "../../../shared/src/items/items";
 import { Settings } from "../../../shared/src/settings";
 import { assert } from "../../../shared/src/utils";
 import { createItemsOverEntity } from "../entities/item-entity";
-import { getHitboxTile, Hitbox } from "../hitboxes";
+import { getHitboxTile } from "../hitboxes";
 import { getEntityLayer, getEntityType } from "../world";
 import { LocalBiome } from "../world-generation/terrain-generation-utils";
 import { ComponentArray } from "./ComponentArray";
-import { getTransformComponentFirstHitbox, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 
 export interface LootEntry {
    readonly itemType: ItemType;
    readonly getAmount: (entity: Entity) => number;
    /** Called every time an item is dropped. */
    readonly onItemDrop?: (entity: Entity) => void;
+   /** If present then the items will be created only on the hitbox at the specified index */
+   readonly hitboxIdx?: number;
 }
 
-const lootOnHitRecord: Partial<Record<EntityType, ReadonlyArray<LootEntry>>> = {};
-const lootOnDeathRecord: Partial<Record<EntityType, ReadonlyArray<LootEntry>>> = {};
+const lootOnHitRecord: Partial<Record<EntityType, Array<LootEntry>>> = {};
+const lootOnDeathRecord: Partial<Record<EntityType, Array<LootEntry>>> = {};
 
 const itemToEntityTypesRecord: Partial<Record<ItemType, Array<EntityType>>> = {};
 
@@ -36,27 +38,35 @@ LootComponentArray.onRemove = onRemove;
 LootComponentArray.onTakeDamage = onHit;
 LootComponentArray.onDeath = onDeath;
 
-const registerEntries = (entityType: EntityType, lootEntries: ReadonlyArray<LootEntry>): void => {
-   for (const entry of lootEntries) {
-      const entityTypes = itemToEntityTypesRecord[entry.itemType];
-      if (typeof entityTypes === "undefined") {
-         itemToEntityTypesRecord[entry.itemType] = [entityType];
-      } else {
-         entityTypes.push(entityType);
-      }
+const registerLootEntry = (entityType: EntityType, entry: LootEntry): void => {
+   const entityTypes = itemToEntityTypesRecord[entry.itemType];
+   if (typeof entityTypes === "undefined") {
+      itemToEntityTypesRecord[entry.itemType] = [entityType];
+   } else {
+      entityTypes.push(entityType);
    }
 }
 
-export function registerEntityLootOnHit(entityType: EntityType, lootEntries: ReadonlyArray<LootEntry>): void {
-   assert(typeof lootOnHitRecord[entityType] === "undefined");
-   lootOnHitRecord[entityType] = lootEntries;
-   registerEntries(entityType, lootEntries);
+export function registerEntityLootOnHit(entityType: EntityType, entry: LootEntry): void {
+   const existingLootEntries = lootOnHitRecord[entityType];
+   if (typeof existingLootEntries === "undefined") {
+      lootOnHitRecord[entityType] = [entry];
+   } else {
+      existingLootEntries.push(entry);
+   }
+
+   registerLootEntry(entityType, entry);
 }
 
-export function registerEntityLootOnDeath(entityType: EntityType, lootEntries: ReadonlyArray<LootEntry>): void {
-   assert(typeof lootOnDeathRecord[entityType] === "undefined");
-   lootOnDeathRecord[entityType] = lootEntries;
-   registerEntries(entityType, lootEntries);
+export function registerEntityLootOnDeath(entityType: EntityType, entry: LootEntry): void {
+   const existingLootEntries = lootOnDeathRecord[entityType];
+   if (typeof existingLootEntries === "undefined") {
+      lootOnDeathRecord[entityType] = [entry];
+   } else {
+      existingLootEntries.push(entry);
+   }
+
+   registerLootEntry(entityType, entry);
 }
 
 const removeFromPreviousLocalBiome = (entity: Entity, lootComponent: LootComponent): void => {
@@ -78,8 +88,7 @@ const removeFromPreviousLocalBiome = (entity: Entity, lootComponent: LootCompone
 
 const addToNewLocalBiome = (entity: Entity, lootComponent: LootComponent): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = getTransformComponentFirstHitbox(transformComponent);
-   assert(hitbox !== null);
+   const hitbox = transformComponent.hitboxes[0];
    
    const layer = getEntityLayer(entity);
    const tileIndex = getHitboxTile(hitbox);
@@ -121,7 +130,7 @@ function onHit(entity: Entity): void {
    if (typeof entries !== "undefined") {
       for (const entry of entries) {
          const amount = entry.getAmount(entity);
-         createItemsOverEntity(entity, entry.itemType, amount);
+         createItemsOverEntity(entity, entry.itemType, amount, entry.hitboxIdx);
 
          if (typeof entry.onItemDrop !== "undefined") {
             entry.onItemDrop(entity);
@@ -137,7 +146,7 @@ function onDeath(entity: Entity): void {
    if (typeof entries !== "undefined") {
       for (const entry of entries) {
          const amount = entry.getAmount(entity);
-         createItemsOverEntity(entity, entry.itemType, amount);
+         createItemsOverEntity(entity, entry.itemType, amount, entry.hitboxIdx);
       }
    }
 }

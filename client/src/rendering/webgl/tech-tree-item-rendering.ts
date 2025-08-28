@@ -1,4 +1,4 @@
-import { Point, randFloat, randSign, rotateXAroundPoint, rotateYAroundPoint } from "battletribes-shared/utils";
+import { Point, polarVec2, randAngle, randFloat, randSign, rotateXAroundPoint, rotateYAroundPoint } from "battletribes-shared/utils";
 import { createWebGLProgram, halfWindowHeight, halfWindowWidth } from "../../webgl";
 import { ATLAS_SLOT_SIZE } from "../../texture-atlases/texture-atlas-stitching";
 import { getTechTreeEntityTextureAtlas, getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -30,8 +30,8 @@ export function createTechTreeItem(itemType: ItemType, position: Point): void {
    const item: TechTreeItem = {
       itemType: itemType,
       position: position,
-      velocity: Point.fromVectorForm(randFloat(10, 15), 2 * Math.PI * Math.random()),
-      rotation: 2 * Math.PI * Math.random(),
+      velocity: polarVec2(randFloat(10, 15), randAngle()),
+      rotation: randAngle(),
       angularVelocity: randFloat(2, 3) * randSign(),
       age: 0,
       lifetime: randFloat(1, 1.25)

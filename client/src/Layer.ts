@@ -2,7 +2,7 @@ import { GrassTileInfo, RiverFlowDirectionsRecord, RiverSteppingStoneData, Water
 import { Entity } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { SubtileType, TileType } from "../../shared/src/tiles";
-import { Point, randFloat, randInt, TileIndex } from "../../shared/src/utils";
+import { Point, randAngle, randFloat, randInt, TileIndex } from "../../shared/src/utils";
 import Board from "./Board";
 import Chunk from "./Chunk";
 import { Light } from "./lights";
@@ -167,12 +167,12 @@ export default class Layer {
 
          // Speck debris
          for (let i = 0; i < 7; i++) {
-            const spawnOffsetDirection = 2 * Math.PI * Math.random();
+            const spawnOffsetDirection = randAngle();
             const spawnPositionX = x + 12 * Math.sin(spawnOffsetDirection);
             const spawnPositionY = y + 12 * Math.cos(spawnOffsetDirection);
          
             const velocityMagnitude = randFloat(50, 70);
-            const velocityDirection = 2 * Math.PI * Math.random();
+            const velocityDirection = randAngle();
             const velocityX = velocityMagnitude * Math.sin(velocityDirection);
             const velocityY = velocityMagnitude * Math.cos(velocityDirection);
          
@@ -198,7 +198,7 @@ export default class Layer {
                velocityX, velocityY,
                0, 0,
                velocityMagnitude / lifetime / 0.7,
-               2 * Math.PI * Math.random(),
+               randAngle(),
                angularVelocity,
                0,
                Math.abs(angularVelocity) / lifetime / 1.5,
@@ -210,7 +210,7 @@ export default class Layer {
          // Larger debris pieces
          for (let i = 0; i < 5; i++) {
             const spawnOffsetMagnitude = 8 * Math.random();
-            const spawnOffsetDirection = 2 * Math.PI * Math.random();
+            const spawnOffsetDirection = randAngle();
             const particleX = x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
             const particleY = y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
             
@@ -226,7 +226,7 @@ export default class Layer {
             }
 
             const moveSpeed = randFloat(20, 40);
-            const moveDirection = 2 * Math.PI * Math.random();
+            const moveDirection = randAngle();
             const velocityX = moveSpeed * Math.sin(moveDirection);
             const velocityY = moveSpeed * Math.cos(moveDirection);
 
@@ -247,7 +247,7 @@ export default class Layer {
                velocityX, velocityY,
                0, 0,
                moveSpeed * 1.5,
-               2 * Math.PI * Math.random(),
+               randAngle(),
                1 * Math.PI * spinDirection,
                0,
                Math.abs(Math.PI * spinDirection),

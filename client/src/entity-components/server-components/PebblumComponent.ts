@@ -2,8 +2,10 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityIntermediateInfo, EntityParams } from "../../world";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
+import { randAngle } from "../../../../shared/src/utils";
+import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface PebblumComponentParams {}
 
@@ -24,29 +26,29 @@ function createParamsFromData(): PebblumComponentParams {
    return {};
 }
 
-function populateIntermediateInfo(entityIntermediateInfo: EntityIntermediateInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.children[0] as Hitbox;
+   const hitbox = transformComponentParams.hitboxes[0];
 
    // Nose
    const nose = new TexturedRenderPart(
       hitbox,
       0,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       getTextureArrayIndex("entities/pebblum/pebblum-nose.png")
    )
    nose.offset.y = 12;
-   entityIntermediateInfo.renderInfo.attachRenderPart(nose);
+   renderInfo.attachRenderPart(nose);
 
    // Body
    const body = new TexturedRenderPart(
       hitbox,
       1,
-      2 * Math.PI * Math.random(),
+      randAngle(),
       getTextureArrayIndex("entities/pebblum/pebblum-body.png")
    )
    body.offset.y = -8;
-   entityIntermediateInfo.renderInfo.attachRenderPart(body);
+   renderInfo.attachRenderPart(body);
 
    return {};
 }

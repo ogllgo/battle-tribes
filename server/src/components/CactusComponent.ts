@@ -3,16 +3,15 @@ import { Entity, EntityType, DamageSource, CactusFlowerSize } from "battletribes
 import { ComponentArray } from "./ComponentArray";
 import { Packet } from "battletribes-shared/packets";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
-import { Point, randInt } from "../../../shared/src/utils";
-import { getEntityType, destroyEntity, getEntityLayer } from "../world";
-import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
+import { Point, polarVec2, randAngle, randInt } from "../../../shared/src/utils";
+import { getEntityType, destroyEntity, getEntityLayer, createEntity } from "../world";
+import { HealthComponentArray, canDamageEntity, damageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { applyAbsoluteKnockback, Hitbox } from "../hitboxes";
 import { Settings } from "../../../shared/src/settings";
-import { entityChildIsEntity, TransformComponent, TransformComponentArray } from "./TransformComponent";
+import { TransformComponent, TransformComponentArray } from "./TransformComponent";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { createPricklyPearConfig } from "../entities/desert/prickly-pear";
 import { createEntityConfigAttachInfo } from "../components";
-import { createEntity } from "../Entity";
 
 export interface CactusFlower {
    readonly parentHitboxLocalID: number;
@@ -46,9 +45,11 @@ CactusComponentArray.onTick = {
 };
 
 const hasFruit = (transformComponent: TransformComponent): boolean => {
-   for (const child of transformComponent.children) {
-      if (entityChildIsEntity(child) && getEntityType(child.attachedEntity) === EntityType.pricklyPear) {
-         return true;
+   for (const hitbox of transformComponent.hitboxes) {
+      for (const childHitbox of hitbox.children) {
+         if (getEntityType(childHitbox.entity) === EntityType.pricklyPear) {
+            return true;
+         }
       }
    }
 
@@ -63,19 +64,21 @@ function onTick(cactus: Entity): void {
          if (cactusComponent.remainingFruitGrowTicks <= 0) {
             // @Copynpaste
             
-            const cactusHitbox = transformComponent.children[0] as Hitbox;
+            const cactusHitbox = transformComponent.hitboxes[0];
             const cactusRadius = (cactusHitbox.box as CircularBox).radius;
       
-            const offsetDirection = 2 * Math.PI * Math.random();
-            const offsetX = cactusRadius * Math.sin(offsetDirection);
-            const offsetY = cactusRadius * Math.cos(offsetDirection);
+            const offset = polarVec2(cactusRadius, randAngle());
       
-            const x = cactusHitbox.box.position.x + offsetX;
-            const y = cactusHitbox.box.position.y + offsetY;
+            const x = cactusHitbox.box.position.x + offset.x;
+            const y = cactusHitbox.box.position.y + offset.y;
             const position = new Point(x, y);
             
-            const fruitConfig = createPricklyPearConfig(position, 2 * Math.PI * Math.random());
-            fruitConfig.attachInfo = createEntityConfigAttachInfo(cactus, cactusHitbox, true);
+            const fruitConfig = createPricklyPearConfig(position, offset, randAngle());
+
+            const fruitTransformComponent = fruitConfig.components[ServerComponentType.transform]!;
+            const fruitHitbox = fruitTransformComponent.hitboxes[0];
+            
+            fruitConfig.attachInfo = createEntityConfigAttachInfo(fruitHitbox, cactusHitbox, true);
             createEntity(fruitConfig, getEntityLayer(cactus), 0);
       
             cactusComponent.remainingFruitGrowTicks = randInt(MIN_FRUIT_GROW_TICKS, MAX_FRUIT_GROW_TICKS);
@@ -106,7 +109,9 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    }
 }
 
-function onHitboxCollision(cactus: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
+   const collidingEntity = collidingHitbox.entity;
+   
    if (getEntityType(collidingEntity) === EntityType.itemEntity) {
       destroyEntity(collidingEntity);
       return;
@@ -125,9 +130,9 @@ function onHitboxCollision(cactus: Entity, collidingEntity: Entity, affectedHitb
       return;
    }
 
-   const hitDirection = affectedHitbox.box.position.calculateAngleBetween(collidingHitbox.box.position);
+   const hitDir = hitbox.box.position.angleTo(collidingHitbox.box.position);
 
-   hitEntity(collidingEntity, cactus, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
-   applyAbsoluteKnockback(collidingEntity, collidingHitbox, 200, hitDirection);
+   damageEntity(collidingEntity, collidingHitbox, hitbox.entity, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
+   applyAbsoluteKnockback(collidingHitbox, polarVec2(200, hitDir));
    addLocalInvulnerabilityHash(collidingEntity, "cactus", 0.3);
 }

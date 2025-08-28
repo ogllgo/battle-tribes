@@ -98,10 +98,6 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Krumblid",
       internalName: "krumblid"
    },
-   [EntityType.frozenYeti]: {
-      name: "Frozen Yeti",
-      internalName: "frozen-yeti"
-   },
    [EntityType.fish]: {
       name: "Fish",
       internalName: "fish"
@@ -141,10 +137,6 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
    [EntityType.iceShardProjectile]: {
       name: "Ice Shard Projectile",
       internalName: "ice-shard-projectile"
-   },
-   [EntityType.rockSpikeProjectile]: {
-      name: "Rock Spike Projectile",
-      internalName: "rock-spike-projectile"
    },
    [EntityType.spearProjectile]: {
       name: "Spear Projectile",
@@ -318,10 +310,6 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Glurb Tail Segment",
       internalName: "glurb-tail-segment"
    },
-   [EntityType.glurb]: {
-      name: "Glurb",
-      internalName: "glurb"
-   },
    [EntityType.slurbTorch]: {
       name: "Slurb Torch",
       internalName: "slurb-torch"
@@ -418,6 +406,10 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Okren",
       internalName: "okren"
    },
+   [EntityType.okrenClaw]: {
+      name: "Okren Claw",
+      internalName: "okren-claw"
+   },
    [EntityType.dustfleaMorphCocoon]: {
       name: "Dustflea Morph Cocoon",
       internalName: "dustflea-morph-cocoon"
@@ -434,17 +426,65 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Okren Tongue",
       internalName: "okren-tongue"
    },
-   [EntityType.okrenTongueSegment]: {
-      name: "Okren Tongue Segment",
-      internalName: "okren-tongue-segment"
-   },
-   [EntityType.okrenTongueTip]: {
-      name: "Okren Tongue Tip",
-      internalName: "okren-tongue-tip"
-   },
    [EntityType.dustfleaEgg]: {
       name: "Dustflea Egg",
       internalName: "dustflea-egg"
+   },
+   [EntityType.spruceTree]: {
+      name: "Spruce Tree",
+      internalName: "spruce-tree"
+   },
+   [EntityType.tundraRock]: {
+      name: "Tundra Rock",
+      internalName: "tundra-rock"
+   },
+   [EntityType.tundraRockFrozen]: {
+      name: "Tundra Rock Frozen",
+      internalName: "tundra-rock-frozen"
+   },
+   [EntityType.snowberryBush]: {
+      name: "Snowberry Bush",
+      internalName: "snowberry-bush"
+   },
+   [EntityType.snobe]: {
+      name: "Snobe",
+      internalName: "snobe"
+   },
+   [EntityType.snobeMound]: {
+      name: "Snobe Mound",
+      internalName: "snobe-mound"
+   },
+   [EntityType.inguSerpent]: {
+      name: "Ingu Serpent",
+      internalName: "ingu-serpent"
+   },
+   [EntityType.tukmok]: {
+      name: "Tukmok",
+      internalName: "tukmok"
+   },
+   [EntityType.tukmokTrunk]: {
+      name: "Tukmok Trunk",
+      internalName: "tukmok-trunk"
+   },
+   [EntityType.tukmokTailClub]: {
+      name: "Tukmok Tail",
+      internalName: "tukmok-tail"
+   },
+   [EntityType.tukmokSpur]: {
+      name: "Tukmok Spur",
+      internalName: "tukmok-spur"
+   },
+   [EntityType.inguYetuksnoglurblidokowflea]: {
+      name: "Ingu-Yetuksnoglurblidokowflea",
+      internalName: "ingu-yetuksnoglurblidokowflea"
+   },
+   [EntityType.inguYetuksnoglurblidokowfleaSeekerHead]: {
+      name: "Ingu-Yetuksnoglurblidokowflea Seeker Head",
+      internalName: "ingu-yetuksnoglurblidokowflea-seeker-head"
+   },
+   [EntityType.inguYetukLaser]: {
+      name: "Ingu-Yetuk Laser",
+      internalName: "ingu-yetuk-laser"
    },
 };
 
