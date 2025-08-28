@@ -3,15 +3,15 @@ import { collisionBitsAreCompatible } from "battletribes-shared/hitbox-collision
 import { Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { Box, HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
-import { Entity } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { entityChildIsHitbox, TransformComponentArray, TransformNode } from "./entity-components/server-components/TransformComponent";
 import Chunk from "./Chunk";
 import { PhysicsComponentArray } from "./entity-components/server-components/PhysicsComponent";
-import { getEntityLayer } from "./world";
+import { getEntityLayer, getEntityType } from "./world";
 import Layer from "./Layer";
 import { getComponentArrays } from "./entity-components/ComponentArray";
 import { playerInstance } from "./player";
-import { getHitboxVelocity, Hitbox, addHitboxVelocity, setHitboxVelocity, translateHitbox } from "./hitboxes";
+import { addHitboxVelocity, getHitboxVelocity, Hitbox, setHitboxVelocity, translateHitbox } from "./hitboxes";
 import CircularBox from "../../shared/src/boxes/CircularBox";
 import { CollisionResult } from "../../shared/src/collision";
 
@@ -22,6 +22,8 @@ export interface HitboxCollisionPair {
 }
 
 interface EntityPairCollisionInfo {
+   readonly affectedEntity: Entity;
+   readonly collidingEntity: Entity;
    readonly collidingHitboxPairs: Array<HitboxCollisionPair>;
 }
 
@@ -78,9 +80,9 @@ export function collide(entity: Entity, collidingEntity: Entity, pushedHitbox: H
    }
 }
 
-const getEntityPairCollisionInfo = (entity1: Entity, entity2: Entity): EntityPairCollisionInfo | null => {
-   const transformComponent1 = TransformComponentArray.getComponent(entity1);
-   const transformComponent2 = TransformComponentArray.getComponent(entity2);
+const getEntityPairCollisionInfo = (affectedEntity: Entity, collidingEntity: Entity): EntityPairCollisionInfo | null => {
+   const transformComponent1 = TransformComponentArray.getComponent(affectedEntity);
+   const transformComponent2 = TransformComponentArray.getComponent(collidingEntity);
    
    // AABB bounding area check
    if (transformComponent1.boundingAreaMinX > transformComponent2.boundingAreaMaxX || // minX(1) > maxX(2)
@@ -93,19 +95,19 @@ const getEntityPairCollisionInfo = (entity1: Entity, entity2: Entity): EntityPai
    const hitboxCollisionPairs = new Array<HitboxCollisionPair>();
    
    // More expensive hitbox check
-   for (const hitbox of transformComponent1.children) {
-      if (!entityChildIsHitbox(hitbox)) {
+   for (const affectedHitbox of transformComponent1.children) {
+      if (!entityChildIsHitbox(affectedHitbox)) {
          continue;
       }
-      const box = hitbox.box;
+      const box = affectedHitbox.box;
 
-      for (const otherHitbox of transformComponent2.children) {
-         if (!entityChildIsHitbox(otherHitbox)) {
+      for (const collidingHitbox of transformComponent2.children) {
+         if (!entityChildIsHitbox(collidingHitbox)) {
             continue;
          }
-         const otherBox = otherHitbox.box;
+         const otherBox = collidingHitbox.box;
 
-         if (!collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, otherHitbox.collisionMask, otherHitbox.collisionBit)) {
+         if (!collisionBitsAreCompatible(affectedHitbox.collisionMask, affectedHitbox.collisionBit, collidingHitbox.collisionMask, collidingHitbox.collisionBit)) {
             continue;
          }
          
@@ -113,8 +115,8 @@ const getEntityPairCollisionInfo = (entity1: Entity, entity2: Entity): EntityPai
          const collisionResult = box.getCollisionResult(otherBox);
          if (collisionResult.isColliding) {
             hitboxCollisionPairs.push({
-               affectedHitbox: hitbox,
-               collidingHitbox: hitbox,
+               affectedHitbox: affectedHitbox,
+               collidingHitbox: collidingHitbox,
                collisionResult: collisionResult
             });
          }
@@ -123,6 +125,8 @@ const getEntityPairCollisionInfo = (entity1: Entity, entity2: Entity): EntityPai
 
    if (hitboxCollisionPairs.length > 0) {
       return {
+         affectedEntity: affectedEntity,
+         collidingEntity: collidingEntity,
          collidingHitboxPairs: hitboxCollisionPairs
       };
    }
@@ -175,12 +179,15 @@ const collectEntityCollisionsWithChunk = (collisionPairs: CollisionPairs, entity
 
 const resolveCollisionPairs = (collisionPairs: CollisionPairs, onlyResolvePlayerCollisions: boolean): void => {
    // @Speed @Garbage
-   for (const entity1 of Object.keys(collisionPairs).map(Number)) {
-      for (const entity2 of Object.keys(collisionPairs[entity1]).map(Number)) {
-         const collisionInfo = collisionPairs[entity1][entity2];
+   for (const minEntity of Object.keys(collisionPairs).map(Number)) {
+      for (const maxEntity of Object.keys(collisionPairs[minEntity]).map(Number)) {
+         const collisionInfo = collisionPairs[minEntity][maxEntity];
          if (collisionInfo === null) {
             continue;
          }
+
+         const affectedEntity = collisionInfo.affectedEntity;
+         const collidingEntity = collisionInfo.collidingEntity;
 
          // Note: from here, entity1 < entity2 (by definition)
 
@@ -190,8 +197,9 @@ const resolveCollisionPairs = (collisionPairs: CollisionPairs, onlyResolvePlayer
             // Of entity 2
             const collidingHitbox = pair.collidingHitbox;
 
-            collide(entity1, entity2, affectedHitbox, collidingHitbox, pair.collisionResult, !onlyResolvePlayerCollisions || entity1 === playerInstance);
-            collide(entity2, entity1, collidingHitbox, affectedHitbox, pair.collisionResult, !onlyResolvePlayerCollisions || entity2 === playerInstance);
+            // @Correctness: is this ok? can we use the same collision result for both, or do we have to swap the axis before the 2nd one or something?
+            collide(affectedEntity, collidingEntity, affectedHitbox, collidingHitbox, pair.collisionResult, !onlyResolvePlayerCollisions || affectedEntity === playerInstance);
+            collide(collidingEntity, affectedEntity, collidingHitbox, affectedHitbox, pair.collisionResult, !onlyResolvePlayerCollisions || collidingEntity === playerInstance);
          }
       }
    }
@@ -389,4 +397,8 @@ export function getEntitiesInRange(layer: Layer, x: number, y: number, range: nu
    }
 
    return entities;
+}
+
+function getHitboxConnectedMass(affectedHitbox: any) {
+   throw new Error("Function not implemented.");
 }

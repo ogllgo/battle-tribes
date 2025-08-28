@@ -745,6 +745,17 @@ export function entityIsInLineOfSight(originEntity: Entity, targetEntity: Entity
    return true;
 }
 
+export function getDistanceFromPointToHitbox(point: Readonly<Point>, hitbox: Hitbox): number {
+   const box = hitbox.box;
+   
+   if (boxIsCircular(box)) {
+      const rawDistance = distance(point.x, point.y, box.position.x, box.position.y);
+      return rawDistance - box.radius;
+   } else {
+      return distBetweenPointAndRectangle(point.x, point.y, box.position, box.width, box.height, box.angle);
+   }
+}
+
 export function getDistanceFromPointToEntity(point: Readonly<Point>, transformComponent: TransformComponent): number {
    let minDistance = Number.MAX_SAFE_INTEGER;
    for (const child of transformComponent.children) {
@@ -756,19 +767,9 @@ export function getDistanceFromPointToEntity(point: Readonly<Point>, transformCo
          }
       } else {
          const hitbox = child;
-         const box = hitbox.box;
-         
-         if (boxIsCircular(box)) {
-            const rawDistance = distance(point.x, point.y, box.position.x, box.position.y);
-            const hitboxDistance = rawDistance - box.radius;
-            if (hitboxDistance < minDistance) {
-               minDistance = hitboxDistance;
-            }
-         } else {
-            const dist = distBetweenPointAndRectangle(point.x, point.y, box.position, box.width, box.height, box.angle);
-            if (dist < minDistance) {
-               minDistance = dist;
-            }
+         const hitboxDistance = getDistanceFromPointToHitbox(point, hitbox);
+         if (hitboxDistance < minDistance) {
+            minDistance = hitboxDistance;
          }
       }
    }

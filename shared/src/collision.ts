@@ -1,7 +1,7 @@
 import { Box } from "./boxes/boxes";
 import RectangularBox from "./boxes/RectangularBox";
 import { Settings } from "./settings";
-import { Mutable, Point, angle, assert, distance, rotateXAroundPoint, rotateYAroundPoint } from "./utils";
+import { Mutable, Point, angle, distance, rotateXAroundPoint, rotateYAroundPoint } from "./utils";
 
 // @Speed: Maybe make into const enum?
 export const enum CollisionBit {
@@ -18,7 +18,10 @@ export const DEFAULT_COLLISION_MASK = CollisionBit.default | CollisionBit.cactus
 
 export interface CollisionResult {
    readonly isColliding: boolean;
-   /** If isColliding is false then this value is just garbage and has no meaning */
+   /**
+    * A vector which would resolve the collision.
+    * If isColliding is false then this value is just garbage and has no meaning.
+    * */
    readonly overlap: Point;
    readonly collisionPoint: Point;
 }
@@ -109,9 +112,9 @@ export function getCircleRectangleCollisionResult(circlePos: Point, circleRadius
    const absDistanceX = Math.abs(distanceX);
    const absDistanceY = Math.abs(distanceY);
 
-   // Amount the circular hitbox is inside the rectangle horizontally
+   // Amount in the X axis the circular hitbox is inside the rectangle
    const horizontalAmountIn = rectWidth/2 + circleRadius - absDistanceX;
-   // Amount the circular hitbox is inside the rectangle vertically
+   // Amount in the Y axis the circular hitbox is inside the rectangle vertically
    const verticalAmountIn = rectHeight/2 + circleRadius - absDistanceY;
    
    if (horizontalAmountIn <= 0 || verticalAmountIn <= 0) {
@@ -123,7 +126,7 @@ export function getCircleRectangleCollisionResult(circlePos: Point, circleRadius
    }
    // Top and bottom collisions
    if (absDistanceX <= rectWidth/2) {
-      const direction = rectRotation + Math.PI + (distanceY > 0 ? Math.PI : 0);
+      const direction = rectRotation + (distanceY > 0 ? 0 : Math.PI);
 
       return {
          isColliding: true,
@@ -132,10 +135,9 @@ export function getCircleRectangleCollisionResult(circlePos: Point, circleRadius
          collisionPoint: new Point(0, 0)
       };
    }
-
    // Left and right collisions
    if (absDistanceY <= rectHeight/2) {
-      const direction = rectRotation + Math.PI + (distanceX > 0 ? Math.PI/2 : -Math.PI/2);
+      const direction = rectRotation + (distanceX > 0 ? Math.PI/2 : -Math.PI/2);
       
       return {
          isColliding: true,
@@ -147,64 +149,46 @@ export function getCircleRectangleCollisionResult(circlePos: Point, circleRadius
 
    const cornerDistanceSquared = Math.pow(absDistanceX - rectWidth/2, 2) + Math.pow(absDistanceY - rectHeight/2, 2);
    if (cornerDistanceSquared <= circleRadius * circleRadius) {
+      const rectCornerX = circlePosX < rectPos.x ? rectPos.x - rectWidth/2 : rectPos.x + rectWidth/2;
+      const rectCornerY = circlePosY < rectPos.y ? rectPos.y - rectHeight/2 : rectPos.y + rectHeight/2;
+
+      const xDistanceFromRectBorder = Math.abs(rectCornerX - circlePosX);
+      const yDistanceFromRectBorder = Math.abs(rectCornerY - circlePosY);
+
+      // Whichever axis has the smallest amount in, we want to push it in that direction (least action to resolve the collision)
       // @Cleanup: Whole lot of copy and paste
       if (verticalAmountIn < horizontalAmountIn) {
-         const closestRectBorderY = circlePosY < rectPos.y ? rectPos.y - rectHeight/2 : rectPos.y + rectHeight/2;
-         const closestRectBorderX = circlePosX < rectPos.x ? rectPos.x - rectWidth/2 : rectPos.x + rectWidth/2;
-         const xDistanceFromRectBorder = Math.abs(closestRectBorderX - circlePosX);
-         const len = Math.sqrt(circleRadius * circleRadius - xDistanceFromRectBorder * xDistanceFromRectBorder);
-
-         const amountIn = Math.abs(closestRectBorderY - (circlePosY - len * Math.sign(distanceY)));
+         const len = Math.sqrt(circleRadius * circleRadius - xDistanceFromRectBorder * xDistanceFromRectBorder) - yDistanceFromRectBorder;
          const direction = rectRotation + Math.PI + (distanceY > 0 ? Math.PI : 0);
          
-         // @Temporary @Hack: should be guaranteed
-         if (amountIn > 0) {
+         // We check for this, cuz len=0 is bad! we don't want to return a collision with an overlap of (0, 0)! would be harmful
+         if (len > 0) {
             return {
                isColliding: true,
-               overlap: Point.fromVectorForm(amountIn, direction),
-               collisionPoint: new Point(0, 0)
-            };
-         } else {
-            // @Temporary: this shittiness is here to further encourage me to fix the above issue
-            return {
-               isColliding: false,
-               overlap: new Point(0, 0),
+               overlap: Point.fromVectorForm(len, direction),
                collisionPoint: new Point(0, 0)
             };
          }
       } else {
-         const closestRectBorderX = circlePosX < rectPos.x ? rectPos.x - rectWidth/2 : rectPos.x + rectWidth/2;
-         
-         const closestRectBorderY = circlePosY < rectPos.y ? rectPos.y - rectHeight/2 : rectPos.y + rectHeight/2;
-         const yDistanceFromRectBorder = Math.abs(closestRectBorderY - circlePosY);
-         const len = Math.sqrt(circleRadius * circleRadius - yDistanceFromRectBorder * yDistanceFromRectBorder);
-
-         const amountIn = Math.abs(closestRectBorderX - (circlePosX - len * Math.sign(distanceX)));
+         const len = Math.sqrt(circleRadius * circleRadius - yDistanceFromRectBorder * yDistanceFromRectBorder) - xDistanceFromRectBorder;
          const direction = rectRotation + (distanceX > 0 ? Math.PI/2 : -Math.PI/2);
          
-         // @Temporary @Hack: should be guaranteed
-         if (amountIn > 0) {
+         // We check for this, cuz len=0 is bad! we don't want to return a collision with an overlap of (0, 0)! would be harmful
+         if (len > 0) {
             return {
                isColliding: true,
-               overlap: Point.fromVectorForm(amountIn, direction),
-               collisionPoint: new Point(0, 0)
-            };
-         } else {
-            // @Temporary: this shittiness is here to further encourage me to fix the above issue
-            return {
-               isColliding: false,
-               overlap: new Point(0, 0),
+               overlap: Point.fromVectorForm(len, direction),
                collisionPoint: new Point(0, 0)
             };
          }
       }
-   } else {
-      return {
-         isColliding: false,
-         overlap: new Point(0, 0),
-         collisionPoint: new Point(0, 0)
-      };
    }
+
+   return {
+      isColliding: false,
+      overlap: new Point(0, 0),
+      collisionPoint: new Point(0, 0)
+   };
 }
 
 /** Computes the axis for the line created by two points */

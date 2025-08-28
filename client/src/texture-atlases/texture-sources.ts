@@ -460,6 +460,8 @@ export const TEXTURE_SOURCES: Array<string> = [
    "entities/krumblid-morph-cocoon/stage-7.png",
    "entities/krumblid-morph-cocoon/stage-8.png",
    "entities/krumblid-morph-cocoon/stage-9.png",
+   "entities/krumblid-morph-cocoon/shitass.png",
+   "entities/dustflea-egg/dustflea-egg.png",
 ];
 
 export function registerTextureSource(textureSource: string): void {

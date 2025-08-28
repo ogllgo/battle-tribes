@@ -210,26 +210,27 @@ const BIOME_GENERATION_INFO: ReadonlyArray<BiomeGenerationInfo> = [
          }
       ],
       wallTiles: [
-         {
-            subtileType: SubtileType.sandstoneWall,
-            requirements: {
-               customNoise: [
-                  {
-                     scale: 9,
-                     minWeight: 0.41,
-                     maxWeight: 0.59
-                     // scale: 13,
-                     // minWeight: 0.59,
-                     // maxWeight: 0.68
-                  },
-                  {
-                     scale: 17,
-                     minWeight: 0.6
-                  }
-               ],
-               minDist: 10
-            }
-         }
+         // @Temporary
+         // {
+         //    subtileType: SubtileType.sandstoneWall,
+         //    requirements: {
+         //       customNoise: [
+         //          {
+         //             scale: 9,
+         //             minWeight: 0.41,
+         //             maxWeight: 0.59
+         //             // scale: 13,
+         //             // minWeight: 0.59,
+         //             // maxWeight: 0.68
+         //          },
+         //          {
+         //             scale: 17,
+         //             minWeight: 0.6
+         //          }
+         //       ],
+         //       minDist: 10
+         //    }
+         // }
       ]
    },
    {

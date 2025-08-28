@@ -442,6 +442,10 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
       name: "Okren Tongue Tip",
       internalName: "okren-tongue-tip"
    },
+   [EntityType.dustfleaEgg]: {
+      name: "Dustflea Egg",
+      internalName: "dustflea-egg"
+   },
 };
 
 export default CLIENT_ENTITY_INFO_RECORD;

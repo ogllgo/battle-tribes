@@ -8,6 +8,7 @@ import { Entity, EntityType } from "../../../../shared/src/entities";
 import { Point } from "../../../../shared/src/utils";
 import { moveEntityToPosition } from "../../ai-shared";
 import { OkrenCombatAI } from "../../ai/OkrenCombatAI";
+import { SandBallingAI } from "../../ai/SandBallingAI";
 import { EntityConfig } from "../../components";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { HealthComponent } from "../../components/HealthComponent";
@@ -27,7 +28,7 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
    const transformComponent = new TransformComponent();
    
    // Flesh body hitbox
-   const fleshBodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 80), 5, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_BODY]);
+   const fleshBodyHitbox = createHitbox(transformComponent, null, new CircularBox(position, new Point(0, 0), angle, 80), 5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_BODY]);
    addHitboxToTransformComponent(transformComponent, fleshBodyHitbox);
 
    for (let i = 0; i < 2; i++) {
@@ -54,8 +55,8 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
          case OkrenAgeStage.juvenile: mandibleOffset = new Point(16, 80); break;
          case OkrenAgeStage.youth:    mandibleOffset = new Point(18, 84); break;
          case OkrenAgeStage.adult:    mandibleOffset = new Point(18, 88); break;
-         case OkrenAgeStage.elder:    mandibleOffset = new Point(22, 96); break;
-         case OkrenAgeStage.ancient:  mandibleOffset = new Point(22, 104); break;
+         case OkrenAgeStage.elder:    mandibleOffset = new Point(22, 98); break;
+         case OkrenAgeStage.ancient:  mandibleOffset = new Point(22, 106); break;
       }
       const mandiblePosition = fleshBodyHitbox.box.position.copy();
       mandiblePosition.add(mandibleOffset);
@@ -68,11 +69,11 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
       
       let bigArmSegmentOffset: Point;
       switch (size) {
-         case OkrenAgeStage.juvenile: bigArmSegmentOffset = new Point(58, 62); break;
-         case OkrenAgeStage.youth:    bigArmSegmentOffset = new Point(66, 64); break;
+         case OkrenAgeStage.juvenile: bigArmSegmentOffset = new Point(52, 62); break;
+         case OkrenAgeStage.youth:    bigArmSegmentOffset = new Point(64, 64); break;
          case OkrenAgeStage.adult:    bigArmSegmentOffset = new Point(74, 66); break;
-         case OkrenAgeStage.elder:    bigArmSegmentOffset = new Point(82, 66); break;
-         case OkrenAgeStage.ancient:  bigArmSegmentOffset = new Point(90, 66); break;
+         case OkrenAgeStage.elder:    bigArmSegmentOffset = new Point(82, 68); break;
+         case OkrenAgeStage.ancient:  bigArmSegmentOffset = new Point(78, 86); break;
       }
       const bigArmSegmentPosition = fleshBodyHitbox.box.position.copy();
       bigArmSegmentPosition.add(bigArmSegmentOffset);
@@ -83,13 +84,26 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
       bigArmSegmentHitbox.box.pivot = createAbsolutePivotPoint(-2, -38);
       addHitboxToTransformComponent(transformComponent, bigArmSegmentHitbox);
 
-      const mediumArmSegmentOffset = Point.fromVectorForm(40, -Math.PI * 0.3);
-      mediumArmSegmentOffset.x += 36;
-      mediumArmSegmentOffset.y += 48;
+      let mediumArmSegmentOffset: Point;
+      switch (size) {
+         case OkrenAgeStage.juvenile: mediumArmSegmentOffset = new Point(0, 68); break;
+         case OkrenAgeStage.youth:    mediumArmSegmentOffset = new Point(4, 72); break;
+         case OkrenAgeStage.adult:    mediumArmSegmentOffset = new Point(4, 72); break;
+         case OkrenAgeStage.elder:    mediumArmSegmentOffset = new Point(4, 72); break;
+         case OkrenAgeStage.ancient:  mediumArmSegmentOffset = new Point(4, 72); break;
+      }
       const mediumArmSegmentPosition = bigArmSegmentHitbox.box.position.copy();
       mediumArmSegmentPosition.add(mediumArmSegmentOffset);
       const mediumArmSegmentHitbox = createHitbox(transformComponent, bigArmSegmentHitbox, new RectangularBox(mediumArmSegmentPosition, mediumArmSegmentOffset, -Math.PI * 0.3, 20, 40), 1.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.OKREN_MEDIUM_ARM_SEGMENT]);
-      mediumArmSegmentHitbox.box.pivot = createAbsolutePivotPoint(0, -36);
+      let mediumArmPivotY: number;
+      switch (size) {
+         case OkrenAgeStage.juvenile: mediumArmPivotY = -28; break;
+         case OkrenAgeStage.youth:    mediumArmPivotY = -32; break;
+         case OkrenAgeStage.adult:    mediumArmPivotY = -36; break;
+         case OkrenAgeStage.elder:    mediumArmPivotY = -36; break;
+         case OkrenAgeStage.ancient:  mediumArmPivotY = -36; break;
+      }
+      mediumArmSegmentHitbox.box.pivot = createAbsolutePivotPoint(0, mediumArmPivotY);
       addHitboxToTransformComponent(transformComponent, mediumArmSegmentHitbox);
       
       const slashingArmSegmentOffset = Point.fromVectorForm(40, -Math.PI * 0.3);
@@ -110,6 +124,7 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
 
    const aiHelperComponent = new AIHelperComponent(fleshBodyHitbox, 700, move);
    aiHelperComponent.ais[AIType.okrenCombat] = new OkrenCombatAI(350, Math.PI * 1.6);
+   aiHelperComponent.ais[AIType.sandBalling] = new SandBallingAI(0, 0, 4);
    
    // @Temporary
    const hungerComponent = new HungerComponent(1000, 200);

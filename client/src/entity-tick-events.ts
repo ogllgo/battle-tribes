@@ -80,6 +80,10 @@ const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
          playSoundOnHitbox("okren-tongue-lick.mp3", randFloat(0.3, 0.35), randFloat(0.9, 1.1), entity, hitbox, true);
          break;
       }
+      case EntityTickEventType.dustfleaEggPop: {
+         playSoundOnHitbox("dustflea-egg-pop.mp3", 0.4, 1, entity, hitbox, true);
+         break;
+      }
    }
 }
 

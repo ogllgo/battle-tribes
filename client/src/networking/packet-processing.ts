@@ -488,11 +488,10 @@ export function processGameDataPacket(reader: PacketReader): void {
    }
 
    const newPlayerInstance = reader.readNumber();
+   let hasNewPlayerInstance = false;
    if (playerInstance === null && newPlayerInstance !== 0) {
       setPlayerInstance(newPlayerInstance);
-
-      selectItemSlot(1);
-      gameScreenSetIsDead(false);
+      hasNewPlayerInstance = true;
    }
    const cameraSubject = reader.readNumber() as Entity;
 
@@ -541,6 +540,12 @@ export function processGameDataPacket(reader: PacketReader): void {
    // Set the tracked entity after the entities are created so that it can find the first render part of the tracked entity
    if (!Camera.verybadIsTracking) {
       Camera.trackEntity(cameraSubject);
+   }
+   
+   if (hasNewPlayerInstance) {
+      // Done after all the components are updated as the selectItemSlot function needs the player's inventory use component
+      selectItemSlot(1);
+      gameScreenSetIsDead(false);
    }
 
    const entitiesToRemove = new Set<Entity>();

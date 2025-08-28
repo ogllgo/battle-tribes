@@ -37,6 +37,9 @@ import { createDustfleaConfig } from "../entities/desert/dustflea";
 import { createKrumblidConfig } from "../entities/mobs/krumblid";
 import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
 import { createTribeWarriorConfig } from "../entities/tribes/tribe-warrior";
+import { getSubtileIndex } from "../../../shared/src/subtiles";
+import { SubtileType } from "../../../shared/src/tiles";
+import { createCowConfig } from "../entities/mobs/cow";
 
 /*
 
@@ -171,7 +174,8 @@ class GameServer {
       generateGrassStrands();
       console.log("grass",performance.now() - a)
       a = performance.now();
-      generateDecorations();
+      // @Temporary
+      // generateDecorations();
       console.log("decorations",performance.now() - a)
       a = performance.now();
       // spawnGuardians();

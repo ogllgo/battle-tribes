@@ -1,13 +1,22 @@
 import { HitboxFlag } from "../../../shared/src/boxes/boxes";
+import CircularBox from "../../../shared/src/boxes/CircularBox";
+import RectangularBox from "../../../shared/src/boxes/RectangularBox";
 import { ServerComponentType } from "../../../shared/src/components";
 import { DamageSource, Entity, EntityType } from "../../../shared/src/entities";
 import { AttackEffectiveness } from "../../../shared/src/entity-damage-types";
+import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 import { Packet } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
-import { getAbsAngleDiff, Point } from "../../../shared/src/utils";
-import { getOkrenPreyTarget, getOkrenThreatTarget, runOkrenCombatAI } from "../ai/OkrenCombatAI";
-import { applyAbsoluteKnockback, getHitboxVelocity, Hitbox, turnHitboxToAngle } from "../hitboxes";
-import { getEntityType } from "../world";
+import { getSubtileIndex } from "../../../shared/src/subtiles";
+import { assert, clampToSubtileBoardDimensions, distance, getAbsAngleDiff, Point, positionIsInWorld, randAngle, randFloat, randInt } from "../../../shared/src/utils";
+import { getDistanceFromPointToHitbox, willStopAtDesiredDistance } from "../ai-shared";
+import { getOkrenPreyTarget, runOkrenCombatAI } from "../ai/OkrenCombatAI";
+import { runSandBallingAI, updateSandBallingAI } from "../ai/SandBallingAI";
+import { createDustfleaEggConfig } from "../entities/desert/dustflea-egg";
+import { createEntity } from "../Entity";
+import { applyAbsoluteKnockback, getHitboxAngularVelocity, getHitboxVelocity, Hitbox, turnHitboxToAngle } from "../hitboxes";
+import { registerEntityTickEvent } from "../server/player-clients";
+import { getEntityAgeTicks, getEntityLayer, getEntityType } from "../world";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray, canDamageEntity, hitEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
@@ -67,7 +76,18 @@ const swungIdealAngles: OkrenHitboxIdealAngles = {
    smallIdealAngle: -Math.PI * 0.3
 };
 
+const layingIdealAngles: OkrenHitboxIdealAngles = {
+   bigIdealAngle: -Math.PI * 0.25,
+   mediumIdealAngle: -Math.PI * 0.4,
+   smallIdealAngle: -Math.PI * 0.65
+};
+
 const KRUMBLID_PEACE_TIME_TICKS = 5 * Settings.TPS;
+
+const MIN_DUSTFLEA_GESTATION_TIME = 3 * Settings.TPS;
+const MAX_DUSTFLEA_GESTATION_TIME = 5 * Settings.TPS;
+
+const DUSTFLEA_EGG_LAY_TIME_TICKS = Settings.TPS;
 
 export class OkrenComponent {
    public size = OkrenAgeStage.juvenile;
@@ -77,6 +97,14 @@ export class OkrenComponent {
    public currentSwingSide = OkrenSide.right;
 
    public remainingPeaceTimeTicks = 0;
+
+   public dustfleaGestationTimer = randInt(MIN_DUSTFLEA_GESTATION_TIME, MAX_DUSTFLEA_GESTATION_TIME);
+   public numEggsReady = 0;
+   public isLayingEggs = false;
+   public eggLayTimer = 0;
+   public eggLayPosition = new Point(0, 0);
+
+   public isProtectingEggs = false;
 }
 
 export const OkrenComponentArray = new ComponentArray<OkrenComponent>(ServerComponentType.okren, true, getDataLength, addDataToPacket);
@@ -176,11 +204,85 @@ const hasFleas = (okren: Entity): boolean => {
    return false;
 }
 
+// @Copynpaste from KrumblidHibernateAI
+
+const getRandomNearbyPosition = (krumblid: Entity): Point => {
+   const krumblidTransformComponent = TransformComponentArray.getComponent(krumblid);
+   const krumblidHitbox = krumblidTransformComponent.children[0] as Hitbox;
+
+   const RANGE = 600;
+   
+   let x: number;
+   let y: number;
+   do {
+      x = krumblidHitbox.box.position.x + randFloat(-RANGE, RANGE);
+      y = krumblidHitbox.box.position.y + randFloat(-RANGE, RANGE);
+   } while (distance(krumblidHitbox.box.position.x, krumblidHitbox.box.position.y, x, y) > RANGE || !positionIsInWorld(x, y))
+
+   return new Point(x, y);
+}
+
+const isValidEggLayPosition = (okren: Entity, position: Point): boolean => {
+   const layer = getEntityLayer(okren);
+
+   // Nake sure it isn't near a wall
+   const WALL_CHECK_RANGE = 350;
+
+   const minSubtileX = clampToSubtileBoardDimensions(Math.floor((position.x - WALL_CHECK_RANGE) / Settings.SUBTILE_SIZE));
+   const maxSubtileX = clampToSubtileBoardDimensions(Math.floor((position.x + WALL_CHECK_RANGE) / Settings.SUBTILE_SIZE));
+   const minSubtileY = clampToSubtileBoardDimensions(Math.floor((position.y - WALL_CHECK_RANGE) / Settings.SUBTILE_SIZE));
+   const maxSubtileY = clampToSubtileBoardDimensions(Math.floor((position.y + WALL_CHECK_RANGE) / Settings.SUBTILE_SIZE));
+
+   const testHitbox = new CircularBox(position.copy(), new Point(0, 0), 0, WALL_CHECK_RANGE);
+   
+   for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
+      for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
+         const subtileIndex = getSubtileIndex(subtileX, subtileY);
+         if (layer.subtileIsWall(subtileIndex)) {
+            // @Speed
+            const position = new Point((subtileX + 0.5) * Settings.SUBTILE_SIZE, (subtileY + 0.5) * Settings.SUBTILE_SIZE);
+            // @Copynpaste
+            const tileBox = new RectangularBox(position, new Point(0, 0), 0, Settings.SUBTILE_SIZE, Settings.SUBTILE_SIZE);
+            if (testHitbox.getCollisionResult(tileBox).isColliding) {
+               return false;
+            }
+         }
+      }
+   }
+
+   return true;
+}
+
 function onTick(okren: Entity): void {
+   if (1+1===2)return;
+   
+   // @HACK: this should really be like some muscle or restriction thing defined when the okren is created.
+   // Cuz what if this function gets disabled or when this gets abstracted into an AI component and the okren's AI gets turned off?
+   for (const side of OKREN_SIDES) {
+      const minAngle = -Math.PI * 0.4;
+      const maxAngle = Math.PI * 0.2;
+
+      const mandibleHitbox = getOkrenMandibleHitbox(okren, side);
+      if (mandibleHitbox.box.relativeAngle < minAngle) {
+         mandibleHitbox.box.relativeAngle = minAngle;
+         mandibleHitbox.previousRelativeAngle = minAngle;
+      } else if (mandibleHitbox.box.relativeAngle > maxAngle) {
+         mandibleHitbox.box.relativeAngle = maxAngle;
+         mandibleHitbox.previousRelativeAngle = maxAngle;
+      }
+   }
+   
    const okrenComponent = OkrenComponentArray.getComponent(okren);
 
    if (okrenComponent.remainingPeaceTimeTicks > 0) {
       okrenComponent.remainingPeaceTimeTicks--;
+   }
+
+   if (okrenComponent.dustfleaGestationTimer > 0) {
+      okrenComponent.dustfleaGestationTimer--;
+   } else {
+      okrenComponent.dustfleaGestationTimer = randInt(MIN_DUSTFLEA_GESTATION_TIME, MAX_DUSTFLEA_GESTATION_TIME);
+      okrenComponent.numEggsReady++;
    }
    
    okrenComponent.ticksInStates[0]++;
@@ -233,6 +335,101 @@ function onTick(okren: Entity): void {
    //    runOkrenCombatAI(okren, aiHelperComponent, combatAI, threatTarget);
    //    return;
    // }
+
+   if (okrenComponent.numEggsReady >= 5 && !okrenComponent.isLayingEggs) {
+      // Wait until the okren finds a good spot to lay eggs
+      if (getEntityAgeTicks(okren) % Math.floor(Settings.TPS / 4) === 0) {
+         const potentialPosition = getRandomNearbyPosition(okren);
+         if (isValidEggLayPosition(okren, potentialPosition)) {
+            okrenComponent.eggLayPosition = potentialPosition;
+            okrenComponent.isLayingEggs = true;
+         }
+      }
+   }
+
+   const okrenTransformComponent = TransformComponentArray.getComponent(okren);
+   const okrenBodyHitbox = okrenTransformComponent.children[0] as Hitbox;
+   
+   if (okrenComponent.isProtectingEggs) {
+      // Turn to face teh egg lay position
+      const angleToLayPosition = okrenBodyHitbox.box.position.calculateAngleBetween(okrenComponent.eggLayPosition);
+      const distance = getDistanceFromPointToHitbox(okrenComponent.eggLayPosition, okrenBodyHitbox);
+      
+      if (getAbsAngleDiff(okrenBodyHitbox.box.angle, angleToLayPosition) < 0.2 && Math.abs(getHitboxAngularVelocity(okrenBodyHitbox)) < 0.2) {
+         // Is facing correct angle to ball up sand
+
+         if (willStopAtDesiredDistance(okrenBodyHitbox, 40, distance)) {
+            // @Copynpaste
+            turnHitboxToAngle(okrenBodyHitbox, angleToLayPosition, 0.5 * Math.PI, 0.75, false);
+   
+            const sandBallingAI = aiHelperComponent.getSandBallingAI();
+            updateSandBallingAI(sandBallingAI);
+            runSandBallingAI(okren, aiHelperComponent, sandBallingAI);
+         } else {
+            aiHelperComponent.move(okren, 350, 0.5 * Math.PI, okrenComponent.eggLayPosition.x, okrenComponent.eggLayPosition.y);
+         }
+      } else {
+         // Isn't facing correct angle to ball up sand
+         
+         // If the okren is too close to turn around without scattering the eggs, move back
+         if (willStopAtDesiredDistance(okrenBodyHitbox, 75, distance)) {
+            const targetPos = okrenBodyHitbox.box.position.offset(1, angleToLayPosition + Math.PI);
+            
+            aiHelperComponent.move(okren, 350, 0.5 * Math.PI, targetPos.x, targetPos.y);
+         } else {
+            if (getHitboxVelocity(okrenBodyHitbox).length() < 30) {
+               // @Copynpaste
+               turnHitboxToAngle(okrenBodyHitbox, angleToLayPosition, 0.5 * Math.PI, 0.75, false);
+            }
+         }
+      }
+      return;
+   } else if (okrenComponent.isLayingEggs) {
+      const distance = getDistanceFromPointToHitbox(okrenComponent.eggLayPosition, okrenBodyHitbox);
+      if (willStopAtDesiredDistance(okrenBodyHitbox, 60, distance)) {
+         // Once in range, turn to face away from the lay position
+         const targetAngle = okrenBodyHitbox.box.position.calculateAngleBetween(okrenComponent.eggLayPosition) + Math.PI;
+         turnHitboxToAngle(okrenBodyHitbox, targetAngle, 0.5 * Math.PI, 0.75, false);
+
+         if (getAbsAngleDiff(okrenBodyHitbox.box.angle, targetAngle) < 0.2 && Math.abs(getHitboxAngularVelocity(okrenBodyHitbox)) < 0.2) {
+            for (const side of OKREN_SIDES) {
+               setOkrenHitboxIdealAngles(okren, side, layingIdealAngles, 1.2 * Math.PI, 3 * Math.PI, 3 * Math.PI);
+            }
+
+            if (++okrenComponent.eggLayTimer >= DUSTFLEA_EGG_LAY_TIME_TICKS) {
+               assert(okrenComponent.numEggsReady > 0);
+      
+               const hitboxRadius = (okrenBodyHitbox.box as CircularBox).radius;
+               
+               const eggPosition = okrenBodyHitbox.box.position.offset(hitboxRadius + 2, Math.PI + okrenBodyHitbox.box.angle + randFloat(-0.15, 0.15));
+      
+               const eggConfig = createDustfleaEggConfig(eggPosition, randAngle(), okren);
+               createEntity(eggConfig, getEntityLayer(okren), 0);
+               
+               okrenComponent.eggLayTimer = 0;
+               okrenComponent.numEggsReady--;
+      
+               // @Hack: entity is the okren because the dustflea egg isn't created yet so the function can't get the transform component of it
+               const tickEvent: EntityTickEvent = {
+                  type: EntityTickEventType.dustfleaEggPop,
+                  entityID: okren,
+                  data: 0
+               };
+               registerEntityTickEvent(okren, tickEvent);
+            }
+         }
+      } else {
+         // @Hack @Cleanup: really bad place to define the acceleration and turn speed
+         aiHelperComponent.move(okren, 350, Math.PI * 1.6, okrenComponent.eggLayPosition.x, okrenComponent.eggLayPosition.y);
+      }
+         
+      if (okrenComponent.numEggsReady === 0) {
+         // Once all eggs are laid, switch to balling up sand around them to protect them
+         okrenComponent.isProtectingEggs = true;
+      }
+
+      return;
+   }
 
    if (getEntityFullness(okren) < 0.5) {
       const preyTarget = getOkrenPreyTarget(okren, aiHelperComponent);
@@ -299,7 +496,7 @@ function onHitboxCollision(okren: Entity, collidingEntity: Entity, affectedHitbo
       
    if (!HealthComponentArray.hasComponent(collidingEntity)) {
       return;
-   } 
+   }
 
    const hash = "okren_" + okren + "_" + affectedHitbox.localID;
    

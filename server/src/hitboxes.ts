@@ -125,6 +125,7 @@ export function setHitboxVelocity(hitbox: Hitbox, vx: number, vy: number): void 
 }
 
 export function getRootHitbox(hitbox: Hitbox): Hitbox {
+   // @Bug: This can cause infinite loops. We should do a check here, or just rework the whole shitass system so this can never occur
    let currentHitbox = hitbox;
    while (currentHitbox.parent !== null) {
       currentHitbox = currentHitbox.parent;
