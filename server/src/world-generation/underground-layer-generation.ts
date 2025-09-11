@@ -245,7 +245,8 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
          let richnessFactor = 0;
          let weightFactor = 0;
          
-         if (weight > 0.57) {
+         // @SQUEAM
+         if (weight > 0.57 && 1+1===3) {
             if (depth > 0.4 && weight < 0.65 && mithrilGenerationWeight > Vars.MIN_MITHRIL_GENERATION_WEIGHT) {
                isMithrilRich = true;
                richnessFactor = (mithrilGenerationWeight - Vars.MIN_MITHRIL_GENERATION_WEIGHT) / (1 - Vars.MIN_MITHRIL_GENERATION_WEIGHT)
@@ -407,36 +408,37 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       createEntityImmediate(treeRoot, undergroundLayer);
    }
 
-   registerNewSpawnInfo({
-      entityTypes: [EntityType.boulder],
-      layer: undergroundLayer,
-      spawnRate: 0.005,
-      biome: Biome.caves,
-      tileTypes: [TileType.stone],
-      onlySpawnsInNight: false,
-      minSpawnDistance: 60,
-      spawnDistribution: createRawSpawnDistribution(16, 0.025),
-      balanceSpawnDistribution: true,
-      doStrictTileTypeCheck: true,
-      createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
-         return [createBoulderConfig(pos, angle)];
-      }
-   });
-   registerNewSpawnInfo({
-      entityTypes: [EntityType.glurbHeadSegment, EntityType.glurbBodySegment, EntityType.glurbTailSegment],
-      layer: undergroundLayer,
-      spawnRate: 0.0025,
-      biome: Biome.caves,
-      tileTypes: [TileType.stone],
-      onlySpawnsInNight: false,
-      minSpawnDistance: 100,
-      spawnDistribution: createRawSpawnDistribution(32, 0.004),
-      balanceSpawnDistribution: true,
-      doStrictTileTypeCheck: true,
-      createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
-         return createGlurbConfig(pos, angle);
-      }
-   });
+   // @SQUEAM
+   // registerNewSpawnInfo({
+   //    entityTypes: [EntityType.boulder],
+   //    layer: undergroundLayer,
+   //    spawnRate: 0.005,
+   //    biome: Biome.caves,
+   //    tileTypes: [TileType.stone],
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 60,
+   //    spawnDistribution: createRawSpawnDistribution(16, 0.025),
+   //    balanceSpawnDistribution: true,
+   //    doStrictTileTypeCheck: true,
+   //    createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
+   //       return [createBoulderConfig(pos, angle)];
+   //    }
+   // });
+   // registerNewSpawnInfo({
+   //    entityTypes: [EntityType.glurbHeadSegment, EntityType.glurbBodySegment, EntityType.glurbTailSegment],
+   //    layer: undergroundLayer,
+   //    spawnRate: 0.0025,
+   //    biome: Biome.caves,
+   //    tileTypes: [TileType.stone],
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 100,
+   //    spawnDistribution: createRawSpawnDistribution(32, 0.004),
+   //    balanceSpawnDistribution: true,
+   //    doStrictTileTypeCheck: true,
+   //    createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
+   //       return createGlurbConfig(pos, angle);
+   //    }
+   // });
    // @HACK: Just so that mithril ore nodes get registered so tribesman know how to gather them
    registerNewSpawnInfo({
       entityTypes: [EntityType.mithrilOreNode],

@@ -131,6 +131,7 @@ export function getCircleRectangleCollisionResult(circlePos: Point, circleRadius
 
       return {
          isColliding: true,
+         // verticalAmountIn is guaranteed to be > 0 (see above)
          // @Speed: don't need sin/cos here at all
          overlap: polarVec2(verticalAmountIn, direction),
          collisionPoint: new Point(0, 0)
@@ -142,6 +143,7 @@ export function getCircleRectangleCollisionResult(circlePos: Point, circleRadius
       
       return {
          isColliding: true,
+         // horizontalAmountIn is guaranteed to be > 0 (see above)
          // @Speed: don't need sin/cos here at all
          overlap: polarVec2(horizontalAmountIn, direction),
          collisionPoint: new Point(0, 0)

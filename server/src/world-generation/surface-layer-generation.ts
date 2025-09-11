@@ -518,41 +518,40 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    //       return [createCowConfig(pos, angle, species)];
    //    }
    // });
-   // @SQUEAM disabled so that cows in the pen don't try and go for it
-   // registerNewSpawnInfo({
-   //    entityTypes: [EntityType.berryBush],
-   //    layer: surfaceLayer,
-   //    // @SQUEAM so that they don't regrow after killed, for the pen shot
-   //    // spawnRate: 0.001,
-   //    spawnRate: 0,
-   //    biome: Biome.grasslands,
-   //    tileTypes: [TileType.grass],
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 150,
-   //    spawnDistribution: createRawSpawnDistribution(8, 0.0025),
-   //    balanceSpawnDistribution: true,
-   //    doStrictTileTypeCheck: true,
-   //    createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
-   //       return [createBerryBushConfig(pos, angle)];
-   //    }
-   // });
-   // registerNewSpawnInfo({
-   //    entityTypes: [EntityType.tree],
-   //    layer: surfaceLayer,
-   //    // @SQUEAM so that they don't regrow after killed, for the pen shot
-   //    // spawnRate: 0.013,
-   //    spawnRate: 0,
-   //    biome: Biome.grasslands,
-   //    tileTypes: [TileType.grass],
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 75,
-   //    spawnDistribution: createRawSpawnDistribution(8, 0.02),
-   //    balanceSpawnDistribution: true,
-   //    doStrictTileTypeCheck: false,
-   //    createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
-   //       return [createTreeConfig(pos, angle, Math.random() > 1/3 ? TreeSize.large : TreeSize.small)];
-   //    }
-   // });
+   registerNewSpawnInfo({
+      entityTypes: [EntityType.berryBush],
+      layer: surfaceLayer,
+      // @SQUEAM so that they don't regrow after killed, for the pen shot
+      // spawnRate: 0.001,
+      spawnRate: 0,
+      biome: Biome.grasslands,
+      tileTypes: [TileType.grass],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150,
+      spawnDistribution: createRawSpawnDistribution(8, 0.0025),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: true,
+      createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
+         return [createBerryBushConfig(pos, angle)];
+      }
+   });
+   registerNewSpawnInfo({
+      entityTypes: [EntityType.tree],
+      layer: surfaceLayer,
+      // @SQUEAM so that they don't regrow after killed, for the pen shot
+      // spawnRate: 0.013,
+      spawnRate: 0,
+      biome: Biome.grasslands,
+      tileTypes: [TileType.grass],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 75,
+      spawnDistribution: createRawSpawnDistribution(8, 0.02),
+      balanceSpawnDistribution: true,
+      doStrictTileTypeCheck: false,
+      createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
+         return [createTreeConfig(pos, angle, Math.random() > 1/3 ? TreeSize.large : TreeSize.small)];
+      }
+   });
    // @TEMPORARY cuz they're messing up my shot!!!!
    // registerNewSpawnInfo({
    //    entityType: EntityType.tombstone,

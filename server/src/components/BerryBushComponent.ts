@@ -11,7 +11,9 @@ const enum Vars {
 }
 
 export class BerryBushComponent {
-   public numBerries = 0;
+   // @SQUEAM
+   // public numBerries = 0;
+   public numBerries = 5;
    public berryGrowTimer = 0;
 }
 

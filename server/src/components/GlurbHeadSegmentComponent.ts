@@ -143,6 +143,9 @@ const getNumSegments = (glurbSegment: Entity, foundSegments: Array<Entity>): num
 }
 
 function onTick(glurbHead: Entity): void {
+   // @SQUEAM
+   if(1+1===2)return;
+   
    const glurbHeadTransformComponent = TransformComponentArray.getComponent(glurbHead);
    const headHitbox = glurbHeadTransformComponent.hitboxes[0];
    

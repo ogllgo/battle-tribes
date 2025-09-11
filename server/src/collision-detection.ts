@@ -1,5 +1,5 @@
 import { CollisionGroup, collisionGroupsCanCollide } from "battletribes-shared/collision-groups";
-import { Entity, EntityType } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { collisionBitsAreCompatible } from "battletribes-shared/hitbox-collision";
 import { Settings } from "battletribes-shared/settings";
 import { collide } from "./collision-resolution";
@@ -14,7 +14,6 @@ export const enum CollisionVars {
 }
 
 type EntityCollisionPair = [affectedEntity: Entity, collidingEntity: Entity];
-// export type HitboxCollisionPair = [affectedHitbox: Hitbox, collidingHitbox: Hitbox];
 
 export interface HitboxCollisionPair {
    readonly affectedHitbox: Hitbox;

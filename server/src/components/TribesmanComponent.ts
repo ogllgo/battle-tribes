@@ -233,7 +233,8 @@ const tickInventoryUseInfo = (tribeMember: Entity, limb: LimbInfo): void => {
                   // @HACK!!! so that they stop eating food when they dont need to
                   const healthComponent = HealthComponentArray.getComponent(tribeMember);
                   if (healthComponent.health >= healthComponent.maxHealth) {
-                     limb.action = LimbAction.none;
+                     // @SQUEAM
+                     // limb.action = LimbAction.none;
                   }
                }
             }

@@ -483,7 +483,7 @@ function onJoin(entity: Entity): void {
 
    updateContainingChunks(transformComponent, entity);
 
-   // @Cleanup: should we make a separate PathfindingOccupancyComponent?
+   // @Cleanup: should i make a separate PathfindingOccupancyComponent?
    if (entityCanBlockPathfinding(entity)) {
       updateEntityPathfindingNodeOccupance(entity);
    }
@@ -710,37 +710,6 @@ export function getRandomPositionInBox(box: Box): Point {
       return new Point(x, y);
    }
 }
-
-// const countHitboxes = (transformComponent: TransformComponent): number => {
-//    let numHitboxes = 0;
-//    for (const child of transformComponent.children) {
-//       if (entityChildIsEntity(child)) {
-//       } else {
-//          numHitboxes++;
-//       }
-//    } 
-//    return numHitboxes;
-// }
-
-// const getHeirarchyIndexedHitbox = (transformComponent: TransformComponent, i: number, hitboxIdx: number): Hitbox | number => {
-//    let newI = i;
-//    for (const child of transformComponent.children) {
-//       if (entityChildIsEntity(child)) {
-//          if (typeof result === "number") {
-//             newI = result;
-//          } else {
-//             return result;
-//          }
-//       } else {
-//          if (newI === hitboxIdx) {
-//             return child;
-//          }
-         
-//          newI++;
-//       }
-//    } 
-//    return newI;
-// }
 
 const getOwnedHitboxArea = (hitbox: Hitbox): number => {
    let area = getBoxArea(hitbox.box);
