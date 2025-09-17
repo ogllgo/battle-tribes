@@ -1,11 +1,10 @@
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collision";
-import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
-import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
+import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity } from "../../components/HealthComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "../../components/StatusEffectComponent";
-import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -14,6 +13,7 @@ import { getEntityType } from "../../world";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { SpitPoisonAreaComponent } from "../../components/SpitPoisonAreaComponent";
 import { Hitbox } from "../../hitboxes";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 export function createSpitPoisonAreaConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
@@ -21,12 +21,15 @@ export function createSpitPoisonAreaConfig(position: Point, rotation: number): E
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 55), Number.EPSILON, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
+   const physicsComponent = new PhysicsComponent();
+   
    const spitPoisonAreaComponent = new SpitPoisonAreaComponent();
    
    return {
       entityType: EntityType.spitPoisonArea,
       components: {
          [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.spitPoisonArea]: spitPoisonAreaComponent
       },
       lights: []

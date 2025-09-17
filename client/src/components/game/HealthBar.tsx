@@ -1,12 +1,9 @@
 import { TRIBE_INFO_RECORD } from "battletribes-shared/tribes";
 import { useEffect, useRef, useState } from "react";
 import HealthIcon from "../../images/miscellaneous/health.png";
-import FrozenHealthIcon from "../../images/miscellaneous/health-frozen.png";
 import { playerTribe } from "../../tribes";
 
 export let updateHealthBar: (newHealth: number) => void = () => {};
-
-export let HealthBar_setHasFrostShield: (hasFrostShield: boolean) => void = () => {};
 
 interface HealthBarProps {
    readonly isDead: boolean;
@@ -15,7 +12,6 @@ interface HealthBarProps {
 const HealthBar = (props: HealthBarProps) => {
    const healthBarRef = useRef<HTMLDivElement | null>(null);
    const [health, setHealth] = useState(!props.isDead ? TRIBE_INFO_RECORD[playerTribe.tribeType].maxHealthPlayer : 0);
-   const [hasFrostShield, setHasFrostShield] = useState(false);
 
    useEffect(() => {
       if (healthBarRef.current !== null) {
@@ -28,10 +24,6 @@ const HealthBar = (props: HealthBarProps) => {
    }, []);
    
    useEffect(() => {
-      HealthBar_setHasFrostShield = (hasFrostShield: boolean) => {
-         setHasFrostShield(hasFrostShield);
-      }
-      
       updateHealthBar = (newHealth: number) => {
          if (healthBarRef.current !== null && newHealth !== health) {
             // Stop health from being negative
@@ -54,9 +46,9 @@ const HealthBar = (props: HealthBarProps) => {
 
    const displayHealth = Math.round((health + Number.EPSILON) * 100) / 100;
 
-   return <div id="health-bar" className={hasFrostShield ? "frost-shield animated" : "animated"} ref={healthBarRef}>
+   return <div id="health-bar" className="animated" ref={healthBarRef}>
       <div className="health-icon">
-         <img src={hasFrostShield ? FrozenHealthIcon : HealthIcon} alt="" />
+         <img src={HealthIcon} alt="" />
          <div className="health-counter">{displayHealth}</div>
       </div>
       <div className="health-slider"></div>

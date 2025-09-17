@@ -409,12 +409,6 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
       packet.padOffset(3);
    }
 
-   // @Incomplete
-   // hasFrostShield: player.immunityTimer === 0 && playerArmour !== null && playerArmour.type === ItemType.deepfrost_armour,
-
-   packet.addBoolean(false);
-   packet.padOffset(3);
-
    packet.addBoolean(playerClient.hasPickedUpItem);
    packet.padOffset(3);
 
@@ -493,9 +487,6 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
       // entityDebugData: entityDebugData,
       // playerTribeData: bundlePlayerTribeData(playerClient),
       // enemyTribesData: bundleEnemyTribesData(playerClient),
-      // @Incomplete
-      // hasFrostShield: player.immunityTimer === 0 && playerArmour !== null && playerArmour.type === ItemType.deepfrost_armour,
-      // hasFrostShield: false,
       // pickedUpItem: playerClient.hasPickedUpItem,
       // hotbarCrossbowLoadProgressRecord: bundleHotbarCrossbowLoadProgressRecord(player),
       // titleOffer: player !== null ? PlayerComponentArray.getComponent(player).titleOffer : null,

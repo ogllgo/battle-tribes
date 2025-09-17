@@ -1,42 +1,24 @@
 import { BuildingPlanData, TribeWallData } from "battletribes-shared/ai-building-types";
-import { GameDataPacket, HitFlags, ServerTileUpdateData } from "battletribes-shared/client-server-types";
-import { distance, Point, randFloat } from "battletribes-shared/utils";
+import { distance } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { TechID } from "battletribes-shared/techs";
-import { STRUCTURE_TYPES } from "battletribes-shared/structures";
 import { TribeType } from "battletribes-shared/tribes";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import Game from "../Game";
 import { Tile } from "../Tile";
 import { gameScreenSetIsDead } from "../components/game/GameScreen";
-import { HealthBar_setHasFrostShield } from "../components/game/HealthBar";
-import Camera from "../Camera";
-import { updateRenderChunkFromTileUpdate } from "../rendering/render-chunks";
 import { definiteGameState, latencyGameState } from "../game-state/game-states";
-import { createDamageNumber, createHealNumber } from "../text-canvas";
-import { playSound } from "../sound";
-import { setVisibleRestrictedBuildingAreas } from "../rendering/webgl/restricted-building-areas-rendering";
-import { setVisibleWallConnections } from "../rendering/webgl/wall-connection-rendering";
-import { Infocards_setTitleOffer } from "../components/game/infocards/Infocards";
-import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { windowHeight, windowWidth } from "../webgl";
 import { closeCurrentMenu } from "../menus";
-import { TribesTab_refresh } from "../components/game/dev/tabs/TribesTab";
-import { processTickEvents } from "../entity-tick-events";
 import { getStringLengthBytes, Packet, PacketReader, PacketType } from "battletribes-shared/packets";
 import { processForcePositionUpdatePacket, processGameDataPacket, processInitialGameDataPacket, processSyncDataPacket } from "./packet-processing";
 import { createActivatePacket, createPlayerDataPacket, createSyncRequestPacket, sendSetSpectatingPositionPacket } from "./packet-creation";
 import { AppState } from "../components/App";
 import { LoadingScreenStatus } from "../components/LoadingScreen";
-import { entityExists, getEntityLayer, getEntityType, layers } from "../world";
-import { getTileIndexIncludingEdges } from "../Layer";
-import { getComponentArrays, updateEntity } from "../entity-components/ComponentArray";
-import { getRandomPositionInEntity, TransformComponentArray } from "../entity-components/server-components/TransformComponent";
-import { createHealingParticle, createSlimePoolParticle, createSparkParticle } from "../particles";
+import { updateEntity } from "../entity-components/ComponentArray";
 import Board from "../Board";
 import { resolvePlayerCollisions } from "../collision";
 import { setPlayerInstance, playerInstance } from "../player";
-import { getHitboxVelocity, Hitbox, addHitboxVelocity, setHitboxVelocity } from "../hitboxes";
 
 export type GameData = {
    readonly gameTicks: number;
@@ -44,15 +26,11 @@ export type GameData = {
    readonly playerID: number;
 }
 
-let visibleWalls: ReadonlyArray<TribeWallData>;
-let buildingPlans: ReadonlyArray<BuildingPlanData>;
+let visibleWalls: ReadonlyArray<TribeWallData> = [];
+let buildingPlans: ReadonlyArray<BuildingPlanData> = [];
 
 let queuedGameDataPackets = new Array<PacketReader>();
 let lastPacketTime = 0;
-
-// @Cleanup: location
-// Use prime numbers / 100 to ensure a decent distribution of different types of particles
-const HEALING_PARTICLE_AMOUNTS = [0.05, 0.37, 1.01];
 
 export function getQueuedGameDataPackets(): Array<PacketReader> {
    return queuedGameDataPackets;
@@ -263,98 +241,6 @@ abstract class Client {
 
       this.socket.close();
       this.socket = null;
-   }
-
-   public static processGameDataPacket(gameDataPacket: GameDataPacket): void {
-      // this.updateTribe(gameDataPacket.playerTribeData);
-      // Game.enemyTribes = gameDataPacket.enemyTribesData;
-      // @Hack: shouldn't do always
-      TribesTab_refresh();
-
-      Infocards_setTitleOffer(gameDataPacket.titleOffer);
-
-      processTickEvents(gameDataPacket.tickEvents);
-
-      // this.updateEntities(gameDataPacket.entityDataArray, gameDataPacket.visibleEntityDeathIDs);
-      
-      this.registerTileUpdates(gameDataPacket.tileUpdates);
-
-      HealthBar_setHasFrostShield(gameDataPacket.hasFrostShield);
-
-      if (playerInstance !== null) {
-         const transformComponent = TransformComponentArray.getComponent(playerInstance);
-         const playerHitbox = transformComponent.hitboxes[0];
-         // Register player knockback
-         for (let i = 0; i < gameDataPacket.playerKnockbacks.length; i++) {
-            const knockbackData = gameDataPacket.playerKnockbacks[i];
-            
-            const previousVelocity = getHitboxVelocity(playerHitbox);
-            setHitboxVelocity(playerHitbox, previousVelocity.x * 0.5, previousVelocity.y * 0.5);
-   
-            addHitboxVelocity(playerHitbox, knockbackData.knockback * Math.sin(knockbackData.knockbackDirection), knockbackData.knockback * Math.cos(knockbackData.knockbackDirection));
-         }
-      }
-
-      // Register heals
-      for (const healData of gameDataPacket.heals) {
-         if (healData.healAmount === 0) {
-            continue;
-         }
-
-         if (healData.healerID === playerInstance) {
-            createHealNumber(healData.healedID, healData.entityPositionX, healData.entityPositionY, healData.healAmount);
-         }
-
-         const healedEntity = healData.healedID;
-         if (entityExists(healedEntity)) {
-            const transformComponent = TransformComponentArray.getComponent(healedEntity);
-      
-            // Create healing particles depending on the amount the entity was healed
-            let remainingHealing = healData.healAmount;
-            for (let size = 2; size >= 0;) {
-               if (remainingHealing >= HEALING_PARTICLE_AMOUNTS[size]) {
-                  const position = getRandomPositionInEntity(transformComponent);
-                  createHealingParticle(position, size);
-                  remainingHealing -= HEALING_PARTICLE_AMOUNTS[size];
-               } else {
-                  size--;
-               }
-            }
-
-            // @Hack @Incomplete: This will trigger the repair sound effect even if a hammer isn't the one healing the structure
-            if (STRUCTURE_TYPES.includes(getEntityType(healedEntity) as any)) { // @Cleanup
-               playSound("repair.mp3", 0.4, 1, new Point(healData.entityPositionX, healData.entityPositionY), getEntityLayer(healedEntity));
-            }
-         }
-      }
-
-      if (gameDataPacket.pickedUpItem) {
-         playSound("item-pickup.mp3", 0.3, 1, Camera.position, null);
-      }
-
-      if (typeof gameDataPacket.hotbarCrossbowLoadProgressRecord !== "undefined") {
-         definiteGameState.hotbarCrossbowLoadProgressRecord = gameDataPacket.hotbarCrossbowLoadProgressRecord;
-      }
-
-      setVisibleRestrictedBuildingAreas(gameDataPacket.visibleRestrictedBuildingAreas);
-      setVisibleWallConnections(gameDataPacket.visibleWallConnections);
-
-      buildingPlans = gameDataPacket.visibleBuildingPlans;
-      visibleWalls = gameDataPacket.visibleWalls;
-   }
-
-   private static registerTileUpdates(tileUpdates: ReadonlyArray<ServerTileUpdateData>): void {
-      for (const tileUpdate of tileUpdates) {
-         const layer = layers[tileUpdate.layerIdx];
-         
-         const tileX = tileUpdate.tileIndex % Settings.BOARD_DIMENSIONS;
-         const tileY = Math.floor(tileUpdate.tileIndex / Settings.BOARD_DIMENSIONS);
-         const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
-         const tile = layer.getTile(tileIndex);
-         tile.type = tileUpdate.type;
-         
-         updateRenderChunkFromTileUpdate(tileUpdate);
-      }
    }
 
    // @Incomplete

@@ -1,14 +1,6 @@
-import { BuildingPlanData, TribeWallData, WallConnectionData } from "./ai-building-types";
-import { BlueprintType } from "./components";
-import { EntitySummonPacket } from "./dev-packets";
 import { LimbAction } from "./entities";
-import { EntityTickEvent } from "./entity-events";
-import { InventoryName, ItemType } from "./items/items";
 import { StatusEffect } from "./status-effects";
-import { TechID } from "./techs";
 import { TileType } from "./tiles";
-import { TribesmanTitle } from "./titles";
-import { TribeType } from "./tribes";
 
 export type ServerTileUpdateData = {
    readonly layerIdx: number;
@@ -58,27 +50,6 @@ export enum GameDataPacketOptions {
    sendVisibleWallConnections = 1 << 6,
    sendSubtileSupports = 1 << 7,
    sendLightLevels = 1 << 8
-}
-
-// @Cleanup: A whole bunch of the data in this for the player can be deduced from the entity data array
-/** Data about the game state sent to the client each tick */
-export interface GameDataPacket {
-   readonly tileUpdates: ReadonlyArray<ServerTileUpdateData>;
-   readonly playerKnockbacks: ReadonlyArray<PlayerKnockbackData>;
-   /** All healing received by visible entities server-side */
-   readonly heals: ReadonlyArray<HealData>;
-   readonly playerHealth: number;
-   readonly hasFrostShield: boolean;
-   readonly pickedUpItem: boolean;
-   readonly hotbarCrossbowLoadProgressRecord: Partial<Record<number, number>> | undefined;
-   readonly titleOffer: TribesmanTitle | null;
-   readonly tickEvents: ReadonlyArray<EntityTickEvent>;
-   // @Cleanup @Bandwidth: move these all to a special dev info packet
-   readonly visibleBuildingPlans: ReadonlyArray<BuildingPlanData>;
-   readonly visibleRestrictedBuildingAreas: ReadonlyArray<RestrictedBuildingAreaData>;
-   readonly visibleWalls: ReadonlyArray<TribeWallData>;
-   readonly visibleWallConnections: ReadonlyArray<WallConnectionData>;
-   readonly visibleEntityDeathIDs: ReadonlyArray<number>;
 }
 
 export enum WaterRockSize {
@@ -209,65 +180,3 @@ export interface RestrictedBuildingAreaData {
 }
 
 export type RiverFlowDirectionsRecord = Partial<Record<number, Partial<Record<number, number>>>>;
-
-// Note to stupid future self: don't remove this, it's important
-export interface SocketData {}
-
-export interface ServerToClientEvents {
-   game_data_packet: (gameDataPacket: GameDataPacket) => void;
-   game_data_sync_packet: (gameDataSyncPacket: GameDataSyncPacket) => void;
-   chat_message: (senderName: string, message: string) => void;
-   client_disconnect: (clientID: string) => void;
-   force_position_update: (position: [number, number]) => void;
-}
-
-export interface ClientToServerEvents {
-   initial_player_data: (username: string, tribeType: TribeType, screenWidth: number, screenHeight: number) => void;
-   visible_chunk_bounds: (visibleChunkBounds: VisibleChunkBounds) => void;
-   deactivate: () => void;
-   activate: () => void;
-   player_data_packet: (playerDataPacket: PlayerDataPacket) => void;
-   chat_message: (message: string) => void;
-   player_movement: (position: [number, number], movementHash: number) => void;
-   crafting_packet: (recipeIndex: number) => void;
-   item_pickup: (entityID: number, inventoryName: InventoryName, itemSlot: number, amount: number) => void;
-   // Tells the server that the client wants to release the held item at the specified place in an inventory
-   item_release: (entityID: number, inventoryName: InventoryName, itemSlot: number, amount: number) => void;
-   // Effectively the item_pickup and item_release events combined
-   attack_packet: (attackPacket: AttackPacket) => void;
-   item_use_packet: (itemSlot: number) => void;
-   held_item_drop: (dropAmount: number, dropDirection: number) => void;
-   // For dropping items on the ground
-   item_drop: (itemSlot: number, dropAmount: number, dropDirection: number) => void;
-   // Tells the server to respawn the client
-   respawn: () => void;
-   command: (command: string) => void;
-   // Tells the server to start sending debug information about a certain game object
-   track_game_object: (gameObjectID: number) => void;
-   select_tech: (techID: TechID) => void;
-   unlock_tech: (techID: TechID) => void;
-   force_unlock_tech: (techID: TechID) => void;
-   study_tech: (studyAmount: number) => void;
-   place_blueprint: (structureID: number, blueprintType: BlueprintType) => void;
-   modify_building: (buildingID: number, data: number) => void;
-   deconstruct_building: (structureID: number) => void;
-   structure_interact: (structureID: number, interactData: number) => void;
-   /** Can be sent when the player stops interacting with a structure */
-   structure_uninteract: (structureID: number) => void;
-   recruit_tribesman: (tribesmanID: number) => void;
-   respond_to_title_offer: (title: TribesmanTitle, isAccepted: boolean) => void;
-
-   // -------------------------- //
-   //       DEV-ONLY EVENTS      //
-   // -------------------------- //
-   dev_give_item: (itemType: ItemType, amount: number) => void;
-   dev_summon_entity: (summonPacket: EntitySummonPacket) => void;
-   dev_give_title: (title: TribesmanTitle) => void;
-   dev_remove_title: (title: TribesmanTitle) => void;
-   dev_pause_simulation: () => void;
-   dev_unpause_simulation: () => void;
-   dev_create_tribe: () => void;
-   dev_change_tribe_type: (tribeID: number, newTribeType: TribeType) => void;
-}
-
-export interface InterServerEvents {}

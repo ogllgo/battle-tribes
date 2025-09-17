@@ -1,4 +1,4 @@
-import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
+import { EntityTickEventType } from "battletribes-shared/entity-events";
 import { randAngle, randFloat, randInt } from "battletribes-shared/utils";
 import { playSoundOnHitbox } from "./sound";
 import { ItemType } from "battletribes-shared/items/items";
@@ -28,19 +28,24 @@ export function playBowFireSound(sourceEntity: Entity, bowItemType: ItemType): v
    }
 }
 
-const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
+export function processTickEvent(entity: Entity, type: EntityTickEventType, data: number): void {
+   // @HACK
+   if (!entityExists(entity)) {
+      return;
+   }
+   
    // @Hack
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.hitboxes[0];
 
-   switch (tickEvent.type) {
+   switch (type) {
       case EntityTickEventType.cowFart: {
          playSoundOnHitbox("fart.mp3", 0.3, randFloat(0.9, 1.2), entity, hitbox, false);
          break;
       }
       case EntityTickEventType.fireBow: {
          // @Cleanup: why need cast?
-         playBowFireSound(entity, tickEvent.data as ItemType);
+         playBowFireSound(entity, data as ItemType);
          break;
       }
       case EntityTickEventType.automatonAccident: {
@@ -106,16 +111,6 @@ const processTickEvent = (entity: Entity, tickEvent: EntityTickEvent): void => {
       case EntityTickEventType.tukmokAngry: {
          playSoundOnHitbox("tukmok-angry-" + randInt(1, 3) + ".mp3", 0.5, randFloat(0.95, 1.05), entity, hitbox, true);
          break;
-      }
-   }
-}
-
-export function processTickEvents(tickEvents: ReadonlyArray<EntityTickEvent>): void {
-   for (let i = 0; i < tickEvents.length; i++) {
-      const entityTickEvent = tickEvents[i];
-      
-      if (entityExists(entityTickEvent.entityID)) {
-         processTickEvent(entityTickEvent.entityID, entityTickEvent);
       }
    }
 }

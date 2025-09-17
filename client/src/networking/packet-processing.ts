@@ -1,4 +1,4 @@
-import { WaterRockData, RiverSteppingStoneData, GrassTileInfo, RiverFlowDirectionsRecord, WaterRockSize, RiverSteppingStoneSize, GameDataPacket, PlayerKnockbackData, HealData, ServerTileUpdateData, EntityDebugData, LineDebugData, CircleDebugData, TileHighlightData, PathData, PathfindingNodeIndex, RIVER_STEPPING_STONE_SIZES, HitFlags } from "battletribes-shared/client-server-types";
+import { WaterRockData, RiverSteppingStoneData, GrassTileInfo, RiverFlowDirectionsRecord, WaterRockSize, RiverSteppingStoneSize, PlayerKnockbackData, HealData, ServerTileUpdateData, EntityDebugData, LineDebugData, CircleDebugData, TileHighlightData, PathData, PathfindingNodeIndex, RIVER_STEPPING_STONE_SIZES, HitFlags } from "battletribes-shared/client-server-types";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
@@ -7,7 +7,7 @@ import { SubtileType, TileType } from "battletribes-shared/tiles";
 import { readCrossbowLoadProgressRecord } from "../entity-components/server-components/InventoryUseComponent";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
+import { EntityTickEventType } from "battletribes-shared/entity-events";
 import Game from "../Game";
 import Client from "./Client";
 import Board from "../Board";
@@ -19,12 +19,12 @@ import { createEntity, addLayer, changeEntityLayer, entityExists, EntityServerCo
 import { isDev, NEIGHBOUR_OFFSETS } from "../utils";
 import { createRiverSteppingStoneData } from "../rendering/webgl/river-rendering";
 import Layer, { getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorld, tileIsWithinEdge } from "../Layer";
-import { getHitboxByLocalID, TransformComponentArray } from "../entity-components/server-components/TransformComponent";
+import { getHitboxByLocalID, getRandomPositionInEntity, TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { playSound } from "../sound";
 import { initialiseRenderables } from "../rendering/render-loop";
 import ServerComponentArray from "../entity-components/ServerComponentArray";
 import { MinedSubtile, setMinedSubtiles, tickCollapse } from "../collapses";
-import { createDamageNumber, createResearchNumber } from "../text-canvas";
+import { createDamageNumber, createHealNumber, createResearchNumber } from "../text-canvas";
 import { registerDirtyRenderInfo } from "../rendering/render-part-matrices";
 import { Biome } from "../../../shared/src/biomes";
 import { ExtendedTribe, readExtendedTribeData, readShortTribeData, Tribe, tribes, updatePlayerTribe } from "../tribes";
@@ -36,9 +36,19 @@ import { selectItemSlot } from "../components/game/GameInteractableLayer";
 import { updateGrassBlockers } from "../grass-blockers";
 import { registerTamingSpecsFromData } from "../taming-specs";
 import { getEntityClientComponentConfigs } from "../entity-components/client-components"
-import { Hitbox } from "../hitboxes";
-import { createSparkParticle, createSlimePoolParticle, createBloodPoolParticle } from "../particles";
+import { createSparkParticle, createSlimePoolParticle, createHealingParticle } from "../particles";
 import { updateLightsFromData } from "../lights";
+import { TribesTab_refresh } from "../components/game/dev/tabs/TribesTab";
+import { Infocards_setTitleOffer } from "../components/game/infocards/Infocards";
+import { processTickEvent } from "../entity-tick-events";
+import { updateRenderChunkFromTileUpdate } from "../rendering/render-chunks";
+import { addHitboxVelocity, getHitboxVelocity, setHitboxVelocity } from "../hitboxes";
+import { STRUCTURE_TYPES } from "../../../shared/src/structures";
+import { definiteGameState } from "../game-state/game-states";
+
+// @Cleanup: location
+// Use prime numbers / 100 to ensure a decent distribution of different types of particles
+const HEALING_PARTICLE_AMOUNTS = [0.05, 0.37, 1.01];
 
 const getBuildingBlockingTiles = (): ReadonlySet<TileIndex> => {
    // Initially find all tiles below a dropdown tile
@@ -521,6 +531,8 @@ export function processGameDataPacket(reader: PacketReader): void {
    for (const tribe of tempTribes) {
       tribes.push(tribe);
    }
+   // @Hack: shouldn't do always
+   TribesTab_refresh();
 
    // Process entities
    const numEntities = reader.readNumber();
@@ -671,32 +683,58 @@ export function processGameDataPacket(reader: PacketReader): void {
       }
    }
 
-   const playerKnockbacks = new Array<PlayerKnockbackData>();
    const numPlayerKnockbacks = reader.readNumber();
    for (let i = 0; i < numPlayerKnockbacks; i++) {
       const knockback = reader.readNumber();
       const knockbackDirection = reader.readNumber();
-      playerKnockbacks.push({
-         knockback: knockback,
-         knockbackDirection: knockbackDirection
-      });
+
+      if (playerInstance !== null) {
+         const transformComponent = TransformComponentArray.getComponent(playerInstance);
+         const playerHitbox = transformComponent.hitboxes[0];
+
+         const previousVelocity = getHitboxVelocity(playerHitbox);
+         setHitboxVelocity(playerHitbox, previousVelocity.x * 0.5, previousVelocity.y * 0.5);
+
+         addHitboxVelocity(playerHitbox, knockback * Math.sin(knockbackDirection), knockback * Math.cos(knockbackDirection));
+      }
    }
 
-   const heals = new Array<HealData>();
    const numHeals = reader.readNumber();
    for (let i = 0; i < numHeals; i++) {
       const x = reader.readNumber();
       const y = reader.readNumber();
-      const healedID = reader.readNumber();
-      const healerID = reader.readNumber();
+      const healedEntity = reader.readNumber() as Entity;
+      const healerEntity = reader.readNumber() as Entity;
       const healAmount = reader.readNumber();
-      heals.push({
-         entityPositionX: x,
-         entityPositionY: y,
-         healedID: healedID,
-         healerID: healerID,
-         healAmount: healAmount
-      });
+
+      if (healAmount === 0) {
+         continue;
+      }
+
+      if (healerEntity === playerInstance) {
+         createHealNumber(healedEntity, x, y, healAmount);
+      }
+
+      if (entityExists(healedEntity)) {
+         const transformComponent = TransformComponentArray.getComponent(healedEntity);
+   
+         // Create healing particles depending on the amount the entity was healed
+         let remainingHealing = healAmount;
+         for (let size = 2; size >= 0;) {
+            if (remainingHealing >= HEALING_PARTICLE_AMOUNTS[size]) {
+               const position = getRandomPositionInEntity(transformComponent);
+               createHealingParticle(position, size);
+               remainingHealing -= HEALING_PARTICLE_AMOUNTS[size];
+            } else {
+               size--;
+            }
+         }
+
+         // @Hack @Incomplete: This will trigger the repair sound effect even if a hammer isn't the one healing the structure
+         if (STRUCTURE_TYPES.includes(getEntityType(healedEntity) as any)) { // @Cleanup
+            playSound("repair.mp3", 0.4, 1, new Point(x, y), getEntityLayer(healedEntity));
+         }
+      }
    }
 
    const visibleEntityDeathIDs = new Set<Entity>();
@@ -724,7 +762,6 @@ export function processGameDataPacket(reader: PacketReader): void {
       createResearchNumber(x, y, amount);
    }
 
-   const tileUpdates = new Array<ServerTileUpdateData>();
    const numTileUpdates = reader.readNumber();
    console.assert(Number.isInteger(numTileUpdates));
    for (let i = 0; i < numTileUpdates; i++) {
@@ -732,11 +769,12 @@ export function processGameDataPacket(reader: PacketReader): void {
       const tileIndex = reader.readNumber();
       const tileType = reader.readNumber();
 
-      tileUpdates.push({
-         layerIdx: layerIdx,
-         tileIndex: tileIndex,
-         type: tileType
-      });
+      const layer = layers[layerIdx];
+      
+      const tile = layer.getTile(tileIndex);
+      tile.type = tileType;
+      
+      updateRenderChunkFromTileUpdate(tileIndex, layer);
    }
 
    // Wall subtile updates
@@ -762,18 +800,14 @@ export function processGameDataPacket(reader: PacketReader): void {
       Game.setGameObjectDebugData(null);
    }
 
-   // @Incomplete
-   // hasFrostShield: player.immunityTimer === 0 && playerArmour !== null && playerArmour.type === ItemType.deepfrost_armour,
-
-   const hasFrostShield = reader.readBoolean();
-   reader.padOffset(3);
-
    const hasPickedUpItem = reader.readBoolean();
    reader.padOffset(3);
+   if (hasPickedUpItem) {
+      playSound("item-pickup.mp3", 0.3, 1, Camera.position, null);
+   }
 
-   let hotbarCrossbowLoadProgressRecord: Partial<Record<number, number>> | undefined;
    if (playerInstance !== null) {
-      hotbarCrossbowLoadProgressRecord = readCrossbowLoadProgressRecord(reader);
+      definiteGameState.hotbarCrossbowLoadProgressRecord = readCrossbowLoadProgressRecord(reader);
    }
 
    // Title offer
@@ -783,19 +817,15 @@ export function processGameDataPacket(reader: PacketReader): void {
    if (hasTitleOffer) {
       titleOffer = reader.readNumber();
    }
+   Infocards_setTitleOffer(titleOffer);
    
    // Tick events
-   const tickEvents = new Array<EntityTickEvent>();
    const numTickEvents = reader.readNumber();
    for (let i = 0; i < numTickEvents; i++) {
-      const entityID = reader.readNumber()
+      const entity = reader.readNumber() as Entity;
       const type = reader.readNumber() as EntityTickEventType;
       const data = reader.readNumber();
-      tickEvents.push({
-         entityID: entityID,
-         type: type,
-         data: data
-      });
+      processTickEvent(entity, type, data);
    }
 
    // Mined subtiles
@@ -836,28 +866,6 @@ export function processGameDataPacket(reader: PacketReader): void {
    if (_isDev) {
       readPacketDevData(reader);
    }
-   
-   // @Garbage
-   const gameDataPacket: GameDataPacket = {
-      tileUpdates: tileUpdates,
-      playerKnockbacks: playerKnockbacks,
-      heals: heals,
-      playerHealth: playerHealth,
-      hasFrostShield: hasFrostShield,
-      pickedUpItem: hasPickedUpItem,
-      hotbarCrossbowLoadProgressRecord: hotbarCrossbowLoadProgressRecord,
-      titleOffer: titleOffer,
-      tickEvents: tickEvents,
-      // @Incomplete
-      visibleBuildingPlans: [],
-      visibleRestrictedBuildingAreas: [],
-      visibleWalls: [],
-      visibleWallConnections: [],
-      visibleEntityDeathIDs: []
-   };
-
-   // @Cleanup: remove
-   Client.processGameDataPacket(gameDataPacket);
 }
 
 export function processSyncDataPacket(reader: PacketReader): void {

@@ -1069,49 +1069,6 @@ export function createCactusSpineParticle(transformComponent: TransformComponent
    Board.highMonocolourParticles.push(particle);
 }
 
-const FROST_PARTICLE_LOW: ParticleColour = [102/255, 165/255, 205/255];
-const FROST_PARTICLE_HIGH: ParticleColour = [202/255, 239/255, 255/255];
-export function createFrostShieldBreakParticle(positionX: number, positionY: number): void {
-   const offsetDirection = randAngle();
-   positionX += 32 * Math.sin(offsetDirection);
-   positionY += 32 * Math.cos(offsetDirection);
-
-   const lifetime = randFloat(0.2, 0.3);
-   
-   const moveSpeed = randFloat(200, 280);
-   const moveDirection = offsetDirection + randFloat(-0.5, 0.5);
-   const velocityX = moveSpeed * Math.sin(moveDirection);
-   const velocityY = moveSpeed * Math.cos(moveDirection);
-
-   const particle = new Particle(lifetime);
-   particle.getOpacity = (): number => {
-      return 1 - Math.pow(particle.age / lifetime, 2);
-   };
-
-   const colourLerp = Math.random();
-   const r = lerp(FROST_PARTICLE_LOW[0], FROST_PARTICLE_HIGH[0], colourLerp);
-   const g = lerp(FROST_PARTICLE_LOW[1], FROST_PARTICLE_HIGH[1], colourLerp);
-   const b = lerp(FROST_PARTICLE_LOW[2], FROST_PARTICLE_HIGH[2], colourLerp);
-
-   const size = randInt(7, 10);
-
-   addMonocolourParticleToBufferContainer(
-      particle,
-      ParticleRenderLayer.high,
-      size / 2, size,
-      positionX, positionY,
-      velocityX, velocityY,
-      0, 0,
-      0,
-      moveDirection,
-      0,
-      0,
-      0,
-      r, g, b
-   );
-   Board.highMonocolourParticles.push(particle);
-}
-
 export function createSawdustCloud(x: number, y: number): void {
    const lifetime = randFloat(0.4, 0.7);
    

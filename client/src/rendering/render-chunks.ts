@@ -167,14 +167,13 @@ export function createRenderChunks(layer: Layer, waterRocks: ReadonlyArray<Water
    wallBorderInfoArrays[layerIdx] = wallBorderInfoArray;
 }
 
-export function updateRenderChunkFromTileUpdate(tileUpdate: ServerTileUpdateData): void {
-   const tileX = tileUpdate.tileIndex % Settings.BOARD_DIMENSIONS;
-   const tileY = Math.floor(tileUpdate.tileIndex / Settings.BOARD_DIMENSIONS);
+export function updateRenderChunkFromTileUpdate(tileIndex: number, layer: Layer): void {
+   const tileX = tileIndex % Settings.BOARD_DIMENSIONS;
+   const tileY = Math.floor(tileIndex / Settings.BOARD_DIMENSIONS);
    
    const renderChunkX = Math.floor(tileX / RENDER_CHUNK_SIZE);
    const renderChunkY = Math.floor(tileY / RENDER_CHUNK_SIZE);
 
-   const layer = layers[tileUpdate.layerIdx];
    recalculateSolidTileRenderChunkData(layer, renderChunkX, renderChunkY);
 }
 

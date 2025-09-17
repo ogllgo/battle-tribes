@@ -26,9 +26,6 @@ export interface EquipmentComponentParams {}
 export interface EquipmentComponent {
    armourRenderPart: TexturedRenderPart | null;
    gloveRenderParts: Array<TexturedRenderPart>;
-   
-   // @Incomplete: i broke the frost shield at some point
-   hasFrostShield: boolean;
 }
 
 // @Cleanup: copy the file name frmo the client item info thing
@@ -107,23 +104,6 @@ const getGloveTextureSource = (gloveType: ItemType): string => {
    return GLOVES_TEXTURE_SOURCE_RECORD[gloveType as GloveItemType];
 }
 
-// @Incomplete
-// public createFrostShieldBreakParticles(): void {
-//    const transformComponent = TransformComponentArray.getComponent(this.entity.id);
-//    for (let i = 0; i < 17; i++) {
-//       createFrostShieldBreakParticle(transformComponent.position.x, transformComponent.position.y);
-//    }
-// }
-
-// @Incomplete
-// public genericUpdateFromData(entityData: EntityData<EntityType.player> | EntityData<EntityType.tribeWorker> | EntityData<EntityType.tribeWarrior>): void {
-//    const hasFrostShield = entityData.clientArgs[15];
-//    if (this.hasFrostShield && !hasFrostShield) {
-//       this.createFrostShieldBreakParticles();
-//    }
-//    this.hasFrostShield = hasFrostShield;
-// }
-
 export const EquipmentComponentArray = new ClientComponentArray<EquipmentComponent>(ClientComponentType.equipment, true, {
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
@@ -138,8 +118,7 @@ export function createEquipmentComponentParams(): EquipmentComponentParams {
 function createComponent(): EquipmentComponent {
    return {
       armourRenderPart: null,
-      gloveRenderParts: [],
-      hasFrostShield: false
+      gloveRenderParts: []
    };
 }
 
