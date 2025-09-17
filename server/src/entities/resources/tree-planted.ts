@@ -14,6 +14,7 @@ import { addHitboxToTransformComponent, TransformComponent } from "../../compone
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
 import { Hitbox } from "../../hitboxes";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 registerEntityLootOnDeath(EntityType.treePlanted, {
    itemType: ItemType.wood,
@@ -35,6 +36,8 @@ export function createTreePlantedConfig(position: Point, rotation: number, plant
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionBit = CollisionBit.plants;
+   
+   const physicsComponent = new PhysicsComponent();
 
    const healthComponent = new HealthComponent(10);
 
@@ -50,6 +53,7 @@ export function createTreePlantedConfig(position: Point, rotation: number, plant
       entityType: EntityType.treePlanted,
       components: {
          [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.planted]: plantedComponent,

@@ -17,6 +17,7 @@ import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { StructureConnection } from "../../structure-placement";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 const HEALTHS = [15, 45];
 
@@ -44,6 +45,8 @@ export function createEmbrasureConfig(position: Point, rotation: number, tribe: 
    const hitbox4 = new Hitbox(transformComponent, null, true, new RectangularBox(position.copy(), new Point((64 - HORIZONTAL_HITBOX_WIDTH) / 2 + 0.025, 0), rotation, HORIZONTAL_HITBOX_WIDTH, HORIZONTAL_HITBOX_HEIGHT), 0.4, HitboxCollisionType.hard, CollisionBit.arrowPassable, DEFAULT_COLLISION_MASK, []);
    hitbox4.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox4);
+
+   const physicsComponent = new PhysicsComponent();
    
    const healthComponent = new HealthComponent(HEALTHS[material]);
    
@@ -59,6 +62,7 @@ export function createEmbrasureConfig(position: Point, rotation: number, tribe: 
       entityType: EntityType.embrasure,
       components: {
          [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,

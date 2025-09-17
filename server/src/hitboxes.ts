@@ -348,11 +348,9 @@ export function hitboxIsInRiver(hitbox: Hitbox): boolean {
       return false;
    }
 
-   if (PhysicsComponentArray.hasComponent(entity)) {
-      const physicsComponent = PhysicsComponentArray.getComponent(entity);
-      if (!physicsComponent.isAffectedByGroundFriction) {
-         return false;
-      }
+   const physicsComponent = PhysicsComponentArray.getComponent(entity);
+   if (!physicsComponent.isAffectedByGroundFriction) {
+      return false;
    }
 
    // If the entity is standing on a stepping stone they aren't in a river

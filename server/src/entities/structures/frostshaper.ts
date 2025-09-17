@@ -17,6 +17,7 @@ import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { StructureConnection } from "../../structure-placement";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 export function createFrostshaperConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent();
@@ -25,6 +26,8 @@ export function createFrostshaperConfig(position: Point, rotation: number, tribe
    const hitbox = new Hitbox(transformComponent, null, true, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
+
+   const physicsComponent = new PhysicsComponent();
    
    const healthComponent = new HealthComponent(20);
    
@@ -40,6 +43,7 @@ export function createFrostshaperConfig(position: Point, rotation: number, tribe
       entityType: EntityType.frostshaper,
       components: {
          [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,

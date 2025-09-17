@@ -419,12 +419,23 @@ function onTick(cow: Entity): void {
          
          aiHelperComponent.moveFunc(cow, targetHitbox.box.position, Vars.MEDIUM_ACCELERATION);
          aiHelperComponent.turnFunc(cow, targetHitbox.box.position, Math.PI, 0.4);
-
+         
          const targetDirection = cowBodyHitbox.box.position.angleTo(targetHitbox.box.position);
 
+         // @INCOMPLETE @HACK: Cows shouldn't be able to pick up barrels themselves. It should require a tribesman to do it for them
+         /* this is just a temporary hack cuz i haven't fleshed out any of these systems.
+            Why they shouldn't be able to pick up barrels themselves:
+            - doesn't make sense; they don't have the ability to
+            - gameplay-wise, this means cows can kind of act as the full pipeline of thievery, not requiring tribesmen. A
+              single tribesman with 10 cows works at equal efficiency as 10 tribesmen with 10 cows. Kind of removes the
+              requirement of your workers as a way to wrangle your animals.
+         */
+         
          // Force carry if colliding and head is looking at the carry target
          const headHitbox = transformComponent.hitboxes[1];
-         if (getAbsAngleDiff(headHitbox.box.angle, targetDirection) < 0.1 && entitiesAreColliding(cow, tamingComponent.carryTarget) !== CollisionVars.NO_COLLISION) {
+         // (commented out the angle test cuz there were cases when teh head couldn't turn enough and got stuck on one direction on the barrel)
+         // if (getAbsAngleDiff(headHitbox.box.angle, targetDirection) < 0.1 && entitiesAreColliding(cow, tamingComponent.carryTarget) !== CollisionVars.NO_COLLISION) {
+         if (entitiesAreColliding(cow, tamingComponent.carryTarget) !== CollisionVars.NO_COLLISION) {
             mountCarrySlot(tamingComponent.carryTarget, carrySlot);
             tamingComponent.carryTarget = 0;
          }

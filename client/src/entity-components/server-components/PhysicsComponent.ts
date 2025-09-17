@@ -275,8 +275,7 @@ const tickHitboxPhysics = (hitbox: Hitbox): void => {
 
    // tickHitboxAngularPhysics(hitbox.entity, hitbox, transformComponent);
 
-   // @Hack: this physics component check is needed because the applyHitboxKinematics function needs a physics component... for now, perhaps....
-   if (hitbox.parent === null && PhysicsComponentArray.hasComponent(hitbox.entity)) {
+   if (hitbox.parent === null) {
       applyHitboxKinematics(transformComponent, hitbox.entity, hitbox);
    }
    

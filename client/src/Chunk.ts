@@ -9,7 +9,6 @@ class Chunk {
 
    public readonly entities = new Array<Entity>();
    public readonly nonGrassEntities = new Array<Entity>();
-   public readonly physicsEntities = new Array<Entity>();
 
    public readonly riverSteppingStones = new Array<RiverSteppingStoneData>();
 
@@ -21,10 +20,6 @@ class Chunk {
    public addEntity(entity: Entity): void {
       this.entities.push(entity);
 
-      if (PhysicsComponentArray.hasComponent(entity)) {
-         this.physicsEntities.push(entity);
-      }
-
       if (getEntityType(entity) !== EntityType.grassStrand) {
          this.nonGrassEntities.push(entity);
       }
@@ -33,11 +28,6 @@ class Chunk {
    public removeEntity(entity: Entity): void {
       const idx = this.entities.indexOf(entity);
       this.entities.splice(idx, 1);
-
-      if (PhysicsComponentArray.hasComponent(entity)) {
-         const idx = this.physicsEntities.indexOf(entity);
-         this.physicsEntities.splice(idx, 1);
-      }
 
       if (getEntityType(entity) !== EntityType.grassStrand) {
          const idx = this.nonGrassEntities.indexOf(entity);

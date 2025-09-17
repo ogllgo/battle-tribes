@@ -16,7 +16,6 @@ export function createGuardianGemQuakeConfig(position: Point, rotation: number):
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
-   // @Hack: shouldn't have
    const physicsComponent = new PhysicsComponent();
 
    const guardianGemQuakeComponent = new GuardianGemQuakeComponent();

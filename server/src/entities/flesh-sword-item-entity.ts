@@ -1,4 +1,3 @@
-import { CollisionBit, DEFAULT_COLLISION_MASK, DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collision";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { ItemComponent } from "../components/ItemComponent";
@@ -12,6 +11,15 @@ import { PhysicsComponent } from "../components/PhysicsComponent";
 import { FleshSwordItemComponent } from "../components/FleshSwordItemComponent";
 import { AIHelperComponent } from "../components/AIHelperComponent";
 import { Hitbox } from "../hitboxes";
+import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../shared/src/collision";
+
+const moveFunc = () => {
+   throw new Error();
+}
+
+const turnFunc = () => {
+   throw new Error();
+}
 
 export function createFleshSwordItemEntityConfig(position: Point, rotation: number, itemType: ItemType, amount: number, throwingEntity: Entity | null): EntityConfig {
    const transformComponent = new TransformComponent();
@@ -23,7 +31,7 @@ export function createFleshSwordItemEntityConfig(position: Point, rotation: numb
 
    const itemComponent = new ItemComponent(itemType, amount, throwingEntity);
 
-   const aiHelperComponent = new AIHelperComponent(hitbox, 250);
+   const aiHelperComponent = new AIHelperComponent(hitbox, 250, moveFunc, turnFunc);
    
    const fleshSwordItemComponent = new FleshSwordItemComponent();
    

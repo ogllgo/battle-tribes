@@ -19,7 +19,9 @@ import { Hitbox } from "../../hitboxes";
 import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { StructureConnection } from "../../structure-placement";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 
+// @HACK @MEMORY: COPYNPASTE BETWEEN FLOOR AND WALLS
 const HEALTHS = [15, 45];
 
 export function createFloorSpikesConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
@@ -29,6 +31,8 @@ export function createFloorSpikesConfig(position: Point, rotation: number, tribe
    const hitbox = new Hitbox(transformComponent, null, true, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
+   
+   const physicsComponent = new PhysicsComponent();
 
    const healthComponent = new HealthComponent(HEALTHS[material]);
    
@@ -46,40 +50,7 @@ export function createFloorSpikesConfig(position: Point, rotation: number, tribe
       entityType: EntityType.floorSpikes,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.health]: healthComponent,
-         [ServerComponentType.statusEffect]: statusEffectComponent,
-         [ServerComponentType.structure]: structureComponent,
-         [ServerComponentType.tribe]: tribeComponent,
-         [ServerComponentType.buildingMaterial]: buildingMaterialComponent,
-         [ServerComponentType.spikes]: spikesComponent
-      },
-      lights: []
-   };
-}
-
-export function createWallSpikesConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
-   const transformComponent = new TransformComponent();
-   
-   const box = new RectangularBox(position, new Point(0, 0), rotation, 56, 28);
-   const hitbox = new Hitbox(transformComponent, null, true, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
-   addHitboxToTransformComponent(transformComponent, hitbox);
-
-   const healthComponent = new HealthComponent(HEALTHS[material]);
-   
-   const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
-   
-   const structureComponent = new StructureComponent(connections, virtualStructure);
-   
-   const tribeComponent = new TribeComponent(tribe);
-   
-   const buildingMaterialComponent = new BuildingMaterialComponent(material, HEALTHS);
-   
-   const spikesComponent = new SpikesComponent();
-   
-   return {
-      entityType: EntityType.wallSpikes,
-      components: {
-         [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,

@@ -19,6 +19,7 @@ import RectangularBox from "../../../../../shared/src/boxes/RectangularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../../shared/src/collision";
 import { Hitbox } from "../../../hitboxes";
 import { StructureConnection } from "../../../structure-placement";
+import { PhysicsComponent } from "../../../components/PhysicsComponent";
 
 export function createFurnaceConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent();
@@ -27,6 +28,8 @@ export function createFurnaceConfig(position: Point, rotation: number, tribe: Tr
    const hitbox = new Hitbox(transformComponent, null, true, box, 2, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
+
+   const physicsComponent = new PhysicsComponent();
    
    const healthComponent = new HealthComponent(25);
 
@@ -57,6 +60,7 @@ export function createFurnaceConfig(position: Point, rotation: number, tribe: Tr
       entityType: EntityType.furnace,
       components: {
          [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,

@@ -86,6 +86,7 @@ export class AIHelperComponent {
 
    public currentAIType: AIType | null = null;
 
+   // @Cleanup: This abstract shit is bad cuz i can't f12 to go to the refernce of the move function.
    public readonly moveFunc: MoveEntityFunction;
    public readonly turnFunc: TurnEntityFunction;
 

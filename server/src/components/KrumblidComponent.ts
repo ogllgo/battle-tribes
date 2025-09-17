@@ -80,10 +80,6 @@ const entityIsFollowable = (entity: Entity): boolean => {
    if (!AIHelperComponentArray.hasComponent(entity)) {
       return false;
    }
-    
-   if (!PhysicsComponentArray.hasComponent(entity)) {
-      return false;
-   }
 
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.hitboxes[0];

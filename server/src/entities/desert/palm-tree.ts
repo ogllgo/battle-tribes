@@ -10,6 +10,7 @@ import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { PalmTreeComponent } from "../../components/PalmTreeComponent";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { Hitbox } from "../../hitboxes";
@@ -25,6 +26,8 @@ export function createPalmTreeConfig(position: Point, angle: number): EntityConf
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), angle, 58), 2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
+
+   const physicsComponent = new PhysicsComponent();
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);
 
@@ -38,6 +41,7 @@ export function createPalmTreeConfig(position: Point, angle: number): EntityConf
       entityType: EntityType.palmTree,
       components: {
          [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.loot]: lootComponent,

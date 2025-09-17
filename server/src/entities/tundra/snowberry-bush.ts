@@ -13,6 +13,7 @@ import { Hitbox } from "../../hitboxes";
 import { SnowberryBushComponent, SnowberryBushComponentArray } from "../../components/SnowberryBushComponent";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerDirtyEntity } from "../../server/player-clients";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 registerEntityLootOnHit(EntityType.snowberryBush, {
    itemType: ItemType.snowberry,
@@ -36,6 +37,8 @@ export function createSnowberryBushConfig(position: Point, angle: number): Entit
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionBit = CollisionBit.plants;
+
+   const physicsComponent = new PhysicsComponent();
    
    const healthComponent = new HealthComponent(10);
    
@@ -49,6 +52,7 @@ export function createSnowberryBushConfig(position: Point, angle: number): Entit
       entityType: EntityType.snowberryBush,
       components: {
          [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.loot]: lootComponent,

@@ -14,7 +14,6 @@ export function createReedConfig(position: Point, rotation: number): EntityConfi
    const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 4, 4), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
-   
    const colour: Colour = {
       r: 0.68,
       g: 1,

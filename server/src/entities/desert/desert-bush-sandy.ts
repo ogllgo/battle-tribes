@@ -9,6 +9,7 @@ import { EntityConfig } from "../../components";
 import { DesertBushSandyComponent } from "../../components/DesertBushSandyComponent";
 import { EnergyStoreComponent } from "../../components/EnergyStoreComponent";
 import { HealthComponent } from "../../components/HealthComponent";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { Hitbox } from "../../hitboxes";
@@ -24,6 +25,8 @@ export function createDesertBushSandyConfig(position: Point, angle: number): Ent
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
 
+   const physicsComponent = new PhysicsComponent();
+
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);
 
    const healthComponent = new HealthComponent(size === 0 ? 3 : 5);
@@ -36,6 +39,7 @@ export function createDesertBushSandyConfig(position: Point, angle: number): Ent
       entityType: EntityType.desertBushSandy,
       components: {
          [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.energyStore]: energyStoreComponent,

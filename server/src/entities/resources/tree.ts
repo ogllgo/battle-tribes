@@ -12,6 +12,7 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
 import { Hitbox } from "../../hitboxes";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 const TREE_MAX_HEALTHS = [10, 15];
 
@@ -49,6 +50,8 @@ export function createTreeConfig(position: Point, angle: number, size: TreeSize)
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionBit = CollisionBit.plants;
+
+   const physicsComponent = new PhysicsComponent();
    
    const healthComponent = new HealthComponent(TREE_MAX_HEALTHS[size]);
    
@@ -62,6 +65,7 @@ export function createTreeConfig(position: Point, angle: number, size: TreeSize)
       entityType: EntityType.tree,
       components: {
          [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.loot]: lootComponent,

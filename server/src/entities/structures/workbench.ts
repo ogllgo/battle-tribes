@@ -17,11 +17,12 @@ import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { Hitbox } from "../../hitboxes";
 import { StructureConnection } from "../../structure-placement";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 export function createWorkbenchConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent();
 
-   // @TEMPORARY: So that the structure placement works for placing workbenches in the corner of walls
+   // @TEMPORARY @HACKK: So that the structure placement works for placing workbenches in the corner of walls
    const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position.copy(), new Point(0, 0), rotation, 80, 80), 1.6, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
@@ -31,6 +32,8 @@ export function createWorkbenchConfig(position: Point, rotation: number, tribe: 
    
    // const hitbox2 = new Hitbox(transformComponent, null, true, new RectangularBox(position.copy(), new Point(0, 0), rotation, 80, 72), 1.6, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    // addHitboxToTransformComponent(transformComponent, hitbox2);
+
+   const physicsComponent = new PhysicsComponent();
    
    const healthComponent = new HealthComponent(15);
    
@@ -46,6 +49,7 @@ export function createWorkbenchConfig(position: Point, rotation: number, tribe: 
       entityType: EntityType.workbench,
       components: {
          [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,

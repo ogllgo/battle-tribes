@@ -17,6 +17,7 @@ import { Hitbox } from "../../hitboxes";
 import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { StructureConnection } from "../../structure-placement";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 const moveFunc = () => {
    throw new Error();
@@ -34,6 +35,8 @@ export function createHealingTotemConfig(position: Point, rotation: number, trib
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
+   const physicsComponent = new PhysicsComponent();
+
    const healthComponent = new HealthComponent(50);
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
@@ -50,6 +53,7 @@ export function createHealingTotemConfig(position: Point, rotation: number, trib
       entityType: EntityType.healingTotem,
       components: {
          [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,

@@ -1,6 +1,6 @@
 import { Settings } from "battletribes-shared/settings";
 import { ServerComponentType } from "battletribes-shared/components";
-import { Entity, EntityType } from "battletribes-shared/entities";
+import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { TILE_PHYSICS_INFO_RECORD, TileType } from "battletribes-shared/tiles";
 import { ComponentArray } from "./ComponentArray";
 import { entityCanBlockPathfinding } from "../pathfinding";
@@ -84,6 +84,9 @@ const applyHitboxKinematics = (hitbox: Hitbox, transformComponent: TransformComp
    let velY = hitbox.box.position.y - hitbox.previousPosition.y;
 
    // Air friction
+   if (typeof physicsComponent === "undefined") {
+      console.log(EntityTypeString[getEntityType(entity)])
+   }
    if (physicsComponent.isAffectedByAirFriction) {
       // @IncompletE: shouldn't use tile friction!!
       velX *= 1 - friction / Settings.TPS * 2;
@@ -265,8 +268,7 @@ const tickHitboxPhysics = (hitbox: Hitbox): void => {
 
    tickHitboxAngularPhysics(hitbox, transformComponent);
 
-   // @Hack: this physics component check is needed because the applyHitboxKinematics function needs a physics component... for now, perhaps....
-   if (hitbox.parent === null && PhysicsComponentArray.hasComponent(hitbox.entity)) {
+   if (hitbox.parent === null) {
       const physicsComponent = PhysicsComponentArray.getComponent(hitbox.entity);
       applyHitboxKinematics(hitbox, transformComponent, physicsComponent);
    }

@@ -6,6 +6,7 @@ import { EntityType } from "../../../shared/src/entities";
 import { Point } from "../../../shared/src/utils";
 import { EntityConfig } from "../components";
 import { MossComponent } from "../components/MossComponent";
+import { PhysicsComponent } from "../components/PhysicsComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../components/TransformComponent";
 import { Hitbox } from "../hitboxes";
 
@@ -15,12 +16,15 @@ export function createMossConfig(position: Point, angle: number, size: number, c
    const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), angle, 40, 40), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
+   const physicsComponent = new PhysicsComponent();
+   
    const mossComponent = new MossComponent(size, colour);
    
    return {
       entityType: EntityType.moss,
       components: {
          [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.moss]: mossComponent
       },
       lights: []

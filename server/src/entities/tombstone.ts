@@ -11,12 +11,15 @@ import { HealthComponent } from "../components/HealthComponent";
 import { StatusEffectComponent } from "../components/StatusEffectComponent";
 import { TombstoneComponent } from "../components/TombstoneComponent";
 import { Hitbox } from "../hitboxes";
+import { PhysicsComponent } from "../components/PhysicsComponent";
 
 export function createTombstoneConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
    
    const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 48, 88), 1.25, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
+
+   const physicsComponent = new PhysicsComponent();
    
    const healthComponent = new HealthComponent(50);
 
@@ -28,6 +31,7 @@ export function createTombstoneConfig(position: Point, rotation: number): Entity
       entityType: EntityType.tombstone,
       components: {
          [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.tombstone]: tombstoneComponent

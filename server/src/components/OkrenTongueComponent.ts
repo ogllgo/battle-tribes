@@ -337,10 +337,6 @@ const entityIsSnaggable = (entity: Entity): boolean => {
       return false;
    }
 
-   if (!PhysicsComponentArray.hasComponent(entity)) {
-      return false;
-   }
-
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.hitboxes[0];
 

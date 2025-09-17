@@ -1,54 +1,50 @@
-import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
+import { HitboxCollisionType, HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { BuildingMaterial, ServerComponentType } from "../../../../shared/src/components";
 import { EntityType } from "../../../../shared/src/entities";
-import { Settings } from "../../../../shared/src/settings";
 import { StatusEffect } from "../../../../shared/src/status-effects";
 import { Point } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
-import { BracingsComponent } from "../../components/BracingsComponent";
 import { BuildingMaterialComponent } from "../../components/BuildingMaterialComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { PhysicsComponent } from "../../components/PhysicsComponent";
+import { SpikesComponent } from "../../components/SpikesComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { StructureComponent } from "../../components/StructureComponent";
-import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
+import { TransformComponent, addHitboxToTransformComponent } from "../../components/TransformComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import { Hitbox } from "../../hitboxes";
+import { StructureConnection } from "../../structure-placement";
 import Tribe from "../../Tribe";
 import { VirtualStructure } from "../../tribesman-ai/building-plans/TribeBuildingLayer";
 
-// @Memory
-const HEALTHS = [5, 20]; 
+// @HACK @MEMORY: COPYNPASTE BETWEEN FLOOR AND WALLS
+const HEALTHS = [15, 45];
 
-export function createBracingsConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial, virtualStructure: VirtualStructure | null): EntityConfig {
+export function createWallSpikesConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent();
-
-   const hitbox1 = new Hitbox(transformComponent, null, true, new RectangularBox(position.copy(), new Point(0, Settings.TILE_SIZE * -0.5), rotation, 16, 16), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
-   hitbox1.isStatic = true;
-   addHitboxToTransformComponent(transformComponent, hitbox1);
-
-   const hitbox2 = new Hitbox(transformComponent, null, true, new RectangularBox(position.copy(), new Point(0, Settings.TILE_SIZE * 0.5), rotation, 16, 16), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
-   hitbox2.isStatic = true;
-   addHitboxToTransformComponent(transformComponent, hitbox2);
    
+   const box = new RectangularBox(position, new Point(0, 0), rotation, 56, 28);
+   const hitbox = new Hitbox(transformComponent, null, true, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   addHitboxToTransformComponent(transformComponent, hitbox);
+
    const physicsComponent = new PhysicsComponent();
    
    const healthComponent = new HealthComponent(HEALTHS[material]);
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
    
-   const structureComponent = new StructureComponent([], virtualStructure);
+   const structureComponent = new StructureComponent(connections, virtualStructure);
    
    const tribeComponent = new TribeComponent(tribe);
    
    const buildingMaterialComponent = new BuildingMaterialComponent(material, HEALTHS);
-
-   const bracingsComponent = new BracingsComponent();
+   
+   const spikesComponent = new SpikesComponent();
    
    return {
-      entityType: EntityType.bracings,
+      entityType: EntityType.wallSpikes,
       components: {
          [ServerComponentType.transform]: transformComponent,
          [ServerComponentType.physics]: physicsComponent,
@@ -57,7 +53,7 @@ export function createBracingsConfig(position: Point, rotation: number, tribe: T
          [ServerComponentType.structure]: structureComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.buildingMaterial]: buildingMaterialComponent,
-         [ServerComponentType.bracings]: bracingsComponent
+         [ServerComponentType.spikes]: spikesComponent
       },
       lights: []
    };

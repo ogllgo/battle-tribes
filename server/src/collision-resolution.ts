@@ -163,8 +163,6 @@ export function collide(affectedEntity: Entity, collidingEntity: Entity, collidi
    //    case EntityType.golem: onGolemCollision(entity, pushingEntity, collisionPoint); break;
    //    case EntityType.floorSpikes:
    //    case EntityType.wallSpikes: onSpikesCollision(entity, pushingEntity, collisionPoint); break;
-   //    case EntityType.floorPunjiSticks:
-   //    case EntityType.wallPunjiSticks: onPunjiSticksCollision(entity, pushingEntity, collisionPoint); break;
    //    case EntityType.embrasure: onEmbrasureCollision(pushingEntity, pushedHitboxIdx); break;
    // }
 }

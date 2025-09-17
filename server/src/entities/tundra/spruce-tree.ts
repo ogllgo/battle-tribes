@@ -12,6 +12,7 @@ import { LootComponent, registerEntityLootOnDeath } from "../../components/LootC
 import { ItemType } from "../../../../shared/src/items/items";
 import { Hitbox } from "../../hitboxes";
 import { SpruceTreeComponent, SpruceTreeComponentArray } from "../../components/SpruceTreeComponent";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 const TREE_MAX_HEALTHS = [15, 20];
 
@@ -37,6 +38,8 @@ export function createSpruceTreeConfig(position: Point, angle: number): EntityCo
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionBit = CollisionBit.plants;
+
+   const physicsComponent = new PhysicsComponent();
    
    const healthComponent = new HealthComponent(TREE_MAX_HEALTHS[size]);
    
@@ -50,6 +53,7 @@ export function createSpruceTreeConfig(position: Point, angle: number): EntityCo
       entityType: EntityType.spruceTree,
       components: {
          [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.loot]: lootComponent,

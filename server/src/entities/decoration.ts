@@ -8,6 +8,7 @@ import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { addHitboxToTransformComponent, TransformComponent } from "../components/TransformComponent";
 import { DecorationComponent } from "../components/DecorationComponent";
 import { Hitbox } from "../hitboxes";
+import { PhysicsComponent } from "../components/PhysicsComponent";
 
 export function createDecorationConfig(position: Point, rotation: number, decorationType: DecorationType): EntityConfig {
    const transformComponent = new TransformComponent();
@@ -15,12 +16,15 @@ export function createDecorationConfig(position: Point, rotation: number, decora
    const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 16, 16), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
+   const physicsComponent = new PhysicsComponent();
+   
    const decorationComponent = new DecorationComponent(decorationType);
    
    return {
       entityType: EntityType.decoration,
       components: {
          [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.decoration]: decorationComponent
       },
       lights: []

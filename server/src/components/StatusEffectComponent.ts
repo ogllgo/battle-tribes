@@ -51,10 +51,8 @@ export function applyStatusEffect(entity: Entity, statusEffect: StatusEffect, du
       statusEffectComponent.activeStatusEffectTicksElapsed.push(0);
       statusEffectComponent.activeStatusEffectTicksRemaining.push(durationTicks);
 
-      if (PhysicsComponentArray.hasComponent(entity)) {
-         const physicsComponent = PhysicsComponentArray.getComponent(entity);
-         physicsComponent.moveSpeedMultiplier *= STATUS_EFFECT_MODIFIERS[statusEffect].moveSpeedMultiplier;
-      }
+      const physicsComponent = PhysicsComponentArray.getComponent(entity);
+      physicsComponent.moveSpeedMultiplier *= STATUS_EFFECT_MODIFIERS[statusEffect].moveSpeedMultiplier;
    } else {
       // Existing status effect
 
@@ -79,12 +77,10 @@ export function hasStatusEffect(statusEffectComponent: StatusEffectComponent, st
 export function clearStatusEffect(entityID: number, statusEffectIndex: number): void {
    const statusEffectComponent = StatusEffectComponentArray.getComponent(entityID);
 
-   if (PhysicsComponentArray.hasComponent(entityID)) {
-      const statusEffect = statusEffectComponent.activeStatusEffectTypes[statusEffectIndex];
-      
-      const physicsComponent = PhysicsComponentArray.getComponent(entityID);
-      physicsComponent.moveSpeedMultiplier /= STATUS_EFFECT_MODIFIERS[statusEffect].moveSpeedMultiplier;
-   }
+   const statusEffect = statusEffectComponent.activeStatusEffectTypes[statusEffectIndex];
+   
+   const physicsComponent = PhysicsComponentArray.getComponent(entityID);
+   physicsComponent.moveSpeedMultiplier /= STATUS_EFFECT_MODIFIERS[statusEffect].moveSpeedMultiplier;
 
    statusEffectComponent.activeStatusEffectTypes.splice(statusEffectIndex, 1);
    statusEffectComponent.activeStatusEffectTicksRemaining.splice(statusEffectIndex, 1);

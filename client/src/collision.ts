@@ -62,7 +62,8 @@ const resolveSoftCollision = (entity: Entity, affectedHitbox: Hitbox, pushingHit
 }
 
 export function collide(entity: Entity, collidingEntity: Entity, pushedHitbox: Hitbox, pushingHitbox: Hitbox, collisionResult: CollisionResult, isPushed: boolean): void {
-   if (isPushed && PhysicsComponentArray.hasComponent(entity)) {
+   if (isPushed) {
+      // @INCOMPLETE: i've removed the "PhysicsComponentArray.hasComponent(entity)" check from here. Do I now need to replace it with a !hitbox.isStatic check?
       if (pushingHitbox.collisionType === HitboxCollisionType.hard) {
          resolveHardCollision(pushedHitbox, collisionResult);
       } else {
@@ -213,8 +214,8 @@ export function resolveEntityCollisions(layer: Layer): void {
       // @Bug: collision can happen multiple times
       // @Speed: physics-physics comparisons happen twice
       // For all physics entities, check for collisions with all other entities in the chunk
-      for (let j = 0; j < chunk.physicsEntities.length; j++) {
-         const entity1ID = chunk.physicsEntities[j];
+      for (let j = 0; j < chunk.nonGrassEntities.length; j++) {
+         const entity1ID = chunk.nonGrassEntities[j];
          
          collectEntityCollisionsWithChunk(collisionPairs, entity1ID, chunk, false);
       }

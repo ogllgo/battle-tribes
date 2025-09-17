@@ -17,6 +17,7 @@ import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { StructureConnection } from "../../structure-placement";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 const HEALTHS = [25, 75];
 
@@ -42,6 +43,8 @@ export function createTunnelConfig(position: Point, rotation: number, tribe: Tri
    const hard2 = new Hitbox(transformComponent, null, true, new RectangularBox(position.copy(), new Point(32.5 - THIN_HITBOX_WIDTH, 0), rotation, THIN_HITBOX_WIDTH, HITBOX_HEIGHT), 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hard2.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hard2);
+
+   const physicsComponent = new PhysicsComponent();
    
    const healthComponent = new HealthComponent(HEALTHS[material]);
    
@@ -59,6 +62,7 @@ export function createTunnelConfig(position: Point, rotation: number, tribe: Tri
       entityType: EntityType.tunnel,
       components: {
          [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,

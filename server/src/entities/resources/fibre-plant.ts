@@ -10,6 +10,7 @@ import { addHitboxToTransformComponent, TransformComponent } from "../../compone
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { Hitbox } from "../../hitboxes";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 export function createFibrePlantConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
@@ -18,6 +19,8 @@ export function createFibrePlantConfig(position: Point, rotation: number): Entit
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionBit = CollisionBit.plants;
+
+   const physicsComponent = new PhysicsComponent();
    
    const healthComponent = new HealthComponent(10);
    
@@ -27,6 +30,7 @@ export function createFibrePlantConfig(position: Point, rotation: number): Entit
       entityType: EntityType.fibrePlant,
       components: {
          [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent
       },

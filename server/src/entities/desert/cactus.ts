@@ -14,6 +14,7 @@ import { ItemType } from "../../../../shared/src/items/items";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { Hitbox } from "../../hitboxes";
 import { createPricklyPearConfig } from "./prickly-pear";
+import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 const RADIUS = 40;
 /** Amount the hitbox is brought in. */
@@ -84,6 +85,8 @@ export function createCactusConfig(position: Point, rotation: number): EntityCon
       }
    }
 
+   const physicsComponent = new PhysicsComponent();
+
    const healthComponent = new HealthComponent(15);
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);
@@ -113,6 +116,7 @@ export function createCactusConfig(position: Point, rotation: number): EntityCon
       entityType: EntityType.cactus,
       components: {
          [ServerComponentType.transform]: transformComponent,
+         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.loot]: lootComponent,
