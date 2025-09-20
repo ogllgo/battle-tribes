@@ -74,7 +74,7 @@ const blockSwing = (blockAttack: Entity, swingAttack: Entity, blockingHitbox: Hi
    const attackerLimb = swingAttackComponent.limb;
 
    // Pause the attacker's attack for a brief period
-   attackerLimb.currentActionPauseTicksRemaining = Math.floor(Settings.TPS / 15);
+   attackerLimb.currentActionPauseTicksRemaining = Math.floor(Settings.TICK_RATE / 15);
    attackerLimb.currentActionRate = 0.4;
    swingAttackComponent.isBlocked = true;
    registerDirtyEntity(swingAttack);

@@ -103,7 +103,7 @@ function onTick(healingTotem: Entity): void {
    // Update heal targets
    for (let i = 0; i < healTargetIDs.length; i++) {
       healTargetsTicksHealed[i]++;
-      if (healTargetsTicksHealed[i] % Settings.TPS === 0) {
+      if (healTargetsTicksHealed[i] % Settings.TICK_RATE === 0) {
          const target = healTargetIDs[i];
          healEntity(target, Vars.HEALING_PER_SECOND, healingTotem);
       }

@@ -31,7 +31,7 @@ export class LootComponent {
 export const LootComponentArray = new ComponentArray<LootComponent>(ServerComponentType.loot, true, getDataLength, addDataToPacket);
 LootComponentArray.onJoin = onJoin;
 LootComponentArray.onTick = {
-   tickInterval: Settings.TPS,
+   tickInterval: Settings.TICK_RATE,
    func: onTick
 };
 LootComponentArray.onRemove = onRemove;

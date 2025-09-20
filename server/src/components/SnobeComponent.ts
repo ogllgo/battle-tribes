@@ -25,8 +25,8 @@ import { Packet } from "../../../shared/src/packets";
 import { DEFAULT_COLLISION_MASK } from "../../../shared/src/collision";
 import { createSnobeMoundConfig } from "../entities/tundra/snobe-mound";
 
-const MIN_EAR_WIGGLE_COOLDOWN_TICKS = 1.5 * Settings.TPS;
-const MAX_EAR_WIGGLE_COOLDOWN_TICKS = 5.5 * Settings.TPS;
+const MIN_EAR_WIGGLE_COOLDOWN_TICKS = 1.5 * Settings.TICK_RATE;
+const MAX_EAR_WIGGLE_COOLDOWN_TICKS = 5.5 * Settings.TICK_RATE;
 
 /** Chance to want to dig per second */
 const SNOW_DIG_CHANCE = 0.02;
@@ -132,7 +132,7 @@ function onTick(snobe: Entity): void {
       if (snobeComponent.ticksSpentDigging < DIG_TIME_TICKS) {
          snobeComponent.ticksSpentDigging++;
 
-         const progressSeconds = snobeComponent.ticksSpentDigging / Settings.TPS;
+         const progressSeconds = snobeComponent.ticksSpentDigging * Settings.DELTA_TIME;
          // minus pi/2 so that it starts on the come up
          let acceleration = 64 * Math.PI * Math.sin(progressSeconds * 28 - Math.PI/2);
          acceleration *= 0.2 + progressSeconds * 1.66;
@@ -151,7 +151,7 @@ function onTick(snobe: Entity): void {
             createEntity(snowballConfig, getEntityLayer(snobe), 0);
          }
       // When dug in, chance to pop back up after a while
-      } else if (Math.random() < 0.1 / Settings.TPS) {
+      } else if (Math.random() < 0.1 * Settings.DELTA_TIME) {
          snobeComponent.isDigging = false;
 
          // Return the collision mask back to normal
@@ -239,7 +239,7 @@ function onTick(snobe: Entity): void {
       }
    }
 
-   if (Math.abs(getHitboxAngularVelocity(hitbox)) < 0.02 && Math.random() < SNOW_DIG_CHANCE / Settings.TPS) {
+   if (Math.abs(getHitboxAngularVelocity(hitbox)) < 0.02 && Math.random() < SNOW_DIG_CHANCE * Settings.DELTA_TIME) {
       snobeComponent.isDigging = true;
       snobeComponent.ticksSpentDigging = 0;
 

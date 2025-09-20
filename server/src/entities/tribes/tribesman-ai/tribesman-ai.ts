@@ -33,7 +33,7 @@ import { clearPathfinding, pathfindTribesman } from "../../../components/AIPathf
 // @Cleanup: Move all of this to the TribesmanComponent file
 
 const enum Vars {
-   HELP_TIME = 10 * Settings.TPS
+   HELP_TIME = 10 * Settings.TICK_RATE
 }
 
 const BARREL_INTERACT_DISTANCE = 80;
@@ -42,7 +42,7 @@ export const TRIBESMAN_TURN_SPEED = 3 * Math.PI;
 
 export const TRIBESMAN_COMMUNICATION_RANGE = 1000;
 
-const MESSAGE_INTERVAL_TICKS = 2 * Settings.TPS;
+const MESSAGE_INTERVAL_TICKS = 2 * Settings.TICK_RATE;
 
 const getCommunicationTargets = (tribesman: Entity): ReadonlyArray<Entity> => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
@@ -677,7 +677,7 @@ export function tickTribesman(tribesman: Entity): void {
    // If full inventory, haul resources back to barrel
    // if (inventoryIsFull(inventoryComponent, "hotbar")) {
    //    // Only look for/update path to barrel every second
-   //    if (tribesman.ageTicks % Settings.TPS === 0) {
+   //    if (tribesman.ageTicks % Settings.TICK_RATE === 0) {
    //       const closestBarrel = findNearestBarrel(tribesman);
    //       if (closestBarrel !== null) {
    //          const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman.id);

@@ -34,8 +34,8 @@ export class CactusComponent {
    }
 }
 
-const MIN_FRUIT_GROW_TICKS = 180 * Settings.TPS;
-const MAX_FRUIT_GROW_TICKS = 300 * Settings.TPS;
+const MIN_FRUIT_GROW_TICKS = 180 * Settings.TICK_RATE;
+const MAX_FRUIT_GROW_TICKS = 300 * Settings.TICK_RATE;
 
 export const CactusComponentArray = new ComponentArray<CactusComponent>(ServerComponentType.cactus, true, getDataLength, addDataToPacket);
 CactusComponentArray.onHitboxCollision = onHitboxCollision;

@@ -15,9 +15,7 @@ import { processForcePositionUpdatePacket, processGameDataPacket, processInitial
 import { createActivatePacket, createPlayerDataPacket, createSyncRequestPacket, sendSetSpectatingPositionPacket } from "./packet-creation";
 import { AppState } from "../components/App";
 import { LoadingScreenStatus } from "../components/LoadingScreen";
-import { updateEntity } from "../entity-components/ComponentArray";
 import Board from "../Board";
-import { resolvePlayerCollisions } from "../collision";
 import { setPlayerInstance, playerInstance } from "../player";
 
 export type GameData = {
@@ -29,12 +27,7 @@ export type GameData = {
 let visibleWalls: ReadonlyArray<TribeWallData> = [];
 let buildingPlans: ReadonlyArray<BuildingPlanData> = [];
 
-let queuedGameDataPackets = new Array<PacketReader>();
 let lastPacketTime = 0;
-
-export function getQueuedGameDataPackets(): Array<PacketReader> {
-   return queuedGameDataPackets;
-}
 
 export function getLastPacketTime(): number {
    return lastPacketTime;
@@ -124,7 +117,7 @@ abstract class Client {
                      return;
                   }
                   
-                  queuedGameDataPackets.push(reader);
+                  // queuedGameDataPackets.push(reader);
                   lastPacketTime = performance.now();
 
                   // Done before so that server data can override particles
@@ -133,11 +126,6 @@ abstract class Client {
                   processGameDataPacket(reader);
                   
                   Board.tickEntities();
-
-                  if (playerInstance !== null) {
-                     updateEntity(playerInstance);
-                     resolvePlayerCollisions();
-                  }
 
                   break;
                }
@@ -307,17 +295,6 @@ abstract class Client {
       if (Game.isRunning && this.socket !== null) {
          // this.socket.emit("command", command);
       }
-   }
-
-   public static killPlayer(): void {
-      // Remove the player from the game
-      setPlayerInstance(null);
-
-      latencyGameState.resetFlags();
-      definiteGameState.resetFlags();
-
-      gameScreenSetIsDead(true);
-      closeCurrentMenu();
    }
 
    public static sendPacket(data: ArrayBuffer): void {

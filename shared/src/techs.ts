@@ -12,7 +12,6 @@ export enum TechID {
    stoneTools,
    furnace,
    woodworking,
-   throngling,
    archery,
    reinforcedBows,
    crossbows,
@@ -113,7 +112,7 @@ export const TECHS: ReadonlyArray<Tech> = [
        name: "Stoneworking",
        description: "Manipulation of stone in crafting.",
        iconSrc: "stoneworking.png",
-       unlockedItems: [ItemType.stone_pickaxe, ItemType.stone_axe, ItemType.stone_sword, ItemType.stoneSpear],
+       unlockedItems: [ItemType.stonecarvingTable, ItemType.stone_pickaxe, ItemType.stone_axe, ItemType.stone_sword, ItemType.stone_hammer, ItemType.stoneSpear],
        positionX: -40,
        positionY: -1,
        dependencies: [TechID.fire],
@@ -156,23 +155,6 @@ export const TECHS: ReadonlyArray<Tech> = [
       // @Temporary
       // researchStudyRequirements: 10,
       researchStudyRequirements: 10000,
-      blacklistedTribes: [],
-      conflictingTechs: []
-   },
-   {
-      id: TechID.throngling,
-      name: "Throngling",
-      description: "The way of the throngle",
-      iconSrc: "throngling.png",
-      unlockedItems: [ItemType.throngler],
-      positionX: -28,
-      positionY: 18,
-      dependencies: [TechID.stoneTools],
-      researchItemRequirements: createTallyFromRecord({
-         [ItemType.rock]: 20,
-         [ItemType.cactus_spine]: 30
-      }),
-      researchStudyRequirements: 40,
       blacklistedTribes: [],
       conflictingTechs: []
    },
@@ -230,7 +212,7 @@ export const TECHS: ReadonlyArray<Tech> = [
       name: "Ice Bows",
       description: "Ice bows",
       iconSrc: "ice-bows.png",
-      unlockedItems: [ItemType.ice_bow],
+      unlockedItems: [ItemType.frostshaper, ItemType.ice_bow],
       positionX: -76,
       positionY: 17,
       dependencies: [TechID.archery, TechID.frostshaping],
@@ -260,9 +242,9 @@ export const TECHS: ReadonlyArray<Tech> = [
    {
       id: TechID.leatherworking,
       name: "Leatherworking",
-      description: "Stretch and meld leather into armour",
+      description: "Stretch and meld leather into useful items",
       iconSrc: "leatherworking.png",
-      unlockedItems: [ItemType.leather_armour],
+      unlockedItems: [ItemType.leather_armour, ItemType.leather_backpack],
       positionX: -56,
       positionY: -18,
       dependencies: [TechID.stoneTools],
@@ -296,16 +278,14 @@ export const TECHS: ReadonlyArray<Tech> = [
       name: "Basic Architecture",
       description: "Primitive structures to build your first defences with.",
       iconSrc: "basic-architecture.png",
-      unlockedItems: [ItemType.wooden_wall, ItemType.wooden_hammer, ItemType.wooden_spikes, ItemType.punji_sticks],
+      unlockedItems: [ItemType.wooden_wall, ItemType.wooden_hammer, ItemType.wooden_spikes, ItemType.punji_sticks, ItemType.wooden_fence, ItemType.woodenBracings],
       positionX: 69,
       positionY: -4,
       dependencies: [TechID.woodworking],
       researchItemRequirements: createTallyFromRecord({
          [ItemType.wood]: 40
       }),
-      // @Temporary
-      // researchStudyRequirements: 150,
-      researchStudyRequirements: 1,
+      researchStudyRequirements: 150,
       blacklistedTribes: [],
       conflictingTechs: []
    },

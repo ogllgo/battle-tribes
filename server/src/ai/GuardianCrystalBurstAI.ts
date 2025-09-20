@@ -10,9 +10,9 @@ import { createEntity, getEntityLayer } from "../world";
 import { Hitbox, addHitboxAngularVelocity, addHitboxVelocity } from "../hitboxes";
 
 const enum Vars {
-   WINDUP_TIME_TICKS = (1.5 * Settings.TPS) | 0,
-   BURST_DURATION_TICKS = (2.5 * Settings.TPS) | 0,
-   RETURN_TIME_TICKS = (1 * Settings.TPS) | 0,
+   WINDUP_TIME_TICKS = (1.5 * Settings.TICK_RATE) | 0,
+   BURST_DURATION_TICKS = (2.5 * Settings.TICK_RATE) | 0,
+   RETURN_TIME_TICKS = (1 * Settings.TICK_RATE) | 0,
 
    RESTING_LIMB_DIRECTION = UtilVars.PI * 0.5,
    BURST_LIMB_DIRECTION = UtilVars.PI * 0.3,
@@ -96,7 +96,7 @@ export default class GuardianCrystalBurstAI {
          progress = Math.pow(progress, 3/2);
          this.setLimbDirection(guardian, Vars.BURST_LIMB_DIRECTION, GuardianVars.LIMB_ORBIT_RADIUS, guardianComponent);
 
-         if (Math.random() < Settings.I_TPS * Vars.FRAGMENTS_PER_SECOND) {
+         if (Math.random() < Settings.DELTA_TIME * Vars.FRAGMENTS_PER_SECOND) {
             createFragmentProjectile(guardian);
          }
       } else if (this.returnProgressTicks < Vars.RETURN_TIME_TICKS) {

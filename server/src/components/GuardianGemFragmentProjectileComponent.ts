@@ -25,7 +25,7 @@ GuardianGemFragmentProjectileComponentArray.onHitboxCollision = onHitboxCollisio
 
 function onTick(fragment: Entity): void {
    const age = getEntityAgeTicks(fragment);
-   if (age >= Settings.TPS * 0.75) {
+   if (age >= Settings.TICK_RATE * 0.75) {
       destroyEntity(fragment);
    }
 }

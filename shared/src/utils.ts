@@ -362,7 +362,7 @@ export function angle(x: number, y: number): number {
 }
 
 export function customTickIntervalHasPassed(ticks: number, intervalSeconds: number): boolean {
-   const ticksPerInterval = intervalSeconds * Settings.TPS;
+   const ticksPerInterval = intervalSeconds * Settings.TICK_RATE;
    
    const previousCheck = (ticks - 1) / ticksPerInterval;
    const check = ticks / ticksPerInterval;
@@ -473,7 +473,7 @@ export function tileIsInWorldIncludingEdges(tileX: number, tileY: number): boole
 }
 
 export function positionIsInWorld(x: number, y: number): boolean {
-   return x >= 0 && x < Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE && y >= 0 && y < Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE;
+   return x >= 0 && x < Settings.BOARD_UNITS && y >= 0 && y < Settings.BOARD_UNITS;
 }
 
 /** Returns x modulo n (according to the mathematical definition related to congruence) */
@@ -512,7 +512,7 @@ export function clampAngleB(angle: number): number {
 
 /** converts the secs into the equivalent integer number of ticks */
 export function secondsToTicks(sex: number): number {
-   return Math.floor(sex * Settings.TPS);
+   return Math.floor(sex * Settings.TICK_RATE);
 }
 
 export function polarVec2(magnitude: number, direction: number): Point {

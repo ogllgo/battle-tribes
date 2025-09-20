@@ -146,7 +146,7 @@ const isValidHibernatePosition = (dustflea: Entity, position: Point): boolean =>
 
 export function runHibernateAI(dustflea: Entity, aiHelperComponent: AIHelperComponent, ai: DustfleaHibernateAI): void {
    // When the dustflea doesn't have a valid hibernate target position, go look for one
-   if (ai.hibernateTargetPosition === null && getEntityAgeTicks(dustflea) % Math.floor(Settings.TPS / 4) === 0) {
+   if (ai.hibernateTargetPosition === null && getEntityAgeTicks(dustflea) % Math.floor(Settings.TICK_RATE / 4) === 0) {
       const potentialPosition = getRandomNearbyPosition(dustflea);
       if (isValidHibernatePosition(dustflea, potentialPosition)) {
          ai.hibernateTargetPosition = potentialPosition;

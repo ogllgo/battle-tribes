@@ -8,7 +8,7 @@ import { damageEntity } from "./HealthComponent";
 import { getRandomPositionInBox, TransformComponentArray } from "./TransformComponent";
 
 /** Interval between damage ticks */
-const DAMAGE_TICK_INTERVAL_TICKS = 2 * Settings.TPS;
+const DAMAGE_TICK_INTERVAL_TICKS = 2 * Settings.TICK_RATE;
 
 export class EnergyStomachComponent {
    /** Units of energy that the creature can store */
@@ -39,7 +39,7 @@ function onTick(entity: Entity): void {
    // @SQUEAM
    if(1+1===2)return;
    const energyStomachComponent = EnergyStomachComponentArray.getComponent(entity);
-   energyStomachComponent.energy -= energyStomachComponent.metabolism / Settings.TPS;
+   energyStomachComponent.energy -= energyStomachComponent.metabolism * Settings.DELTA_TIME;
    if (energyStomachComponent.energy < 0) {
       energyStomachComponent.energy = 0;
       if (energyStomachComponent.damageTickTimer === 0) {

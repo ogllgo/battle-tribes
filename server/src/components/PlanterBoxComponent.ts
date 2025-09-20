@@ -14,7 +14,7 @@ import { Hitbox } from "../hitboxes";
 import { randAngle } from "../../../shared/src/utils";
 
 const enum Vars {
-   FERTILISER_DURATION_TICKS = 300 * Settings.TPS
+   FERTILISER_DURATION_TICKS = 300 * Settings.TICK_RATE
 }
 
 export class PlanterBoxComponent {

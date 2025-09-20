@@ -523,7 +523,7 @@ export function playRiverSounds(): void {
             continue;
          }
 
-         if (tile.type === TileType.water && Math.random() < 0.1 / Settings.TPS) {
+         if (tile.type === TileType.water && Math.random() < 0.1 * Settings.DELTA_TIME) {
             const flowDirection = layer.getRiverFlowDirection(tileX, tileY);
             if (flowDirection > 0) {
                const x = (tileX + Math.random()) * Settings.TILE_SIZE;

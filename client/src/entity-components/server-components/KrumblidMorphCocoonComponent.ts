@@ -92,7 +92,7 @@ function onTick(cocoon: Entity): void {
    const hitbox = transformComponent.hitboxes[0];
   
    const hitboxRadius = (hitbox.box as CircularBox).radius;
-   const particleChance = hitboxRadius / Settings.TPS / 20;
+   const particleChance = hitboxRadius * Settings.DELTA_TIME / 20;
    if (Math.random() < particleChance) {
       const offsetDirection = randAngle();
       const x = hitbox.box.position.x + hitboxRadius * Math.sin(offsetDirection);

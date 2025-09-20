@@ -1,64 +1,38 @@
 import { VisibleChunkBounds } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { TribeType } from "battletribes-shared/tribes";
-import { lerp, Point, randAngle, randFloat, randInt, smoothstep, unitsToChunksClamped } from "battletribes-shared/utils";
+import { Point, randFloat } from "battletribes-shared/utils";
 import { PacketReader, PacketType } from "battletribes-shared/packets";
 import WebSocket, { Server } from "ws";
 import { runSpawnAttempt, spawnInitialEntities } from "../entity-spawning";
 import Tribe from "../Tribe";
 import SRandom from "../SRandom";
 import { updateDynamicPathfindingNodes } from "../pathfinding";
-import { createGrassBlocker, updateGrassBlockers } from "../grass-blockers";
+import { updateGrassBlockers } from "../grass-blockers";
 import { createGameDataPacket, createSyncDataPacket, createSyncPacket } from "./packet-creation";
 import PlayerClient, { PlayerClientVars } from "./PlayerClient";
 import { addPlayerClient, generatePlayerSpawnPosition, getPlayerClients, handlePlayerDisconnect, resetDirtyEntities } from "./player-clients";
 import { createPlayerConfig } from "../entities/tribes/player";
-import { generateGrassStrands } from "../world-generation/grass-generation";
 import { processAcquireTamingSkillPacket, processAnimalStaffFollowCommandPacket, processAscendPacket, processCompleteTamingTierPacket, processDevGiveItemPacket, processDevSetViewedSpawnDistribution, processDismountCarrySlotPacket, processEntitySummonPacket, processForceAcquireTamingSkillPacket, processForceCompleteTamingTierPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processModifyBuildingPacket, processMountCarrySlotPacket, processPickUpEntityPacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRenameAnimalPacket, processRespawnPacket, processSelectTechPacket, processSetAttackTargetPacket, processSetAutogiveBaseResourcesPacket, processSetCarryTargetPacket, processSetMoveTargetPositionPacket, processSetSignMessagePacket, processSetSpectatingPositionPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processTechStudyPacket, processTechUnlockPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket } from "./packet-processing";
-import { CowSpecies, Entity, EntityType, TreeSize } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { SpikesComponentArray } from "../components/SpikesComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { generateDecorations } from "../world-generation/decoration-generation";
 import { forceMaxGrowAllIceSpikes } from "../components/IceSpikesComponent";
 import { sortComponentArrays } from "../components/ComponentArray";
-import { destroyFlaggedEntities, entityExists, getEntityLayer, pushEntityJoinBuffer, tickGameTime, tickEntities, generateLayers, getEntityType, preDestroyFlaggedEntities, getGameTicks, createEntity, destroyEntity, createEntityImmediate } from "../world";
+import { destroyFlaggedEntities, entityExists, getEntityLayer, pushEntityJoinBuffer, tickGameTime, tickEntities, generateLayers, preDestroyFlaggedEntities, createEntity } from "../world";
 import { resolveEntityCollisions } from "../collision-detection";
 import { runCollapses } from "../collapses";
 import { updateTribes } from "../tribes";
 import { surfaceLayer, layers } from "../layers";
 import { generateReeds } from "../world-generation/reed-generation";
 import { riverMainTiles } from "../world-generation/surface-layer-generation";
-import { Hitbox } from "../hitboxes";
 import { updateWind } from "../wind";
-import OPTIONS from "../options";
-import { createDustfleaConfig } from "../entities/desert/dustflea";
-import { createKrumblidConfig } from "../entities/mobs/krumblid";
 import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
-import { createTribeWarriorConfig } from "../entities/tribes/tribe-warrior";
-import { getSubtileIndex } from "../../../shared/src/subtiles";
-import { SubtileType } from "../../../shared/src/tiles";
 import { applyTethers } from "../tethers";
-import { getEntityCount } from "../census";
-import { damageEntity } from "../components/HealthComponent";
-import { createWallConfig } from "../entities/structures/wall";
-import { BuildingMaterial, DecorationType, ServerComponentType } from "../../../shared/src/components";
-import { createDoorConfig } from "../entities/structures/door";
 import { createTukmokConfig } from "../entities/tundra/tukmok";
-import { createInguSerpentConfig } from "../entities/tundra/ingu-serpent";
-import { createBarrelConfig } from "../entities/structures/barrel";
-import { mountCarrySlot, RideableComponentArray } from "../components/RideableComponent";
-import { createInguYetuksnoglurblidokowfleaConfig } from "../entities/wtf/ingu-yetuksnoglurblidokowflea";
-import { createFenceConfig } from "../entities/structures/fence";
-import { StructureConnection } from "../structure-placement";
-import { createEmbrasureConfig } from "../entities/structures/embrasure";
-import { createFenceGateConfig } from "../entities/structures/fence-gate";
-import { createCowConfig } from "../entities/mobs/cow";
-import { createTreeConfig } from "../entities/resources/tree";
-import { createDecorationConfig } from "../entities/decoration";
-import CircularBox from "../../../shared/src/boxes/CircularBox";
-import { createItemEntityConfig } from "../entities/item-entity";
-import { ItemType } from "../../../shared/src/items/items";
+import { generateGrassStrands } from "../world-generation/grass-generation";
 
 /*
 
@@ -66,6 +40,9 @@ Reference for future self:
 node --prof-process isolate-0xnnnnnnnnnnnn-v8.log > processed.txt
 
 */
+
+let lastTickTime = 0;
+let packetSendTimer = 0;
 
 const entityIsHiddenFromPlayer = (entity: Entity, playerTribe: Tribe): boolean => {
    if (SpikesComponentArray.hasComponent(entity) && TribeComponentArray.hasComponent(entity)) {
@@ -499,11 +476,13 @@ class GameServer {
       
       if (typeof SERVER.tickInterval === "undefined") {
          console.log("Server started on port " + Settings.SERVER_PORT);
-         setInterval(SERVER.tick, 1000 / Settings.TPS);
+         setInterval(SERVER.tick, 1000 / Settings.TICK_RATE);
       }
    }
 
    private async tick(): Promise<void> {
+      const tickTime = performance.now();
+      
       // These are done before each tick to account for player packets causing entities to be removed/added between ticks.
       pushEntityJoinBuffer(false);
       preDestroyFlaggedEntities();
@@ -525,7 +504,7 @@ class GameServer {
             resolveEntityCollisions(layer);
          }
          
-         // if (getGameTicks() % Settings.TPS === 0) {
+         // if (getGameTicks() % Settings.TICK_RATE === 0) {
             // @Incomplete
             // updateResourceDistributions();
             runSpawnAttempt();
@@ -538,13 +517,22 @@ class GameServer {
       }
       preDestroyFlaggedEntities();
 
-      SERVER.sendGameDataPackets();
+      const deltaTime = tickTime - lastTickTime;
+      packetSendTimer -= deltaTime;
+      if (packetSendTimer <= 0) {
+         SERVER.sendGameDataPackets();
+         while (packetSendTimer <= 0) {
+            packetSendTimer += 1000 / Settings.SERVER_PACKET_SEND_RATE;
+         }
+      }
 
       destroyFlaggedEntities();
 
       // Update server ticks and time
       // This is done at the end of the tick so that information sent by players is associated with the next tick to run
       tickGameTime();
+
+      lastTickTime = tickTime;
    }
 
    // @Cleanup: maybe move this function to player-clients?

@@ -294,7 +294,7 @@ export function runSpawnAttempt(): void {
          continue;
       }
 
-      let numSpawnEvents = Settings.BOARD_SIZE * Settings.BOARD_SIZE * spawnInfo.spawnRate / Settings.TPS;
+      let numSpawnEvents = Settings.BOARD_SIZE * Settings.BOARD_SIZE * spawnInfo.spawnRate * Settings.DELTA_TIME;
       if (Math.random() < numSpawnEvents % 1) {
          numSpawnEvents = Math.ceil(numSpawnEvents);
       } else {

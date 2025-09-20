@@ -99,22 +99,22 @@ export function cloneHitbox(transformComponent: TransformComponent, hitbox: Hitb
 }
 
 export function getHitboxVelocity(hitbox: Hitbox): Point {
-   const vx = (hitbox.box.position.x - hitbox.previousPosition.x) * Settings.TPS;
-   const vy = (hitbox.box.position.y - hitbox.previousPosition.y) * Settings.TPS;
+   const vx = (hitbox.box.position.x - hitbox.previousPosition.x) * Settings.DELTA_TIME;
+   const vy = (hitbox.box.position.y - hitbox.previousPosition.y) * Settings.DELTA_TIME;
    return new Point(vx, vy);
 }
 
 export function setHitboxVelocityX(hitbox: Hitbox, vx: number): void {
-   hitbox.previousPosition.x = hitbox.box.position.x - vx / Settings.TPS;
+   hitbox.previousPosition.x = hitbox.box.position.x - vx * Settings.DELTA_TIME;
 }
 
 export function setHitboxVelocityY(hitbox: Hitbox, vy: number): void {
-   hitbox.previousPosition.y = hitbox.box.position.y - vy / Settings.TPS;
+   hitbox.previousPosition.y = hitbox.box.position.y - vy * Settings.DELTA_TIME;
 }
 
 export function setHitboxVelocity(hitbox: Hitbox, vx: number, vy: number): void {
-   hitbox.previousPosition.x = hitbox.box.position.x - vx / Settings.TPS;
-   hitbox.previousPosition.y = hitbox.box.position.y - vy / Settings.TPS;
+   hitbox.previousPosition.x = hitbox.box.position.x - vx * Settings.DELTA_TIME;
+   hitbox.previousPosition.y = hitbox.box.position.y - vy * Settings.DELTA_TIME;
 }
 
 export function getRootHitbox(hitbox: Hitbox): Hitbox {
@@ -129,8 +129,8 @@ export function getRootHitbox(hitbox: Hitbox): Hitbox {
 export function addHitboxVelocity(hitbox: Hitbox, addVec: Point): void {
    const rootHitbox = getRootHitbox(hitbox);
    if (!rootHitbox.isStatic) {
-      rootHitbox.box.position.x += addVec.x / Settings.TPS;
-      rootHitbox.box.position.y += addVec.y / Settings.TPS;
+      rootHitbox.box.position.x += addVec.x * Settings.DELTA_TIME;
+      rootHitbox.box.position.y += addVec.y * Settings.DELTA_TIME;
    }
 }
 
@@ -299,11 +299,11 @@ const cleanRelativeAngle = (hitbox: Hitbox): void => {
 export function getHitboxAngularVelocity(hitbox: Hitbox): number {
    // Here we don't use getAngleDiff but just subtract them, so that e.g. adding 2pi to the relative angle will register as some angular velocity
    // return 
-   return getAngleDiff(hitbox.previousRelativeAngle, hitbox.box.relativeAngle) * Settings.TPS;
+   return getAngleDiff(hitbox.previousRelativeAngle, hitbox.box.relativeAngle) * Settings.TICK_RATE;
 }
 
 export function addHitboxAngularVelocity(hitbox: Hitbox, angularVelocity: number): void {
-   hitbox.box.relativeAngle += angularVelocity / Settings.TPS;
+   hitbox.box.relativeAngle += angularVelocity * Settings.DELTA_TIME;
 }
 
 export function addHitboxAngularAcceleration(hitbox: Hitbox, acceleration: number): void {

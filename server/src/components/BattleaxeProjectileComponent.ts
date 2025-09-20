@@ -10,7 +10,7 @@ import { CollisionVars, entitiesAreColliding } from "../collision-detection";
 import { addHitboxAngularAcceleration, Hitbox, turnHitboxToAngle } from "../hitboxes";
 
 const enum Vars {
-   RETURN_TIME_TICKS = 1 * Settings.TPS
+   RETURN_TIME_TICKS = 1 * Settings.TICK_RATE
 }
 
 export class BattleaxeProjectileComponent {}
@@ -47,17 +47,17 @@ function onTick(battleaxe: Entity): void {
       
       const ageTicks = getEntityAgeTicks(battleaxe);
       const ticksSinceReturn = ageTicks - Vars.RETURN_TIME_TICKS;
-      battleaxeHitbox.box.relativeAngle -= lerp(6 * Math.PI / Settings.TPS, 0, Math.min(ticksSinceReturn / Settings.TPS * 1.25, 1));
+      battleaxeHitbox.box.relativeAngle -= lerp(6 * Math.PI * Settings.DELTA_TIME, 0, Math.min(ticksSinceReturn * Settings.DELTA_TIME * 1.25, 1));
 
       // @Hack: Just set velocity instead of adding to position
       const returnDirection = battleaxeHitbox.box.position.angleTo(ownerHitbox.box.position);
-      const returnSpeed = lerp(0, 800, Math.min(ticksSinceReturn / Settings.TPS * 1.5, 1));
-      battleaxeHitbox.box.position.x += returnSpeed * Settings.I_TPS * Math.sin(returnDirection);
-      battleaxeHitbox.box.position.y += returnSpeed * Settings.I_TPS * Math.cos(returnDirection);
+      const returnSpeed = lerp(0, 800, Math.min(ticksSinceReturn * Settings.DELTA_TIME * 1.5, 1));
+      battleaxeHitbox.box.position.x += returnSpeed * Settings.DELTA_TIME * Math.sin(returnDirection);
+      battleaxeHitbox.box.position.y += returnSpeed * Settings.DELTA_TIME * Math.cos(returnDirection);
       transformComponent.isDirty = true;
 
       // Turn to face the owner
-      turnHitboxToAngle(battleaxeHitbox, returnDirection, ticksSinceReturn / Settings.TPS * Math.PI, 0.5, false);
+      turnHitboxToAngle(battleaxeHitbox, returnDirection, ticksSinceReturn * Settings.DELTA_TIME * Math.PI, 0.5, false);
    }
 }
 

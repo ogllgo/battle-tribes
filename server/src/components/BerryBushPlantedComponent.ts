@@ -7,7 +7,7 @@ import { ComponentArray } from "./ComponentArray";
 import { getPlantGrowthSpeed, plantIsFertilised } from "./PlanterBoxComponent";
 
 const enum Vars {
-   GROWTH_TIME_TICKS = 60 * Settings.TPS
+   GROWTH_TIME_TICKS = 60 * Settings.TICK_RATE
 }
 
 export class BerryBushPlantedComponent {
@@ -34,7 +34,7 @@ function onTick(entity: Entity): void {
          const tickChance = plantIsFertilised(entity) ? 0.45 : 0.3;
          
          // Grow fruit
-         if (Math.random() < tickChance / Settings.TPS) {
+         if (Math.random() < tickChance * Settings.DELTA_TIME) {
             berryBushPlantedComponent.fruitRandomGrowthTicks++;
             if (berryBushPlantedComponent.fruitRandomGrowthTicks === 5) {
                berryBushPlantedComponent.numFruit++;

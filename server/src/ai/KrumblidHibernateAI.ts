@@ -149,7 +149,7 @@ const isValidHibernatePosition = (krumblid: Entity, position: Point): boolean =>
 
 export function runKrumblidHibernateAI(krumblid: Entity, aiHelperComponent: AIHelperComponent, hibernateAI: KrumblidHibernateAI): void {
    // When the krumblid doesn't have a valid hibernate target position, go look for one
-   if (hibernateAI.hibernateTargetPosition === null && getEntityAgeTicks(krumblid) % Math.floor(Settings.TPS / 4) === 0) {
+   if (hibernateAI.hibernateTargetPosition === null && getEntityAgeTicks(krumblid) % Math.floor(Settings.TICK_RATE / 4) === 0) {
       const potentialPosition = getRandomNearbyPosition(krumblid);
       if (isValidHibernatePosition(krumblid, potentialPosition)) {
          hibernateAI.hibernateTargetPosition = potentialPosition;

@@ -18,9 +18,9 @@ interface TickCallback {
    readonly callback: () => void;
 }
 
+// @CLEANUP: "Board" is weird...
 abstract class Board {
    public static serverTicks: number;
-   public static lastServerTickTime: number;
    public static clientTicks = 0;
    public static time: number;
 
@@ -45,7 +45,7 @@ abstract class Board {
    public static updateTickCallbacks(): void {
       for (let i = this.tickCallbacks.length - 1; i >= 0; i--) {
          const tickCallbackInfo = this.tickCallbacks[i];
-         tickCallbackInfo.time -= 1 / Settings.TPS;
+         tickCallbackInfo.time -= 1 * Settings.DELTA_TIME;
          if (tickCallbackInfo.time <= 0) {
             tickCallbackInfo.callback();
             this.tickCallbacks.splice(i, 1);
@@ -54,7 +54,7 @@ abstract class Board {
    }
 
    public static tickIntervalHasPassed(intervalSeconds: number): boolean {
-      const ticksPerInterval = intervalSeconds * Settings.TPS;
+      const ticksPerInterval = intervalSeconds * Settings.TICK_RATE;
       
       const previousCheck = (Board.serverTicks - 1) / ticksPerInterval;
       const check = Board.serverTicks / ticksPerInterval;
@@ -66,7 +66,7 @@ abstract class Board {
       for (let i = 0; i < particles.length; i++) {
          const particle = particles[i];
 
-         particle.age += 1 / Settings.TPS;
+         particle.age += 1 * Settings.DELTA_TIME;
          if (particle.age >= particle.lifetime) {
             removedParticleIndexes.push(i);
          } else {
@@ -131,29 +131,25 @@ abstract class Board {
    //       tile.isWall = update.isWall;
    //    }
    // }
-
-   public static positionIsInBoard(x: number, y: number): boolean {
-      return x >= 0 && x < Settings.BOARD_UNITS && y >= 0 && y < Settings.BOARD_UNITS;
-   }
 }
 
 export default Board;
 
 export function getSecondsSinceTickTimestamp(ticks: number): number {
    const ticksSince = Board.serverTicks - ticks;
-   let secondsSince = ticksSince / Settings.TPS;
+   let secondsSince = ticksSince * Settings.DELTA_TIME;
 
    // Account for frame progress
-   secondsSince += getFrameProgress() / Settings.TPS;
+   secondsSince += getFrameProgress() * Settings.DELTA_TIME;
 
    return secondsSince;
 }
 
 export function getElapsedTimeInSeconds(elapsedTicks: number): number {
-   let secondsSince = elapsedTicks / Settings.TPS;
+   let secondsSince = elapsedTicks * Settings.DELTA_TIME;
 
    // Account for frame progress
-   secondsSince += getFrameProgress() / Settings.TPS;
+   secondsSince += getFrameProgress() * Settings.DELTA_TIME;
 
    return secondsSince;
 }

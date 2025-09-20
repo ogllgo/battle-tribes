@@ -15,7 +15,7 @@ const enum Vars {
    SUPPORT_REDUCTION = 0,
    // SUPPORT_REDUCTION = 10,
    COLLAPSE_THRESHOLD = 50,
-   COLLAPSE_WARNING_TIME_TICKS = 5 * Settings.TPS
+   COLLAPSE_WARNING_TIME_TICKS = 5 * Settings.TICK_RATE
 }
 
 const enum ExpansionType {
@@ -275,7 +275,7 @@ export function runCollapses(): void {
    
    // Once a second, check for new collapses
    // @Temporary
-   if (getGameTicks() % Settings.TPS === 0 && 1 + 1 === 1) {
+   if (getGameTicks() % Settings.TICK_RATE === 0 && 1 + 1 === 1) {
       for (const layer of layers) {
          for (const pair of layer.minedSubtileInfoMap) {
             const minedSubtileInfo = pair[1];
@@ -288,7 +288,7 @@ export function runCollapses(): void {
             const progressToMaxCollapse = 1 - support / Vars.COLLAPSE_THRESHOLD;
             const collapseChancePerSecond = (0.25 + progressToMaxCollapse) / 100;
    
-            if (Math.random() < collapseChancePerSecond * Settings.I_TPS) {
+            if (Math.random() < collapseChancePerSecond * Settings.DELTA_TIME) {
                const subtile = pair[0];
                startCollapse(layer, subtile);
             }

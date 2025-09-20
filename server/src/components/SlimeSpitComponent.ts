@@ -80,7 +80,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    applyKnockback(collidingHitbox, 150, hitDirection);
    
    if (StatusEffectComponentArray.hasComponent(collidingEntity)) {
-      applyStatusEffect(collidingEntity, StatusEffect.poisoned, 2 * Settings.TPS);
+      applyStatusEffect(collidingEntity, StatusEffect.poisoned, 2 * Settings.TICK_RATE);
    }
 
    destroyEntity(spit);

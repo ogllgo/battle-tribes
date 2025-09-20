@@ -56,7 +56,7 @@ const shouldRecalculatePath = (tribesman: Entity, goalX: number, goalY: number, 
    const velocitySquare = vx * vx + vy * vy;
    
    const ageTicks = getEntityAgeTicks(tribesman);
-   if (currentPath.rawPath.length > 2 && ageTicks % Settings.TPS === 0 && velocitySquare < 10 * 10) {
+   if (currentPath.rawPath.length > 2 && ageTicks % Settings.TICK_RATE === 0 && velocitySquare < 10 * 10) {
       return true;
    }
 
@@ -156,7 +156,7 @@ export function continueCurrentPath(tribesman: Entity): boolean {
       // @Speed: only do this if we know the path has a door in it
       // Open any doors in their way
       const ageTicks = getEntityAgeTicks(tribesman);
-      if (ageTicks % ((Settings.TPS / 6) | 0) === 0) {
+      if (ageTicks % ((Settings.TICK_RATE / 6) | 0) === 0) {
          const tribeComponent = TribeComponentArray.getComponent(tribesman); // @Speed?
          openDoors(tribesman, tribeComponent.tribe);
       }

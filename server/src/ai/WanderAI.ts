@@ -9,7 +9,7 @@ import { getEntityAgeTicks, getEntityLayer } from "../world";
 import { getHitboxVelocity, Hitbox } from "../hitboxes";
 
 const enum Vars {
-   POSITION_RECORD_INTERVAL = Settings.TPS
+   POSITION_RECORD_INTERVAL = Settings.TICK_RATE
 }
 
 export type WanderAITileIsValidCallback = (entity: Entity, layer: Layer, x: number, y: number) => boolean;
@@ -41,11 +41,11 @@ export default class WanderAI {
 
    private shouldTryAndWander(hitbox: Hitbox): boolean {
       // @SQUEAM cuz tukmoks aren't wandering thanks to their clubs pushing them around and making them be in constant motion
-      return Math.random() < this.wanderRate / Settings.TPS;
+      return Math.random() < this.wanderRate * Settings.DELTA_TIME;
       
       const velocity = getHitboxVelocity(hitbox);
       // We check for < 1 instead of == 0 here as sometimtes the velocity can be an infinitessimal
-      return Math.abs(velocity.x) < 1 && Math.abs(velocity.y) < 1 && Math.random() < this.wanderRate / Settings.TPS;
+      return Math.abs(velocity.x) < 1 && Math.abs(velocity.y) < 1 && Math.random() < this.wanderRate * Settings.DELTA_TIME;
    }
 
    public update(entity: Entity): void {

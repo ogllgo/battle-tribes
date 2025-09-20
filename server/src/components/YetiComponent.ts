@@ -296,7 +296,7 @@ function onTick(yeti: Entity): void {
    const layer = getEntityLayer(yeti);
    const tileIndex = getHitboxTile(yetiBodyHitbox);
    if (layer.getTileBiome(tileIndex) !== Biome.tundra) {
-      // applyStatusEffect(yeti, StatusEffect.heatSickness, 2 * Settings.TPS);
+      // applyStatusEffect(yeti, StatusEffect.heatSickness, 2 * Settings.TICK_RATE);
    }
 
    if (yetiComponent.isThrowingSnow) {
@@ -311,7 +311,7 @@ function onTick(yeti: Entity): void {
          
          switch (yetiComponent.snowThrowStage) {
             case SnowThrowStage.windup: {
-               yetiComponent.snowThrowAttackProgress -= Settings.I_TPS / Vars.SNOW_THROW_WINDUP_TIME;
+               yetiComponent.snowThrowAttackProgress -= Settings.DELTA_TIME / Vars.SNOW_THROW_WINDUP_TIME;
                if (yetiComponent.snowThrowAttackProgress <= 0) {
                   throwSnow(yeti);
                   yetiComponent.snowThrowAttackProgress = 0;
@@ -325,7 +325,7 @@ function onTick(yeti: Entity): void {
                return;
             }
             case SnowThrowStage.hold: {
-               yetiComponent.snowThrowHoldTimer += Settings.I_TPS;
+               yetiComponent.snowThrowHoldTimer += Settings.DELTA_TIME;
                if (yetiComponent.snowThrowHoldTimer >= Vars.SNOW_THROW_HOLD_TIME) {
                   yetiComponent.snowThrowStage = SnowThrowStage.return;
                }
@@ -335,7 +335,7 @@ function onTick(yeti: Entity): void {
                return;
             }
             case SnowThrowStage.return: {
-               yetiComponent.snowThrowAttackProgress += Settings.I_TPS / Vars.SNOW_THROW_RETURN_TIME;
+               yetiComponent.snowThrowAttackProgress += Settings.DELTA_TIME / Vars.SNOW_THROW_RETURN_TIME;
                if (yetiComponent.snowThrowAttackProgress >= 1) {
                   yetiComponent.snowThrowAttackProgress = 1;
                   yetiComponent.isThrowingSnow = false;
@@ -353,7 +353,7 @@ function onTick(yeti: Entity): void {
       }
    }
 
-   yetiComponent.snowThrowCooldown -= Settings.I_TPS;
+   yetiComponent.snowThrowCooldown -= Settings.DELTA_TIME;
    if (yetiComponent.snowThrowCooldown < 0) {
       yetiComponent.snowThrowCooldown = 0;
    }

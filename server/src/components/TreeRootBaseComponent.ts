@@ -102,7 +102,7 @@ function preRemove(entity: Entity): void {
 
    // Respawn the tree root after a while
    const config = createTreeRootBaseConfig(treeRootHitbox.box.position.copy(), randAngle());
-   createEntity(config, getEntityLayer(entity), randInt(60, 90) * Settings.TPS);
+   createEntity(config, getEntityLayer(entity), randInt(60, 90) * Settings.TICK_RATE);
 
    const treeRootBaseComponent = TreeRootBaseComponentArray.getComponent(entity);
    for (const segment of treeRootBaseComponent.segments) {

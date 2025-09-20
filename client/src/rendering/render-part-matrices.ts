@@ -169,8 +169,8 @@ const calculateHitboxMatrix = (hitbox: Hitbox, frameProgress: number): Matrix3x2
    // scaleMatrix(matrix, scale, scale);
    
    const velocity = getHitboxVelocity(hitbox);
-   const tx = hitbox.box.position.x + velocity.x * frameProgress / Settings.TPS;
-   const ty = hitbox.box.position.y + velocity.y * frameProgress / Settings.TPS;
+   const tx = hitbox.box.position.x + velocity.x * frameProgress * Settings.DELTA_TIME;
+   const ty = hitbox.box.position.y + velocity.y * frameProgress * Settings.DELTA_TIME;
 
    // Translation
    translateMatrix(matrix, tx, ty);
@@ -248,7 +248,7 @@ export function updateRenderPartMatrices(frameProgress: number): void {
    }
    
    // @Bug: I don't think this will account for cases where the game is updated less than 60 times a second.
-   // To fix: temporarily set Settings.TPS to like 10 or something and then fix the subsequent slideshow
+   // To fix: temporarily set Settings.TICK_RATE to like 10 or something and then fix the subsequent slideshow
    for (let i = 0; i < dirtyEntityRenderInfos.length; i++) {
       const renderInfo = dirtyEntityRenderInfos[i];
       cleanEntityRenderInfo(renderInfo, frameProgress);

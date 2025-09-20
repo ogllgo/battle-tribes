@@ -167,7 +167,7 @@ function onTick(entity: Entity): void {
       resetIgnoredTileSpeedMultipliers(physicsComponent);
    }
 
-   if (Math.random() < 0.2 / Settings.TPS) {
+   if (Math.random() < 0.2 * Settings.DELTA_TIME) {
       playSoundOnHitbox("slime-ambient-" + randInt(1, 4) + ".mp3", 0.4, 1, entity, hitbox, false);
    }
 
@@ -176,12 +176,12 @@ function onTick(entity: Entity): void {
       const orb = slimeComponent.orbs[i];
 
       // Randomly move around the orbs
-      if (Math.random() < 0.3 / Settings.TPS) {
+      if (Math.random() < 0.3 * Settings.DELTA_TIME) {
          orb.angularVelocity = randFloat(-3, 3);
       }
 
       // Update orb angular velocity & rotation
-      orb.rotation += orb.angularVelocity / Settings.TPS;
+      orb.rotation += orb.angularVelocity * Settings.DELTA_TIME;
 
       // Update the orb's rotation
       if (orb.angularVelocity !== 0) {
@@ -191,7 +191,7 @@ function onTick(entity: Entity): void {
          slimeComponent.orbRenderParts[i].offset.y = offsetMagnitude * Math.cos(orb.rotation);
       }
 
-      orb.angularVelocity -= 3 / Settings.TPS;
+      orb.angularVelocity -= 3 * Settings.DELTA_TIME;
       if (orb.angularVelocity < 0) {
          orb.angularVelocity = 0;
       }

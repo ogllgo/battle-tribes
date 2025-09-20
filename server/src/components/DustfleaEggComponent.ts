@@ -11,8 +11,8 @@ import { TransformComponentArray } from "./TransformComponent";
 
 // @Incomplete: make dustflea eggs stick to walls as well
 
-const MIN_JIGGLE_TIME_TICKS = 2 * Settings.TPS;
-const MAX_JIGGLE_TIME_TICKS = 3 * Settings.TPS;
+const MIN_JIGGLE_TIME_TICKS = 2 * Settings.TICK_RATE;
+const MAX_JIGGLE_TIME_TICKS = 3 * Settings.TICK_RATE;
 
 export class DustfleaEggComponent {
    public readonly parentOkren: Entity;

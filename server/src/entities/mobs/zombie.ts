@@ -22,7 +22,7 @@ import { LootComponent, registerEntityLootOnDeath } from "../../components/LootC
 import { Hitbox } from "../../hitboxes";
 
 export const enum ZombieVars {
-   CHASE_PURSUE_TIME_TICKS = 5 * Settings.TPS,
+   CHASE_PURSUE_TIME_TICKS = 5 * Settings.TICK_RATE,
    VISION_RANGE = 375
 }
 

@@ -52,6 +52,6 @@ export function onSpitPoisonCollision(spit: Entity, collidingEntity: Entity, col
    addLocalInvulnerabilityHash(collidingEntity, "spitPoison", 0.35);
 
    if (StatusEffectComponentArray.hasComponent(collidingEntity)) {
-      applyStatusEffect(collidingEntity, StatusEffect.poisoned, 3 * Settings.TPS);
+      applyStatusEffect(collidingEntity, StatusEffect.poisoned, 3 * Settings.TICK_RATE);
    }
 }

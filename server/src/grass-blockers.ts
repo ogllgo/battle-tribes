@@ -12,8 +12,8 @@ import { boxIsInRange } from "./ai-shared";
 import { addBoxDataToPacket, getBoxDataLength } from "./server/packet-hitboxes";
 
 const enum Vars {
-   GRASS_FULL_REGROW_TICKS = Settings.TPS * 120,
-   GRASS_FULL_DIE_TICKS = Settings.TPS * 20,
+   GRASS_FULL_REGROW_TICKS = Settings.TICK_RATE * 120,
+   GRASS_FULL_DIE_TICKS = Settings.TICK_RATE * 20,
    STRUCTURE_BLOCKER_PADDING = -4
 }
 

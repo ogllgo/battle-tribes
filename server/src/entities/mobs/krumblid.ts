@@ -139,13 +139,13 @@ export function createKrumblidConfig(position: Point, angle: number): EntityConf
    const aiHelperComponent = new AIHelperComponent(bodyHitbox, 400, moveFunc, turnFunc);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(400, 5 * Math.PI, 0.4, 0.35, wanderPositionIsValid);
    aiHelperComponent.ais[AIType.escape] = new EscapeAI(900, 5 * Math.PI, 0.4, 1, extraEscapeCondition);
-   aiHelperComponent.ais[AIType.follow] = new FollowAI(8 * Settings.TPS, 16 * Settings.TPS, 0.05, 34);
+   aiHelperComponent.ais[AIType.follow] = new FollowAI(8 * Settings.TICK_RATE, 16 * Settings.TICK_RATE, 0.05, 34);
    aiHelperComponent.ais[AIType.sandBalling] = new SandBallingAI(400, 1, 1);
    aiHelperComponent.ais[AIType.vegetationConsume] = new VegetationConsumeAI(400, 5 * Math.PI, 0.4);
    aiHelperComponent.ais[AIType.krumblidCombat] = new KrumblidCombatAI(900, 5 * Math.PI, 0.4);
    aiHelperComponent.ais[AIType.krumblidHibernate] = new KrumblidHibernateAI(240, 5 * Math.PI, 0.4);
 
-   const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
+   const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TICK_RATE);
    
    const lootComponent = new LootComponent();
 

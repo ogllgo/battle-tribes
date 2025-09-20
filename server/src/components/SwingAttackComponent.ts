@@ -245,12 +245,12 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, hitHitbox: H
       // @HACK: shouldn't be hard-coded here!!
       switch (attackingItem.type) {
          case ItemType.flesh_sword: {
-            applyStatusEffect(victim, StatusEffect.poisoned, 3 * Settings.TPS);
+            applyStatusEffect(victim, StatusEffect.poisoned, 3 * Settings.TICK_RATE);
             break;
          }
          case ItemType.inguSerpentTooth:
          case ItemType.iceWringer: {
-            applyStatusEffect(victim, StatusEffect.freezing, 3 * Settings.TPS);
+            applyStatusEffect(victim, StatusEffect.freezing, 3 * Settings.TICK_RATE);
             break;
          }
       }
@@ -258,7 +258,7 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, hitHitbox: H
 
    // Bloodaxes have a 20% chance to inflict bleeding on hit
    if (hasTitle(attacker, TribesmanTitle.bloodaxe) && Math.random() < 0.2) {
-      applyStatusEffect(victim, StatusEffect.bleeding, 2 * Settings.TPS);
+      applyStatusEffect(victim, StatusEffect.bleeding, 2 * Settings.TICK_RATE);
    }
 
    return true;

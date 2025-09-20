@@ -158,92 +158,92 @@ function onTick(inguYetuk: Entity): void {
 
    const mult = 1.5;
 
-   if (Math.random() < 0.6 * mult / Settings.TPS) {
+   if (Math.random() < 0.6 * mult * Settings.DELTA_TIME) {
       playSound("cow-ambient-" + randInt(1, 3) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 0.4 * mult / Settings.TPS) {
+   if (Math.random() < 0.4 * mult * Settings.DELTA_TIME) {
       playSound("cow-hurt-" + randInt(1, 3) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 0.3 * mult / Settings.TPS) {
+   if (Math.random() < 0.3 * mult * Settings.DELTA_TIME) {
       playSound("cow-die-1.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 
-   if (Math.random() < 0.6 * mult / Settings.TPS) {
+   if (Math.random() < 0.6 * mult * Settings.DELTA_TIME) {
       playSound("yeti-ambient-" + randInt(1, 6) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 0.6 * mult / Settings.TPS) {
+   if (Math.random() < 0.6 * mult * Settings.DELTA_TIME) {
       playSound("yeti-angry-" + randInt(1, 5) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 0.5 * mult / Settings.TPS) {
+   if (Math.random() < 0.5 * mult * Settings.DELTA_TIME) {
       playSound("yeti-hurt-" + randInt(1, 5) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 0.3 * mult / Settings.TPS) {
+   if (Math.random() < 0.3 * mult * Settings.DELTA_TIME) {
       playSound("yeti-death-" + randInt(1, 2) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 
-   if (Math.random() < 2 * mult / Settings.TPS) {
+   if (Math.random() < 2 * mult * Settings.DELTA_TIME) {
       playSound("glurb-hit.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 1 * mult / Settings.TPS) {
+   if (Math.random() < 1 * mult * Settings.DELTA_TIME) {
       playSound("glurb-death.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 
-   if (Math.random() < 0.8 * mult / Settings.TPS) {
+   if (Math.random() < 0.8 * mult * Settings.DELTA_TIME) {
       playSound("tukmok-bone-hit.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 1.2 * mult / Settings.TPS) {
+   if (Math.random() < 1.2 * mult * Settings.DELTA_TIME) {
       playSound("tukmok-hit-flesh-" + randInt(1, 4) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 1.2 * mult / Settings.TPS) {
+   if (Math.random() < 1.2 * mult * Settings.DELTA_TIME) {
       playSound("tukmok-angry-" + randInt(1, 3) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 0.5 * mult / Settings.TPS) {
+   if (Math.random() < 0.5 * mult * Settings.DELTA_TIME) {
       playSound("tukmok-death.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 
-   if (Math.random() < 0.65 * mult / Settings.TPS) {
+   if (Math.random() < 0.65 * mult * Settings.DELTA_TIME) {
       playSound("ingu-serpent-hit.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 0.5 * mult / Settings.TPS) {
+   if (Math.random() < 0.5 * mult * Settings.DELTA_TIME) {
       playSound("ingu-serpent-death.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 1 * mult / Settings.TPS) {
+   if (Math.random() < 1 * mult * Settings.DELTA_TIME) {
       playSound("ingu-serpent-angry-" + randInt(1, 2) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 1.2 * mult / Settings.TPS) {
+   if (Math.random() < 1.2 * mult * Settings.DELTA_TIME) {
       playSound("ingu-serpent-leap.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 
 
-   if (Math.random() < 1.2 * mult / Settings.TPS) {
+   if (Math.random() < 1.2 * mult * Settings.DELTA_TIME) {
       playSound("snobe-hit-" + randInt(1, 3) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 1.2 * mult / Settings.TPS) {
+   if (Math.random() < 1.2 * mult * Settings.DELTA_TIME) {
       playSound("snobe-death-" + randInt(1,3) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 1.5 * mult / Settings.TPS) {
+   if (Math.random() < 1.5 * mult * Settings.DELTA_TIME) {
       playSound("snobe-ambient-" + randInt(1,4) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 
-   if (Math.random() < 1 * mult / Settings.TPS) {
+   if (Math.random() < 1 * mult * Settings.DELTA_TIME) {
       playSound("krumblid-death.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 1 * mult / Settings.TPS) {
+   if (Math.random() < 1 * mult * Settings.DELTA_TIME) {
       playSound("krumblid-hit-flesh-" + randInt(1, 2) + ".mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
-   if (Math.random() < 1 * mult / Settings.TPS) {
+   if (Math.random() < 1 * mult * Settings.DELTA_TIME) {
       playSound("krumblid-hit-shell.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 
-   if (Math.random() < 0.7 * mult / Settings.TPS) {
+   if (Math.random() < 0.7 * mult * Settings.DELTA_TIME) {
       playSound("okren-eye-hit.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 
-   if (Math.random() < 1 * mult / Settings.TPS) {
+   if (Math.random() < 1 * mult * Settings.DELTA_TIME) {
       playSound("dustflea-hit.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 
-   if (Math.random() < 2.5 * mult / Settings.TPS) {
+   if (Math.random() < 2.5 * mult * Settings.DELTA_TIME) {
       playSound("dustflea-egg-pop.mp3", 0.4, randFloat(0.8, 1.2), Camera.position.copy(), getCurrentLayer());
    }
 }

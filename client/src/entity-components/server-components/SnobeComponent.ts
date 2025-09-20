@@ -105,10 +105,10 @@ function getMaxRenderParts(): number {
 
 function onTick(snobe: Entity): void {
    const randomSoundComponent = RandomSoundComponentArray.getComponent(snobe);
-   updateRandomSoundComponentSounds(randomSoundComponent, 3 * Settings.TPS, 7 * Settings.TPS, AMBIENT_SOUNDS, 0.3);
+   updateRandomSoundComponentSounds(randomSoundComponent, 3 * Settings.TICK_RATE, 7 * Settings.TICK_RATE, AMBIENT_SOUNDS, 0.3);
 
    const snobeComponent = SnobeComponentArray.getComponent(snobe);
-   if (snobeComponent.isDigging && snobeComponent.diggingProgress < 1 && Math.random() < 15 / Settings.TPS) {
+   if (snobeComponent.isDigging && snobeComponent.diggingProgress < 1 && Math.random() < 15 * Settings.DELTA_TIME) {
       const transformComponent = TransformComponentArray.getComponent(snobe);
       const hitbox = transformComponent.hitboxes[0];
 

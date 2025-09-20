@@ -30,7 +30,7 @@ export function updateTribes(): void {
          tribe.buildingsAreDirty = false;
       }
 
-      if (getGameTicks() % Settings.TPS === 0) {
+      if (getGameTicks() % Settings.TICK_RATE === 0) {
          // @Cleanup: Not related to tribe building
          tribe.updateAvailableResources();
       }

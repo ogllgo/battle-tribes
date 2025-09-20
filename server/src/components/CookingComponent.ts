@@ -3,11 +3,11 @@ import { ComponentArray } from "./ComponentArray";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 import { InventoryName, ItemType, ItemTypeString } from "battletribes-shared/items/items";
-import { Settings } from "battletribes-shared/settings";
 import { InventoryComponentArray, getInventory, consumeItemTypeFromInventory, addItemToInventory } from "./InventoryComponent";
 import { CookingIngredientItemType, FuelSourceItemType } from "battletribes-shared/items/cooking-info";
 import { getEntityType } from "../world";
 import { registerDirtyEntity } from "../server/player-clients";
+import { Settings } from "../../../shared/src/settings";
 
 export interface HeatingRecipe {
    readonly ingredientType: CookingIngredientItemType;
@@ -109,7 +109,7 @@ function onTick(entity: Entity): void {
    if (cookingComponent.remainingHeatSeconds > 0) {
       registerDirtyEntity(entity);
    }
-   cookingComponent.remainingHeatSeconds -= Settings.I_TPS;
+   cookingComponent.remainingHeatSeconds -= Settings.DELTA_TIME;
    if (cookingComponent.remainingHeatSeconds < 0) {
       cookingComponent.remainingHeatSeconds = 0;
    }
@@ -131,7 +131,7 @@ function onTick(entity: Entity): void {
       }
 
       if (cookingComponent.remainingHeatSeconds > 0) {
-         cookingComponent.heatingTimer += Settings.I_TPS;
+         cookingComponent.heatingTimer += Settings.DELTA_TIME;
          registerDirtyEntity(entity);
          
          if (cookingComponent.heatingTimer >= cookingComponent.currentRecipe.cookTime) {

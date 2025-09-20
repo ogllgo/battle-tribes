@@ -55,6 +55,6 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox): void {
    addLocalInvulnerabilityHash(collidingEntity, "punjiSticks", 0.3);
 
    if (StatusEffectComponentArray.hasComponent(collidingEntity)) {
-      applyStatusEffect(collidingEntity, StatusEffect.poisoned, 2 * Settings.TPS);
+      applyStatusEffect(collidingEntity, StatusEffect.poisoned, 2 * Settings.TICK_RATE);
    }
 }

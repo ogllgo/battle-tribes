@@ -209,8 +209,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
 
    const randomSoundComponent = RandomSoundComponentArray.getComponent(entity);
    if (isAttacking) {
-      updateRandomSoundComponentSounds(randomSoundComponent, 3.5 * Settings.TPS, 5.5 * Settings.TPS, ANGRY_SOUNDS, 0.7);
+      updateRandomSoundComponentSounds(randomSoundComponent, 3.5 * Settings.TICK_RATE, 5.5 * Settings.TICK_RATE, ANGRY_SOUNDS, 0.7);
    } else {
-      updateRandomSoundComponentSounds(randomSoundComponent, 7 * Settings.TPS, 11 * Settings.TPS, AMBIENT_SOUNDS, 0.7);
+      updateRandomSoundComponentSounds(randomSoundComponent, 7 * Settings.TICK_RATE, 11 * Settings.TICK_RATE, AMBIENT_SOUNDS, 0.7);
    }
 }

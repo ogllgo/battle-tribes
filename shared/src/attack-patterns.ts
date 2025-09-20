@@ -5,15 +5,15 @@ export const enum AttackVars {
    MAX_EXTRA_ATTACK_RANGE = 24,
    // The speed needed to have the max attack range
    MAX_EXTRA_ATTACK_RANGE_SPEED = 300,
-   BOW_REST_TIME_TICKS = (Settings.TPS * 0.25) | 0,
+   BOW_REST_TIME_TICKS = (Settings.TICK_RATE * 0.25) | 0,
    // Number of ticks into a swing that the attack can still be feigned
-   FEIGN_SWING_TICKS_LEEWAY = (Settings.TPS * 0.1) | 0,
-   FEIGN_TIME_TICKS = (Settings.TPS * 0.1) | 0,
-   SHIELD_BASH_WINDUP_TIME_TICKS = (Settings.TPS * 0.3) | 0,
-   SHIELD_BASH_PUSH_TIME_TICKS = (Settings.TPS * 0.15) | 0,
-   SHIELD_BASH_RETURN_TIME_TICKS = (Settings.TPS * 0.4) | 0,
-   SHIELD_BASH_REST_TIME_TICKS = (Settings.TPS * 0.4) | 0,
-   SHIELD_BLOCK_REST_TIME_TICKS = (Settings.TPS * 2) | 0
+   FEIGN_SWING_TICKS_LEEWAY = (Settings.TICK_RATE * 0.1) | 0,
+   FEIGN_TIME_TICKS = (Settings.TICK_RATE * 0.1) | 0,
+   SHIELD_BASH_WINDUP_TIME_TICKS = (Settings.TICK_RATE * 0.3) | 0,
+   SHIELD_BASH_PUSH_TIME_TICKS = (Settings.TICK_RATE * 0.15) | 0,
+   SHIELD_BASH_RETURN_TIME_TICKS = (Settings.TICK_RATE * 0.4) | 0,
+   SHIELD_BASH_REST_TIME_TICKS = (Settings.TICK_RATE * 0.4) | 0,
+   SHIELD_BLOCK_REST_TIME_TICKS = (Settings.TICK_RATE * 2) | 0
 }
 
 export const enum LimbConfiguration {
@@ -168,51 +168,51 @@ export const SPEAR_ATTACK_PATTERNS: Record<LimbConfiguration, AttackPatternInfo>
 /* -------------- */
 
 export const DEFAULT_ATTACK_TIMINGS: AttackTimingsInfo = {
-   windupTimeTicks: Math.floor(0.1 * Settings.TPS),
-   swingTimeTicks: Math.floor(0.15 * Settings.TPS),
-   returnTimeTicks: Math.floor(0.2 * Settings.TPS),
-   restTimeTicks: Math.floor(0.2 * Settings.TPS),
+   windupTimeTicks: Math.floor(0.1 * Settings.TICK_RATE),
+   swingTimeTicks: Math.floor(0.15 * Settings.TICK_RATE),
+   returnTimeTicks: Math.floor(0.2 * Settings.TICK_RATE),
+   restTimeTicks: Math.floor(0.2 * Settings.TICK_RATE),
    blockTimeTicks: null
 };
 
 export const AXE_ATTACK_TIMINGS: AttackTimingsInfo = {
-   windupTimeTicks: Math.floor(0.15 * Settings.TPS),
-   swingTimeTicks: Math.floor(0.2 * Settings.TPS),
-   returnTimeTicks: Math.floor(0.3 * Settings.TPS),
-   restTimeTicks: Math.floor(0.3 * Settings.TPS),
-   blockTimeTicks: Math.floor(0.3 * Settings.TPS)
+   windupTimeTicks: Math.floor(0.15 * Settings.TICK_RATE),
+   swingTimeTicks: Math.floor(0.2 * Settings.TICK_RATE),
+   returnTimeTicks: Math.floor(0.3 * Settings.TICK_RATE),
+   restTimeTicks: Math.floor(0.3 * Settings.TICK_RATE),
+   blockTimeTicks: Math.floor(0.3 * Settings.TICK_RATE)
 };
 
 export const PICKAXE_ATTACK_TIMINGS: AttackTimingsInfo = {
-   windupTimeTicks: Math.floor(0.3 * Settings.TPS),
-   swingTimeTicks: Math.floor(0.2 * Settings.TPS),
-   returnTimeTicks: Math.floor(0.35 * Settings.TPS),
-   restTimeTicks: Math.floor(0.35 * Settings.TPS),
-   blockTimeTicks: Math.floor(0.3 * Settings.TPS)
+   windupTimeTicks: Math.floor(0.3 * Settings.TICK_RATE),
+   swingTimeTicks: Math.floor(0.2 * Settings.TICK_RATE),
+   returnTimeTicks: Math.floor(0.35 * Settings.TICK_RATE),
+   restTimeTicks: Math.floor(0.35 * Settings.TICK_RATE),
+   blockTimeTicks: Math.floor(0.3 * Settings.TICK_RATE)
 };
 
 export const SWORD_ATTACK_TIMINGS: AttackTimingsInfo = {
-   windupTimeTicks: Math.floor(0.1 * Settings.TPS),
-   swingTimeTicks: Math.floor(0.2 * Settings.TPS),
-   returnTimeTicks: Math.floor(0.15 * Settings.TPS),
-   restTimeTicks: Math.floor(0.15 * Settings.TPS),
-   blockTimeTicks: Math.floor(0.15 * Settings.TPS)
+   windupTimeTicks: Math.floor(0.1 * Settings.TICK_RATE),
+   swingTimeTicks: Math.floor(0.2 * Settings.TICK_RATE),
+   returnTimeTicks: Math.floor(0.15 * Settings.TICK_RATE),
+   restTimeTicks: Math.floor(0.15 * Settings.TICK_RATE),
+   blockTimeTicks: Math.floor(0.15 * Settings.TICK_RATE)
 };
 
 export const SPEAR_ATTACK_TIMINGS: AttackTimingsInfo = {
-   windupTimeTicks: Math.floor(0.25 * Settings.TPS),
-   swingTimeTicks: Math.floor(0.2 * Settings.TPS),
-   returnTimeTicks: Math.floor(0.35 * Settings.TPS),
-   restTimeTicks: Math.floor(0.35 * Settings.TPS),
+   windupTimeTicks: Math.floor(0.25 * Settings.TICK_RATE),
+   swingTimeTicks: Math.floor(0.2 * Settings.TICK_RATE),
+   returnTimeTicks: Math.floor(0.35 * Settings.TICK_RATE),
+   restTimeTicks: Math.floor(0.35 * Settings.TICK_RATE),
    blockTimeTicks: null
 };
 
 export const HAMMER_ATTACK_TIMINGS: AttackTimingsInfo = {
-   windupTimeTicks: Math.floor(0.3 * Settings.TPS),
-   swingTimeTicks: Math.floor(0.2 * Settings.TPS),
-   returnTimeTicks: Math.floor(0.35 * Settings.TPS),
-   restTimeTicks: Math.floor(0.35 * Settings.TPS),
-   blockTimeTicks: Math.floor(0.3 * Settings.TPS)
+   windupTimeTicks: Math.floor(0.3 * Settings.TICK_RATE),
+   swingTimeTicks: Math.floor(0.2 * Settings.TICK_RATE),
+   returnTimeTicks: Math.floor(0.35 * Settings.TICK_RATE),
+   restTimeTicks: Math.floor(0.35 * Settings.TICK_RATE),
+   blockTimeTicks: Math.floor(0.3 * Settings.TICK_RATE)
 };
 
 /* ----------- */

@@ -37,7 +37,7 @@ function onTick(snowball: Entity): void {
    // const hitbox = transformComponent.hitboxes[0];
    // if (hitbox.angleTurnSpeed !== 0) {
    //    const beforeSign = Math.sign(hitbox.angleTurnSpeed);
-   //    hitbox.angleTurnSpeed -= Math.PI / Settings.TPS * beforeSign;
+   //    hitbox.angleTurnSpeed -= Math.PI * Settings.DELTA_TIME * beforeSign;
    //    if (beforeSign !== Math.sign(hitbox.angleTurnSpeed)) {
    //       hitbox.angleTurnSpeed = 0;
    //    }
@@ -80,7 +80,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    const velocity = getHitboxVelocity(hitbox).magnitude();
 
    const ageTicks = getEntityAgeTicks(snowball);
-   if (velocity < DAMAGE_VELOCITY_THRESHOLD || ageTicks >= 2 * Settings.TPS) {
+   if (velocity < DAMAGE_VELOCITY_THRESHOLD || ageTicks >= 2 * Settings.TICK_RATE) {
       return;
    }
 

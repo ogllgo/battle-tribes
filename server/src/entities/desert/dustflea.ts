@@ -33,7 +33,7 @@ function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: numb
 
 const moveFunc = (dustflea: Entity, pos: Point, acceleration: number): void => {
    const ageTicks = getEntityAgeTicks(dustflea);
-   if ((ageTicks + dustflea) % Math.floor(Settings.TPS / 2.3) === 0) {
+   if ((ageTicks + dustflea) % Math.floor(Settings.TICK_RATE / 2.3) === 0) {
       const transformComponent = TransformComponentArray.getComponent(dustflea);
       const hitbox = transformComponent.hitboxes[0];
       
@@ -82,7 +82,7 @@ export function createDustfleaConfig(position: Point, angle: number): EntityConf
    aiHelperComponent.ais[AIType.dustfleaHibernate] = new DustfleaHibernateAI(200, 4 * Math.PI, 0.25);
    // aiHelperComponent.ais[AIType.hoppingMovementAI] = new HoppingMovementAI();
    
-   const attackingEntitiesComponent = new AttackingEntitiesComponent(3 * Settings.TPS);
+   const attackingEntitiesComponent = new AttackingEntitiesComponent(3 * Settings.TICK_RATE);
    
    const energyStoreComponent = new EnergyStoreComponent(30);
 

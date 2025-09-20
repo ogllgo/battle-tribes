@@ -271,7 +271,7 @@ import { PacketReader } from "battletribes-shared/packets";
 //    const limb = getLimbByInventoryName(inventoryUseComponent, damageBox.associatedLimbInventoryName);
    
 //    // Pause the attack for a brief period
-//    limb.currentActionPauseTicksRemaining = Math.floor(Settings.TPS / 15);
+//    limb.currentActionPauseTicksRemaining = Math.floor(Settings.TICK_RATE / 15);
 //    limb.currentActionRate = 0.4;
 
 //    discombobulate(0.2);

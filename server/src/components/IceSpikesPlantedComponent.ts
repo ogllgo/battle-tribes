@@ -11,7 +11,7 @@ import { getPlantGrowthSpeed } from "./PlanterBoxComponent";
 import { TransformComponentArray } from "./TransformComponent";
 
 const enum Vars {
-   GROWTH_TIME_TICKS = 120 * Settings.TPS
+   GROWTH_TIME_TICKS = 120 * Settings.TICK_RATE
 }
 
 export class IceSpikesPlantedComponent {

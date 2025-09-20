@@ -81,7 +81,7 @@ function onTick(entity: Entity): void {
       createPoisonBubble(spawnPositionX, spawnPositionY, 1);
    }
 
-   if (Math.random() >= range * range / Settings.TPS / 5) {
+   if (Math.random() >= range * range * Settings.DELTA_TIME / 5) {
       return;
    }
 

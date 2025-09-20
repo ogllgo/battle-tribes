@@ -118,7 +118,7 @@ function onTick(entity: Entity): void {
          }
          footprintComponent.numFootstepsTaken++;
       }
-      footprintComponent.distanceTracker += velocity.magnitude() / Settings.TPS;
+      footprintComponent.distanceTracker += velocity.magnitude() * Settings.DELTA_TIME;
       if (footprintComponent.distanceTracker > footprintComponent.footstepSoundIntervalDist) {
          footprintComponent.distanceTracker -= footprintComponent.footstepSoundIntervalDist;
          createFootstepSound(entity);

@@ -55,7 +55,7 @@ export function onIceArrowCollision(arrow: Entity, collidingEntity: Entity): voi
    
    if (HealthComponentArray.hasComponent(collidingEntity)) {
       if (StatusEffectComponentArray.hasComponent(collidingEntity)) {
-         applyStatusEffect(collidingEntity, StatusEffect.freezing, 3 * Settings.TPS);
+         applyStatusEffect(collidingEntity, StatusEffect.freezing, 3 * Settings.TICK_RATE);
       }
       
       destroyEntity(arrow);

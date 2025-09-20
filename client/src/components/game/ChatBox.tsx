@@ -19,7 +19,7 @@ const SPAM_FILTER: SpamFilter = {
 export function updateSpamFilter(): void {
    for (let idx = spamFilterHistory.length - 1; idx >= 0; idx--) {
       const spamFilterMessage = spamFilterHistory[idx];
-      spamFilterMessage[1] -= 1 / Settings.TPS;
+      spamFilterMessage[1] -= 1 * Settings.DELTA_TIME;
       if (spamFilterMessage[1] <= 0) {
          spamFilterHistory.splice(idx, 1);
       }

@@ -212,7 +212,7 @@ const tickInventoryUseInfo = (tribeMember: Entity, limb: LimbInfo): void => {
    switch (limb.action) {
       case LimbAction.eat:
       case LimbAction.useMedicine: {
-         limb.foodEatingTimer -= Settings.I_TPS;
+         limb.foodEatingTimer -= Settings.DELTA_TIME;
    
          if (limb.foodEatingTimer <= 0) {
             const inventory = limb.associatedInventory;
@@ -243,9 +243,9 @@ const tickInventoryUseInfo = (tribeMember: Entity, limb: LimbInfo): void => {
       case LimbAction.loadCrossbow: {
          const loadProgress = limb.crossbowLoadProgressRecord[limb.selectedItemSlot];
          if (typeof loadProgress === "undefined") {
-            limb.crossbowLoadProgressRecord[limb.selectedItemSlot] = Settings.I_TPS;
+            limb.crossbowLoadProgressRecord[limb.selectedItemSlot] = Settings.DELTA_TIME;
          } else {
-            limb.crossbowLoadProgressRecord[limb.selectedItemSlot]! += Settings.I_TPS;
+            limb.crossbowLoadProgressRecord[limb.selectedItemSlot]! += Settings.DELTA_TIME;
          }
          
          if (limb.crossbowLoadProgressRecord[limb.selectedItemSlot]! >= 1) {
@@ -263,7 +263,7 @@ function onTick(tribeMember: Entity): void {
    const tribeMemberHitbox = transformComponent.hitboxes[0];
       
    const chance = TITLE_REWARD_CHANCES.SPRINTER_REWARD_CHANCE_PER_SPEED * getHitboxVelocity(tribeMemberHitbox).magnitude();
-   if (Math.random() < chance / Settings.TPS) {
+   if (Math.random() < chance * Settings.DELTA_TIME) {
       awardTitle(tribeMember, TribesmanTitle.sprinter);
    }
 

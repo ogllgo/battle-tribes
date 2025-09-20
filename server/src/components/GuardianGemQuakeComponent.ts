@@ -11,8 +11,8 @@ import { TransformComponentArray } from "./TransformComponent";
 import { Hitbox } from "../hitboxes";
 
 const enum Vars {
-   TICKS_BEFORE_RECEED = (Settings.TPS * 0.2) | 0,
-   LIFETIME_TICKS = (Settings.TPS * 0.6) | 0
+   TICKS_BEFORE_RECEED = (Settings.TICK_RATE * 0.2) | 0,
+   LIFETIME_TICKS = (Settings.TICK_RATE * 0.6) | 0
 }
 
 export class GuardianGemQuakeComponent {}

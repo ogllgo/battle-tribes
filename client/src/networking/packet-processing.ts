@@ -9,7 +9,6 @@ import { TribesmanTitle } from "battletribes-shared/titles";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { EntityTickEventType } from "battletribes-shared/entity-events";
 import Game from "../Game";
-import Client from "./Client";
 import Board from "../Board";
 import Camera from "../Camera";
 import { updateDebugScreenIsPaused, updateDebugScreenTicks, updateDebugScreenCurrentTime, registerServerTick } from "../components/game/dev/GameInfoDisplay";
@@ -31,7 +30,7 @@ import { ExtendedTribe, readExtendedTribeData, readShortTribeData, Tribe, tribes
 import { readPacketDevData } from "./dev-packet-processing";
 import { assert, Point, randAngle, randFloat, TileIndex } from "../../../shared/src/utils";
 import { playerInstance, setPlayerInstance } from "../player";
-import { gameScreenSetIsDead } from "../components/game/GameScreen";
+import { GameScreen_update, gameScreenSetIsDead } from "../components/game/GameScreen";
 import { selectItemSlot } from "../components/game/GameInteractableLayer";
 import { updateGrassBlockers } from "../grass-blockers";
 import { registerTamingSpecsFromData } from "../taming-specs";
@@ -44,7 +43,8 @@ import { processTickEvent } from "../entity-tick-events";
 import { updateRenderChunkFromTileUpdate } from "../rendering/render-chunks";
 import { addHitboxVelocity, getHitboxVelocity, setHitboxVelocity } from "../hitboxes";
 import { STRUCTURE_TYPES } from "../../../shared/src/structures";
-import { definiteGameState } from "../game-state/game-states";
+import { definiteGameState, latencyGameState } from "../game-state/game-states";
+import { closeCurrentMenu } from "../menus";
 
 // @Cleanup: location
 // Use prime numbers / 100 to ensure a decent distribution of different types of particles
@@ -749,7 +749,21 @@ export function processGameDataPacket(reader: PacketReader): void {
       removeEntity(entity, isDeath);
 
       if (entity === playerInstance) {
-         Client.killPlayer();
+         // Kill the player
+
+         // Remove the player from the game
+         setPlayerInstance(null);
+
+         latencyGameState.resetFlags();
+         definiteGameState.resetFlags();
+
+         gameScreenSetIsDead(true);
+         closeCurrentMenu();
+
+         // We want the hotbar to refresh now to show the empty hotbar
+         // This will propagate down to refresh the hotbar.
+         // @CLEANUP bruuuh this is just to update the hotbar. React.js shittery.
+         GameScreen_update();
       }
    }
 

@@ -2,7 +2,6 @@ import { AttackPatternInfo, AttackTimingsInfo, AXE_ATTACK_TIMINGS, UNARMED_ATTAC
 import { EntityType } from "../entities";
 import { Settings } from "../settings";
 import { StructureType } from "../structures";
-import { assert } from "../utils";
 
 export const enum ItemType {
    wood,
@@ -45,7 +44,6 @@ export const enum ItemType {
    cooked_fish,
    fishlord_suit,
    gathering_gloves,
-   throngler,
    leather_armour,
    paper,
    research_bench,
@@ -154,7 +152,6 @@ export const ItemTypeString: Record<ItemType, string> = {
    [ItemType.cooked_fish]: "cooked_fish",
    [ItemType.fishlord_suit]: "fishlord_suit",
    [ItemType.gathering_gloves]: "gathering_gloves",
-   [ItemType.throngler]: "throngler",
    [ItemType.leather_armour]: "leather_armour",
    [ItemType.woodenSpear]: "Wooden Spear",
    [ItemType.stoneSpear]: "Stone Spear",
@@ -447,7 +444,7 @@ const ITEM_CATEGORY_ATTACK_INFO_RECORD: Record<keyof ItemInfoRecord, Readonly<At
          returnTimeTicks: 0,
          restTimeTicks: 0,
          /** If null, then the attack cannot block. */
-         blockTimeTicks: Math.floor(0.2 * Settings.TPS)
+         blockTimeTicks: Math.floor(0.2 * Settings.TICK_RATE)
       },
       heldItemDamageBoxInfo: SHIELD_BLOCKING_DAMAGE_BOX_INFO
    },
@@ -507,7 +504,6 @@ export const ITEM_TYPE_RECORD = {
    [ItemType.cooked_fish]: "healing",
    [ItemType.fishlord_suit]: "armour",
    [ItemType.gathering_gloves]: "glove",
-   [ItemType.throngler]: "sword",
    [ItemType.leather_armour]: "armour",
    [ItemType.woodenSpear]: "spear",
    [ItemType.stoneSpear]: "spear",
@@ -748,28 +744,28 @@ export const ITEM_INFO_RECORD = {
    [ItemType.wooden_bow]: {
       projectileDamage: 4,
       projectileKnockback: 150,
-      shotChargeTimeTicks: 1 * Settings.TPS,
+      shotChargeTimeTicks: 1 * Settings.TICK_RATE,
       projectileSpeed: 1100,
       airResistance: 400
    },
    [ItemType.reinforced_bow]: {
       projectileDamage: 6,
       projectileKnockback: 200,
-      shotChargeTimeTicks: 1 * Settings.TPS,
+      shotChargeTimeTicks: 1 * Settings.TICK_RATE,
       projectileSpeed: 1500,
       airResistance: 300
    },
    [ItemType.ice_bow]: {
       projectileDamage: 0,
       projectileKnockback: 0,
-      shotChargeTimeTicks: 1.25 * Settings.TPS,
+      shotChargeTimeTicks: 1.25 * Settings.TICK_RATE,
       projectileSpeed: 1100,
       airResistance: 400
    },
    [ItemType.crossbow]: {
       projectileDamage: 6,
       projectileKnockback: 200,
-      shotChargeTimeTicks: 1 * Settings.TPS,
+      shotChargeTimeTicks: 1 * Settings.TICK_RATE,
       projectileSpeed: 1500,
       airResistance: 300
    },
@@ -796,14 +792,6 @@ export const ITEM_INFO_RECORD = {
    },
    [ItemType.gathering_gloves]: {
       level: 1
-   },
-   [ItemType.throngler]: {
-      stackSize: 1,
-      toolType: "sword",
-      damage: 2,
-      knockback: 400
-      // @Incomplete
-      // attackCooldown: 0.5,
    },
    [ItemType.leather_armour]: {
       defence: 0.1
@@ -1168,11 +1156,11 @@ export interface InventoryData {
 
 // @Hack: all of these
 /** Time to move limb to quiver */
-export const QUIVER_ACCESS_TIME_TICKS = Math.floor(0.4 * Settings.TPS);
+export const QUIVER_ACCESS_TIME_TICKS = Math.floor(0.4 * Settings.TICK_RATE);
 /** Time to pull arrow from quiver to bow */
-export const QUIVER_PULL_TIME_TICKS = Math.floor(0.6 * Settings.TPS);
-export const ARROW_RELEASE_WAIT_TIME_TICKS = Math.floor(0.3 * Settings.TPS);
-export const RETURN_FROM_BOW_USE_TIME_TICKS = Math.floor(0.3 * Settings.TPS);
+export const QUIVER_PULL_TIME_TICKS = Math.floor(0.6 * Settings.TICK_RATE);
+export const ARROW_RELEASE_WAIT_TIME_TICKS = Math.floor(0.3 * Settings.TICK_RATE);
+export const RETURN_FROM_BOW_USE_TIME_TICKS = Math.floor(0.3 * Settings.TICK_RATE);
 
 export class Item {
    /** Unique identifier for the item */

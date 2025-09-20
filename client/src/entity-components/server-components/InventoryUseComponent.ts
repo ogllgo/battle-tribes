@@ -800,7 +800,7 @@ function onTick(entity: Entity): void {
 //             const lastActionTicks = limbInfo.action === LimbAction.chargeBow ? limbInfo.lastBowChargeTicks : limbInfo.lastCrossbowLoadTicks;
 //             const secondsSinceLastAction = getSecondsSinceTickTimestamp(lastActionTicks);
 //             // @Hack: why does itemInfoIsBow not narrow this fully??
-//             const chargeProgress = secondsSinceLastAction / (itemInfo as BowItemInfo).shotCooldownTicks * Settings.TPS;
+//             const chargeProgress = secondsSinceLastAction / (itemInfo as BowItemInfo).shotCooldownTicks * Settings.TICK_RATE;
 
 //             let textureSourceArray: ReadonlyArray<string>;
 //             let arrowTextureSource: string;
@@ -1017,7 +1017,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
       //    if (isDominantHand) {
       //       // @Copynpaste
       //       const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
-      //       const chargeProgress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
+      //       const chargeProgress = secondsSinceLastAction * Settings.TICK_RATE / limb.currentActionDurationTicks;
       //       lerpThingBetweenStates(entity, limbRenderPart, BOW_CHARGE_DOMINANT_START_LIMB_STATE, BOW_CHARGE_DOMINANT_END_LIMB_STATE, chargeProgress);
       //       updateHeldItemRenderPart(inventoryUseComponent, entity, limbIdx, heldItemType, 0, 58, Math.PI * -0.25, true);
             
@@ -1085,7 +1085,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
       case LimbAction.feignAttack: {
          // @Copynpaste
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
-         const windupProgress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
+         const windupProgress = secondsSinceLastAction * Settings.TICK_RATE / limb.currentActionDurationTicks;
 
          lerpThingBetweenStates(entity, attachPoint, limb.currentActionStartLimbState, limb.currentActionEndLimbState, windupProgress);
          resetThing(limbRenderPart);
@@ -1096,7 +1096,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
       case LimbAction.windShieldBash: {
          // @Copynpaste
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
-         const windupProgress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
+         const windupProgress = secondsSinceLastAction * Settings.TICK_RATE / limb.currentActionDurationTicks;
          
          lerpThingBetweenStates(entity, attachPoint, SHIELD_BLOCKING_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, windupProgress);
          resetThing(limbRenderPart);
@@ -1107,7 +1107,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
       case LimbAction.pushShieldBash: {
          // @Copynpaste
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
-         const windupProgress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
+         const windupProgress = secondsSinceLastAction * Settings.TICK_RATE / limb.currentActionDurationTicks;
          
          lerpThingBetweenStates(entity, attachPoint, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BASH_PUSHED_LIMB_STATE, windupProgress);
          resetThing(limbRenderPart);
@@ -1118,7 +1118,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
       case LimbAction.returnShieldBashToRest: {
          // @Copynpaste
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
-         const windupProgress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
+         const windupProgress = secondsSinceLastAction * Settings.TICK_RATE / limb.currentActionDurationTicks;
          
          lerpThingBetweenStates(entity, attachPoint, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, windupProgress);
          resetThing(limbRenderPart);
@@ -1129,7 +1129,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
       case LimbAction.windAttack: {
          // @Copynpaste
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
-         const windupProgress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
+         const windupProgress = secondsSinceLastAction * Settings.TICK_RATE / limb.currentActionDurationTicks;
 
          lerpThingBetweenStates(entity, attachPoint, limb.currentActionStartLimbState, limb.currentActionEndLimbState, windupProgress);
          resetThing(limbRenderPart);
@@ -1140,7 +1140,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
       case LimbAction.attack: {
          // @Copynpaste
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
-         const attackProgress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
+         const attackProgress = secondsSinceLastAction * Settings.TICK_RATE / limb.currentActionDurationTicks;
 
          lerpThingBetweenStates(entity, attachPoint, limb.currentActionStartLimbState, limb.currentActionEndLimbState, attackProgress);
          resetThing(limbRenderPart);
@@ -1151,7 +1151,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
       case LimbAction.returnAttackToRest: {
          // @Copynpaste
          const secondsIntoAnimation = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
-         const animationProgress = secondsIntoAnimation * Settings.TPS / limb.currentActionDurationTicks;
+         const animationProgress = secondsIntoAnimation * Settings.TICK_RATE / limb.currentActionDurationTicks;
 
          lerpThingBetweenStates(entity, attachPoint, limb.currentActionStartLimbState, limb.currentActionEndLimbState, animationProgress);
          resetThing(limbRenderPart);
@@ -1190,7 +1190,7 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
       case LimbAction.mainArrowReleased:
       case LimbAction.returnFromBow: {
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
-         const progress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
+         const progress = secondsSinceLastAction * Settings.TICK_RATE / limb.currentActionDurationTicks;
 
          lerpThingBetweenStates(entity, attachPoint, limb.currentActionStartLimbState, limb.currentActionEndLimbState, progress);
          resetThing(limbRenderPart);

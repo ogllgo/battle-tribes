@@ -81,7 +81,7 @@ function onTick(inguYetu: Entity): void {
    // Create dustfleas
    for (const hitbox of transformComponent.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.YETUK_DUSTFLEA_DISPENSION_PORT)) {
-         if (Math.random() < 1 / Settings.TPS) {
+         if (Math.random() < 1 * Settings.DELTA_TIME) {
             const config = createDustfleaConfig(hitbox.box.position.copy(), randAngle());
             createEntity(config, getEntityLayer(inguYetu), 0);
          }

@@ -12,8 +12,8 @@ import { getInventory, InventoryComponentArray } from "./InventoryComponent";
 import { TransformComponentArray } from "./TransformComponent";
 
 const enum Vars {
-   MIN_ACCIDENT_INTERVAL = 2 * Settings.TPS,
-   MAX_ACCIDENT_INTERVAL = 4 * Settings.TPS
+   MIN_ACCIDENT_INTERVAL = 2 * Settings.TICK_RATE,
+   MAX_ACCIDENT_INTERVAL = 4 * Settings.TICK_RATE
 }
 
 export class ScrappyComponent {

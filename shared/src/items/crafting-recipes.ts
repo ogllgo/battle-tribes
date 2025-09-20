@@ -1,13 +1,11 @@
 import { ItemSlots, ItemType, ItemTypeString, StructureItemType } from "./items";
 import { Settings } from "../settings";
 import { ItemTally2, createTallyFromRecord } from "./ItemTally";
-import { VisibleChunkBounds } from "../client-server-types";
-import { LimbAction } from "../entities";
 
 const enum Vars {
-   FAST_CRAFT_TIME = (0.5 * Settings.TPS) | 0,
-   NORMAL_CRAFT_TIME = (1.2 * Settings.TPS) | 0,
-   SLOW_CRAFT_TIME = (2.5 * Settings.TPS) | 0
+   FAST_CRAFT_TIME = (0.5 * Settings.TICK_RATE) | 0,
+   NORMAL_CRAFT_TIME = (1.2 * Settings.TICK_RATE) | 0,
+   SLOW_CRAFT_TIME = (2.5 * Settings.TICK_RATE) | 0
 }
 
 export enum CraftingStation {

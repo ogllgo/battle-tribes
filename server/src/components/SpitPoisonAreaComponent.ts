@@ -20,7 +20,7 @@ function onTick(spit: Entity): void {
    
    const hitbox = transformComponent.hitboxes[0];
    const box = hitbox.box as CircularBox;
-   box.radius -= 5 / Settings.TPS;
+   box.radius -= 5 * Settings.DELTA_TIME;
    if (box.radius <= 0) {
       destroyEntity(spit);
    }

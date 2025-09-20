@@ -92,7 +92,7 @@ const moveFunc = (fish: Entity, pos: Point, acceleration: number): void => {
       // 
 
       const fishComponent = FishComponentArray.getComponent(fish);
-      if (customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TPS, Vars.LUNGE_INTERVAL)) {
+      if (customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TICK_RATE, Vars.LUNGE_INTERVAL)) {
          addHitboxVelocity(fishHitbox, polarVec2(Vars.LUNGE_FORCE, direction));
       }
    }
@@ -116,7 +116,7 @@ const turnFunc = (fish: Entity, pos: Point, turnSpeed: number, turnDamping: numb
       // 
 
       const fishComponent = FishComponentArray.getComponent(fish);
-      if (customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TPS, Vars.LUNGE_INTERVAL)) {
+      if (customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TICK_RATE, Vars.LUNGE_INTERVAL)) {
          if (direction !== fishHitbox.box.angle) {
             // @HACK @BUG
             fishHitbox.box.angle = direction;
@@ -142,7 +142,7 @@ export function createFishConfig(position: Point, rotation: number, colour: Fish
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI, 0.5, 0.6, wanderTargetIsValid);
    aiHelperComponent.ais[AIType.escape] = new EscapeAI(200, Math.PI * 2/3, 0.5, 1);
 
-   const attackingEntitiesComponent = new AttackingEntitiesComponent(3 * Settings.TPS);
+   const attackingEntitiesComponent = new AttackingEntitiesComponent(3 * Settings.TICK_RATE);
    
    const lootComponent = new LootComponent();
    

@@ -87,8 +87,7 @@ export function getCircleCircleCollisionResult(circle1Pos: Point, radius1: numbe
    const dist = distance(circle1Pos.x, circle1Pos.y, circle2Pos.x, circle2Pos.y);
       
    const amountIn = radius1 + radius2 - dist;
-   // Angle from pushing hitbox to pushed hitbox
-   const direction = angle(circle1Pos.x - circle2Pos.x, circle1Pos.y - circle2Pos.y);
+   const direction = circle2Pos.angleTo(circle1Pos);
    
    return {
       isColliding: amountIn > 0,

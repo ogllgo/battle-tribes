@@ -1,9 +1,9 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
 import { Entity } from "battletribes-shared/entities";
-import { Settings } from "battletribes-shared/settings";
 import { Packet } from "battletribes-shared/packets";
 import { registerDirtyEntity } from "../server/player-clients";
+import { Settings } from "../../../shared/src/settings";
 
 const enum Vars {
    /** Number of seconds it takes for a berry bush to regrow one of its berries */
@@ -27,7 +27,7 @@ function onTick(entity: Entity): void {
       return;
    }
 
-   berryBushComponent.berryGrowTimer += Settings.I_TPS;
+   berryBushComponent.berryGrowTimer += Settings.DELTA_TIME;
    if (berryBushComponent.berryGrowTimer >= Vars.BERRY_GROW_TIME) {
       // Grow a new berry
       berryBushComponent.berryGrowTimer = 0;

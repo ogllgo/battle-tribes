@@ -49,7 +49,7 @@ export function createHealingBeamShaders(): void {
    precision mediump float;
 
    #define BEAM_THICKNESS ${HEALING_BEAM_THICKNESS.toFixed(1)}
-   #define TPS ${Settings.TPS.toFixed(1)}
+   #define TPS ${Settings.TICK_RATE.toFixed(1)}
 
    #define INNER_COLOUR vec4(15.0/255.0, 252.0/255.0, 3.0/255.0, 0.8)
    #define OUTER_COLOUR vec4(10.0/255.0, 199.0/255.0, 54.0/255.0, 0.0)

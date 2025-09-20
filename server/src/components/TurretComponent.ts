@@ -5,7 +5,6 @@ import { SLING_TURRET_RELOAD_TIME_TICKS, SLING_TURRET_SHOT_COOLDOWN_TICKS } from
 import { AmmoBoxComponentArray } from "./AmmoBoxComponent";
 import { Packet } from "battletribes-shared/packets";
 import { ItemType } from "battletribes-shared/items/items";
-import { Settings } from "battletribes-shared/settings";
 import { getMinAngleToCircularBox, getMaxAngleToCircularBox, getMinAngleToRectangularBox, getMaxAngleToRectangularBox, angleIsInRange, getClockwiseAngleDistance, entityIsInLineOfSight } from "../ai-shared";
 import { EntityConfig } from "../components";
 import { createBallistaFrostcicleConfig } from "../entities/projectiles/ballista-frostcicle";
@@ -22,6 +21,7 @@ import { registerDirtyEntity } from "../server/player-clients";
 import { createSlingTurretRockConfig } from "../entities/projectiles/sling-turret-rock";
 import { HealthComponentArray } from "./HealthComponent";
 import { addHitboxVelocity } from "../hitboxes";
+import { Settings } from "../../../shared/src/settings";
 
 export class TurretComponent {
    public aimDirection = 0;
@@ -238,14 +238,14 @@ function onTick(turret: Entity): void {
          const clockwiseDist = getClockwiseAngleDistance(turretAimDirection, targetDirection);
          if (clockwiseDist >= Math.PI) {
             // Turn counterclockwise
-            turretComponent.aimDirection -= Math.PI / 3 * Settings.I_TPS;
+            turretComponent.aimDirection -= Math.PI / 3 * Settings.DELTA_TIME;
             // @Incomplete: Will this sometimes cause snapping?
             if (turretComponent.aimDirection + turretHitbox.box.angle < targetDirection) {
                turretComponent.aimDirection = targetDirection - turretHitbox.box.angle;
             }
          } else {
             // Turn clockwise
-            turretComponent.aimDirection += Math.PI / 3 * Settings.I_TPS;
+            turretComponent.aimDirection += Math.PI / 3 * Settings.DELTA_TIME;
             if (turretComponent.aimDirection + turretHitbox.box.angle > targetDirection) {
                turretComponent.aimDirection = targetDirection - turretHitbox.box.angle;
             }

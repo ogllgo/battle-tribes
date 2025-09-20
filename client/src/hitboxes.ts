@@ -99,22 +99,22 @@ export function createHitboxQuick(localID: number, parent: Hitbox | null, box: B
 }
 
 export function getHitboxVelocity(hitbox: Hitbox): Point {
-   const vx = (hitbox.box.position.x - hitbox.previousPosition.x) * Settings.TPS;
-   const vy = (hitbox.box.position.y - hitbox.previousPosition.y) * Settings.TPS;
+   const vx = (hitbox.box.position.x - hitbox.previousPosition.x) * Settings.TICK_RATE;
+   const vy = (hitbox.box.position.y - hitbox.previousPosition.y) * Settings.TICK_RATE;
    return new Point(vx, vy);
 }
 
 export function setHitboxVelocityX(hitbox: Hitbox, vx: number): void {
-   hitbox.previousPosition.x = hitbox.box.position.x - vx / Settings.TPS;
+   hitbox.previousPosition.x = hitbox.box.position.x - vx * Settings.DELTA_TIME;
 }
 
 export function setHitboxVelocityY(hitbox: Hitbox, vy: number): void {
-   hitbox.previousPosition.y = hitbox.box.position.y - vy / Settings.TPS;
+   hitbox.previousPosition.y = hitbox.box.position.y - vy * Settings.DELTA_TIME;
 }
 
 export function setHitboxVelocity(hitbox: Hitbox, vx: number, vy: number): void {
-   hitbox.previousPosition.x = hitbox.box.position.x - vx / Settings.TPS;
-   hitbox.previousPosition.y = hitbox.box.position.y - vy / Settings.TPS;
+   hitbox.previousPosition.x = hitbox.box.position.x - vx * Settings.DELTA_TIME;
+   hitbox.previousPosition.y = hitbox.box.position.y - vy * Settings.DELTA_TIME;
 }
 
 export function getRootHitbox(hitbox: Hitbox): Hitbox {
@@ -127,8 +127,8 @@ export function getRootHitbox(hitbox: Hitbox): Hitbox {
 
 export function addHitboxVelocity(hitbox: Hitbox, pushX: number, pushY: number): void {
    const pushedHitbox = getRootHitbox(hitbox);
-   pushedHitbox.box.position.x += pushX / Settings.TPS;
-   pushedHitbox.box.position.y += pushY / Settings.TPS;
+   pushedHitbox.box.position.x += pushX * Settings.DELTA_TIME;
+   pushedHitbox.box.position.y += pushY * Settings.DELTA_TIME;
 }
 
 export function translateHitbox(hitbox: Hitbox, translationX: number, translationY: number): void {
@@ -166,5 +166,5 @@ export function applyAcceleration(entity: Entity, hitbox: Hitbox, accelerationX:
 }
 
 export function setHitboxAngularVelocity(hitbox: Hitbox, angularVelocity: number): void {
-   hitbox.previousRelativeAngle = hitbox.box.angle - angularVelocity / Settings.TPS;
+   hitbox.previousRelativeAngle = hitbox.box.angle - angularVelocity * Settings.DELTA_TIME;
 }

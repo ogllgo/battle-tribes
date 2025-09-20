@@ -36,8 +36,8 @@ function onTick(entity: Entity): void {
    
    const age = getEntityAgeTicks(entity);
    // @Temporary
-   // if (age >= 180 * Settings.TPS) {
-   if (age >= 18000 * Settings.TPS) {
+   // if (age >= 180 * Settings.TICK_RATE) {
+   if (age >= 18000 * Settings.TICK_RATE) {
       destroyEntity(entity);
    }
 }

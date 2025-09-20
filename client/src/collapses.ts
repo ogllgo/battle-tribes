@@ -213,7 +213,7 @@ export function createCollapseParticles(): void {
          collapseLikelihood = lerp(0.3, 1, collapseLikelihood);
       }
 
-      if (Math.random() < collapseLikelihood * 0.1 * Settings.I_TPS * Math.random()) {
+      if (Math.random() < collapseLikelihood * 0.1 * Settings.DELTA_TIME * Math.random()) {
          const subtileX = getSubtileX(subtileIndex);
          const subtileY = getSubtileY(subtileIndex);
 

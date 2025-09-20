@@ -87,7 +87,7 @@ function onTick(entity: Entity): void {
    const healthComponent = HealthComponentArray.getComponent(entity);
    
    const previousRedness = calculateRedness(healthComponent);
-   healthComponent.secondsSinceLastHit += Settings.I_TPS;
+   healthComponent.secondsSinceLastHit += Settings.DELTA_TIME;
 
    const newRedness = calculateRedness(healthComponent);
 

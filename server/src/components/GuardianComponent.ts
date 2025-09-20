@@ -22,8 +22,8 @@ const enum Vars {
    ANGERED_GEM_ACTIVATION = 0.55,
    ACTIVATION_MOVE_SPEED = 0.2,
 
-   MIN_ATTACK_COOLDOWN_TICKS = (2 * Settings.TPS) | 0,
-   MAX_ATTACK_COOLDOWN_TICKS = (3 * Settings.TPS) | 0
+   MIN_ATTACK_COOLDOWN_TICKS = (2 * Settings.TICK_RATE) | 0,
+   MAX_ATTACK_COOLDOWN_TICKS = (3 * Settings.TICK_RATE) | 0
 }
 
 export const enum GuardianVars {
@@ -106,34 +106,34 @@ function onJoin(guardian: Entity): void {
 
 const moveGemActivation = (guardianComponent: GuardianComponent, targetActivation: number): void => {
    if (guardianComponent.rubyGemActivation > targetActivation) {
-      guardianComponent.rubyGemActivation -= Vars.ACTIVATION_MOVE_SPEED * Settings.I_TPS;
+      guardianComponent.rubyGemActivation -= Vars.ACTIVATION_MOVE_SPEED * Settings.DELTA_TIME;
       if (guardianComponent.rubyGemActivation < targetActivation) {
          guardianComponent.rubyGemActivation = targetActivation;
       }
    } else if (guardianComponent.rubyGemActivation < targetActivation) {
-      guardianComponent.rubyGemActivation += Vars.ACTIVATION_MOVE_SPEED * Settings.I_TPS;
+      guardianComponent.rubyGemActivation += Vars.ACTIVATION_MOVE_SPEED * Settings.DELTA_TIME;
       if (guardianComponent.rubyGemActivation > targetActivation) {
          guardianComponent.rubyGemActivation = targetActivation;
       }
    }
    if (guardianComponent.emeraldGemActivation > targetActivation) {
-      guardianComponent.emeraldGemActivation -= Vars.ACTIVATION_MOVE_SPEED * Settings.I_TPS;
+      guardianComponent.emeraldGemActivation -= Vars.ACTIVATION_MOVE_SPEED * Settings.DELTA_TIME;
       if (guardianComponent.emeraldGemActivation < targetActivation) {
          guardianComponent.emeraldGemActivation = targetActivation;
       }
    } else if (guardianComponent.emeraldGemActivation < targetActivation) {
-      guardianComponent.emeraldGemActivation += Vars.ACTIVATION_MOVE_SPEED * Settings.I_TPS;
+      guardianComponent.emeraldGemActivation += Vars.ACTIVATION_MOVE_SPEED * Settings.DELTA_TIME;
       if (guardianComponent.emeraldGemActivation > targetActivation) {
          guardianComponent.emeraldGemActivation = targetActivation;
       }
    }
    if (guardianComponent.amethystGemActivation > targetActivation) {
-      guardianComponent.amethystGemActivation -= Vars.ACTIVATION_MOVE_SPEED * Settings.I_TPS;
+      guardianComponent.amethystGemActivation -= Vars.ACTIVATION_MOVE_SPEED * Settings.DELTA_TIME;
       if (guardianComponent.amethystGemActivation < targetActivation) {
          guardianComponent.amethystGemActivation = targetActivation;
       }
    } else if (guardianComponent.amethystGemActivation < targetActivation) {
-      guardianComponent.amethystGemActivation += Vars.ACTIVATION_MOVE_SPEED * Settings.I_TPS;
+      guardianComponent.amethystGemActivation += Vars.ACTIVATION_MOVE_SPEED * Settings.DELTA_TIME;
       if (guardianComponent.amethystGemActivation > targetActivation) {
          guardianComponent.amethystGemActivation = targetActivation;
       }
@@ -243,7 +243,7 @@ function onTick(guardian: Entity): void {
       // Move the limbs into the position to orbit
       // @Copynpaste
       if (guardianComponent.limbMoveProgress < 1) {
-         guardianComponent.limbMoveProgress += 0.75 * Settings.I_TPS;
+         guardianComponent.limbMoveProgress += 0.75 * Settings.DELTA_TIME;
          if (guardianComponent.limbMoveProgress > 1) {
             guardianComponent.limbMoveProgress = 1;
          }
@@ -274,7 +274,7 @@ function onTick(guardian: Entity): void {
          transformComponent.isDirty = true;
       } else {
          // Orbit the limbs around the guardian
-         guardianComponent.limbNormalDirection += Vars.LIMB_ORBIT_SPEED * Settings.I_TPS;
+         guardianComponent.limbNormalDirection += Vars.LIMB_ORBIT_SPEED * Settings.DELTA_TIME;
          updateOrbitingGuardianLimbs(guardian, guardianComponent);
       }
       return;
@@ -283,7 +283,7 @@ function onTick(guardian: Entity): void {
 
    // Move limbs back to resting state
    if (guardianComponent.limbsAreOrbiting) {
-      guardianComponent.limbNormalDirection += Vars.LIMB_ORBIT_SPEED * Settings.I_TPS;
+      guardianComponent.limbNormalDirection += Vars.LIMB_ORBIT_SPEED * Settings.DELTA_TIME;
 
       // If just passed staging position, start staging
       if (limbsAreInStagingPosition(guardian, guardianComponent)) {
@@ -296,7 +296,7 @@ function onTick(guardian: Entity): void {
       }
       updateOrbitingGuardianLimbs(guardian, guardianComponent);
    } else if (!guardianComponent.limbsAreOrbiting && guardianComponent.limbMoveProgress < 1) {
-      guardianComponent.limbMoveProgress += 0.75 * Settings.I_TPS;
+      guardianComponent.limbMoveProgress += 0.75 * Settings.DELTA_TIME;
       if (guardianComponent.limbMoveProgress > 1) {
          guardianComponent.limbMoveProgress = 1;
       }

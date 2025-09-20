@@ -7,9 +7,9 @@ import { EntityConfig } from "../components";
 import { TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
-import { Hitbox, setHitboxAngle, teleportHitbox } from "../hitboxes";
+import { setHitboxAngle, teleportHitbox } from "../hitboxes";
 
-const DOOR_SWING_SPEED = 5 / Settings.TPS;
+const DOOR_SWING_SPEED = 5 * Settings.DELTA_TIME;
 
 export class DoorComponent {
    public originX = 0;

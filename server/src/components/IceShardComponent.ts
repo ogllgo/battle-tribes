@@ -26,7 +26,7 @@ function onTick(iceShard: Entity): void {
    
    // @Cleanup @Speed: Don't even need a component for this, just do it based on age with a random chance
    const ageTicks = getEntityAgeTicks(iceShard);
-   if (ageTicks / Settings.TPS >= iceShardComponent.lifetime) {
+   if (ageTicks * Settings.DELTA_TIME >= iceShardComponent.lifetime) {
       destroyEntity(iceShard);
    }
 }
@@ -63,7 +63,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
       addLocalInvulnerabilityHash(collidingEntity, "ice_shards", 0.3);
 
       if (StatusEffectComponentArray.hasComponent(collidingEntity)) {
-         applyStatusEffect(collidingEntity, StatusEffect.freezing, 3 * Settings.TPS);
+         applyStatusEffect(collidingEntity, StatusEffect.freezing, 3 * Settings.TICK_RATE);
       }
    }
 }

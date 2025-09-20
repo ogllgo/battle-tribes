@@ -6,7 +6,7 @@ import { createTextCanvasContext, updateTextNumbers, renderText } from "./text-c
 import Camera from "./Camera";
 import { updateSpamFilter } from "./components/game/ChatBox";
 import { createEntityShaders } from "./rendering/webgl/entity-rendering";
-import Client, { getLastPacketTime, getQueuedGameDataPackets } from "./networking/Client";
+import Client, { getLastPacketTime } from "./networking/Client";
 import { calculateCursorWorldPositionX, calculateCursorWorldPositionY, cursorX, cursorY, handleMouseMovement, renderCursorTooltip } from "./mouse";
 import { refreshDebugInfo, setDebugInfoDebugData } from "./components/game/dev/DebugInfo";
 import { createTexture, createWebGLContext, gl, halfWindowHeight, halfWindowWidth, resizeCanvas, windowHeight, windowWidth } from "./webgl";
@@ -75,7 +75,9 @@ import { updateDebugEntity } from "./entity-debugging";
 import { playerInstance } from "./player";
 import { TamingMenu_forceUpdate } from "./components/game/taming-menu/TamingMenu";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
-import { Hitbox, setHitboxAngularVelocity } from "./hitboxes";
+import { setHitboxAngularVelocity } from "./hitboxes";
+import { updateEntity } from "./entity-components/ComponentArray";
+import { resolvePlayerCollisions } from "./collision";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -133,7 +135,7 @@ const updatePlayerRotation = (cursorX: number, cursorY: number): void => {
    playerHitbox.box.relativeAngle = cursorDirection - playerHitbox.box.angle + playerHitbox.box.relativeAngle;
 
    // Angular velocity
-   setHitboxAngularVelocity(playerHitbox, (playerHitbox.box.relativeAngle - previousRelativeAngle) * Settings.TPS);
+   setHitboxAngularVelocity(playerHitbox, (playerHitbox.box.relativeAngle - previousRelativeAngle) * Settings.TICK_RATE);
 
    const renderInfo = getEntityRenderInfo(playerInstance);
    // @Temporary
@@ -146,47 +148,25 @@ const main = (currentTime: number): void => {
       Game.lastTime = currentTime;
    
       Game.lag += deltaTime;
-      while (Game.lag >= 1000 / Settings.TPS) {
-         const queuedPackets = getQueuedGameDataPackets();
-         if (queuedPackets.length > 0) {
-            for (const packet of queuedPackets) {
-               Board.lastServerTickTime = currentTime;
-               GameScreen_update();
-               
-               updateTextNumbers();
-               Board.updateTickCallbacks();
-               // if (playerInstance !== null) {
-               //    updateEntity(playerInstance);
-               // }
-            }
-            queuedPackets.length = 0;
-
-         } else {
-            updateTextNumbers();
-            Board.updateTickCallbacks();
-            Board.updateParticles();
-            // Board.updateEntities();
-            // if (playerInstance !== null) {
-            //    updateEntity(playerInstance);
-            // }
-            // for (const layer of layers) {
-            //    resolveEntityCollisions(layer);
-            // }
-         }
-
-         Game.update();
-         
+      while (Game.lag >= 1000 / Settings.CLIENT_PACKET_SEND_RATE) {
          Client.sendPlayerDataPacket();
+         Game.lag -= 1000 / Settings.CLIENT_PACKET_SEND_RATE;
+      }
 
-         Game.lag -= 1000 / Settings.TPS;
+      Game.lag2 += deltaTime;
+      while (Game.lag2 >= 1000 / Settings.TICK_RATE) {
+         if (playerInstance !== null) {
+            updateEntity(playerInstance);
+            resolvePlayerCollisions();
+         }
+         Game.tickPlayer();
+         Game.lag2 -= 1000 / Settings.TICK_RATE;
       }
 
       const renderStartTime = performance.now();
       
-      const ticksSinceLastFrame = (renderStartTime - getLastPacketTime()) / 1000 * Settings.TPS;
-      
-      const frameProgress = ticksSinceLastFrame;
-      Game.render(frameProgress);
+      const progressToNextPacket = (renderStartTime - getLastPacketTime()) / 1000 * Settings.SERVER_PACKET_SEND_RATE;
+      Game.render(progressToNextPacket);
 
       const renderEndTime = performance.now();
 
@@ -194,6 +174,14 @@ const main = (currentTime: number): void => {
       registerFrame(renderStartTime, renderEndTime);
       updateFrameGraph();
       updateDebugScreenRenderTime(renderTime);
+
+      GameScreen_update();
+      updateTextNumbers();
+      Board.updateTickCallbacks();
+      Board.updateParticles();
+      //       // for (const layer of layers) {
+      //       //    resolveEntityCollisions(layer);
+      //       // }
    }
 
    if (Game.isRunning) {
@@ -325,6 +313,7 @@ abstract class Game {
 
    /** Amount of time the game is through the current frame */
    public static lag = 0;
+   public static lag2 = 0;
 
    // @Cleanup: Make these not be able to be null, just number
    public static cursorX: number | null = null;
@@ -369,10 +358,6 @@ abstract class Game {
     * Prepares the game to be played. Called once just before the game starts.
     */
    public static async initialise(): Promise<void> {
-      // Clear any queued packets from previous games
-      const queuedPackets = getQueuedGameDataPackets();
-      queuedPackets.length = 0;
-
       resetInteractableEntityIDs();
       
       if (!Game.hasInitialised) {
@@ -478,7 +463,7 @@ abstract class Game {
       }
    }
 
-   public static update(): void {
+   public static tickPlayer(): void {
       Board.clientTicks++;
       
       updateSpamFilter();

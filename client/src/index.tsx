@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './components/App';
+import App, { AppState } from './components/App';
 import { createPlayerInputListeners } from './components/game/GameInteractableLayer';
 
 import "./css/index.css";
@@ -57,7 +57,7 @@ const renderApp = (Component: React.FC) => {
   );
 };
 
-// renderApp(App);
+renderApp(App);
 
 // Enable Hot Module Replacement (HMR)
 if (module.hot) {
@@ -67,49 +67,3 @@ if (module.hot) {
 window.addEventListener("load", () => {
    createPlayerInputListeners();
 });
-
-
-
-
-
-
-
-
-
-
-const a = async (): void => {
-   const connectionWasSuccessful = await Client.connectToServer(props.setAppState, setStatus);
-   if (connectionWasSuccessful) {
-      setStatus(LoadingScreenStatus.sendingPlayerData);
-   } else {
-      setStatus(LoadingScreenStatus.connectionError);
-      return;
-   }
-
-   // @HACK
-   Camera.isSpectating = props.isSpectating;
-
-   Client.sendInitialPlayerData(props.username, props.tribeType, props.isSpectating);
-
-   // 
-   // Initialise game
-   // 
-
-   await Client.getInitialGameDataPacket();
-
-   setStatus(LoadingScreenStatus.initialisingGame);
-
-   await Game.initialise();
-         
-   definiteGameState.playerUsername = props.username;
-
-   Client.sendActivatePacket();
-
-   const gameDataPacket = await Client.getNextGameDataPacket();
-   processGameDataPacket(gameDataPacket);
-
-   Game.start();
-
-   props.setAppState(AppState.game);
-}
-a();

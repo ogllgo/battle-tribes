@@ -10,7 +10,6 @@ import { TransformComponentArray } from "../../entity-components/server-componen
 import { TurretComponentArray } from "../../entity-components/server-components/TurretComponent";
 import { playerInstance } from "../../player";
 import { calculateEntityPlaceInfo } from "../../structure-placement";
-import { Hitbox } from "../../hitboxes";
 
 const CIRCLE_DETAIL = 300;
 

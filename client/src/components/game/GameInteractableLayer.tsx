@@ -108,15 +108,15 @@ const enum BufferedInputType {
 const INPUT_COYOTE_TIME = 0.05;
 
 /** Acceleration of the player while moving without any modifiers. */
-const PLAYER_ACCELERATION = 700;
+const PLAYER_ACCELERATION = 600;
 
 const PLAYER_LIGHTSPEED_ACCELERATION = 15000;
 
 /** Acceleration of the player while slowed. */
-const PLAYER_SLOW_ACCELERATION = 400;
+const PLAYER_SLOW_ACCELERATION = 350;
 
 /** Acceleration of the player for a brief period after being hit */
-const PLAYER_DISCOMBOBULATED_ACCELERATION = 300;
+const PLAYER_DISCOMBOBULATED_ACCELERATION = 275;
 
 export let rightMouseButtonIsPressed = false;
 
@@ -251,7 +251,7 @@ export function updatePlayerItems(): void {
       return;
    }
 
-   discombobulationTimer -= Settings.I_TPS;
+   discombobulationTimer -= Settings.DELTA_TIME;
    if (discombobulationTimer < 0) {
       discombobulationTimer = 0;
    }
@@ -288,7 +288,7 @@ export function updatePlayerItems(): void {
       }
       
       // If finished winding attack, switch to doing attack
-      if (limb.action === LimbAction.windAttack && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
+      if (limb.action === LimbAction.windAttack && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TICK_RATE >= limb.currentActionDurationTicks) {
          const attackInfo = getItemAttackInfo(limb.heldItemType);
 
          const attackPattern = attackInfo.attackPatterns![getLimbConfiguration(inventoryUseComponent)];
@@ -318,12 +318,12 @@ export function updatePlayerItems(): void {
       }
 
       // If finished attacking, go to rest
-      if (limb.action === LimbAction.attack && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
+      if (limb.action === LimbAction.attack && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TICK_RATE >= limb.currentActionDurationTicks) {
          cancelAttack(limb, getLimbConfiguration(inventoryUseComponent));
       }
 
       // If finished moving limb to quiver, move from quiver to charge start limbstate
-      if (limb.action === LimbAction.moveLimbToQuiver && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
+      if (limb.action === LimbAction.moveLimbToQuiver && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TICK_RATE >= limb.currentActionDurationTicks) {
          const startLimbState = getCurrentLimbState(limb);
          
          limb.action = LimbAction.moveLimbFromQuiver;
@@ -336,7 +336,7 @@ export function updatePlayerItems(): void {
       }
 
       // if finished moving limb from quiver, start charging bow
-      if (limb.action === LimbAction.moveLimbFromQuiver && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
+      if (limb.action === LimbAction.moveLimbFromQuiver && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TICK_RATE >= limb.currentActionDurationTicks) {
          const startLimbState = getCurrentLimbState(limb);
          // @Hack
          const itemInfo = ITEM_INFO_RECORD[ItemType.wooden_bow] as BowItemInfo;
@@ -362,7 +362,7 @@ export function updatePlayerItems(): void {
       }
 
       // If finished resting after arrow release, return to default state
-      if ((limb.action === LimbAction.arrowReleased || limb.action === LimbAction.mainArrowReleased) && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
+      if ((limb.action === LimbAction.arrowReleased || limb.action === LimbAction.mainArrowReleased) && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TICK_RATE >= limb.currentActionDurationTicks) {
          const initialLimbState = getCurrentLimbState(limb);
          const limbConfiguration = getLimbConfiguration(inventoryUseComponent);
          
@@ -374,14 +374,14 @@ export function updatePlayerItems(): void {
          limb.currentActionEndLimbState = RESTING_LIMB_STATES[limbConfiguration];
       }
 
-      if (limb.action === LimbAction.returnFromBow && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
+      if (limb.action === LimbAction.returnFromBow && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TICK_RATE >= limb.currentActionDurationTicks) {
          limb.action = LimbAction.none;
          limb.currentActionElapsedTicks = 0;
          limb.currentActionDurationTicks = 0;
       }
 
       // If finished going to rest, set to default
-      if (limb.action === LimbAction.returnAttackToRest && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
+      if (limb.action === LimbAction.returnAttackToRest && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TICK_RATE >= limb.currentActionDurationTicks) {
          limb.action = LimbAction.none;
 
          const attackInfo = getItemAttackInfo(limb.heldItemType);
@@ -390,7 +390,7 @@ export function updatePlayerItems(): void {
       }
 
       // If finished engaging block, go to block
-      if (limb.action === LimbAction.engageBlock && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
+      if (limb.action === LimbAction.engageBlock && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TICK_RATE >= limb.currentActionDurationTicks) {
          limb.action = LimbAction.block;
          limb.currentActionElapsedTicks = 0;
          limb.currentActionDurationTicks = 0;
@@ -435,32 +435,32 @@ export function updatePlayerItems(): void {
 
       // @Copynpaste
       // If finished returning block to rest, go to rest
-      if (limb.action === LimbAction.returnBlockToRest && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
+      if (limb.action === LimbAction.returnBlockToRest && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TICK_RATE >= limb.currentActionDurationTicks) {
          limb.action = LimbAction.none;
          limb.currentActionElapsedTicks = 0;
          limb.currentActionDurationTicks = 0;
       }
 
       // If finished feigning attack, go to rest
-      if (limb.action === LimbAction.feignAttack && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
+      if (limb.action === LimbAction.feignAttack && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TICK_RATE >= limb.currentActionDurationTicks) {
          limb.action = LimbAction.none;
          limb.currentActionElapsedTicks = 0;
          limb.currentActionDurationTicks = 0;
       }
 
-      if (limb.action === LimbAction.windShieldBash && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
+      if (limb.action === LimbAction.windShieldBash && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TICK_RATE >= limb.currentActionDurationTicks) {
          limb.action = LimbAction.pushShieldBash;
          limb.currentActionElapsedTicks = 0;
          limb.currentActionDurationTicks = AttackVars.SHIELD_BASH_PUSH_TIME_TICKS;
       }
 
-      if (limb.action === LimbAction.pushShieldBash && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
+      if (limb.action === LimbAction.pushShieldBash && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TICK_RATE >= limb.currentActionDurationTicks) {
          limb.action = LimbAction.returnShieldBashToRest;
          limb.currentActionElapsedTicks = 0;
          limb.currentActionDurationTicks = AttackVars.SHIELD_BASH_RETURN_TIME_TICKS;
       }
 
-      if (limb.action === LimbAction.returnShieldBashToRest && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TPS >= limb.currentActionDurationTicks) {
+      if (limb.action === LimbAction.returnShieldBashToRest && getElapsedTimeInSeconds(limb.currentActionElapsedTicks) * Settings.TICK_RATE >= limb.currentActionDurationTicks) {
          limb.action = LimbAction.block;
          limb.currentActionElapsedTicks = 0;
          limb.currentActionDurationTicks = AttackVars.SHIELD_BASH_RETURN_TIME_TICKS;
@@ -486,7 +486,7 @@ export function updatePlayerItems(): void {
             }
          }
          
-         attackBufferTime -= Settings.I_TPS;
+         attackBufferTime -= Settings.DELTA_TIME;
          if (attackBufferTime <= 0) {
             attackBufferTime = 0;
          }
@@ -1053,7 +1053,7 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
       } else if (limb.action === LimbAction.windAttack || (limb.action === LimbAction.attack && limb.currentActionElapsedTicks <= AttackVars.FEIGN_SWING_TICKS_LEEWAY)) {
          // @Copynpaste
          const secondsSinceLastAction = getElapsedTimeInSeconds(limb.currentActionElapsedTicks);
-         const progress = secondsSinceLastAction * Settings.TPS / limb.currentActionDurationTicks;
+         const progress = secondsSinceLastAction * Settings.TICK_RATE / limb.currentActionDurationTicks;
 
          const limbConfiguration = getLimbConfiguration(inventoryUseComponent);
          
@@ -1163,7 +1163,7 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
          if (limb.action === LimbAction.none) {
             limb.action = LimbAction.chargeSpear;
             limb.currentActionElapsedTicks = 0;
-            limb.currentActionDurationTicks = 3 * Settings.TPS;
+            limb.currentActionDurationTicks = 3 * Settings.TICK_RATE;
             limb.currentActionRate = 1;
          }
          break;

@@ -17,8 +17,8 @@ import { damageEntity } from "./HealthComponent";
 import { attachHitbox, detachHitbox, TransformComponentArray } from "./TransformComponent";
 import { TribeMemberComponentArray } from "./TribeMemberComponent";
 
-const MIN_OBSTACLE_SIT_MODE_TICKS = 8 * Settings.TPS;
-const MAX_OBSTACLE_SIT_MODE_TICKS = 16 * Settings.TPS;
+const MIN_OBSTACLE_SIT_MODE_TICKS = 8 * Settings.TICK_RATE;
+const MAX_OBSTACLE_SIT_MODE_TICKS = 16 * Settings.TICK_RATE;
 
 export class DustfleaComponent {
    public obstacleSitModeRemainingTicks = randInt(MIN_OBSTACLE_SIT_MODE_TICKS, MAX_OBSTACLE_SIT_MODE_TICKS);
@@ -170,7 +170,7 @@ function onTick(dustflea: Entity): void {
                registerEntityTickEvent(dustflea, tickEvent);
 
                const dustfleaComponent = DustfleaComponentArray.getComponent(dustflea);
-               dustfleaComponent.latchTicks = getGameTicks() + randInt(0, Settings.TPS - 1);
+               dustfleaComponent.latchTicks = getGameTicks() + randInt(0, Settings.TICK_RATE - 1);
             }
             return;
          }
@@ -182,12 +182,12 @@ function onTick(dustflea: Entity): void {
    // if (dustfleaHitbox.parent !== null && entityIsSuckTarget(dustfleaHitbox.parent.entity)) {
    //    // wriggle around
    //    const ageTicks = getEntityAgeTicks(dustflea);
-   //    addHitboxAngularAcceleration(dustfleaHitbox, 8 * Math.sin((ageTicks / Settings.TPS) * 40));
+   //    addHitboxAngularAcceleration(dustfleaHitbox, 8 * Math.sin((ageTicks * Settings.DELTA_TIME) * 40));
       
    //    // Suck
    //    const dustfleaComponent = DustfleaComponentArray.getComponent(dustflea);
    //    const ticksSinceLatch = ageTicks - dustfleaComponent.latchTicks;
-   //    if (ticksSinceLatch % (Settings.TPS * 2) === 0) {
+   //    if (ticksSinceLatch % (Settings.TICK_RATE * 2) === 0) {
    //       damageEntity(dustfleaHitbox.parent.entity, dustfleaHitbox, dustflea, 1, 0, AttackEffectiveness.effective, dustfleaHitbox.box.position.copy(), 0)
    //       addHungerEnergy(dustflea, 10);
    //    }
@@ -224,7 +224,7 @@ function onTick(dustflea: Entity): void {
          return;
       }
    } else {
-      if (Math.random() < 0.15 / Settings.TPS) {
+      if (Math.random() < 0.15 * Settings.DELTA_TIME) {
          dustfleaComponent.obstacleSitModeRemainingTicks = randInt(MIN_OBSTACLE_SIT_MODE_TICKS, MAX_OBSTACLE_SIT_MODE_TICKS);
       }
    }

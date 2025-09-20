@@ -9,9 +9,9 @@ import { createEntity, getEntityLayer, getGameTicks } from "../world";
 import { addHitboxAngularVelocity, Hitbox, setHitboxVelocity } from "../hitboxes";
 
 const enum Vars {
-   WINDUP_TIME_TICKS = (1.5 * Settings.TPS) | 0,
-   FOCUS_DURATION_TICKS = (2.5 * Settings.TPS) | 0,
-   RETURN_TIME_TICKS = (1 * Settings.TPS) | 0,
+   WINDUP_TIME_TICKS = (1.5 * Settings.TICK_RATE) | 0,
+   FOCUS_DURATION_TICKS = (2.5 * Settings.TICK_RATE) | 0,
+   RETURN_TIME_TICKS = (1 * Settings.TICK_RATE) | 0,
 
    LIMB_DIRECTION = UtilVars.PI * 0.5
 }

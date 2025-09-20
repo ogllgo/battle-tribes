@@ -80,7 +80,7 @@ export function createYetiConfig(position: Point, rotation: number, territory: R
    const aiHelperComponent = new AIHelperComponent(headHitbox, 500, moveFunc, turnFunc);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(100, Math.PI * 1.5, 1, 0.6, wanderPositionIsValid);
    
-   const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
+   const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TICK_RATE);
    
    const lootComponent = new LootComponent();
    

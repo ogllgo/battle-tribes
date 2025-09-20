@@ -28,8 +28,8 @@ import { TribeMemberComponentArray } from "./components/TribeMemberComponent";
 import { StructureComponentArray } from "./components/StructureComponent";
 import { Hitbox } from "./hitboxes";
 
-const ENEMY_ATTACK_REMEMBER_TIME_TICKS = 30 * Settings.TPS;
-const RESPAWN_TIME_TICKS = 5 * Settings.TPS;
+const ENEMY_ATTACK_REMEMBER_TIME_TICKS = 30 * Settings.TICK_RATE;
+const RESPAWN_TIME_TICKS = 5 * Settings.TICK_RATE;
 
 let tribeIDCounter = 0;
 
@@ -139,8 +139,7 @@ export default class Tribe {
    public tribesmanCap: number;
 
    public selectedTechID: TechID | null = null;
-   // public readonly unlockedTechs = new Array<Tech>();
-   public readonly unlockedTechs = [getTechByID(TechID.frostshaping)];
+   public readonly unlockedTechs = new Array<Tech>();
    public readonly techTreeUnlockProgress: TechTreeUnlockProgress = {};
 
    private readonly respawnTimesRemaining = new Array<number>();
@@ -188,11 +187,12 @@ export default class Tribe {
       this.tribesmanCap = TRIBE_INFO_RECORD[tribeType].baseTribesmanCap;
       this.pathfindingGroupID = getPathfindingGroupID();
 
-      // @TEMPORARY
-      const assignment = createGatherItemPlanAssignment([], ItemType.tukmokFurHide, 999);
-      this.rootAssignment.children.push(assignment);
-
       addTribe(this);
+
+      // @TEMPORARY
+      setTimeout(() => {
+         this.unlockAllTechs();
+      }, 3000);
    }
 
    public getBuildingLayer(layer: Layer): TribeBuildingLayer {

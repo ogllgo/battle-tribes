@@ -130,7 +130,7 @@ const FISH_SUIT_IGNORED_TILE_MOVE_SPEEDS = [TileType.water];
 //          renderInfo.attachRenderThing(this.lowHealthMarker);
 //       }
 
-//       let opacity = Math.sin(getEntityAgeTicks(this.id) / Settings.TPS * 5) * 0.5 + 0.5;
+//       let opacity = Math.sin(getEntityAgeTicks(this.id) * Settings.DELTA_TIME * 5) * 0.5 + 0.5;
 //       this.lowHealthMarker.opacity = lerp(0.3, 0.8, opacity);
 //    } else {
 //       if (this.lowHealthMarker !== null) {
@@ -181,7 +181,7 @@ const getSecondsSinceLastAttack = (entity: Entity): number => {
    }
 
    const ticksSinceLastAttack = Board.serverTicks - maxLastTicks;
-   return ticksSinceLastAttack / Settings.TPS;
+   return ticksSinceLastAttack * Settings.DELTA_TIME;
 }
 
 const titlesArrayHasExtra = (extraCheckArray: ReadonlyArray<TitleGenerationInfo>, sourceArray: ReadonlyArray<TitleGenerationInfo>): boolean => {
@@ -737,7 +737,7 @@ function onTick(entity: Entity): void {
    const velocity = getHitboxVelocity(entityHitbox);
    if (tribesmanHasTitle(tribesmanComponent, TribesmanTitle.sprinter) && velocity.magnitude() > 100) {
       const sprintParticleSpawnRate = Math.sqrt(velocity.magnitude() * 0.8);
-      if (Math.random() < sprintParticleSpawnRate / Settings.TPS) {
+      if (Math.random() < sprintParticleSpawnRate * Settings.DELTA_TIME) {
          const offsetMagnitude = 32 * Math.random();
          const offsetDirection = randAngle();
          const x = entityHitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);
@@ -752,7 +752,7 @@ function onTick(entity: Entity): void {
    }
 
    // Winterswrath particles
-   if (tribesmanHasTitle(tribesmanComponent, TribesmanTitle.winterswrath) && Math.random() < 18 * Settings.I_TPS) {
+   if (tribesmanHasTitle(tribesmanComponent, TribesmanTitle.winterswrath) && Math.random() < 18 * Settings.DELTA_TIME) {
       const offsetMagnitude = randFloat(36, 50);
       const offsetDirection = randAngle();
       const x = entityHitbox.box.position.x + offsetMagnitude * Math.sin(offsetDirection);

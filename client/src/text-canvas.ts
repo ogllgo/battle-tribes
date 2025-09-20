@@ -146,7 +146,7 @@ export function createHealNumber(healedEntityID: number, positionX: number, posi
 }
 
 export function updateTextNumbers(): void {
-   damageTime -= 1 / Settings.TPS;
+   damageTime -= 1 * Settings.DELTA_TIME;
    if (damageTime < 0) {
       damageTime = 0;
       accumulatedDamage = 0;
@@ -157,28 +157,28 @@ export function updateTextNumbers(): void {
    for (let i = 0; i < researchNumbers.length; i++) {
       const researchNumber = researchNumbers[i];
 
-      researchNumber.age += 1 / Settings.TPS;
+      researchNumber.age += 1 * Settings.DELTA_TIME;
       if (researchNumber.age >= RESEARCH_NUMBER_LIFETIME) {
          researchNumbers.splice(i, 1);
          i--;
          continue;
       }
 
-      researchNumber.positionY += 8 / Settings.TPS;
+      researchNumber.positionY += 8 * Settings.DELTA_TIME;
    }
 
    // Update heal numbers
    for (let i = 0; i < healNumbers.length; i++) {
       const healNumber = healNumbers[i];
 
-      healNumber.age += 1 / Settings.TPS;
+      healNumber.age += 1 * Settings.DELTA_TIME;
       if (healNumber.age >= HEAL_NUMBER_LIFETIME) {
          healNumbers.splice(i, 1);
          i--;
          continue;
       }
 
-      healNumber.positionY += 11 / Settings.TPS;
+      healNumber.positionY += 11 * Settings.DELTA_TIME;
    }
 }
 

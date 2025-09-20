@@ -135,7 +135,6 @@ const TOOL_TYPE_FOR_MATERIAL_RECORD: Record<ItemType, ToolType | null> = {
    [ItemType.cooked_fish]: null,
    [ItemType.fishlord_suit]: null,
    [ItemType.gathering_gloves]: null,
-   [ItemType.throngler]: null,
    [ItemType.leather_armour]: null,
    [ItemType.woodenSpear]: null,
    [ItemType.stoneSpear]: null,

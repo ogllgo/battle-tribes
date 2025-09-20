@@ -62,7 +62,7 @@ export function createCraftingAnimationParticles(entity: Entity, limbIdx: number
    for (const itemTypeString of Object.keys(recipe.ingredients)) {
       const ingredientType = Number(itemTypeString) as ItemType;
 
-      if (ingredientType === ItemType.wood && Math.random() < 1 / Settings.TPS) {
+      if (ingredientType === ItemType.wood && Math.random() < 1 * Settings.DELTA_TIME) {
          const pos = generateRandomLimbPosition();
 
          const x = hitbox.box.position.x + rotateXAroundOrigin(pos.x, pos.y, hitbox.box.angle);
@@ -71,7 +71,7 @@ export function createCraftingAnimationParticles(entity: Entity, limbIdx: number
          createSawdustCloud(x, y);
       }
       
-      if (Math.random() >= 2.5 / Settings.TPS) {
+      if (Math.random() >= 2.5 * Settings.DELTA_TIME) {
          continue;
       }
       
@@ -131,7 +131,7 @@ export function updateBandageRenderPart(entity: Entity, renderPart: VisualRender
 }
 
 export function createMedicineAnimationParticles(entity: Entity, limbIdx: number): void {
-   if (Math.random() < 5 / Settings.TPS) {
+   if (Math.random() < 5 * Settings.DELTA_TIME) {
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.hitboxes[0];
 

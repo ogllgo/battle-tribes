@@ -896,8 +896,8 @@ export const AMMO_INFO_RECORD: Record<TurretAmmoType, GenericAmmoInfo> = {
       // projectileType: BallistaProjectileType.woodenBolt,
       damage: 5,
       knockback: 150,
-      shotCooldownTicks: 2.5 * Settings.TPS,
-      reloadTimeTicks: Math.floor(0.4 * Settings.TPS),
+      shotCooldownTicks: 2.5 * Settings.TICK_RATE,
+      reloadTimeTicks: Math.floor(0.4 * Settings.TICK_RATE),
       projectileSpeed: 1100,
       hitboxWidth: 12,
       hitboxHeight: 80,
@@ -908,8 +908,8 @@ export const AMMO_INFO_RECORD: Record<TurretAmmoType, GenericAmmoInfo> = {
       // projectileType: GenericArrowType.ballistaRock,
       damage: 8,
       knockback: 350,
-      shotCooldownTicks: 3 * Settings.TPS,
-      reloadTimeTicks: Math.floor(0.5 * Settings.TPS),
+      shotCooldownTicks: 3 * Settings.TICK_RATE,
+      reloadTimeTicks: Math.floor(0.5 * Settings.TICK_RATE),
       projectileSpeed: 1000,
       hitboxWidth: 12,
       hitboxHeight: 80,
@@ -920,33 +920,33 @@ export const AMMO_INFO_RECORD: Record<TurretAmmoType, GenericAmmoInfo> = {
       // projectileType: GenericArrowType.ballistaSlimeball,
       damage: 3,
       knockback: 0,
-      shotCooldownTicks: 2 * Settings.TPS,
-      reloadTimeTicks: Math.floor(0.4 * Settings.TPS),
+      shotCooldownTicks: 2 * Settings.TICK_RATE,
+      reloadTimeTicks: Math.floor(0.4 * Settings.TICK_RATE),
       projectileSpeed: 800,
       hitboxWidth: 12,
       hitboxHeight: 80,
       ammoMultiplier: 4,
       statusEffect: {
          type: StatusEffect.poisoned,
-         durationTicks: 2.5 * Settings.TPS
+         durationTicks: 2.5 * Settings.TICK_RATE
       }
    },
    [ItemType.frostcicle]: {
       // projectileType: GenericArrowType.ballistaFrostcicle,
       damage: 1,
       knockback: 50,
-      shotCooldownTicks: 0.5 * Settings.TPS,
-      reloadTimeTicks: Math.floor(0.15 * Settings.TPS),
+      shotCooldownTicks: 0.5 * Settings.TICK_RATE,
+      reloadTimeTicks: Math.floor(0.15 * Settings.TICK_RATE),
       projectileSpeed: 1500,
       hitboxWidth: 12,
       hitboxHeight: 80,
       ammoMultiplier: 6,
       statusEffect: {
          type: StatusEffect.freezing,
-         durationTicks: 1 * Settings.TPS
+         durationTicks: 1 * Settings.TICK_RATE
       }
    }
-}
+};
 
 
 

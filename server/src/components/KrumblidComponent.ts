@@ -166,7 +166,7 @@ function onTick(krumblid: Entity): void {
    }
 
    const tamingComponent = TamingComponentArray.getComponent(krumblid);
-   if (tamingComponent.tamingTier >= 3 && getEntityAgeTicks(krumblid) % Settings.TPS === 0) {
+   if (tamingComponent.tamingTier >= 3 && getEntityAgeTicks(krumblid) % Settings.TICK_RATE === 0) {
       addSkillLearningProgress(tamingComponent, TamingSkillID.imprint, 1);
    }
    

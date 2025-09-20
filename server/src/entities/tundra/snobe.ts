@@ -64,7 +64,7 @@ function wanderPositionIsValid(_entity: Entity, layer: Layer, x: number, y: numb
 
 const moveFunc = (snobe: Entity, pos: Point, acceleration: number): void => {
    const ageTicks = getEntityAgeTicks(snobe);
-   if ((ageTicks + snobe) % Math.floor(Settings.TPS / 3.5) === 0) {
+   if ((ageTicks + snobe) % Math.floor(Settings.TICK_RATE / 3.5) === 0) {
       const transformComponent = TransformComponentArray.getComponent(snobe);
       const hitbox = transformComponent.hitboxes[0];
       
@@ -133,10 +133,10 @@ export function createSnobeConfig(position: Point, angle: number): EntityConfig 
    aiHelperComponent.ais[AIType.wander] = new WanderAI(1000, 6 * Math.PI, 1, 0.5, wanderPositionIsValid);
    aiHelperComponent.ais[AIType.escape] = new EscapeAI(1600, 6 * Math.PI, 1, 5);
    // @SQUEAM
-   // aiHelperComponent.ais[AIType.follow] = new FollowAI(8 * Settings.TPS, 16 * Settings.TPS, 0.1, 34);
-   aiHelperComponent.ais[AIType.follow] = new FollowAI(8 * Settings.TPS, 16 * Settings.TPS, 1, 150);
+   // aiHelperComponent.ais[AIType.follow] = new FollowAI(8 * Settings.TICK_RATE, 16 * Settings.TICK_RATE, 0.1, 34);
+   aiHelperComponent.ais[AIType.follow] = new FollowAI(8 * Settings.TICK_RATE, 16 * Settings.TICK_RATE, 1, 150);
 
-   const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
+   const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TICK_RATE);
    
    const tamingComponent = new TamingComponent();
    

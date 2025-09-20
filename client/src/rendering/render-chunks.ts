@@ -7,6 +7,7 @@ import { calculateWallBorderInfo } from "./webgl/wall-border-rendering";
 import Board from "../Board";
 import Layer from "../Layer";
 import { layers } from "../world";
+import { positionIsInWorld } from "../../../shared/src/utils";
 
 /** Width and height of a render chunk in tiles */
 export const RENDER_CHUNK_SIZE = 8;
@@ -101,7 +102,7 @@ export function createRenderChunks(layer: Layer, waterRocks: ReadonlyArray<Water
    // Group edge stepping stones
    let edgeSteppingStonesChunked: Record<number, Record<number, Array<RiverSteppingStoneData>>> = {};
    for (const steppingStone of riverSteppingStones) {
-      if (Board.positionIsInBoard(steppingStone.positionX, steppingStone.positionY)) {
+      if (positionIsInWorld(steppingStone.positionX, steppingStone.positionY)) {
          continue;
       }
       

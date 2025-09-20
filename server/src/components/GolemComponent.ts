@@ -16,7 +16,7 @@ import { applyAccelerationFromGround, applyKnockback, Hitbox, turnHitboxToAngle 
 
 const enum Vars {
    TARGET_ENTITY_FORGET_TIME = 20,
-   ROCK_SHIFT_INTERVAL = (0.225 * Settings.TPS) | 0
+   ROCK_SHIFT_INTERVAL = (0.225 * Settings.TICK_RATE) | 0
 }
 
 export interface RockInfo {
@@ -184,7 +184,7 @@ function onTick(golem: Entity): void {
       if (typeof target === "undefined" || target.timeSinceLastAggro >= Vars.TARGET_ENTITY_FORGET_TIME) {
          delete golemComponent.attackingEntities[targetID];
       } else {
-         target.timeSinceLastAggro += Settings.I_TPS;
+         target.timeSinceLastAggro += Settings.DELTA_TIME;
       }
    }
 

@@ -88,7 +88,7 @@ const updateAngerTarget = (slime: Entity): Entity | null => {
       }
 
       // Decrease anger
-      angerInfo.angerAmount -= Settings.I_TPS * Vars.ANGER_DIFFUSE_MULTIPLIER;
+      angerInfo.angerAmount -= Settings.DELTA_TIME * Vars.ANGER_DIFFUSE_MULTIPLIER;
       if (angerInfo.angerAmount <= 0) {
          slimeComponent.angeredEntities.splice(i, 1);
          i--;
@@ -418,7 +418,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    if (collidingEntityType === EntityType.slime) {
       const slimeComponent = SlimeComponentArray.getComponent(slime);
       if (wantsToMerge(slimeComponent, collidingEntity)) {
-         slimeComponent.mergeTimer -= Settings.I_TPS;
+         slimeComponent.mergeTimer -= Settings.DELTA_TIME;
          if (slimeComponent.mergeTimer <= 0) {
             merge(slime, collidingEntity);
          }

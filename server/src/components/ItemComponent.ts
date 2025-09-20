@@ -6,8 +6,8 @@ import { Entity } from "battletribes-shared/entities";
 import { Packet } from "battletribes-shared/packets";
 
 const enum Vars {
-   TICKS_TO_DESPAWN = 300 * Settings.TPS,
-   THROWING_ENTITY_PICKUP_COOLDOWN_TICKS = Settings.TPS
+   TICKS_TO_DESPAWN = 300 * Settings.TICK_RATE,
+   THROWING_ENTITY_PICKUP_COOLDOWN_TICKS = Settings.TICK_RATE
 }
 
 export class ItemComponent {

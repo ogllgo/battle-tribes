@@ -18,7 +18,7 @@ import { Hitbox } from "../../hitboxes";
 import { createLight } from "../../lights";
 
 export const enum GolemVars {
-   PEBBLUM_SUMMON_COOLDOWN_TICKS = 10 * Settings.TPS
+   PEBBLUM_SUMMON_COOLDOWN_TICKS = 10 * Settings.TICK_RATE
 }
 
 // @Cleanup: shouldn't be polluting the exports!
@@ -30,7 +30,7 @@ const ROCK_MEDIUM_MASS = 1.15;
 const ROCK_LARGE_MASS = 1.75;
 const ROCK_MASSIVE_MASS = 2.25;
 
-export const GOLEM_WAKE_TIME_TICKS = Math.floor(2.5 * Settings.TPS);
+export const GOLEM_WAKE_TIME_TICKS = Math.floor(2.5 * Settings.TICK_RATE);
 
 registerEntityLootOnDeath(EntityType.golem, {
    itemType: ItemType.living_rock,

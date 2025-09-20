@@ -72,8 +72,8 @@ const turnFunc = (inguYetu: Entity, _pos: Point, turnSpeed: number, turnDamping:
    const angleDiffStopWiggle = 0.85;
    const wiggleMultiplier = 1 - Math.pow(Math.min(absDiff, angleDiffStopWiggle) / angleDiffStopWiggle, 2);
    
-   // const idealAngle = targetDirection + Math.PI * 0.45 * Math.sin(getEntityAgeTicks(serpent) / Settings.TPS * 7) * wiggleMultiplier;
-   const idealAngle = targetDirection + Math.PI * 0.45 * Math.sin(getEntityAgeTicks(inguYetu) / Settings.TPS * 7);
+   // const idealAngle = targetDirection + Math.PI * 0.45 * Math.sin(getEntityAgeTicks(serpent) * Settings.DELTA_TIME * 7) * wiggleMultiplier;
+   const idealAngle = targetDirection + Math.PI * 0.45 * Math.sin(getEntityAgeTicks(inguYetu) * Settings.DELTA_TIME * 7);
    turnHitboxToAngle(headHitbox, idealAngle, turnSpeed, turnDamping, false);
 }
 

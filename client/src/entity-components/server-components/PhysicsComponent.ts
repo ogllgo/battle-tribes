@@ -54,7 +54,7 @@ const applyHitboxKinematics = (transformComponent: TransformComponent, entity: E
    if (entityIsInRiver(transformComponent, entity)) {
       const flowDirection = layer.getRiverFlowDirection(tile.x, tile.y);
       if (flowDirection > 0) {
-         applyAcceleration(entity, hitbox, 240 / Settings.TPS * Math.sin(flowDirection - 1), 240 / Settings.TPS * Math.cos(flowDirection - 1));
+         applyAcceleration(entity, hitbox, 240 * Settings.DELTA_TIME * Math.sin(flowDirection - 1), 240 * Settings.DELTA_TIME * Math.cos(flowDirection - 1));
       }
    }
 
@@ -66,21 +66,21 @@ const applyHitboxKinematics = (transformComponent: TransformComponent, entity: E
       
    // Air friction
    // @Bug? the tile's friction shouldn't affect air friction?
-   velX *= 1 - tileFriction / Settings.TPS * 2;
-   velY *= 1 - tileFriction / Settings.TPS * 2;
+   velX *= 1 - tileFriction * Settings.DELTA_TIME * 2;
+   velY *= 1 - tileFriction * Settings.DELTA_TIME * 2;
 
    // Ground friction
    const velocityMagnitude = Math.hypot(velX, velY);
    if (velocityMagnitude > 0) {
       const groundFriction = Math.min(tileFriction, velocityMagnitude);
-      velX -= groundFriction * velX / velocityMagnitude / Settings.TPS;
-      velY -= groundFriction * velY / velocityMagnitude / Settings.TPS;
+      velX -= groundFriction * velX / velocityMagnitude * Settings.DELTA_TIME;
+      velY -= groundFriction * velY / velocityMagnitude * Settings.DELTA_TIME;
    }
    
    // Verlet integration update:
    // new position = current position + (damped implicit velocity) + acceleration * (dt^2)
-   const newX = hitbox.box.position.x + velX + hitbox.acceleration.x / Settings.TPS / Settings.TPS;
-   const newY = hitbox.box.position.y + velY + hitbox.acceleration.y / Settings.TPS / Settings.TPS;
+   const newX = hitbox.box.position.x + velX + hitbox.acceleration.x * Settings.DELTA_TIME * Settings.DELTA_TIME;
+   const newY = hitbox.box.position.y + velY + hitbox.acceleration.y * Settings.DELTA_TIME * Settings.DELTA_TIME;
 
    hitbox.previousPosition.x = hitbox.box.position.x;
    hitbox.previousPosition.y = hitbox.box.position.y;

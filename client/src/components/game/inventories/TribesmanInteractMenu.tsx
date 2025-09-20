@@ -87,7 +87,7 @@ const TribesmanInfocard = ({ tribesman }: TribesmanInfocardProps) => {
       }
    }
 
-   const ageDays = getEntityAgeTicks(tribesman) / Settings.TIME_PASS_RATE * Settings.TPS / 3600;
+   const ageDays = getEntityAgeTicks(tribesman) / Settings.TIME_PASS_RATE * Settings.TICK_RATE / 3600;
 
    let tribeName: string;
    if (tribeComponent.tribeID === playerTribe.id) {

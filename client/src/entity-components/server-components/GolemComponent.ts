@@ -43,7 +43,7 @@ export interface GolemComponent {
    readonly eyeLights: Array<Light>;
 }
 
-const ANGRY_SOUND_INTERVAL_TICKS = Settings.TPS * 3;
+const ANGRY_SOUND_INTERVAL_TICKS = Settings.TICK_RATE * 3;
 
 const getHitboxSize = (hitboxBox: CircularBox): GolemRockSize => {
    if (Math.abs(hitboxBox.radius - 36) < 0.01) {
@@ -211,7 +211,7 @@ function onTick(entity: Entity): void {
       }
    } else if (golemComponent.wakeProgress === 1) {
       for (let i = 0; i < transformComponent.hitboxes.length; i++) {
-         if (Math.random() >= 6 / Settings.TPS) {
+         if (Math.random() >= 6 * Settings.DELTA_TIME) {
             continue;
          }
 

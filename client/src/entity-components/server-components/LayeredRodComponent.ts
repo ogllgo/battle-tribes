@@ -12,7 +12,7 @@ import { TileType } from "../../../../shared/src/tiles";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 const enum Vars {
-   NATURAL_DRIFT = 20 / Settings.TPS
+   NATURAL_DRIFT = 20 * Settings.DELTA_TIME
 }
 
 export interface LayeredRodComponentParams {
@@ -271,7 +271,7 @@ function onCollision(entity: Entity, collidingEntity: Entity, affectedHitbox: Hi
    let existingPushX = bendToPushAmount(layeredRodComponent.bendX);
    let existingPushY = bendToPushAmount(layeredRodComponent.bendY);
    
-   let pushAmount = 50 * collidingHitbox.mass / Settings.TPS / Math.sqrt(layeredRodComponent.numLayers);
+   let pushAmount = 50 * collidingHitbox.mass * Settings.DELTA_TIME / Math.sqrt(layeredRodComponent.numLayers);
    
    // Restrict the bend from going past the max bend
    const currentBend = Math.sqrt(layeredRodComponent.bendX * layeredRodComponent.bendX + layeredRodComponent.bendY * layeredRodComponent.bendY);

@@ -6,7 +6,7 @@ import { ComponentArray } from "./ComponentArray";
 import { getPlantGrowthSpeed } from "./PlanterBoxComponent";
 
 const enum Vars {
-   GROWTH_TIME_TICKS = 90 * Settings.TPS
+   GROWTH_TIME_TICKS = 90 * Settings.TICK_RATE
 }
 
 export class TreePlantedComponent {

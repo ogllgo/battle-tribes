@@ -46,9 +46,9 @@ const enum Vars {
    COHESION_INFLUENCE = 0.3,
 
    /** The time in ticks after being hit that the zombie will move towards the source of damage */
-   DAMAGE_INVESTIGATE_TIME_TICKS = (0.8 * Settings.TPS) | 0,
+   DAMAGE_INVESTIGATE_TIME_TICKS = (0.8 * Settings.TICK_RATE) | 0,
 
-   HURT_ENTITY_INVESTIGATE_TICKS = (1 * Settings.TPS) | 0
+   HURT_ENTITY_INVESTIGATE_TICKS = (1 * Settings.TICK_RATE) | 0
 }
 
 export class ZombieComponent {
@@ -164,7 +164,7 @@ const doMeleeAttack = (zombie: Entity, target: Entity): void => {
 
       // Reset attack cooldown
       const zombieComponent = ZombieComponentArray.getComponent(zombie);
-      zombieComponent.attackCooldownTicks = Math.floor(randFloat(1, 2) * Settings.TPS);
+      zombieComponent.attackCooldownTicks = Math.floor(randFloat(1, 2) * Settings.TICK_RATE);
    }
 }
 
@@ -183,7 +183,7 @@ const doBiteAttack = (zombie: Entity, target: Entity): void => {
 
    // Reset attack cooldown
    const zombieComponent = ZombieComponentArray.getComponent(zombie);
-   zombieComponent.attackCooldownTicks = Math.floor(randFloat(3, 4) * Settings.TPS);
+   zombieComponent.attackCooldownTicks = Math.floor(randFloat(3, 4) * Settings.TICK_RATE);
 
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(zombie);
 
@@ -235,8 +235,8 @@ function onTick(zombie: Entity): void {
    if (!isNight()) {
       // Ignite randomly or stay on fire if already on fire
       const statusEffectComponent = StatusEffectComponentArray.getComponent(zombie);
-      if (hasStatusEffect(statusEffectComponent, StatusEffect.burning) || Math.random() < Vars.SPONTANEOUS_COMBUSTION_CHANCE / Settings.TPS) {
-         applyStatusEffect(zombie, StatusEffect.burning, 5 * Settings.TPS);
+      if (hasStatusEffect(statusEffectComponent, StatusEffect.burning) || Math.random() < Vars.SPONTANEOUS_COMBUSTION_CHANCE * Settings.DELTA_TIME) {
+         applyStatusEffect(zombie, StatusEffect.burning, 5 * Settings.TICK_RATE);
       }
    }
 
@@ -258,7 +258,7 @@ function onTick(zombie: Entity): void {
       
       return;
    } else {
-      zombieComponent.attackCooldownTicks = Math.floor(2.5 * Settings.TPS);
+      zombieComponent.attackCooldownTicks = Math.floor(2.5 * Settings.TICK_RATE);
    }
 
    const transformComponent = TransformComponentArray.getComponent(zombie);

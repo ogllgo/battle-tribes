@@ -82,8 +82,8 @@ function onTick(entity: Entity): void {
    const renderInfo = getEntityRenderInfo(entity);
    const rotatingRenderPart = renderInfo.renderPartsByZIndex[0];
    
-   rotatingRenderPart.angle += 1.5 * Math.PI / Settings.TPS;
-   rotatingRenderPart.angle -= 1.5 * Math.PI / Settings.TPS;
+   rotatingRenderPart.angle += 1.5 * Math.PI * Settings.DELTA_TIME;
+   rotatingRenderPart.angle -= 1.5 * Math.PI * Settings.DELTA_TIME;
 
    if (Board.tickIntervalHasPassed(0.2)) {
       for (let i = 0; i < 5; i++) {

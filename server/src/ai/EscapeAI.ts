@@ -93,7 +93,7 @@ export function runEscapeAI(entity: Entity, aiHelperComponent: AIHelperComponent
       const escapeTargetHitbox = escapeTargetTransformComponent.hitboxes[0];
       escapePosition = escapeTargetHitbox.box.position.copy();
       escapeAI.lastEscapeTargetPosition = escapePosition;
-      escapeAI.remainingRememberTicks = escapeAI.escapeTargetRememberTime * Settings.TPS;
+      escapeAI.remainingRememberTicks = escapeAI.escapeTargetRememberTime * Settings.TICK_RATE;
    } else if (escapeAI.remainingRememberTicks > 0) {
       escapePosition = escapeAI.lastEscapeTargetPosition;
    } else {

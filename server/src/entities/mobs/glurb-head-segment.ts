@@ -28,8 +28,8 @@ import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { StatusEffect } from "../../../../shared/src/status-effects";
 
 const enum Vars {
-   MIN_FOLLOW_COOLDOWN = 10 * Settings.TPS,
-   MAX_FOLLOW_COOLDOWN = 20 * Settings.TPS
+   MIN_FOLLOW_COOLDOWN = 10 * Settings.TICK_RATE,
+   MAX_FOLLOW_COOLDOWN = 20 * Settings.TICK_RATE
 }
 
 registerEntityTamingSpec(EntityType.glurbHeadSegment, {
@@ -69,7 +69,7 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 const getAcceleration = (glurb: Entity): number => {
    const age = getEntityAgeTicks(glurb);
    
-   const u = (Math.sin(age * Settings.I_TPS * 6.5) + 1) * 0.5;
+   const u = (Math.sin(age * Settings.DELTA_TIME * 6.5) + 1) * 0.5;
    return lerp(375, 650, u);
 }
 
@@ -127,7 +127,7 @@ export function createGlurbHeadSegmentConfig(position: Point, rotation: number, 
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, 2 * Math.PI, 0.5, 0.25, positionIsValidCallback);
    aiHelperComponent.ais[AIType.follow] = new FollowAI(Vars.MIN_FOLLOW_COOLDOWN, Vars.MAX_FOLLOW_COOLDOWN, 0.2, 35);
    
-   const attackingEntitiesComponent = new AttackingEntitiesComponent(Settings.TPS * 6);
+   const attackingEntitiesComponent = new AttackingEntitiesComponent(Settings.TICK_RATE * 6);
 
    const lootComponent = new LootComponent();
 

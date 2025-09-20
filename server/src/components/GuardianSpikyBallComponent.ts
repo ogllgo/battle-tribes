@@ -10,7 +10,7 @@ import { Settings } from "battletribes-shared/settings";
 import { applyKnockback, Hitbox } from "../hitboxes";
 
 export class GuardianSpikyBallComponent {
-   public lifetime = Math.floor(Settings.TPS * randFloat(6.5, 8));
+   public lifetime = Math.floor(Settings.TICK_RATE * randFloat(6.5, 8));
 }
 
 export const GuardianSpikyBallComponentArray = new ComponentArray<GuardianSpikyBallComponent>(ServerComponentType.guardianSpikyBall, true, getDataLength, addDataToPacket);
@@ -32,7 +32,7 @@ function onTick(spikyBall: Entity): void {
 
 function onWallCollision(spikyBall: Entity): void {
    const spikyBallComponent = GuardianSpikyBallComponentArray.getComponent(spikyBall);
-   spikyBallComponent.lifetime -= Math.floor(Settings.TPS * randFloat(0.2, 0.4));
+   spikyBallComponent.lifetime -= Math.floor(Settings.TICK_RATE * randFloat(0.2, 0.4));
 }
 
 function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {

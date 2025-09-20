@@ -1,13 +1,13 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { DoorToggleType, Entity } from "battletribes-shared/entities";
-import { Settings } from "battletribes-shared/settings";
 import { ComponentArray } from "./ComponentArray";
 import { getHitboxByFlag, TransformComponentArray } from "./TransformComponent";
 import { HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
 import { setHitboxRelativeAngle } from "../hitboxes";
+import { Settings } from "../../../shared/src/settings";
 
 const enum Vars {
-   DOOR_SWING_SPEED = 5 / Settings.TPS
+   DOOR_SWING_SPEED = 5 * Settings.DELTA_TIME
 }
 
 export class FenceGateComponent {

@@ -25,7 +25,7 @@ const NUM_GROWTH_STAGES = 4;
 
 const ATTACK_DAMAGES = [2, 2, 3, 3, 4];
 
-const TICKS_TO_GROW = 30 * Settings.TPS;
+const TICKS_TO_GROW = 30 * Settings.TICK_RATE;
 
 export class OkrenClawComponent {
    public readonly size: OkrenAgeStage;

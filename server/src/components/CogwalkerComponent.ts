@@ -69,7 +69,7 @@ function onTick(cogwalker: Entity): void {
 
 
    // @Hack @Copynpaste
-   if (getEntityAgeTicks(cogwalker) % (Settings.TPS * 4) === 0) {
+   if (getEntityAgeTicks(cogwalker) % (Settings.TICK_RATE * 4) === 0) {
       let hasAccident = false;
       {
          const transformComponent = TransformComponentArray.getComponent(cogwalker);

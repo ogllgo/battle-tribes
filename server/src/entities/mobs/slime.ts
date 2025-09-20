@@ -30,11 +30,11 @@ export interface SlimeEntityAnger {
 
 export const SLIME_RADII: ReadonlyArray<number> = [32, 44, 60];
 export const SLIME_MERGE_WEIGHTS: ReadonlyArray<number> = [2, 5, 11];
-export const SLIME_MAX_MERGE_WANT: ReadonlyArray<number> = [15 * Settings.TPS, 40 * Settings.TPS, 75 * Settings.TPS];
+export const SLIME_MAX_MERGE_WANT: ReadonlyArray<number> = [15 * Settings.TICK_RATE, 40 * Settings.TICK_RATE, 75 * Settings.TICK_RATE];
 
 export const SLIME_MERGE_TIME = 7.5;
 
-export const SPIT_COOLDOWN_TICKS = 4 * Settings.TPS;
+export const SPIT_COOLDOWN_TICKS = 4 * Settings.TICK_RATE;
 export const SPIT_CHARGE_TIME_TICKS = SPIT_COOLDOWN_TICKS + secondsToTicks(0.8);
 
 const MAX_HEALTH: ReadonlyArray<number> = [10, 20, 35];

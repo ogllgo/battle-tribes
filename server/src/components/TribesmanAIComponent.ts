@@ -18,7 +18,7 @@ import { Path } from "../pathfinding";
 const enum Vars {
    MAX_ENEMY_RELATION_THRESHOLD = -30,
    MIN_ACQUAINTANCE_RELATION_THRESOLD = 50,
-   ITEM_THROW_COOLDOWN_TICKS = (0.2 * Settings.TPS) | 0
+   ITEM_THROW_COOLDOWN_TICKS = (0.2 * Settings.TICK_RATE) | 0
 }
 
 /** Stores how much gifting an item to a tribesman increases your relations with them */
@@ -61,7 +61,6 @@ const GIFT_APPRECIATION_WEIGHTS: Record<ItemType, number> = {
    [ItemType.cooked_fish]: 2,
    [ItemType.fishlord_suit]: 4,
    [ItemType.gathering_gloves]: 5,
-   [ItemType.throngler]: 7,
    [ItemType.leather_armour]: 8,
    [ItemType.woodenSpear]: 5,
    [ItemType.stoneSpear]: 5,

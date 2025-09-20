@@ -10,9 +10,9 @@ import { createEntity, getEntityLayer } from "../world";
 import { applyAbsoluteKnockback } from "../hitboxes";
 
 const enum Vars {
-   WINDUP_TIME_TICKS = (1.5 * Settings.TPS) | 0,
-   SLAM_TIME_TICKS = (0.3 * Settings.TPS) | 0,
-   RETURN_TIME_TICKS = (1.1 * Settings.TPS) | 0,
+   WINDUP_TIME_TICKS = (1.5 * Settings.TICK_RATE) | 0,
+   SLAM_TIME_TICKS = (0.3 * Settings.TICK_RATE) | 0,
+   RETURN_TIME_TICKS = (1.1 * Settings.TICK_RATE) | 0,
 
    RESTING_LIMB_DIRECTION = UtilVars.PI * 0.5,
    SLAMMED_LIMB_DIRECTION = UtilVars.PI * 0.05,
@@ -62,7 +62,7 @@ export default class GuardianCrystalSlamAI {
             const directionOffsetMultiplier = (i - halfIRange) / halfIRange;
             const direction = bodyHitbox.box.angle + directionOffsetMultiplier * Vars.QUAKE_ARC_SIZE * 0.5;
    
-            const spawnDelayTicks = Math.round(offsetIdx * 0.05 * Settings.TPS);
+            const spawnDelayTicks = Math.round(offsetIdx * 0.05 * Settings.TICK_RATE);
             
             let x = originX + offset * Math.sin(direction);
             let y = originY + offset * Math.cos(direction);

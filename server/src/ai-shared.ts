@@ -12,7 +12,7 @@ import { Box, boxIsCircular } from "battletribes-shared/boxes/boxes";
 import { getEntityLayer, getEntityType } from "./world";
 import { addHitboxAngularAcceleration, applyAccelerationFromGround, getHitboxVelocity, Hitbox, turnHitboxToAngle } from "./hitboxes";
 
-const TURN_CONSTANT = Math.PI / Settings.TPS;
+const TURN_CONSTANT = Math.PI * Settings.DELTA_TIME;
 const WALL_AVOIDANCE_MULTIPLIER = 1.5;
    
 // @Cleanup: remove
@@ -587,9 +587,9 @@ export function turnAngle(angle: number, targetAngle: number, turnSpeed: number)
    const clockwiseDist = getClockwiseAngleDistance(angle, targetAngle);
    if (clockwiseDist < Math.PI) {
       // Turn clockwise
-      let result = angle + turnSpeed * Settings.I_TPS;
+      let result = angle + turnSpeed * Settings.DELTA_TIME;
       // @Incomplete: Will this sometimes cause snapping?
-      if (turnSpeed * Settings.I_TPS >= clockwiseDist) {
+      if (turnSpeed * Settings.DELTA_TIME >= clockwiseDist) {
          result = targetAngle;
       }
       return result;
@@ -597,8 +597,8 @@ export function turnAngle(angle: number, targetAngle: number, turnSpeed: number)
       const anticlockwiseDist = 2 * Math.PI - clockwiseDist;
       
       // Turn counterclockwise
-      let result = angle - turnSpeed * Settings.I_TPS;
-      if (turnSpeed * Settings.I_TPS >= anticlockwiseDist) {
+      let result = angle - turnSpeed * Settings.DELTA_TIME;
+      if (turnSpeed * Settings.DELTA_TIME >= anticlockwiseDist) {
          result = targetAngle;
       }
       return result;

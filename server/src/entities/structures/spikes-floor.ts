@@ -61,35 +61,3 @@ export function createFloorSpikesConfig(position: Point, rotation: number, tribe
       lights: []
    };
 }
-
-// @Cleanup: Copy and paste
-export function onSpikesCollision(spikes: Entity, collidingEntity: Entity, collisionPoint: Point): void {
-   // @Incomplete: Why is this condition neeeded? Shouldn't be able to be placed colliding with other structures anyway.
-   const collidingEntityType = getEntityType(collidingEntity);
-   if (collidingEntityType === EntityType.floorSpikes || collidingEntityType === EntityType.wallSpikes || collidingEntityType === EntityType.door || collidingEntityType === EntityType.wall) {
-      return;
-   }
-   
-   if (!HealthComponentArray.hasComponent(collidingEntity)) {
-      return;
-   }
-
-   // Don't collide with friendly entities if the spikes are covered
-   const spikesComponent = SpikesComponentArray.getComponent(spikes);
-   if (spikesComponent.isCovered && getEntityRelationship(spikes, collidingEntity) === EntityRelationship.friendly) {
-      return;
-   }
-
-   // Reveal
-   spikesComponent.isCovered = false;
-
-   const healthComponent = HealthComponentArray.getComponent(collidingEntity);
-   if (!canDamageEntity(healthComponent, "woodenSpikes")) {
-      return;
-   }
-   
-   // @Incomplete: Cause of death
-   // @INCOMPLETE
-   // hitEntity(collidingEntity, spikes, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
-   addLocalInvulnerabilityHash(collidingEntity, "woodenSpikes", 0.3);
-}

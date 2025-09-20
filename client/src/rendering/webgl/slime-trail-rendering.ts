@@ -97,7 +97,7 @@ const coatFromCircularBox = (layer: Layer, box: CircularBox): void => {
             const gamePixelIndex = getGamePixelIndex(gamePixelX, gamePixelY);
             
             const previousOpacity = layer.slimeTrailPixels.get(gamePixelIndex) || 0;
-            const newOpacity = Math.min(previousOpacity + Settings.I_TPS / Vars.SLIME_BUILD_TIME_SECONDS, 1);
+            const newOpacity = Math.min(previousOpacity + Settings.DELTA_TIME / Vars.SLIME_BUILD_TIME_SECONDS, 1);
             layer.slimeTrailPixels.set(gamePixelIndex, newOpacity);
          }
       }
@@ -168,7 +168,7 @@ export function updateSlimeTrails(): void {
          const numNeighbouring = getNumNeighbouringSlimePixels(layer, gamePixelIndex);
          const opacityDecreaseMultiplier = 1 - numNeighbouring / 5;
          
-         const newOpacity = opacity - 1 / Vars.SLIME_LAST_TIME_SECONDS * Settings.I_TPS * opacityDecreaseMultiplier;
+         const newOpacity = opacity - 1 / Vars.SLIME_LAST_TIME_SECONDS * Settings.DELTA_TIME * opacityDecreaseMultiplier;
          if (newOpacity <= 0) {
             layer.slimeTrailPixels.delete(gamePixelIndex);
          } else {

@@ -18,7 +18,7 @@ import { getDistanceToClosestEntity } from "../layer-utils";
 import { applyKnockback, Hitbox, addHitboxVelocity } from "../hitboxes";
 
 const enum Vars {
-   TICKS_TO_GROW = 1/5 * Settings.TPS,
+   TICKS_TO_GROW = 1/5 * Settings.TICK_RATE,
    GROWTH_TICK_CHANCE = 0.5,
    GROWTH_OFFSET = 60
 }
@@ -98,7 +98,7 @@ const grow = (iceSpikes: Entity): void => {
 
 function onTick(iceSpikes: Entity): void {
    const iceSpikesComponent = IceSpikesComponentArray.getComponent(iceSpikes);
-   if (canGrow(iceSpikesComponent) && Math.random() < Vars.GROWTH_TICK_CHANCE / Settings.TPS) {
+   if (canGrow(iceSpikesComponent) && Math.random() < Vars.GROWTH_TICK_CHANCE * Settings.DELTA_TIME) {
       iceSpikesComponent.iceSpikeGrowProgressTicks++;
       if (iceSpikesComponent.iceSpikeGrowProgressTicks >= Vars.TICKS_TO_GROW) {
          grow(iceSpikes);
@@ -175,7 +175,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
          addLocalInvulnerabilityHash(collidingEntity, "ice_spikes", 0.3);
    
          if (StatusEffectComponentArray.hasComponent(collidingEntity)) {
-            applyStatusEffect(collidingEntity, StatusEffect.freezing, 5 * Settings.TPS);
+            applyStatusEffect(collidingEntity, StatusEffect.freezing, 5 * Settings.TICK_RATE);
          }
       }
    }

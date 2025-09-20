@@ -436,7 +436,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    addLocalInvulnerabilityHash(collidingEntity, localInvulnerabilityHash, 0.3);
 
    if (StatusEffectComponentArray.hasComponent(collidingEntity)) {
-      applyStatusEffect(collidingEntity, StatusEffect.freezing, 3 * Settings.TPS);
+      applyStatusEffect(collidingEntity, StatusEffect.freezing, 3 * Settings.TICK_RATE);
    }
 
    // @HACK: should only work if the snobe is being led!!

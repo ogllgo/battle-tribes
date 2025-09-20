@@ -95,8 +95,8 @@ function onTick(fish: Entity): void {
    physicsComponent.overrideMoveSpeedMultiplier = tileType === TileType.water;
 
    if (tileType !== TileType.water) {
-      fishComponent.secondsOutOfWater += Settings.I_TPS;
-      if (fishComponent.secondsOutOfWater >= 5 && customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TPS, 1.5)) {
+      fishComponent.secondsOutOfWater += Settings.DELTA_TIME;
+      if (fishComponent.secondsOutOfWater >= 5 && customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TICK_RATE, 1.5)) {
          const hitPosition = getRandomPositionInEntity(transformComponent);
          damageEntity(fish, fishHitbox, null, 1, DamageSource.lackOfOxygen, AttackEffectiveness.effective, hitPosition, 0);
       }
@@ -164,7 +164,7 @@ function onTick(fish: Entity): void {
    
    // Flail on the ground when out of water
    if (tileType !== TileType.water) {
-      fishComponent.flailTimer += Settings.I_TPS;
+      fishComponent.flailTimer += Settings.DELTA_TIME;
       if (fishComponent.flailTimer >= 0.75) {
          const flailDirection = randAngle();
          

@@ -147,10 +147,10 @@ function onTick(glurbHead: Entity): void {
    const headHitbox = glurbHeadTransformComponent.hitboxes[0];
    
    const glurbHeadSegmentComponent = GlurbHeadSegmentComponentArray.getComponent(glurbHead);
-   glurbHeadSegmentComponent.food -= 1 / (Vars.STOMACH_EMPTY_TIME_SECONDS * Settings.TPS);
+   glurbHeadSegmentComponent.food -= 1 / (Vars.STOMACH_EMPTY_TIME_SECONDS * Settings.TICK_RATE);
    if (glurbHeadSegmentComponent.food < 0) {
       // @Temporary @Hack: glurbs are kinda shite right now at both spawning on moss and finding moss, so this is temp hack
-      // if (getEntityAgeTicks(glurbHead) % (Settings.TPS * 5) === 0) {
+      // if (getEntityAgeTicks(glurbHead) % (Settings.TICK_RATE * 5) === 0) {
       //    hitEntity(glurbHead, null, 1, DamageSource.arrow, AttackEffectiveness.effective, getRandomPositionInBox(headHitbox.box), 0);
       // }
       

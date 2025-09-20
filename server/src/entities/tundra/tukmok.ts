@@ -324,7 +324,7 @@ export function createTukmokConfig(position: Point, angle: number): ReadonlyArra
    // aiHelperComponent.ais[AIType.wander] = new WanderAI(400, 1 * Math.PI, 1, 0.35, wanderPositionIsValid);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(400, 1 * Math.PI, 1, 2, wanderPositionIsValid);
    
-   const attackingEntitiesComponent = new AttackingEntitiesComponent(12 * Settings.TPS);
+   const attackingEntitiesComponent = new AttackingEntitiesComponent(12 * Settings.TICK_RATE);
    
    const energyStomachComponent = new EnergyStomachComponent(800, 4, 5);
    

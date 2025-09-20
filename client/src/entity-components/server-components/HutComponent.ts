@@ -200,7 +200,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          renderInfo.attachRenderPart(hutComponent.recallMarker);
       }
 
-      let opacity = Math.sin(getEntityAgeTicks(entity) / Settings.TPS * 5) * 0.5 + 0.5;
+      let opacity = Math.sin(getEntityAgeTicks(entity) * Settings.DELTA_TIME * 5) * 0.5 + 0.5;
       opacity = lerp(0.3, 1, opacity);
       hutComponent.recallMarker.opacity = lerp(0.3, 0.8, opacity);
    } else {

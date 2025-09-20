@@ -36,12 +36,12 @@ export class OkrenCombatAI {
    }
 }
 
-const BOTH_SWING_COOLDOWN_TICKS = Math.floor(Settings.TPS * 0.7);
+const BOTH_SWING_COOLDOWN_TICKS = Math.floor(Settings.TICK_RATE * 0.7);
 
 const TONGUE_INITIAL_OFFSET = 88;
 // @Hack shouldn't export
-export const MIN_TONGUE_COOLDOWN_TICKS = 4 * Settings.TPS;
-export const MAX_TONGUE_COOLDOWN_TICKS = 5 * Settings.TPS;
+export const MIN_TONGUE_COOLDOWN_TICKS = 4 * Settings.TICK_RATE;
+export const MAX_TONGUE_COOLDOWN_TICKS = 5 * Settings.TICK_RATE;
 
 const entityIsThreatToDesert = (okren: Entity, entity: Entity): boolean => {
    // @Hack
@@ -164,7 +164,7 @@ export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperCompo
    // @Hack: override the ideal angle
    // Make the okren lean into the swings
    for (const side of OKREN_SIDES) {
-      if ((okrenComponent.swingStates[side] === OkrenSwingState.raising && okrenComponent.ticksInStates[side] > Math.floor(Settings.TPS * 0.25)) || (okrenComponent.swingStates[side] === OkrenSwingState.swinging && okrenComponent.ticksInStates[side] <= Math.floor(Settings.TPS * 0.15))) {
+      if ((okrenComponent.swingStates[side] === OkrenSwingState.raising && okrenComponent.ticksInStates[side] > Math.floor(Settings.TICK_RATE * 0.25)) || (okrenComponent.swingStates[side] === OkrenSwingState.swinging && okrenComponent.ticksInStates[side] <= Math.floor(Settings.TICK_RATE * 0.15))) {
          const targetDir = okrenHitbox.box.position.angleTo(targetHitbox.box.position);
          const idealAngle = targetDir + (side === OkrenSide.right ? -0.6 : 0.6);
 
@@ -206,7 +206,7 @@ export function runOkrenCombatAI(okren: Entity, aiHelperComponent: AIHelperCompo
    for (const side of OKREN_SIDES) {
       combatAI.okrenMandibleFlickCountdowns[side]--;
       if (combatAI.okrenMandibleFlickCountdowns[side] <= 0) {
-         combatAI.okrenMandibleFlickCountdowns[side] = Math.floor(randFloat(0.08, 0.2) * Settings.TPS);
+         combatAI.okrenMandibleFlickCountdowns[side] = Math.floor(randFloat(0.08, 0.2) * Settings.TICK_RATE);
          combatAI.okrenMandibleIsIns[side] = !combatAI.okrenMandibleIsIns[side];
       }
       

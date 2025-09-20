@@ -60,6 +60,11 @@ interface GameScreenProps {
    setAppState(appState: AppState): void;
 }
 
+// @CLEANUP @HACK only exists for a shit hack
+const cloneEmptyInventory = (inventory: Inventory): Inventory => {
+   return new Inventory(inventory.width, inventory.height, inventory.name);
+}
+
 const GameScreen = (props: GameScreenProps) => {
    const [settingsIsOpen, setSettingsIsOpen] = useState(false);
    const [isDead, setIsDead] = useState(false);
@@ -116,51 +121,64 @@ const GameScreen = (props: GameScreenProps) => {
 
    useEffect(() => {
       GameScreen_update = (): void => {
+         // @Copynpaste throughout all of this
+
+         let entityHotbar: Inventory | null;
+         let entityOffhand: Inventory | null;
+         let entityHeldItemSlot: Inventory | null;
+         let entityCraftingOutputSlot: Inventory | null;
+         let entityBackpack: Inventory | null;
+         let entityBackpackSlot: Inventory | null;
+         let entityArmourSlot: Inventory | null;
+         let entityGloveSlot: Inventory | null;
          if (playerInstance !== null) {
             const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
+            entityHotbar = getInventory(inventoryComponent, InventoryName.hotbar);
+            entityOffhand = getInventory(inventoryComponent, InventoryName.offhand);
+            entityHeldItemSlot = getInventory(inventoryComponent, InventoryName.heldItemSlot);
+            entityCraftingOutputSlot = getInventory(inventoryComponent, InventoryName.craftingOutputSlot);
+            entityBackpack = getInventory(inventoryComponent, InventoryName.backpack);
+            entityBackpackSlot = getInventory(inventoryComponent, InventoryName.backpackSlot);
+            entityArmourSlot = getInventory(inventoryComponent, InventoryName.armourSlot);
+            entityGloveSlot = getInventory(inventoryComponent, InventoryName.gloveSlot);
+         } else {
+            entityHotbar = cloneEmptyInventory(hotbar);
+            entityOffhand = cloneEmptyInventory(offhand);
+            entityHeldItemSlot = cloneEmptyInventory(heldItemSlot);
+            entityCraftingOutputSlot = cloneEmptyInventory(craftingOutputSlot);
+            entityBackpack = cloneEmptyInventory(backpack);
+            entityBackpackSlot = cloneEmptyInventory(backpackSlot);
+            entityArmourSlot = cloneEmptyInventory(armourSlot);
+            entityGloveSlot = cloneEmptyInventory(gloveSlot);
+         }
             
-            // @Copynpaste
-            
-            const entityHotbar = getInventory(inventoryComponent, InventoryName.hotbar);
-            if (entityHotbar !== null && inventoriesAreDifferent(hotbar, entityHotbar)) {
-               setHotbar(copyInventory(entityHotbar));
-            }
-            
-            const entityOffhand = getInventory(inventoryComponent, InventoryName.offhand);
-            if (entityOffhand !== null && inventoriesAreDifferent(offhand, entityOffhand)) {
-               setOffhand(copyInventory(entityOffhand));
-            }
-            
-            const entityHeldItemSlot = getInventory(inventoryComponent, InventoryName.heldItemSlot);
-            if (entityHeldItemSlot !== null && inventoriesAreDifferent(heldItemSlot, entityHeldItemSlot)) {
-               setHeldItemSlot(copyInventory(entityHeldItemSlot));
-            }
-            
-            const entityCraftingOutputSlot = getInventory(inventoryComponent, InventoryName.craftingOutputSlot);
-            if (entityCraftingOutputSlot !== null && inventoriesAreDifferent(craftingOutputSlot, entityCraftingOutputSlot)) {
-               setCraftingOutputSlot(copyInventory(entityCraftingOutputSlot));
-            }
+         if (entityHotbar !== null && inventoriesAreDifferent(hotbar, entityHotbar)) {
+            setHotbar(copyInventory(entityHotbar));
+         }
+         if (entityOffhand !== null && inventoriesAreDifferent(offhand, entityOffhand)) {
+            setOffhand(copyInventory(entityOffhand));
+         }
+         if (entityHeldItemSlot !== null && inventoriesAreDifferent(heldItemSlot, entityHeldItemSlot)) {
+            setHeldItemSlot(copyInventory(entityHeldItemSlot));
+         }
+         if (entityCraftingOutputSlot !== null && inventoriesAreDifferent(craftingOutputSlot, entityCraftingOutputSlot)) {
+            setCraftingOutputSlot(copyInventory(entityCraftingOutputSlot));
+         }
+         if (entityBackpack !== null && inventoriesAreDifferent(backpack, entityBackpack)) {
+            setBackpack(copyInventory(entityBackpack));
+         }
+         if (entityBackpackSlot !== null && inventoriesAreDifferent(backpackSlot, entityBackpackSlot)) {
+            setBackpackSlot(copyInventory(entityBackpackSlot));
+         }
+         if (entityArmourSlot !== null && inventoriesAreDifferent(armourSlot, entityArmourSlot)) {
+            setArmourSlot(copyInventory(entityArmourSlot));
+         }
+         if (entityGloveSlot !== null && inventoriesAreDifferent(gloveSlot, entityGloveSlot)) {
+            setGloveSlot(copyInventory(entityGloveSlot));
+         }
 
-            const entityBackpack = getInventory(inventoryComponent, InventoryName.backpack);
-            if (entityBackpack !== null && inventoriesAreDifferent(backpack, entityBackpack)) {
-               setBackpack(copyInventory(entityBackpack));
-            }
-
-            const entityBackpackSlot = getInventory(inventoryComponent, InventoryName.backpackSlot);
-            if (entityBackpackSlot !== null && inventoriesAreDifferent(backpackSlot, entityBackpackSlot)) {
-               setBackpackSlot(copyInventory(entityBackpackSlot));
-            }
-
-            const entityArmourSlot = getInventory(inventoryComponent, InventoryName.armourSlot);
-            if (entityArmourSlot !== null && inventoriesAreDifferent(armourSlot, entityArmourSlot)) {
-               setArmourSlot(copyInventory(entityArmourSlot));
-            }
-
-            const entityGloveSlot = getInventory(inventoryComponent, InventoryName.gloveSlot);
-            if (entityGloveSlot !== null && inventoriesAreDifferent(gloveSlot, entityGloveSlot)) {
-               setGloveSlot(copyInventory(entityGloveSlot));
-            }
-
+         // @Cleanup wtf is this why is this here
+         if (playerInstance !== null) {
             let canAscendLayer = false;
             if (getCurrentLayer() === undergroundLayer) {
                const transformComponent = TransformComponentArray.getComponent(playerInstance);

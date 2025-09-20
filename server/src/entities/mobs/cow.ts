@@ -169,9 +169,9 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
    const aiHelperComponent = new AIHelperComponent(headHitbox, 320, moveFunc, turnFunc);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, Math.PI, 0.4, 0.6, positionIsValidCallback)
    aiHelperComponent.ais[AIType.escape] = new EscapeAI(650, Math.PI, 0.4, 1);
-   aiHelperComponent.ais[AIType.follow] = new FollowAI(15 * Settings.TPS, 30 * Settings.TPS, 0.2, 60);
+   aiHelperComponent.ais[AIType.follow] = new FollowAI(15 * Settings.TICK_RATE, 30 * Settings.TICK_RATE, 0.2, 60);
    
-   const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TPS);
+   const attackingEntitiesComponent = new AttackingEntitiesComponent(5 * Settings.TICK_RATE);
    
    const rideableComponent = new RideableComponent();
    rideableComponent.carrySlots.push(createCarrySlot(bodyHitbox, new Point(0, -14), new Point(48, 0)));

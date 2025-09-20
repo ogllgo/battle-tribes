@@ -87,14 +87,14 @@ const layingIdealAngles: OkrenHitboxIdealAngles = {
    smallIdealAngle: -Math.PI * 0.65
 };
 
-const KRUMBLID_PEACE_TIME_TICKS = 5 * Settings.TPS;
+const KRUMBLID_PEACE_TIME_TICKS = 5 * Settings.TICK_RATE;
 
-const MIN_DUSTFLEA_GESTATION_TIME = 3 * Settings.TPS;
-const MAX_DUSTFLEA_GESTATION_TIME = 5 * Settings.TPS;
+const MIN_DUSTFLEA_GESTATION_TIME = 3 * Settings.TICK_RATE;
+const MAX_DUSTFLEA_GESTATION_TIME = 5 * Settings.TICK_RATE;
 
-const DUSTFLEA_EGG_LAY_TIME_TICKS = Settings.TPS;
+const DUSTFLEA_EGG_LAY_TIME_TICKS = Settings.TICK_RATE;
 
-const LIMB_REGROW_TIME = 60 * Settings.TPS;
+const LIMB_REGROW_TIME = 60 * Settings.TICK_RATE;
 
 export class OkrenComponent {
    public size: OkrenAgeStage;
@@ -449,7 +449,7 @@ function onTick(okren: Entity): void {
 
    // if (okrenComponent.numEggsReady >= 5 && !okrenComponent.isLayingEggs) {
    //    // Wait until the okren finds a good spot to lay eggs
-   //    if (getEntityAgeTicks(okren) % Math.floor(Settings.TPS / 4) === 0) {
+   //    if (getEntityAgeTicks(okren) % Math.floor(Settings.TICK_RATE / 4) === 0) {
    //       const potentialPosition = getRandomNearbyPosition(okren);
    //       if (isValidEggLayPosition(okren, potentialPosition)) {
    //          okrenComponent.eggLayPosition = potentialPosition;
@@ -544,7 +544,7 @@ function onTick(okren: Entity): void {
 
    if (okrenComponent.numEggsReady >= 5 && !okrenComponent.isLayingEggs) {
       // Wait until the okren finds a good spot to lay eggs
-      if (getEntityAgeTicks(okren) % Math.floor(Settings.TPS / 4) === 0) {
+      if (getEntityAgeTicks(okren) % Math.floor(Settings.TICK_RATE / 4) === 0) {
          const potentialPosition = getRandomNearbyPosition(okren);
          if (isValidEggLayPosition(okren, potentialPosition)) {
             okrenComponent.eggLayPosition = potentialPosition;

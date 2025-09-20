@@ -34,7 +34,7 @@ function onTick(projectile: Entity): void {
    const entityType = getEntityType(projectile);
    if (entityType !== EntityType.guardianSpikyBall && entityType !== EntityType.woodenArrow) {
       const ageTicks = getEntityAgeTicks(projectile);
-      if (ageTicks >= 1.5 * Settings.TPS) {
+      if (ageTicks >= 1.5 * Settings.TICK_RATE) {
          destroyEntity(projectile);
          return;
       }

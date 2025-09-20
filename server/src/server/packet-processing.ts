@@ -36,8 +36,6 @@ import { getTamingSkill, TamingSkillID, TamingTier } from "../../../shared/src/t
 import { getTamingSkillLearning, skillLearningIsComplete, TamingComponentArray } from "../components/TamingComponent";
 import { getTamingSpec } from "../taming-specs";
 import { getHitboxTile, getHitboxVelocity } from "../hitboxes";
-import Tribe from "../Tribe";
-import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
 import { FloorSignComponentArray } from "../components/FloorSignComponent";
 import { BLOCKING_LIMB_STATE, copyLimbState, SHIELD_BLOCKING_LIMB_STATE } from "../../../shared/src/attack-patterns";
 
@@ -326,20 +324,9 @@ export function processStopItemUsePacket(playerClient: PlayerClient): void {
    registerDirtyEntity(player);
 }
 
-// @TEMPORARY
-const dwarfTribe = new Tribe(TribeType.dwarves, true, new Point(0, 0));
-
 export function processItemDropPacket(playerClient: PlayerClient, reader: PacketReader): void {
    if (!entityExists(playerClient.instance)) {
       return;
-   }
-
-   if (playerClient.username.includes("Dragon")) {
-      const playerTransformComponent = TransformComponentArray.getComponent(playerClient.instance);
-      const playerHitbox = playerTransformComponent.hitboxes[0];
-      
-      const worker = createTribeWorkerConfig(playerHitbox.box.position.copy(), randAngle(), dwarfTribe);
-      createEntity(worker, undergroundLayer, 0);
    }
 
    const isOffhand = reader.readBoolean();

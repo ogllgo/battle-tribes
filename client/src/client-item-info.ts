@@ -335,15 +335,6 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       namePlural: "Gathering Gloves", 
       description: ""
    },
-   // @Incomplete
-   [ItemType.throngler]: {
-      entityTextureSource: "items/small/fishlord-suit.png",
-      textureSource: "items/large/fishlord-suit.png",
-      toolTextureSource: "items/large/fishlord-suit.png",
-      name: "The Throngler",
-      namePlural: "Thronglers", 
-      description: ""
-   },
    [ItemType.leather_armour]: {
       entityTextureSource: "items/small/leather-armour.png",
       textureSource: "items/large/leather-armour.png",
@@ -872,7 +863,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       entityTextureSource: "items/small/ivory-tusk.png",
       textureSource: "items/large/ivory-tusk.png",
       toolTextureSource: "items/misc/ivory-tusk.png",
-      name: "Timolothy's pocket quarter",
+      name: "Ivory Tusk",
       namePlural: "Ivory Tusk",
       description: ""
    },
@@ -880,7 +871,7 @@ const CLIENT_ITEM_INFO_RECORD: Record<ItemType, ClientItemInfo> = {
       entityTextureSource: "items/small/ivory-spear.png",
       textureSource: "items/large/ivory-spear.png",
       toolTextureSource: "items/misc/ivory-spear.png",
-      name: "Timolothy's pocket penny",
+      name: "Ivory Spear",
       namePlural: "Ivory Spear",
       description: ""
    },

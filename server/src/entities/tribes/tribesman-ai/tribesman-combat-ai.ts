@@ -24,7 +24,7 @@ import { BLOCKING_LIMB_STATE, copyLimbState, LimbState, QUIVER_PULL_LIMB_STATE, 
 import { AIHelperComponent, AIHelperComponentArray } from "../../../components/AIHelperComponent";
 
 const enum Vars {
-   BOW_LINE_OF_SIGHT_WAIT_TIME = 0.5 * Settings.TPS,
+   BOW_LINE_OF_SIGHT_WAIT_TIME = 0.5 * Settings.TICK_RATE,
    EMBRASURE_USE_RADIUS = 40,
    BATTLEAXE_MIN_USE_RANGE = 120,
    BATTLEAXE_IDEAL_USE_RANGE = 260,
@@ -60,7 +60,7 @@ export function doMeleeAttack(tribesman: Entity, itemSlot: number): void {
 const getItemAttackExecuteTimeSeconds = (item: Item): number => {
    const attackInfo = getItemAttackInfo(item.type);
    const timings = attackInfo.attackTimings;
-   return (timings.windupTimeTicks + timings.swingTimeTicks + timings.returnTimeTicks) / Settings.TPS;
+   return (timings.windupTimeTicks + timings.swingTimeTicks + timings.returnTimeTicks) * Settings.DELTA_TIME;
 }
 
 export function entityHasWeapon(tribesman: Entity): boolean {
@@ -303,7 +303,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
          }
          
          const ticksSinceLastAction = getGameTicks() - hotbarLimb.lastSpearChargeTicks;
-         if (ticksSinceLastAction >= 3 * Settings.TPS) {
+         if (ticksSinceLastAction >= 3 * Settings.TICK_RATE) {
             // Throw spear
             useItem(tribesman, selectedItem, InventoryName.hotbar, hotbarLimb.selectedItemSlot);
             setLimbActions(inventoryUseComponent, LimbAction.none);
@@ -483,7 +483,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
             }
 
             const ticksSinceLastAction = getGameTicks() - hotbarLimb.lastBattleaxeChargeTicks;
-            if (ticksSinceLastAction >= 3 * Settings.TPS) {
+            if (ticksSinceLastAction >= 3 * Settings.TICK_RATE) {
                // Throw the battleaxe
                useItem(tribesman, selectedItem, InventoryName.hotbar, mostDamagingItemSlot);
                setLimbActions(inventoryUseComponent, LimbAction.none);
@@ -560,7 +560,7 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
       // If there isn't a path to the entity, try to repair buildings
       // @Incomplete: This will cause a delay after the tribesman finishes repairing the building.
       const ageTicks = getEntityAgeTicks(tribesman);
-      if (ageTicks % (Settings.TPS / 2) === 0) {
+      if (ageTicks % (Settings.TICK_RATE / 2) === 0) {
          const pathExists = pathToEntityExists(tribesman, huntedEntity, getHumanoidRadius(transformComponent));
          if (!pathExists) {
             const isRepairing = attemptToRepairBuildings(tribesman, hammerItemSlot);

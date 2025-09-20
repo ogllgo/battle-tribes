@@ -36,14 +36,14 @@ const enum Vars {
    MEDIUM_ACCELERATION = 500,
    FAST_ACCELERATION = 1000,
    
-   MIN_GRAZE_COOLDOWN = 15 * Settings.TPS,
-   MAX_GRAZE_COOLDOWN = 30 * Settings.TPS,
-   MIN_POOP_PRODUCTION_COOLDOWN = 10 * Settings.TPS,
-   MAX_POOP_PRODUCTION_COOLDOWN = 90 * Settings.TPS,
-   GRAZE_TIME_TICKS = 2.5 * Settings.TPS,
+   MIN_GRAZE_COOLDOWN = 15 * Settings.TICK_RATE,
+   MAX_GRAZE_COOLDOWN = 30 * Settings.TICK_RATE,
+   MIN_POOP_PRODUCTION_COOLDOWN = 10 * Settings.TICK_RATE,
+   MAX_POOP_PRODUCTION_COOLDOWN = 90 * Settings.TICK_RATE,
+   GRAZE_TIME_TICKS = 2.5 * Settings.TICK_RATE,
    BERRY_FULLNESS_VALUE = 0.15,
    MIN_POOP_PRODUCTION_FULLNESS = 0.4,
-   BOWEL_EMPTY_TIME_TICKS = 30 * Settings.TPS,
+   BOWEL_EMPTY_TIME_TICKS = 30 * Settings.TICK_RATE,
    MAX_BERRY_CHASE_FULLNESS = 0.8,
    // @Hack
    TURN_SPEED = 3.14159265358979,
@@ -57,9 +57,9 @@ const enum Vars {
    HEAD_DIRECTION_LEEWAY = 0.3,
    HEAD_TURN_SPEED = 0.75 * UtilVars.PI,
 
-   RAM_COOLDOWN_TICKS = Settings.TPS * 2,
-   RAM_CHARGE_TICKS = Settings.TPS,
-   RAM_REST_TICKS = Settings.TPS * 0.6
+   RAM_COOLDOWN_TICKS = Settings.TICK_RATE * 2,
+   RAM_CHARGE_TICKS = Settings.TICK_RATE,
+   RAM_REST_TICKS = Settings.TICK_RATE * 0.6
 }
 
 export class CowComponent {
@@ -353,7 +353,7 @@ function onTick(cow: Entity): void {
       const tamingComponent = TamingComponentArray.getComponent(cow);
       if (tamingComponent.name !== "27") {
          // @Temporary: cuz shouldn't it use the energy system now?????
-         if (cowComponent.bowelFullness === 0 && (getEntityAgeTicks(cow) + cow) % (2 * Settings.TPS) === 0) {
+         if (cowComponent.bowelFullness === 0 && (getEntityAgeTicks(cow) + cow) % (2 * Settings.TICK_RATE) === 0) {
             damageEntity(cow, cowBodyHitbox, null, 1, 0, AttackEffectiveness.effective, cowBodyHitbox.box.position.copy(), 0);
          }
       }
@@ -395,7 +395,7 @@ function onTick(cow: Entity): void {
       
       aiHelperComponent.moveFunc(cow, targetHitbox.box.position, Vars.SLOWMEDIUM_ACCELERATION);
       aiHelperComponent.turnFunc(cow, targetHitbox.box.position, Math.PI, 0.4);
-      if (getEntityAgeTicks(cow) % Settings.TPS === 0) {
+      if (getEntityAgeTicks(cow) % Settings.TICK_RATE === 0) {
          addSkillLearningProgress(tamingComponent, TamingSkillID.move, 1);
       }
       return;
@@ -499,7 +499,7 @@ function onTick(cow: Entity): void {
 
    // Graze dirt to recover health
    if (cowComponent.bowelFullness < 0.3) {
-      if (!entityExists(cowComponent.targetGrass) || (getEntityAgeTicks(cow) + cow * 2) % (Settings.TPS * 2) === 0) {
+      if (!entityExists(cowComponent.targetGrass) || (getEntityAgeTicks(cow) + cow * 2) % (Settings.TICK_RATE * 2) === 0) {
          const target = getTargetGrass(cow);
          if (target !== null) {
             cowComponent.targetGrass = target;
@@ -583,7 +583,7 @@ function onTick(cow: Entity): void {
             const testEntities = getEntitiesAtPosition(layer, eatPositionX, eatPositionY);
             if (testEntities.indexOf(cowComponent.targetBushID) !== -1) {
                cowComponent.bushShakeTimer++;
-               if (cowComponent.bushShakeTimer >= 1.5 * Settings.TPS) {
+               if (cowComponent.bushShakeTimer >= 1.5 * Settings.TICK_RATE) {
                   const hitPosition = new Point(eatPositionX, eatPositionY);
                   hitEntityWithoutDamage(cowComponent.targetBushID, targetHitbox, cow, hitPosition);
                   cowComponent.bushShakeTimer = 0;
@@ -701,7 +701,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    if (getHitboxVelocity(hitbox).magnitude() <= 100) {
       // If the cow is being blocked, stop the ram
       const ticksSinceRamStart = getGameTicks() - cowComponent.ramStartTicks;
-      if (ticksSinceRamStart >= 1 * Settings.TPS) {
+      if (ticksSinceRamStart >= 1 * Settings.TICK_RATE) {
          stopRamming(cowComponent);
       }
       return;

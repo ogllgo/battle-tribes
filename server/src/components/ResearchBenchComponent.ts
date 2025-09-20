@@ -17,7 +17,7 @@ import { getEntityType, getGameTicks } from "../world";
 import { hasTitle, awardTitle } from "./TribesmanComponent";
 import { Hitbox } from "../hitboxes";
 
-const ORB_COMPLETE_TICKS = Math.floor(RESEARCH_ORB_COMPLETE_TIME * Settings.TPS);
+const ORB_COMPLETE_TICKS = Math.floor(RESEARCH_ORB_COMPLETE_TIME * Settings.TICK_RATE);
 
 export class ResearchBenchComponent {
    public isOccupied = false;
@@ -133,7 +133,7 @@ export function continueResearching(researchBench: Entity, researcher: Entity, t
       useInfo.lastAttackTicks = getGameTicks();
    }
 
-   if (TribeMemberComponentArray.hasComponent(researcher) && Math.random() < TITLE_REWARD_CHANCES.SHREWD_REWARD_CHANCE / Settings.TPS) {
+   if (TribeMemberComponentArray.hasComponent(researcher) && Math.random() < TITLE_REWARD_CHANCES.SHREWD_REWARD_CHANCE * Settings.DELTA_TIME) {
       awardTitle(researcher, TribesmanTitle.shrewd);
    }
 }
