@@ -13,7 +13,6 @@ import { EntityConfig, LightCreationInfo } from "../../components";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { getGuardianLimbOrbitRadius, GuardianComponent, GuardianComponentArray } from "../../components/GuardianComponent";
 import { HealthComponent } from "../../components/HealthComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import Layer from "../../Layer";
@@ -42,8 +41,6 @@ export function createGuardianConfig(position: Point, rotation: number, homeTile
       const hitbox = new Hitbox(transformComponent, headHitbox, true, new CircularBox(new Point(0, 0), new Point(limbOrbitRadius * (i === 0 ? 1 : -1), 0), 0, 14), 0.7, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.GUARDIAN_LIMB_HITBOX, HitboxFlag.IGNORES_WALL_COLLISIONS]);
       addHitboxToTransformComponent(transformComponent, hitbox);
    }
-   
-   const physicsComponent = new PhysicsComponent();
    
    const healthComponent = new HealthComponent(60);
    
@@ -336,7 +333,6 @@ export function createGuardianConfig(position: Point, rotation: number, homeTile
       entityType: EntityType.guardian,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,

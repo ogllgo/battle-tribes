@@ -353,7 +353,6 @@ export function sortComponentArrays(): void {
       [ServerComponentType.fence]: ComponentArrayPriority.medium,
       [ServerComponentType.fenceGate]: ComponentArrayPriority.medium,
       [ServerComponentType.craftingStation]: ComponentArrayPriority.medium,
-      [ServerComponentType.transform]: ComponentArrayPriority.medium,
       [ServerComponentType.projectile]: ComponentArrayPriority.medium,
       [ServerComponentType.iceArrow]: ComponentArrayPriority.medium,
       [ServerComponentType.layeredRod]: ComponentArrayPriority.medium,
@@ -432,8 +431,8 @@ export function sortComponentArrays(): void {
       [ServerComponentType.inguYetuksnoglurblidokowfleaSeekerHead]: ComponentArrayPriority.medium,
       [ServerComponentType.inguYetukLaser]: ComponentArrayPriority.medium,
       [ServerComponentType.health]: ComponentArrayPriority.high,
-      // The physics component ticking must be done at the end so there is time for the positionIsDirty and hitboxesAreDirty flags to collect
-      [ServerComponentType.physics]: ComponentArrayPriority.high
+      // The transform component ticking must be done at the end so there is time for the positionIsDirty and hitboxesAreDirty flags to collect
+      [ServerComponentType.transform]: ComponentArrayPriority.high
    };
 
    for (let i = 0; i < ComponentArrays.length - 1; i++) {

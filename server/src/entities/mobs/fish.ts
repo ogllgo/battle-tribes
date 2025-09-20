@@ -13,7 +13,6 @@ import { TileType } from "battletribes-shared/tiles";
 import Layer from "../../Layer";
 import { Settings } from "battletribes-shared/settings";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { EscapeAI } from "../../ai/EscapeAI";
 import { Biome } from "../../../../shared/src/biomes";
@@ -132,8 +131,6 @@ export function createFishConfig(position: Point, rotation: number, colour: Fish
    const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 28, 56), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-
    const healthComponent = new HealthComponent(5);
 
    const statusEffectComponent = new StatusEffectComponent(0);
@@ -152,7 +149,6 @@ export function createFishConfig(position: Point, rotation: number, colour: Fish
       entityType: EntityType.fish,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,

@@ -8,7 +8,6 @@ import { Point, randInt } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { TreeRootBaseComponent } from "../../components/TreeRootBaseComponent";
@@ -26,8 +25,6 @@ export function createTreeRootBaseConfig(position: Point, rotation: number): Ent
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(15);
 
    const statusEffectComponent = new StatusEffectComponent(0);
@@ -40,7 +37,6 @@ export function createTreeRootBaseConfig(position: Point, rotation: number): Ent
       entityType: EntityType.treeRootBase,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.loot]: lootComponent,

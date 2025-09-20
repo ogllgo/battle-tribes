@@ -9,11 +9,10 @@ import { MIN_TONGUE_COOLDOWN_TICKS, MAX_TONGUE_COOLDOWN_TICKS } from "../ai/Okre
 import { addHitboxVelocity, applyAcceleration, getHitboxTotalMassIncludingChildren, Hitbox, HitboxAngularTether, turnHitboxToAngle } from "../hitboxes";
 import { registerEntityTickEvent } from "../server/player-clients";
 import { destroyTether, tetherHitboxes } from "../tethers";
-import { destroyEntity, entityExists, getEntityAgeTicks, getEntityType } from "../world";
+import { entityExists, getEntityAgeTicks, getEntityType } from "../world";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray } from "./HealthComponent";
-import { PhysicsComponentArray } from "./PhysicsComponent";
 import { addHitboxToEntity, TransformComponent, TransformComponentArray } from "./TransformComponent";
 
 export class OkrenTongueComponent {

@@ -6,7 +6,6 @@ import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { Entity } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import Chunk from "./Chunk";
-import { PhysicsComponentArray } from "./entity-components/server-components/PhysicsComponent";
 import { getEntityLayer } from "./world";
 import Layer from "./Layer";
 import { getComponentArrays } from "./entity-components/ComponentArray";
@@ -62,8 +61,8 @@ const resolveSoftCollision = (entity: Entity, affectedHitbox: Hitbox, pushingHit
 }
 
 export function collide(entity: Entity, collidingEntity: Entity, pushedHitbox: Hitbox, pushingHitbox: Hitbox, collisionResult: CollisionResult, isPushed: boolean): void {
+   // @INCOMPLETE: i've removed the "PhysicsComponentArray.hasComponent(entity)" check from here. Do I now need to replace it with a !hitbox.isStatic check?
    if (isPushed) {
-      // @INCOMPLETE: i've removed the "PhysicsComponentArray.hasComponent(entity)" check from here. Do I now need to replace it with a !hitbox.isStatic check?
       if (pushingHitbox.collisionType === HitboxCollisionType.hard) {
          resolveHardCollision(pushedHitbox, collisionResult);
       } else {

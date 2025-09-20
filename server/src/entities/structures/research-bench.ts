@@ -16,7 +16,6 @@ import { Hitbox } from "../../hitboxes";
 import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../../shared/src/collision";
 import { StructureConnection } from "../../structure-placement";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 export function createResearchBenchConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent();
@@ -26,8 +25,6 @@ export function createResearchBenchConfig(position: Point, rotation: number, tri
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(40);
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
@@ -42,7 +39,6 @@ export function createResearchBenchConfig(position: Point, rotation: number, tri
       entityType: EntityType.researchBench,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,

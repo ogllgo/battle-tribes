@@ -17,7 +17,6 @@ import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/col
 import { Hitbox } from "../../hitboxes";
 import { StructureConnection } from "../../structure-placement";
 import { createNormalisedPivotPoint } from "../../../../shared/src/boxes/BaseBox";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 export function createFenceGateConfig(position: Point, angle: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent();
@@ -42,8 +41,6 @@ export function createFenceGateConfig(position: Point, angle: number, tribe: Tri
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(5);
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
@@ -58,7 +55,6 @@ export function createFenceGateConfig(position: Point, angle: number, tribe: Tri
       entityType: EntityType.fenceGate,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,

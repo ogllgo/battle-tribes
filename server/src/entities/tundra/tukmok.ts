@@ -18,7 +18,6 @@ import { AttackingEntitiesComponent } from "../../components/AttackingEntitiesCo
 import { EnergyStomachComponent } from "../../components/EnergyStomachComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { createCarrySlot, RideableComponent } from "../../components/RideableComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { TamingComponent } from "../../components/TamingComponent";
@@ -313,8 +312,6 @@ export function createTukmokConfig(position: Point, angle: number): ReadonlyArra
       lastHitbox = hitbox;
    }
 
-   const physicsComponent = new PhysicsComponent();
-
    const healthComponent = new HealthComponent(250);
    
    const statusEffectComponent = new StatusEffectComponent(0);
@@ -346,7 +343,6 @@ export function createTukmokConfig(position: Point, angle: number): ReadonlyArra
       entityType: EntityType.tukmok,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,

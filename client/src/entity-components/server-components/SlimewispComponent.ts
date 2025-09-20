@@ -4,10 +4,8 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
 import { createSlimePoolParticle, createSlimeSpeckParticle } from "../../particles";
-import { getHitboxTile, TransformComponentArray } from "./TransformComponent";
-import { TileType } from "../../../../shared/src/tiles";
-import { EntityParams, getEntityLayer } from "../../world";
-import { PhysicsComponentArray, resetIgnoredTileSpeedMultipliers } from "./PhysicsComponent";
+import { TransformComponentArray } from "./TransformComponent";
+import { EntityParams } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
@@ -19,15 +17,11 @@ export interface SlimewispComponent {}
 
 const RADIUS = 16;
 
-// @Cleanup @Memory: Same as slime's
-const IGNORED_TILE_SPEED_MULTIPLIERS = [TileType.slime];
-
 export const SlimewispComponentArray = new ServerComponentArray<SlimewispComponent, SlimewispComponentParams, IntermediateInfo>(ServerComponentType.slimewisp, true, {
    createParamsFromData: createParamsFromData,
    populateIntermediateInfo: populateIntermediateInfo,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
    padData: padData,
    updateFromData: updateFromData,
    onHit: onHit,
@@ -60,22 +54,6 @@ function createComponent(): SlimewispComponent {
 
 function getMaxRenderParts(): number {
    return 1;
-}
-
-function onTick(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const hitbox = transformComponent.hitboxes[0];
-   
-   const layer = getEntityLayer(entity);
-
-   // Slimes move at normal speed on slime tiles
-   const tile = getHitboxTile(layer, hitbox);
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
-   if (tile.type === TileType.slime) {
-      physicsComponent.ignoredTileSpeedMultipliers = IGNORED_TILE_SPEED_MULTIPLIERS;
-   } else {
-      resetIgnoredTileSpeedMultipliers(physicsComponent);
-   }
 }
 
 function padData(): void {}

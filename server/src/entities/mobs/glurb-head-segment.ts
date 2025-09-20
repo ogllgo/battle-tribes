@@ -14,7 +14,6 @@ import { GlurbHeadSegmentComponent, GlurbHeadSegmentComponentArray } from "../..
 import { GlurbSegmentComponent } from "../../components/GlurbSegmentComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../hitboxes";
 import Layer from "../../Layer";
@@ -117,8 +116,6 @@ export function createGlurbHeadSegmentConfig(position: Point, rotation: number, 
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 24), 0.6, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-
    const healthComponent = new HealthComponent(5);
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.burning);
@@ -147,7 +144,6 @@ export function createGlurbHeadSegmentConfig(position: Point, rotation: number, 
       entityType: EntityType.glurbHeadSegment,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,

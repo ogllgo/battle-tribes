@@ -13,7 +13,6 @@ import { VirtualStructure } from "../tribesman-ai/building-plans/TribeBuildingLa
 import { Point } from "../../../shared/src/utils";
 import { cloneHitbox } from "../hitboxes";
 import { createStructureConfig, StructureConnection } from "../structure-placement";
-import { PhysicsComponent } from "../components/PhysicsComponent";
 
 // @Incomplete: Remove if the associated entity is removed
 
@@ -69,8 +68,6 @@ export function createBlueprintEntityConfig(position: Point, rotation: number, t
       }
    }
 
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(5);
    
    const structureComponent = new StructureComponent(connections, virtualStructure);
@@ -83,7 +80,6 @@ export function createBlueprintEntityConfig(position: Point, rotation: number, t
       entityType: EntityType.blueprintEntity,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.structure]: structureComponent,
          [ServerComponentType.blueprint]: blueprintComponent,

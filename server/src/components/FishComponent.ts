@@ -7,12 +7,11 @@ import { InventoryName, ItemType } from "battletribes-shared/items/items";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
 import { customTickIntervalHasPassed, Point, polarVec2, randAngle, randFloat, randSign, UtilVars } from "battletribes-shared/utils";
-import { runHerdAI, moveEntityToPosition } from "../ai-shared";
+import { runHerdAI } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { runEscapeAI } from "../ai/EscapeAI";
 import { damageEntity, HealthComponentArray, canDamageEntity, addLocalInvulnerabilityHash } from "./HealthComponent";
 import { InventoryComponentArray, hasInventory, getInventory } from "./InventoryComponent";
-import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray, getRandomPositionInEntity } from "./TransformComponent";
 import { entityExists, getEntityLayer, getEntityType } from "../world";
 import { TribesmanComponentArray } from "./TribesmanComponent";
@@ -85,14 +84,13 @@ function onTick(fish: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(fish);
    const fishHitbox = transformComponent.hitboxes[0];
    
-   const physicsComponent = PhysicsComponentArray.getComponent(fish);
    const fishComponent = FishComponentArray.getComponent(fish);
 
    const tileIndex = getHitboxTile(fishHitbox);
    const layer = getEntityLayer(fish)
    const tileType = layer.tileTypes[tileIndex];
 
-   physicsComponent.overrideMoveSpeedMultiplier = tileType === TileType.water;
+   transformComponent.overrideMoveSpeedMultiplier = tileType === TileType.water;
 
    if (tileType !== TileType.water) {
       fishComponent.secondsOutOfWater += Settings.DELTA_TIME;

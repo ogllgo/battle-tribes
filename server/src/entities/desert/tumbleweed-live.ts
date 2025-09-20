@@ -7,7 +7,6 @@ import { StatusEffect } from "../../../../shared/src/status-effects";
 import { Point } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { TumbleweedLiveComponent } from "../../components/TumbleweedLiveComponent";
@@ -20,8 +19,6 @@ export function createTumbleweedLiveConfig(position: Point, angle: number): Enti
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
-   const physicsComponent = new PhysicsComponent();
-
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);
 
    const healthComponent = new HealthComponent(2);
@@ -32,7 +29,6 @@ export function createTumbleweedLiveConfig(position: Point, angle: number): Enti
       entityType: EntityType.tumbleweedLive,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.tumbleweedLive]: tumbleweedLiveComponent

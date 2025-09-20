@@ -1,6 +1,5 @@
 import { RiverSteppingStoneData } from "battletribes-shared/client-server-types";
 import { Entity, EntityType } from "battletribes-shared/entities";
-import { PhysicsComponentArray } from "./entity-components/server-components/PhysicsComponent";
 import { getEntityType } from "./world";
 
 class Chunk {

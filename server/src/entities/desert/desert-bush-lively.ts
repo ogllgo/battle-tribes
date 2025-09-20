@@ -9,7 +9,6 @@ import { EntityConfig } from "../../components";
 import { DesertBushLivelyComponent } from "../../components/DesertBushLivelyComponent";
 import { EnergyStoreComponent } from "../../components/EnergyStoreComponent";
 import { HealthComponent } from "../../components/HealthComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { Hitbox } from "../../hitboxes";
@@ -20,8 +19,6 @@ export function createDesertBushLivelyConfig(position: Point, angle: number): En
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), angle, 24), 1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
-
-   const physicsComponent = new PhysicsComponent();
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);
 
@@ -35,7 +32,6 @@ export function createDesertBushLivelyConfig(position: Point, angle: number): En
       entityType: EntityType.desertBushLively,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.energyStore]: energyStoreComponent,

@@ -10,7 +10,6 @@ import { turnAngle, getEntitiesInRange, moveEntityToPosition } from "../ai-share
 import { createSlimeSpitConfig } from "../entities/projectiles/slime-spit";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity, getEntityHealth, healEntity } from "./HealthComponent";
-import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { createEntity, destroyEntity, entityExists, entityIsFlaggedForDestruction, getEntityLayer, getEntityType, getGameTicks, tickIntervalHasPassed } from "../world";
 import { Biome } from "../../../shared/src/biomes";
@@ -219,8 +218,7 @@ function onTick(slime: Entity): void {
    const tileType = layer.getTileType(tileIndex);
    
    // Slimes move at normal speed on slime and sludge blocks
-   const physicsComponent = PhysicsComponentArray.getComponent(slime);
-   physicsComponent.overrideMoveSpeedMultiplier = tileType === TileType.slime || tileType === TileType.sludge;
+   transformComponent.overrideMoveSpeedMultiplier = tileType === TileType.slime || tileType === TileType.sludge;
 
    // Heal when standing on slime blocks
    if (tileType === TileType.slime) {

@@ -14,7 +14,6 @@ import { IceSpikesPlantedComponent, plantedIceSpikesIsFullyGrown } from "../../c
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
 import { Hitbox } from "../../hitboxes";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 registerEntityLootOnDeath(EntityType.iceSpikesPlanted, {
    itemType: ItemType.frostcicle,
@@ -30,8 +29,6 @@ export function createIceSpikesPlantedConfig(position: Point, rotation: number, 
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionBit = CollisionBit.plants;
 
-   const physicsComponent = new PhysicsComponent();
-
    const healthComponent = new HealthComponent(5);
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);
@@ -46,7 +43,6 @@ export function createIceSpikesPlantedConfig(position: Point, rotation: number, 
       entityType: EntityType.iceSpikesPlanted,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.planted]: plantedComponent,

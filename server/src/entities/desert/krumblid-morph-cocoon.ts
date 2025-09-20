@@ -7,7 +7,6 @@ import { Point } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { KrumblidMorphCocoonComponent } from "../../components/KrumblidMorphCocoonComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { Hitbox } from "../../hitboxes";
@@ -20,8 +19,6 @@ export function createKrumblidMorphCocoonConfig(position: Point, angle: number, 
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-   
    const statusEffectComponent = new StatusEffectComponent(0);
 
    const healthComponent = new HealthComponent(20);
@@ -32,7 +29,6 @@ export function createKrumblidMorphCocoonConfig(position: Point, angle: number, 
       entityType: EntityType.krumblidMorphCocoon,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.krumblidMorphCocoon]: krumblidMorphCocoonComponent,

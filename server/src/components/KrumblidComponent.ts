@@ -10,7 +10,6 @@ import { TransformComponentArray } from "./TransformComponent";
 import { destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType, ticksToGameHours } from "../world";
 import { applyAccelerationFromGround, getHitboxTile, turnHitboxToAngle } from "../hitboxes";
 import { HealthComponentArray } from "./HealthComponent";
-import { PhysicsComponentArray } from "./PhysicsComponent";
 import { Biome } from "../../../shared/src/biomes";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
 import { addHungerEnergy, getEntityFullness } from "./EnergyStomachComponent";

@@ -5,7 +5,6 @@ import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { TILE_PHYSICS_INFO_RECORD, TileType } from "../../shared/src/tiles";
 import { getAngleDiff, getTileIndexIncludingEdges, Point, polarVec2, TileIndex } from "../../shared/src/utils";
-import { PhysicsComponentArray } from "./components/PhysicsComponent";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { registerPlayerKnockback } from "./server/player-clients";
 import { HitboxTether } from "./tethers";
@@ -231,21 +230,21 @@ export function applyForce(hitbox: Hitbox, force: Point): void {
 // @Cleanup: Passing in hitbox really isn't the best, ideally hitbox should self-contain all the necessary info... but is that really good? + memory efficient?
 export function applyAccelerationFromGround(hitbox: Hitbox, acceleration: Point): void {
    const entity = hitbox.entity;
-   
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
 
    const tileIndex = getHitboxTile(hitbox);
    const tileType = getEntityLayer(entity).getTileType(tileIndex);
    const tilePhysicsInfo = TILE_PHYSICS_INFO_RECORD[tileType];
    
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   
    // @Speed: very complicated logic
    let moveSpeedMultiplier: number;
-   if (physicsComponent.overrideMoveSpeedMultiplier || !physicsComponent.isAffectedByGroundFriction) {
+   if (transformComponent.overrideMoveSpeedMultiplier || !transformComponent.isAffectedByGroundFriction) {
       moveSpeedMultiplier = 1;
    } else if (tileType === TileType.water && !hitboxIsInRiver(hitbox)) {
-      moveSpeedMultiplier = physicsComponent.moveSpeedMultiplier;
+      moveSpeedMultiplier = transformComponent.moveSpeedMultiplier;
    } else {
-      moveSpeedMultiplier = tilePhysicsInfo.moveSpeedMultiplier * physicsComponent.moveSpeedMultiplier;
+      moveSpeedMultiplier = tilePhysicsInfo.moveSpeedMultiplier * transformComponent.moveSpeedMultiplier;
    }
 
    // Calculate the desired velocity based on acceleration
@@ -255,7 +254,7 @@ export function applyAccelerationFromGround(hitbox: Hitbox, acceleration: Point)
 
    const currentVelocity = getHitboxVelocity(hitbox);
 
-   applyAcceleration(hitbox, new Point((desiredVelocityX - currentVelocity.x) * physicsComponent.traction, (desiredVelocityY - currentVelocity.y) * physicsComponent.traction));
+   applyAcceleration(hitbox, new Point((desiredVelocityX - currentVelocity.x) * transformComponent.traction, (desiredVelocityY - currentVelocity.y) * transformComponent.traction));
 }
 
 /** Makes the hitboxes' angle be that as specified, by only changing its relative angle */
@@ -348,14 +347,13 @@ export function hitboxIsInRiver(hitbox: Hitbox): boolean {
       return false;
    }
 
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
-   if (!physicsComponent.isAffectedByGroundFriction) {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   if (!transformComponent.isAffectedByGroundFriction) {
       return false;
    }
 
    // If the entity is standing on a stepping stone they aren't in a river
    // @Speed: we only need to check the chunks the hitbox is in
-   const transformComponent = TransformComponentArray.getComponent(entity);
    for (const chunk of transformComponent.chunks) {
       for (const steppingStone of chunk.riverSteppingStones) {
          const size = RIVER_STEPPING_STONE_SIZES[steppingStone.size];

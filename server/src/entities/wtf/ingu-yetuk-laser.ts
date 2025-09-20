@@ -6,7 +6,6 @@ import { EntityType } from "../../../../shared/src/entities";
 import { Point } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { InguYetukLaserComponent } from "../../components/InguYetukLaserComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { Hitbox } from "../../hitboxes";
@@ -17,8 +16,6 @@ export function createInguYetukLaserConfig(position: Point, angle: number): Enti
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), angle, 12), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
    addHitboxToTransformComponent(transformComponent, hitbox);
    
-   const physicsComponent = new PhysicsComponent();
-
    const statusEffectComponent = new StatusEffectComponent(0);
 
    const inguYetukLaserComponent = new InguYetukLaserComponent();
@@ -27,7 +24,6 @@ export function createInguYetukLaserConfig(position: Point, angle: number): Enti
       entityType: EntityType.inguYetukLaser,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.inguYetukLaser]: inguYetukLaserComponent
       },

@@ -8,7 +8,6 @@ import { Point } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { EnergyStoreComponent } from "../../components/EnergyStoreComponent";
 import { HealthComponent } from "../../components/HealthComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { PricklyPearComponent } from "../../components/PricklyPearComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
@@ -19,8 +18,6 @@ export function createPricklyPearConfig(position: Point, offset: Point, angle: n
 
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, offset, angle, 10), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
-   
-   const physicsComponent = new PhysicsComponent();
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);
    
@@ -34,7 +31,6 @@ export function createPricklyPearConfig(position: Point, offset: Point, angle: n
       entityType: EntityType.pricklyPear,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.energyStore]: energyStoreComponent,

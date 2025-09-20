@@ -8,7 +8,6 @@ import { Point } from "../../../shared/src/utils";
 import { createEntityConfigAttachInfo, EntityConfig } from "../components";
 import { BlockAttackComponent } from "../components/BlockAttackComponent";
 import { getHeldItem, LimbInfo } from "../components/InventoryUseComponent";
-import { PhysicsComponent } from "../components/PhysicsComponent";
 import { setHitboxToLimbState } from "../components/SwingAttackComponent";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { Hitbox } from "../hitboxes";
@@ -32,8 +31,6 @@ export function createBlockAttackConfig(owner: Entity, limb: LimbInfo): EntityCo
    // @hack ? Should probably set all hitbox positions when they are added from the join buffer.
    updateBox(hitbox.box, ownerHitbox.box);
    
-   const physicsComponent = new PhysicsComponent();
-
    const blockType = heldItem !== null && ITEM_TYPE_RECORD[heldItem.type] === "shield" ? BlockType.shieldBlock : BlockType.toolBlock;
    const blockAttackComponent = new BlockAttackComponent(owner, limb, blockType);
 
@@ -41,7 +38,6 @@ export function createBlockAttackConfig(owner: Entity, limb: LimbInfo): EntityCo
       entityType: EntityType.blockAttack,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.blockAttack]: blockAttackComponent
       },
       lights: [],

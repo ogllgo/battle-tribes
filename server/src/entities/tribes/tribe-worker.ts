@@ -13,7 +13,6 @@ import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { InventoryComponent } from "../../components/InventoryComponent";
 import { InventoryUseComponent } from "../../components/InventoryUseComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { TribeMemberComponent } from "../../components/TribeMemberComponent";
@@ -49,11 +48,11 @@ const getHitboxRadius = (tribeType: TribeType): number => {
 export function createTribeWorkerConfig(position: Point, rotation: number, tribe: Tribe): EntityConfig {
    const transformComponent = new TransformComponent();
 
+   transformComponent.traction = 1.4;
+
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, getHitboxRadius(tribe.tribeType)), 1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
-   const physicsComponent = new PhysicsComponent();
-   physicsComponent.traction = 1.4;
 
    const tribeInfo = TRIBE_INFO_RECORD[tribe.tribeType];
    // @SQUEAM
@@ -84,7 +83,6 @@ export function createTribeWorkerConfig(position: Point, rotation: number, tribe
       entityType: EntityType.tribeWorker,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.tribe]: tribeComponent,

@@ -7,7 +7,6 @@ import { ItemType } from "battletribes-shared/items/items";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { addHitboxToTransformComponent, TransformComponent } from "../components/TransformComponent";
-import { PhysicsComponent } from "../components/PhysicsComponent";
 import { FleshSwordItemComponent } from "../components/FleshSwordItemComponent";
 import { AIHelperComponent } from "../components/AIHelperComponent";
 import { Hitbox } from "../hitboxes";
@@ -27,8 +26,6 @@ export function createFleshSwordItemEntityConfig(position: Point, rotation: numb
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionMask = DEFAULT_COLLISION_MASK & ~CollisionBit.planterBox;
    
-   const physicsComponent = new PhysicsComponent();
-
    const itemComponent = new ItemComponent(itemType, amount, throwingEntity);
 
    const aiHelperComponent = new AIHelperComponent(hitbox, 250, moveFunc, turnFunc);
@@ -39,7 +36,6 @@ export function createFleshSwordItemEntityConfig(position: Point, rotation: numb
       entityType: EntityType.fleshSwordItemEntity,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.item]: itemComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
          [ServerComponentType.fleshSwordItem]: fleshSwordItemComponent

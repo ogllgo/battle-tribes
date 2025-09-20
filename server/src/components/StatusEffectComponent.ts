@@ -4,7 +4,6 @@ import { StatusEffect, STATUS_EFFECT_MODIFIERS } from "battletribes-shared/statu
 import { customTickIntervalHasPassed } from "battletribes-shared/utils";
 import { ComponentArray } from "./ComponentArray";
 import { damageEntity } from "./HealthComponent";
-import { PhysicsComponentArray } from "./PhysicsComponent";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { getRandomPositionInEntity, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
@@ -51,8 +50,9 @@ export function applyStatusEffect(entity: Entity, statusEffect: StatusEffect, du
       statusEffectComponent.activeStatusEffectTicksElapsed.push(0);
       statusEffectComponent.activeStatusEffectTicksRemaining.push(durationTicks);
 
-      const physicsComponent = PhysicsComponentArray.getComponent(entity);
-      physicsComponent.moveSpeedMultiplier *= STATUS_EFFECT_MODIFIERS[statusEffect].moveSpeedMultiplier;
+      const transformComponent = TransformComponentArray.getComponent(entity);
+      // @BUG: Over time this may accrue errors!!!!! fix!!!!
+      transformComponent.moveSpeedMultiplier *= STATUS_EFFECT_MODIFIERS[statusEffect].moveSpeedMultiplier;
    } else {
       // Existing status effect
 
@@ -79,8 +79,9 @@ export function clearStatusEffect(entityID: number, statusEffectIndex: number): 
 
    const statusEffect = statusEffectComponent.activeStatusEffectTypes[statusEffectIndex];
    
-   const physicsComponent = PhysicsComponentArray.getComponent(entityID);
-   physicsComponent.moveSpeedMultiplier /= STATUS_EFFECT_MODIFIERS[statusEffect].moveSpeedMultiplier;
+   const transformComponent = TransformComponentArray.getComponent(entityID);
+      // @BUG: Over time this may accrue errors!!!!! fix!!!!
+   transformComponent.moveSpeedMultiplier /= STATUS_EFFECT_MODIFIERS[statusEffect].moveSpeedMultiplier;
 
    statusEffectComponent.activeStatusEffectTypes.splice(statusEffectIndex, 1);
    statusEffectComponent.activeStatusEffectTicksRemaining.splice(statusEffectIndex, 1);

@@ -15,7 +15,6 @@ import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { InguSerpentComponent } from "../../components/InguSerpentComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { TamingComponent } from "../../components/TamingComponent";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
@@ -192,8 +191,6 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
       useLeverage: false
    });
 
-   const physicsComponent = new PhysicsComponent();
-
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.freezing);
    
    const healthComponent = new HealthComponent(35);
@@ -230,7 +227,6 @@ export function createInguSerpentConfig(position: Point, angle: number): EntityC
       entityType: EntityType.inguSerpent,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,

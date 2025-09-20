@@ -11,7 +11,6 @@ import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { Biome } from "battletribes-shared/biomes";
 import Layer from "../../Layer";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { EscapeAI } from "../../ai/EscapeAI";
@@ -160,8 +159,6 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
       useLeverage: true
    });
 
-   const physicsComponent = new PhysicsComponent();
-
    const healthComponent = new HealthComponent(10);
 
    const statusEffectComponent = new StatusEffectComponent(0);
@@ -186,7 +183,6 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
       entityType: EntityType.cow,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,

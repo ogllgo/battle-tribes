@@ -19,7 +19,6 @@ import { Hitbox } from "../../hitboxes";
 import { HitboxCollisionType } from "../../../../shared/src/boxes/boxes";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { StructureConnection } from "../../structure-placement";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 export const SLING_TURRET_SHOT_COOLDOWN_TICKS = 1.5 * Settings.TICK_RATE;
 export const SLING_TURRET_RELOAD_TIME_TICKS = Math.floor(0.4 * Settings.TICK_RATE);
@@ -40,8 +39,6 @@ export function createSlingTurretConfig(position: Point, rotation: number, tribe
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(25);
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.poisoned | StatusEffect.bleeding);
@@ -60,7 +57,6 @@ export function createSlingTurretConfig(position: Point, rotation: number, tribe
       entityType: EntityType.slingTurret,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,

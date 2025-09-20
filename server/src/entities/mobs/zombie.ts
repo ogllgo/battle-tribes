@@ -5,7 +5,6 @@ import { Point, randInt } from "battletribes-shared/utils";
 import { HealthComponent } from "../../components/HealthComponent";
 import { ZombieComponent, ZombieComponentArray } from "../../components/ZombieComponent";
 import { addInventoryToInventoryComponent, InventoryComponent } from "../../components/InventoryComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/items";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
@@ -51,8 +50,6 @@ export function createZombieConfig(position: Point, rotation: number, isGolden: 
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 32), 1, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(20);
    
    const statusEffectComponent = new StatusEffectComponent(0);
@@ -84,7 +81,6 @@ export function createZombieConfig(position: Point, rotation: number, isGolden: 
       entityType: EntityType.zombie,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.zombie]: zombieComponent,

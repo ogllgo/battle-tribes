@@ -46,7 +46,6 @@ import { KrumblidComponent, KrumblidComponentArray, KrumblidComponentParams } fr
 import { LayeredRodComponent, LayeredRodComponentArray, LayeredRodComponentParams } from "./server-components/LayeredRodComponent";
 import { MithrilOreNodeComponent, MithrilOreNodeComponentArray, MithrilOreNodeComponentParams } from "./server-components/MithrilOreNodeComponent";
 import { PebblumComponent, PebblumComponentArray, PebblumComponentParams } from "./server-components/PebblumComponent";
-import { PhysicsComponent, PhysicsComponentArray, PhysicsComponentParams } from "./server-components/PhysicsComponent";
 import { PlantedComponent, PlantedComponentArray, PlantedComponentParams } from "./server-components/PlantedComponent";
 import { PlanterBoxComponent, PlanterBoxComponentArray, PlanterBoxComponentParams } from "./server-components/PlanterBoxComponent";
 import { PlayerComponent, PlayerComponentArray, PlayerComponentParams } from "./server-components/PlayerComponent";
@@ -189,7 +188,6 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.statusEffect]: StatusEffectComponentArray,
    [ServerComponentType.cactus]: CactusComponentArray,
    [ServerComponentType.health]: HealthComponentArray,
-   [ServerComponentType.physics]: PhysicsComponentArray,
    [ServerComponentType.researchBench]: ResearchBenchComponentArray,
    [ServerComponentType.berryBush]: BerryBushComponentArray,
    [ServerComponentType.inventoryUse]: InventoryUseComponentArray,
@@ -324,7 +322,6 @@ const ServerComponentRecord = {
    [ServerComponentType.statusEffect]: (): StatusEffectComponent => 0 as any,
    [ServerComponentType.cactus]: (): CactusComponent => 0 as any,
    [ServerComponentType.health]: (): HealthComponent => 0 as any,
-   [ServerComponentType.physics]: (): PhysicsComponent => 0 as any,
    [ServerComponentType.researchBench]: (): ResearchBenchComponent => 0 as any,
    [ServerComponentType.berryBush]: (): BerryBushComponent => 0 as any,
    [ServerComponentType.inventoryUse]: (): InventoryUseComponent => 0 as any,
@@ -461,7 +458,6 @@ const ServerComponentParamsRecord = {
    [ServerComponentType.statusEffect]: (): StatusEffectComponentParams => 0 as any,
    [ServerComponentType.cactus]: (): CactusComponentParams => 0 as any,
    [ServerComponentType.health]: (): HealthComponentParams => 0 as any,
-   [ServerComponentType.physics]: (): PhysicsComponentParams => 0 as any,
    [ServerComponentType.researchBench]: (): ResearchBenchComponentParams => 0 as any,
    [ServerComponentType.berryBush]: (): BerryBushComponentParams => 0 as any,
    [ServerComponentType.inventoryUse]: (): InventoryUseComponentParams => 0 as any,

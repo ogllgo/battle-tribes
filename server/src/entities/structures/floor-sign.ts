@@ -8,7 +8,6 @@ import { Point } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { FloorSignComponent } from "../../components/FloorSignComponent";
 import { HealthComponent } from "../../components/HealthComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { StructureComponent } from "../../components/StructureComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
@@ -25,8 +24,6 @@ export function createFloorSignConfig(position: Point, angle: number, tribe: Tri
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
-   const physicsComponent = new PhysicsComponent();
-
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);
    
    const healthComponent = new HealthComponent(5);
@@ -41,7 +38,6 @@ export function createFloorSignConfig(position: Point, angle: number, tribe: Tri
       entityType: EntityType.floorSign,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.tribe]: tribeComponent,

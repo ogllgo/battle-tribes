@@ -10,7 +10,6 @@ import { TransformComponent, addHitboxToTransformComponent } from "../../compone
 import { Hitbox } from "../../hitboxes";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 const HEALTHS = [15, 35, 55];
 const MASSES = [1, 2, 3];
@@ -40,8 +39,6 @@ export function createTundraRockConfig(position: Point, angle: number): EntityCo
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(HEALTHS[variant]);
    
    const statusEffectComponent = new StatusEffectComponent(0);
@@ -52,7 +49,6 @@ export function createTundraRockConfig(position: Point, angle: number): EntityCo
       entityType: EntityType.tundraRock,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.tundraRock]: tundraRockComponent

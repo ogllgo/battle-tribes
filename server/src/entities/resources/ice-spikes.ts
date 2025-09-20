@@ -13,7 +13,6 @@ import { IceSpikesComponent } from "../../components/IceSpikesComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
 import { Hitbox } from "../../hitboxes";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 registerEntityLootOnDeath(EntityType.iceSpikes, {
    itemType: ItemType.frostcicle,
@@ -27,8 +26,6 @@ export function createIceSpikesConfig(position: Point, rotation: number, rootIce
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionMask = DEFAULT_COLLISION_MASK & ~CollisionBit.iceSpikes;
 
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(5);
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.poisoned | StatusEffect.freezing | StatusEffect.bleeding);
@@ -41,7 +38,6 @@ export function createIceSpikesConfig(position: Point, rotation: number, rootIce
       entityType: EntityType.iceSpikes,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.loot]: lootComponent,

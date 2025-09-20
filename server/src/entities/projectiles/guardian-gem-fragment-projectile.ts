@@ -6,7 +6,6 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { EntityConfig } from "../../components";
 import { GuardianGemFragmentProjectileComponent } from "../../components/GuardianGemFragmentProjectileComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { ProjectileComponent } from "../../components/ProjectileComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { Hitbox } from "../../hitboxes";
@@ -14,12 +13,12 @@ import { Hitbox } from "../../hitboxes";
 export function createGuardianGemFragmentProjectileConfig(position: Point, rotation: number, creator: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
 
+   transformComponent.isAffectedByAirFriction = false;
+   transformComponent.isAffectedByGroundFriction = false;
+
    const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 8, 16), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
-   const physicsComponent = new PhysicsComponent();
-   physicsComponent.isAffectedByAirFriction = false;
-   physicsComponent.isAffectedByGroundFriction = false;
    
    const projectileComponent = new ProjectileComponent(creator);
    
@@ -29,7 +28,6 @@ export function createGuardianGemFragmentProjectileConfig(position: Point, rotat
       entityType: EntityType.guardianGemFragmentProjectile,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.projectile]: projectileComponent,
          [ServerComponentType.guardianGemFragmentProjectile]: guardianGemFragmentProjectileComponent
       },

@@ -6,7 +6,6 @@ import { EntityType } from "../../../../shared/src/entities";
 import { Point } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { TukmokSpurComponent } from "../../components/TukmokSpurComponent";
@@ -21,8 +20,6 @@ export function createTukmokSpurConfig(position: Point, angle: number, offset: P
    hitbox.box.totalFlipXMultiplier = isFlipped ? -1 : 1;
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-
    const healthComponent = new HealthComponent(25);
    
    const statusEffectComponent = new StatusEffectComponent(0);
@@ -33,7 +30,6 @@ export function createTukmokSpurConfig(position: Point, angle: number, offset: P
       entityType: EntityType.tukmokSpur,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.tukmokSpur]: tukmokSpurComponent

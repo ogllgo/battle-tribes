@@ -9,7 +9,6 @@ import { ItemType } from "battletribes-shared/items/items";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { addHitboxToTransformComponent, getRandomPositionInBox, getRandomWeightedHitbox, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
-import { PhysicsComponent } from "../components/PhysicsComponent";
 import Layer from "../Layer";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { createEntity, getEntityLayer } from "../world";
@@ -23,8 +22,6 @@ export function createItemEntityConfig(position: Point, rotation: number, itemTy
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionMask = DEFAULT_COLLISION_MASK & ~CollisionBit.planterBox;
    
-   const physicsComponent = new PhysicsComponent();
-
    const itemComponent = new ItemComponent(itemType, amount, throwingEntity);
 
    const lights = new Array<LightCreationInfo>();
@@ -41,7 +38,6 @@ export function createItemEntityConfig(position: Point, rotation: number, itemTy
       entityType: EntityType.itemEntity,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.item]: itemComponent
       },
       lights: lights

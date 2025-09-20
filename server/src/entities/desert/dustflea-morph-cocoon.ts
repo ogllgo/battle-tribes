@@ -7,7 +7,6 @@ import { Point } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { DustfleaMorphCocoonComponent } from "../../components/DustfleaMorphCocoonComponent";
 import { HealthComponent } from "../../components/HealthComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { Hitbox } from "../../hitboxes";
@@ -19,8 +18,6 @@ export function createDustfleaMorphCocoonConfig(position: Point, angle: number):
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-   
    const statusEffectComponent = new StatusEffectComponent(0);
 
    const healthComponent = new HealthComponent(4);
@@ -31,7 +28,6 @@ export function createDustfleaMorphCocoonConfig(position: Point, angle: number):
       entityType: EntityType.dustfleaMorphCocoon,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.dustfleaMorphCocoon]: dustfleaMorphCocoonComponent,

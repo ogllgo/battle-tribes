@@ -25,7 +25,6 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.item]: {},
    [ServerComponentType.fleshSwordItem]: {},
    [ServerComponentType.pebblum]: {},
-   [ServerComponentType.physics]: {},
    [ServerComponentType.player]: {},
    [ServerComponentType.slime]: {},
    [ServerComponentType.slimeSpit]: {},

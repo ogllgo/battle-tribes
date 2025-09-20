@@ -3,7 +3,6 @@ import { runEscapeAI } from "../ai/EscapeAI";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
-import { PhysicsComponentArray } from "./PhysicsComponent";
 import { createEntity, destroyEntity, entityExists, getEntityLayer, getEntityType } from "../world";
 import { TransformComponent, TransformComponentArray } from "./TransformComponent";
 import { addHitboxAngularAcceleration, addHitboxAngularVelocity, addHitboxVelocity, getHitboxAngularVelocity, getHitboxTile, Hitbox, teleportHitbox } from "../hitboxes";
@@ -74,8 +73,7 @@ function onTick(snobe: Entity): void {
    const tileType = layer.getTileType(tileIndex);
 
    // Snobes move at normal speed on snow
-   const physicsComponent = PhysicsComponentArray.getComponent(snobe);
-   physicsComponent.overrideMoveSpeedMultiplier = tileType === TileType.snow;
+   transformComponent.overrideMoveSpeedMultiplier = tileType === TileType.snow;
 
    const aiHelperComponent = AIHelperComponentArray.getComponent(snobe);
 

@@ -12,14 +12,12 @@ import { onFishLeaderHurt } from "../entities/mobs/fish";
 import { useItem } from "../entities/tribes/tribe-member";
 import { getHitboxTile, getHitboxVelocity, Hitbox } from "../hitboxes";
 import { addHumanoidInventories } from "../inventories";
-import { createItem } from "../items";
 import { generateTitle, TITLE_REWARD_CHANCES } from "../tribesman-title-generation";
 import { getEntityLayer, getEntityType, getGameTicks } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { HealthComponentArray } from "./HealthComponent";
 import { InventoryComponentArray, getInventory, resizeInventory } from "./InventoryComponent";
 import { LimbInfo, InventoryUseComponentArray } from "./InventoryUseComponent";
-import { PhysicsComponentArray } from "./PhysicsComponent";
 import { PlayerComponentArray } from "./PlayerComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { TribeComponentArray } from "./TribeComponent";
@@ -296,8 +294,7 @@ function onTick(tribeMember: Entity): void {
    const armourInventory = getInventory(inventoryComponent, InventoryName.armourSlot);
    const armour = armourInventory.getItem(1);
    
-   const physicsComponent = PhysicsComponentArray.getComponent(tribeMember);
-   physicsComponent.overrideMoveSpeedMultiplier = tileType === TileType.snow && armour !== null && (armour.type === ItemType.frostArmour || armour.type === ItemType.winterskinArmour);
+   transformComponent.overrideMoveSpeedMultiplier = tileType === TileType.snow && armour !== null && (armour.type === ItemType.frostArmour || armour.type === ItemType.winterskinArmour);
 }
 
 function onDeath(entity: Entity, attackingEntity: Entity | null): void {

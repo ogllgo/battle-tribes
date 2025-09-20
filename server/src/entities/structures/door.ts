@@ -3,7 +3,6 @@ import { EntityType } from "battletribes-shared/entities";
 import { EntityConfig } from "../../components";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { StructureComponent } from "../../components/StructureComponent";
@@ -24,15 +23,13 @@ const HEALTHS = [15, 45];
 export function createDoorConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent();
    
+   transformComponent.isAffectedByAirFriction = false;
+   transformComponent.isAffectedByGroundFriction = false;
+
    const box = new RectangularBox(position, new Point(0, 0), rotation, 64, 16);
    const hitbox = new Hitbox(transformComponent, null, true, box, 0.5, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
-   
-   // @Hack: Shouldn't need!
-   const physicsComponent = new PhysicsComponent();
-   physicsComponent.isAffectedByAirFriction = false;
-   physicsComponent.isAffectedByGroundFriction = false;
 
    const healthComponent = new HealthComponent(HEALTHS[material]);
 
@@ -50,7 +47,6 @@ export function createDoorConfig(position: Point, rotation: number, tribe: Tribe
       entityType: EntityType.door,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,

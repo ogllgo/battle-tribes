@@ -3,7 +3,6 @@ import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponentArray, damageEntity } from "../../components/HealthComponent";
 import { ThrowingProjectileComponent, ThrowingProjectileComponentArray } from "../../components/ThrowingProjectileComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { EntityRelationship, getEntityRelationship } from "../../components/TribeComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
@@ -17,12 +16,11 @@ import { Hitbox } from "../../hitboxes";
 
 export function createSpearProjectileConfig(position: Point, rotation: number, tribeMember: Entity, itemID: number | null): EntityConfig {
    const transformComponent = new TransformComponent();
+   
+   transformComponent.isAffectedByGroundFriction = false;
 
    const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 12, 60), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
-   
-   const physicsComponent = new PhysicsComponent();
-   physicsComponent.isAffectedByGroundFriction = false;
    
    const throwingProjectileComponent = new ThrowingProjectileComponent(tribeMember, itemID);
    
@@ -32,7 +30,6 @@ export function createSpearProjectileConfig(position: Point, rotation: number, t
       entityType: EntityType.spearProjectile,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.throwingProjectile]: throwingProjectileComponent,
          [ServerComponentType.spearProjectile]: spearProjectileComponent
       },

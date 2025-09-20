@@ -582,7 +582,7 @@ export function getTurnSmoothingMultiplier(entity: Entity, targetDirection: numb
 }
 
 export function turnAngle(angle: number, targetAngle: number, turnSpeed: number): number {
-   // @Copynpaste from turnEntity in PhysicsComponent
+   // @Copynpaste from turnEntity
    
    const clockwiseDist = getClockwiseAngleDistance(angle, targetAngle);
    if (clockwiseDist < Math.PI) {

@@ -11,7 +11,6 @@ import WanderAI from "../../ai/WanderAI";
 import { Biome } from "battletribes-shared/biomes";
 import Layer from "../../Layer";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { SlimewispComponent } from "../../components/SlimewispComponent";
@@ -36,8 +35,6 @@ export function createSlimewispConfig(position: Point, rotation: number): Entity
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 16), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(3);
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.poisoned);
@@ -51,7 +48,6 @@ export function createSlimewispConfig(position: Point, rotation: number): Entity
       entityType: EntityType.slimewisp,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,

@@ -6,7 +6,6 @@ import { EntityType } from "../../../../shared/src/entities";
 import { Point } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { SnobeMoundComponent } from "../../components/SnobeMoundComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { Hitbox } from "../../hitboxes";
@@ -18,8 +17,6 @@ export function createSnobeMoundConfig(position: Point, angle: number): EntityCo
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
-   const physicsComponent = new PhysicsComponent();
-
    const healthComponent = new HealthComponent(4);
    
    const snobeMoundComponent = new SnobeMoundComponent();
@@ -28,7 +25,6 @@ export function createSnobeMoundConfig(position: Point, angle: number): EntityCo
       entityType: EntityType.snobeMound,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.snobeMound]: snobeMoundComponent,
       },

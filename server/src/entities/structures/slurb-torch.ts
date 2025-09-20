@@ -17,7 +17,6 @@ import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/collision";
 import { Hitbox } from "../../hitboxes";
 import { StructureConnection } from "../../structure-placement";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 export function createSlurbTorchConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent();
@@ -27,8 +26,6 @@ export function createSlurbTorchConfig(position: Point, rotation: number, tribe:
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(3);
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
@@ -49,7 +46,6 @@ export function createSlurbTorchConfig(position: Point, rotation: number, tribe:
       entityType: EntityType.slurbTorch,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,

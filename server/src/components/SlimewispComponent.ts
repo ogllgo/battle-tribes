@@ -7,11 +7,10 @@ import { Point, randAngle, UtilVars } from "battletribes-shared/utils";
 import { moveEntityToPosition } from "../ai-shared";
 import { createSlimeConfig } from "../entities/mobs/slime";
 import { AIHelperComponentArray } from "./AIHelperComponent";
-import { PhysicsComponentArray } from "./PhysicsComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { createEntity, destroyEntity, entityIsFlaggedForDestruction, getEntityLayer, getEntityType } from "../world";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { getHitboxTile, Hitbox } from "../hitboxes";
+import { getHitboxTile } from "../hitboxes";
 
 const enum Vars {
    ACCELERATION = 100,
@@ -38,8 +37,7 @@ function onTick(slimewisp: Entity): void {
    const tileType = layer.tileTypes[tileIndex];
    
    // Slimewisps move at normal speed on slime blocks
-   const physicsComponent = PhysicsComponentArray.getComponent(slimewisp);
-   physicsComponent.overrideMoveSpeedMultiplier = tileType === TileType.slime || tileType === TileType.sludge;
+   transformComponent.overrideMoveSpeedMultiplier = tileType === TileType.slime || tileType === TileType.sludge;
 
    const aiHelperComponent = AIHelperComponentArray.getComponent(slimewisp);
    const slimewispComponent = SlimewispComponentArray.getComponent(slimewisp);

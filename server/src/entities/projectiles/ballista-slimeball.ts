@@ -3,7 +3,6 @@ import { AMMO_INFO_RECORD, ServerComponentType } from "battletribes-shared/compo
 import { EntityType, DamageSource, Entity } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponentArray, damageEntity } from "../../components/HealthComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { EntityRelationship, TribeComponent, TribeComponentArray, getEntityRelationship } from "../../components/TribeComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "../../components/StatusEffectComponent";
 import { EntityConfig } from "../../components";
@@ -19,13 +18,12 @@ import { Hitbox } from "../../hitboxes";
 
 export function createBallistaSlimeballConfig(position: Point, rotation: number, tribe: Tribe, creator: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
+
+   transformComponent.isAffectedByGroundFriction = false;
    
    const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 12, 80), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.arrowPassable, []);
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
-
-   const physicsComponent = new PhysicsComponent();
-   physicsComponent.isAffectedByGroundFriction = false;
    
    const tribeComponent = new TribeComponent(tribe);
 
@@ -35,7 +33,6 @@ export function createBallistaSlimeballConfig(position: Point, rotation: number,
       entityType: EntityType.ballistaSlimeball,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.projectile]: projectileComponent
       },

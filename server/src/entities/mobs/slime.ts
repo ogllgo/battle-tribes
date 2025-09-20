@@ -15,7 +15,6 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import WanderAI from "../../ai/WanderAI";
 import { Biome } from "battletribes-shared/biomes";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { CraftingStationComponent } from "../../components/CraftingStationComponent";
 import { registerEntityLootOnDeath } from "../../components/LootComponent";
@@ -76,8 +75,6 @@ export function createSlimeConfig(position: Point, rotation: number, size: Slime
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, SLIME_RADII[size]), 1 + size * 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(MAX_HEALTH[size]);
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.poisoned);
@@ -93,7 +90,6 @@ export function createSlimeConfig(position: Point, rotation: number, size: Slime
       entityType: EntityType.slime,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,

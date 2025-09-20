@@ -4,11 +4,11 @@ import { Settings } from "battletribes-shared/settings";
 import { RenderPartParent, RenderPart } from "../render-parts/render-parts";
 import { renderLayerIsChunkRendered, updateChunkRenderedEntity } from "./webgl/chunked-entity-rendering";
 import { getEntityRenderInfo } from "../world";
-import { PhysicsComponentArray } from "../entity-components/server-components/PhysicsComponent";
 import { Point, randAngle } from "../../../shared/src/utils";
 import { gl } from "../webgl";
 import { HealthComponentArray } from "../entity-components/server-components/HealthComponent";
 import { getHitboxVelocity, Hitbox } from "../hitboxes";
+import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 
 // @Cleanup: file name
 
@@ -119,9 +119,8 @@ export function undirtyRenderInfo(renderInfo: EntityRenderInfo): void {
 
 /** Marks all render infos which will move due to the frame progress */
 export function dirtifyMovingEntities(): void {
-   // @BUG: Doesn't account for entities without physics components which can be carried!
-   for (let i = 0; i < PhysicsComponentArray.entities.length; i++) {
-      const entity = PhysicsComponentArray.entities[i];
+   for (let i = 0; i < TransformComponentArray.entities.length; i++) {
+      const entity = TransformComponentArray.entities[i];
 
       const renderInfo = getEntityRenderInfo(entity);
       registerDirtyRenderInfo(renderInfo);

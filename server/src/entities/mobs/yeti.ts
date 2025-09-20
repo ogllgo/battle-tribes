@@ -5,7 +5,6 @@ import { Settings } from "battletribes-shared/settings";
 import { HealthComponent } from "../../components/HealthComponent";
 import { YetiComponent, YetiComponentArray } from "../../components/YetiComponent";
 import Layer from "../../Layer";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
@@ -71,8 +70,6 @@ export function createYetiConfig(position: Point, rotation: number, territory: R
    const headHitbox = new Hitbox(transformComponent, bodyHitbox, true, new CircularBox(headPosition, headOffset, 0, 28), 3, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.YETI_HEAD]);
    addHitboxToTransformComponent(transformComponent, headHitbox);
    
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(75);
    
    const statusEffectComponent = new StatusEffectComponent(0);
@@ -90,7 +87,6 @@ export function createYetiConfig(position: Point, rotation: number, territory: R
       entityType: EntityType.yeti,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,

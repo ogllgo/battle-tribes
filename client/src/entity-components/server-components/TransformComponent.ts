@@ -1,7 +1,7 @@
-import { assert, distance, Point, randAngle, randSign, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { assert, customTickIntervalHasPassed, distance, lerp, Point, randAngle, randInt, randSign, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { Tile } from "../../Tile";
 import { Settings } from "battletribes-shared/settings";
-import { TileType } from "battletribes-shared/tiles";
+import { TILE_PHYSICS_INFO_RECORD, TileType } from "battletribes-shared/tiles";
 import { RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
 import Chunk from "../../Chunk";
 import { randFloat } from "battletribes-shared/utils";
@@ -9,20 +9,27 @@ import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { boxIsCircular, updateBox, Box } from "battletribes-shared/boxes/boxes";
 import Layer, { getTileIndexIncludingEdges } from "../../Layer";
-import { entityExists, EntityParams, getCurrentLayer, getEntityLayer, getEntityRenderInfo, surfaceLayer } from "../../world";
+import { entityExists, EntityParams, getCurrentLayer, getEntityLayer, getEntityRenderInfo, getEntityType, surfaceLayer } from "../../world";
 import Board from "../../Board";
-import { Entity } from "../../../../shared/src/entities";
+import { Entity, EntityType } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../../shared/src/collision";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playerInstance } from "../../player";
-import { getHitboxVelocity, Hitbox, HitboxTether, setHitboxVelocity } from "../../hitboxes";
+import { applyAcceleration, getHitboxVelocity, Hitbox, HitboxTether, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox } from "../../hitboxes";
 import { padHitboxDataExceptLocalID, readBoxFromData, readHitboxFromData, updateHitboxExceptLocalIDFromData } from "../../networking/packet-hitboxes";
+import Particle from "../../Particle";
+import { createWaterSplashParticle } from "../../particles";
+import { addTexturedParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
+import { playSoundOnHitbox } from "../../sound";
+import { resolveWallCollisions } from "../../collision";
+import { keyIsPressed } from "../../keyboard-input";
 
 export interface TransformComponentParams {
    readonly hitboxes: Array<Hitbox>;
    readonly collisionBit: CollisionBit;
    readonly collisionMask: number;
+   readonly traction: number;
 }
 
 export interface TransformComponent {
@@ -42,13 +49,22 @@ export interface TransformComponent {
    boundingAreaMaxX: number;
    boundingAreaMinY: number;
    boundingAreaMaxY: number;
+
+   traction: number;
+
+   ignoredTileSpeedMultipliers: ReadonlyArray<TileType>;
 }
 
-const fillTransformComponentParams = (hitboxes: Array<Hitbox>, collisionBit: CollisionBit, collisionMask: number): TransformComponentParams => {
+// We use this so that a component tries to override the empty array with the same empty
+// array, instead of a different empty array which would cause garbage collection
+const EMPTY_IGNORED_TILE_SPEED_MULTIPLIERS = new Array<TileType>();
+
+const fillTransformComponentParams = (hitboxes: Array<Hitbox>, collisionBit: CollisionBit, collisionMask: number, traction: number): TransformComponentParams => {
    return {
       hitboxes: hitboxes,
       collisionBit: collisionBit,
-      collisionMask: collisionMask
+      collisionMask: collisionMask,
+      traction: traction
    };
 }
 
@@ -56,7 +72,8 @@ export function createTransformComponentParams(hitboxes: Array<Hitbox>): Transfo
    return {
       hitboxes: hitboxes,
       collisionBit: CollisionBit.default,
-      collisionMask: DEFAULT_COLLISION_MASK
+      collisionMask: DEFAULT_COLLISION_MASK,
+      traction: 1
    };
 }
 
@@ -73,7 +90,13 @@ function createParamsFromData(reader: PacketReader): TransformComponentParams {
       hitboxes.push(hitbox);
    }
 
-   return fillTransformComponentParams(hitboxes, collisionBit, collisionMask);
+   const traction = reader.readNumber();
+
+   return fillTransformComponentParams(hitboxes, collisionBit, collisionMask, traction);
+}
+
+export function resetIgnoredTileSpeedMultipliers(transformComponent: TransformComponent): void {
+   transformComponent.ignoredTileSpeedMultipliers = EMPTY_IGNORED_TILE_SPEED_MULTIPLIERS;
 }
 
 // @Location
@@ -250,11 +273,171 @@ export function cleanEntityTransform(entity: Entity): void {
    updateContainingChunks(transformComponent, entity);
 }
 
+const applyHitboxKinematics = (transformComponent: TransformComponent, entity: Entity, hitbox: Hitbox): void => {
+   if (isNaN(hitbox.box.position.x) || isNaN(hitbox.box.position.y)) {
+      throw new Error("Position was NaN.");
+   }
+
+   const layer = getEntityLayer(entity);
+   const tile = getHitboxTile(layer, hitbox);
+
+   if (isNaN(hitbox.box.position.x)) {
+      throw new Error("Position was NaN.");
+   }
+
+   // @Incomplete: here goes fish suit exception
+   // Apply river flow to external velocity
+   if (entityIsInRiver(transformComponent, entity)) {
+      const flowDirection = layer.getRiverFlowDirection(tile.x, tile.y);
+      if (flowDirection > 0) {
+         applyAcceleration(entity, hitbox, 240 * Settings.DELTA_TIME * Math.sin(flowDirection - 1), 240 * Settings.DELTA_TIME * Math.cos(flowDirection - 1));
+      }
+   }
+
+   const tilePhysicsInfo = TILE_PHYSICS_INFO_RECORD[tile.type];
+   const tileFriction = tilePhysicsInfo.friction;
+
+   let velX = hitbox.box.position.x - hitbox.previousPosition.x;
+   let velY = hitbox.box.position.y - hitbox.previousPosition.y;
+      
+   // Air friction
+   // @Bug? the tile's friction shouldn't affect air friction?
+   velX *= 1 - tileFriction * Settings.DELTA_TIME * 2;
+   velY *= 1 - tileFriction * Settings.DELTA_TIME * 2;
+
+   // Ground friction
+   const velocityMagnitude = Math.hypot(velX, velY);
+   if (velocityMagnitude > 0) {
+      const groundFriction = Math.min(tileFriction, velocityMagnitude);
+      velX -= groundFriction * velX / velocityMagnitude * Settings.DELTA_TIME;
+      velY -= groundFriction * velY / velocityMagnitude * Settings.DELTA_TIME;
+   }
+   
+   // Verlet integration update:
+   // new position = current position + (damped implicit velocity) + acceleration * (dt^2)
+   const newX = hitbox.box.position.x + velX + hitbox.acceleration.x * Settings.DELTA_TIME * Settings.DELTA_TIME;
+   const newY = hitbox.box.position.y + velY + hitbox.acceleration.y * Settings.DELTA_TIME * Settings.DELTA_TIME;
+
+   hitbox.previousPosition.x = hitbox.box.position.x;
+   hitbox.previousPosition.y = hitbox.box.position.y;
+
+   hitbox.box.position.x = newX;
+   hitbox.box.position.y = newY;
+
+   hitbox.acceleration.x = 0;
+   hitbox.acceleration.y = 0;
+
+   // Mark entity's position as updated
+   cleanEntityTransform(entity);
+   const renderInfo = getEntityRenderInfo(entity);
+   registerDirtyRenderInfo(renderInfo);
+}
+
+const resolveBorderCollisions = (entity: Entity): boolean => {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   
+   const EPSILON = 0.00001;
+   
+   let hasMoved = false;
+   
+   const baseHitbox = transformComponent.hitboxes[0];
+
+   // @Incomplete: do this using transform component bounds
+   
+   // @Bug: if the entity is a lot of hitboxes stacked vertically, and they are all in the left border, then they will be pushed too far out.
+   for (const hitbox of transformComponent.hitboxes) {
+      const box = hitbox.box;
+      
+      const minX = box.calculateBoundsMinX();
+      const maxX = box.calculateBoundsMaxX();
+      const minY = box.calculateBoundsMinY();
+      const maxY = box.calculateBoundsMaxY();
+
+      // Left wall
+      if (minX < 0) {
+         translateHitbox(baseHitbox, -minX + EPSILON, 0);
+         setHitboxVelocityX(baseHitbox, 0);
+         hasMoved = true;
+         // Right wall
+      } else if (maxX > Settings.BOARD_UNITS) {
+         translateHitbox(baseHitbox, Settings.BOARD_UNITS - maxX - EPSILON, 0);
+         setHitboxVelocityX(baseHitbox, 0);
+         hasMoved = true;
+      }
+      
+      // Bottom wall
+      if (minY < 0) {
+         translateHitbox(baseHitbox, 0, -minY + EPSILON);
+         setHitboxVelocityY(baseHitbox, 0);
+         hasMoved = true;
+         // Top wall
+      } else if (maxY > Settings.BOARD_UNITS) {
+         translateHitbox(baseHitbox, 0, -maxY + Settings.BOARD_UNITS - EPSILON);
+         setHitboxVelocityY(baseHitbox, 0);
+         hasMoved = true;
+      }
+
+      // @Bug @Incomplete Can happen if maxX is something crazy like 1584104521169366000. fix!!!
+      if (box.calculateBoundsMinX() < 0 || box.calculateBoundsMaxX() >= Settings.BOARD_UNITS || box.calculateBoundsMinY() < 0 || box.calculateBoundsMaxY() >= Settings.BOARD_UNITS) {
+         throw new Error();
+      }
+   }
+
+   return hasMoved;
+}
+
+const applyHitboxTethers = (transformComponent: TransformComponent, hitbox: Hitbox): void => {
+   // Apply the spring physics
+   for (const tether of hitbox.tethers) {
+      const originBox = tether.originBox;
+
+      const diffX = originBox.position.x - hitbox.box.position.x;
+      const diffY = originBox.position.y - hitbox.box.position.y;
+      const distance = Math.sqrt(diffX * diffX + diffY * diffY);
+      if (distance === 0) {
+         continue;
+      }
+
+      const normalisedDiffX = diffX / distance;
+      const normalisedDiffY = diffY / distance;
+
+      const displacement = distance - tether.idealDistance;
+      
+      // Calculate spring force
+      const springForceX = normalisedDiffX * tether.springConstant * displacement;
+      const springForceY = normalisedDiffY * tether.springConstant * displacement;
+      
+      hitbox.acceleration.x += springForceX / hitbox.mass;
+      hitbox.acceleration.y += springForceY / hitbox.mass;
+      // Don't move the other hitbox, as that will be accounted for by the server!
+   }
+
+}
+const tickHitboxPhysics = (hitbox: Hitbox): void => {
+   // @CLEANUP
+   const transformComponent = TransformComponentArray.getComponent(hitbox.entity);
+
+   // tickHitboxAngularPhysics(hitbox.entity, hitbox, transformComponent);
+
+   if (hitbox.parent === null) {
+      applyHitboxKinematics(transformComponent, hitbox.entity, hitbox);
+   }
+   
+   // @Incomplete
+   // applyHitboxTethers(hitbox, transformComponent);
+
+   for (const childHitbox of hitbox.children) {
+      tickHitboxPhysics(childHitbox);
+   }
+}
+
 export const TransformComponentArray = new ServerComponentArray<TransformComponent, TransformComponentParams, never>(ServerComponentType.transform, true, {
    createParamsFromData: createParamsFromData,
    createComponent: createComponent,
    getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
+   onTick: onTick,
+   onUpdate: onUpdate,
    onRemove: onRemove,
    padData: padData,
    updateFromData: updateFromData,
@@ -287,7 +470,9 @@ function createComponent(entityParams: EntityParams): TransformComponent {
       boundingAreaMinX: Number.MAX_SAFE_INTEGER,
       boundingAreaMaxX: Number.MIN_SAFE_INTEGER,
       boundingAreaMinY: Number.MAX_SAFE_INTEGER,
-      boundingAreaMaxY: Number.MIN_SAFE_INTEGER
+      boundingAreaMaxY: Number.MIN_SAFE_INTEGER,
+      traction: transformComponentParams.traction,
+      ignoredTileSpeedMultipliers: EMPTY_IGNORED_TILE_SPEED_MULTIPLIERS.slice()
    };
 }
 
@@ -297,6 +482,97 @@ function getMaxRenderParts(): number {
 
 function onLoad(entity: Entity): void {
    cleanEntityTransform(entity);
+}
+
+function onTick(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   const hitbox = transformComponent.hitboxes[0];
+
+   // Water droplet particles
+   // @Cleanup: Don't hardcode fish condition
+   if (entityIsInRiver(transformComponent, entity) && customTickIntervalHasPassed(Board.clientTicks, 0.05) && (getEntityType(entity) !== EntityType.fish)) {
+      createWaterSplashParticle(hitbox.box.position.x, hitbox.box.position.y);
+   }
+   
+   // Water splash particles
+   // @Cleanup: Move to particles file
+   if (entityIsInRiver(transformComponent, entity) && customTickIntervalHasPassed(Board.clientTicks, 0.15) && getHitboxVelocity(hitbox).magnitude() > 0&& getEntityType(entity) !== EntityType.fish) {
+      const lifetime = 2.5;
+
+      const particle = new Particle(lifetime);
+      particle.getOpacity = (): number => {
+         return lerp(0.75, 0, Math.sqrt(particle.age / lifetime));
+      }
+      particle.getScale = (): number => {
+         return 1 + particle.age / lifetime * 1.4;
+      }
+
+      addTexturedParticleToBufferContainer(
+         particle,
+         ParticleRenderLayer.low,
+         64, 64,
+         hitbox.box.position.x, hitbox.box.position.y,
+         0, 0, 
+         0, 0,
+         0,
+         randAngle(),
+         0,
+         0,
+         0,
+         8 * 1 + 5,
+         0, 0, 0
+      );
+      Board.lowTexturedParticles.push(particle);
+
+      playSoundOnHitbox("water-splash-" + randInt(1, 3) + ".mp3", 0.25, 1, entity, hitbox, false);
+   }
+}
+
+function onUpdate(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent.boundingAreaMinX < 0 || transformComponent.boundingAreaMaxX >= Settings.BOARD_UNITS || transformComponent.boundingAreaMinY < 0 || transformComponent.boundingAreaMaxY >= Settings.BOARD_UNITS) {
+      throw new Error();
+   }
+
+   for (const child of transformComponent.hitboxes) {
+      const hitbox = child;
+      applyHitboxTethers(transformComponent, hitbox);
+   }
+   
+   for (const rootHitbox of transformComponent.rootHitboxes) {
+      tickHitboxPhysics(rootHitbox);
+   }
+
+   // @Speed: only do if the kinematics moved the entity
+   cleanEntityTransform(entity);
+   
+   // Don't resolve wall tile collisions in lightspeed mode
+   if (entity !== playerInstance || !keyIsPressed("l")) { 
+      const hasMoved = resolveWallCollisions(entity);
+
+      if (hasMoved) {
+         cleanEntityTransform(entity);
+      }
+   }
+
+   const hasMoved = resolveBorderCollisions(entity);
+   if (hasMoved) {
+      cleanEntityTransform(entity);
+   }
+
+      // @INCOMPLETE!
+      // The player is attached to a parent: need to snap them to the parent!
+      // for (const child of transformComponent.children) {
+      //    if (entityChildIsEntity(child)) {
+      //       cleanTransform(child.attachedEntity);
+      //    } else {
+      //       cleanTransform(child);
+      //    }
+      // }
+
+   if (transformComponent.boundingAreaMinX < 0 || transformComponent.boundingAreaMaxX >= Settings.BOARD_UNITS || transformComponent.boundingAreaMinY < 0 || transformComponent.boundingAreaMaxY >= Settings.BOARD_UNITS) {
+      throw new Error();
+   }
 }
 
 function onRemove(entity: Entity): void {
@@ -323,9 +599,12 @@ function padData(reader: PacketReader): void {
       }
    }
 
+   // @Cleanup @Investigate wtf is this... this isn't added in the server...
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
    const numCarriedEntities = reader.readNumber();
    reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT * numCarriedEntities);
+
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
    
 function updateFromData(reader: PacketReader, entity: Entity): void {
@@ -364,6 +643,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          updateHitboxExceptLocalIDFromData(hitbox, reader);
       }
    }
+
+   transformComponent.traction = reader.readNumber();
 
    // Remove hitboxes which no longer exist
    for (let i = 0; i < transformComponent.hitboxes.length; i++) {
@@ -519,6 +800,8 @@ function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): voi
 
       updatePlayerHitboxFromData(hitbox, reader);
    }
+
+   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
 export function getRandomPositionInBox(box: Box): Point {

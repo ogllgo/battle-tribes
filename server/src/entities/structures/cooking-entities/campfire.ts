@@ -19,7 +19,6 @@ import CircularBox from "../../../../../shared/src/boxes/CircularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../../shared/src/collision";
 import { Hitbox } from "../../../hitboxes";
 import { StructureConnection } from "../../../structure-placement";
-import { PhysicsComponent } from "../../../components/PhysicsComponent";
 
 // @Incomplete: Destroy campfire when remaining heat reaches 0
 
@@ -31,8 +30,6 @@ export function createCampfireConfig(position: Point, rotation: number, tribe: T
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(25);
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.poisoned | StatusEffect.bleeding);
@@ -62,7 +59,6 @@ export function createCampfireConfig(position: Point, rotation: number, tribe: T
       entityType: EntityType.campfire,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,

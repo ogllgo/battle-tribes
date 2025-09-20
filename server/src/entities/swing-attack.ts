@@ -8,7 +8,6 @@ import { getItemAttackInfo, InventoryName } from "../../../shared/src/items/item
 import { Point, rotatePoint } from "../../../shared/src/utils";
 import { createEntityConfigAttachInfo, EntityConfig } from "../components";
 import { getHeldItem, LimbInfo } from "../components/InventoryUseComponent";
-import { PhysicsComponent } from "../components/PhysicsComponent";
 import { setHitboxToLimbState, SwingAttackComponent } from "../components/SwingAttackComponent";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../components/TransformComponent";
 import { Hitbox } from "../hitboxes";
@@ -40,15 +39,12 @@ export function createSwingAttackConfig(position: Point, angle: number, owner: E
       addHitboxToTransformComponent(transformComponent, heldItemHitbox);
    }
 
-   const physicsComponent = new PhysicsComponent();
-
    const swingAttackComponent = new SwingAttackComponent(owner, limb);
    
    return {
       entityType: EntityType.swingAttack,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.swingAttack]: swingAttackComponent
       },
       lights: [],

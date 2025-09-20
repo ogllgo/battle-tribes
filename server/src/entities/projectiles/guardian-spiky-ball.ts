@@ -8,7 +8,6 @@ import { Point } from "battletribes-shared/utils";
 import { EntityConfig, LightCreationInfo } from "../../components";
 import { GuardianSpikyBallComponent } from "../../components/GuardianSpikyBallComponent";
 import { HealthComponent } from "../../components/HealthComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { ProjectileComponent } from "../../components/ProjectileComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
@@ -17,13 +16,14 @@ import { createLight } from "../../lights";
 
 export function createGuardianSpikyBallConfig(position: Point, rotation: number,creator: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
+
+   transformComponent.isAffectedByAirFriction = false;
+   transformComponent.isAffectedByGroundFriction = false;
+
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 20), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
-   const physicsComponent = new PhysicsComponent();
-   physicsComponent.isAffectedByAirFriction = false;
-   physicsComponent.isAffectedByGroundFriction = false;
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned | StatusEffect.poisoned);
    
@@ -44,7 +44,6 @@ export function createGuardianSpikyBallConfig(position: Point, rotation: number,
       entityType: EntityType.guardianSpikyBall,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.projectile]: projectileComponent,

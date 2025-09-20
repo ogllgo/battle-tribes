@@ -8,7 +8,6 @@ import { Point } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { BuildingMaterialComponent } from "../../components/BuildingMaterialComponent";
 import { HealthComponent } from "../../components/HealthComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { SpikesComponent } from "../../components/SpikesComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { StructureComponent } from "../../components/StructureComponent";
@@ -29,8 +28,6 @@ export function createWallSpikesConfig(position: Point, rotation: number, tribe:
    const hitbox = new Hitbox(transformComponent, null, true, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(HEALTHS[material]);
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
@@ -47,7 +44,6 @@ export function createWallSpikesConfig(position: Point, rotation: number, tribe:
       entityType: EntityType.wallSpikes,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,

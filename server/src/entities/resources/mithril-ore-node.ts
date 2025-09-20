@@ -9,7 +9,6 @@ import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { MithrilOreNodeComponent } from "../../components/MithrilOreNodeComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { Hitbox } from "../../hitboxes";
@@ -26,8 +25,6 @@ export function createMithrilOreNodeConfig(position: Point, rotation: number, si
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(15);
 
    const statusEffectComponent = new StatusEffectComponent(0);
@@ -40,7 +37,6 @@ export function createMithrilOreNodeConfig(position: Point, rotation: number, si
       entityType: EntityType.mithrilOreNode,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.loot]: lootComponent,

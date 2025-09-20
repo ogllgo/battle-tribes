@@ -7,7 +7,6 @@ import { StatusEffect } from "../../../../shared/src/status-effects";
 import { Point } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { PunjiSticksComponent } from "../../components/PunjiSticksComponent";
 import { SpikesComponent } from "../../components/SpikesComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
@@ -26,8 +25,6 @@ export function createWallPunjiSticksConfig(position: Point, rotation: number, t
    const hitbox = new Hitbox(transformComponent, null, true, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(10);
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
@@ -44,7 +41,6 @@ export function createWallPunjiSticksConfig(position: Point, rotation: number, t
       entityType: EntityType.wallPunjiSticks,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,

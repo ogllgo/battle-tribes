@@ -9,7 +9,6 @@ import { EntityConfig } from "../../components";
 import { DesertShrubComponent } from "../../components/DesertShrubComponent";
 import { EnergyStoreComponent } from "../../components/EnergyStoreComponent";
 import { HealthComponent } from "../../components/HealthComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { Hitbox } from "../../hitboxes";
@@ -21,8 +20,6 @@ export function createDesertShrubConfig(position: Point, angle: number): EntityC
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
-   const physicsComponent = new PhysicsComponent();
-
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);
 
    const healthComponent = new HealthComponent(5);
@@ -35,7 +32,6 @@ export function createDesertShrubConfig(position: Point, angle: number): EntityC
       entityType: EntityType.desertShrub,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.energyStore]: energyStoreComponent,

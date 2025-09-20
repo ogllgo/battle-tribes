@@ -7,7 +7,6 @@ import { Point, polarVec2 } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
 import { OkrenTongueComponent } from "../../components/OkrenTongueComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { addHitboxVelocity, Hitbox, HitboxAngularTether } from "../../hitboxes";
 
@@ -31,8 +30,6 @@ export function createOkrenTongueConfig(position: Point, angle: number, okrenHit
    };
    tongueTipHitbox.angularTethers.push(angularTether);
 
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(99);
 
    const okrenTongueComponent = new OkrenTongueComponent(target);
@@ -45,7 +42,6 @@ export function createOkrenTongueConfig(position: Point, angle: number, okrenHit
       entityType: EntityType.okrenTongue,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.okrenTongue]: okrenTongueComponent
       },

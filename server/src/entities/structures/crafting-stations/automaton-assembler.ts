@@ -18,7 +18,6 @@ import RectangularBox from "../../../../../shared/src/boxes/RectangularBox";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../../shared/src/collision";
 import { Hitbox } from "../../../hitboxes";
 import { StructureConnection } from "../../../structure-placement";
-import { PhysicsComponent } from "../../../components/PhysicsComponent";
 
 export function createAutomatonAssemblerConfig(position: Point, rotation: number, tribe: Tribe, connections: Array<StructureConnection>, virtualStructure: VirtualStructure | null): EntityConfig {
    const transformComponent = new TransformComponent();
@@ -28,8 +27,6 @@ export function createAutomatonAssemblerConfig(position: Point, rotation: number
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(50);
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned | StatusEffect.freezing);
@@ -46,7 +43,6 @@ export function createAutomatonAssemblerConfig(position: Point, rotation: number
       entityType: EntityType.automatonAssembler,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,

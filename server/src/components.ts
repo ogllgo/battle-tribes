@@ -17,7 +17,6 @@ import { HutComponent } from "./components/HutComponent";
 import { InventoryComponent } from "./components/InventoryComponent";
 import { InventoryUseComponent } from "./components/InventoryUseComponent";
 import { ItemComponent } from "./components/ItemComponent";
-import { PhysicsComponent } from "./components/PhysicsComponent";
 import { PlanterBoxComponent } from "./components/PlanterBoxComponent";
 import { PlayerComponent } from "./components/PlayerComponent";
 import { ResearchBenchComponent } from "./components/ResearchBenchComponent";
@@ -149,7 +148,6 @@ const ComponentClassRecord = {
    [ServerComponentType.statusEffect]: () => StatusEffectComponent,
    [ServerComponentType.cactus]: () => CactusComponent,
    [ServerComponentType.health]: () => HealthComponent,
-   [ServerComponentType.physics]: () => PhysicsComponent,
    [ServerComponentType.researchBench]: () => ResearchBenchComponent,
    [ServerComponentType.berryBush]: () => BerryBushComponent,
    [ServerComponentType.inventoryUse]: () => InventoryUseComponent,

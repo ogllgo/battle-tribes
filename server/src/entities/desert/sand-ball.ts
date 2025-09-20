@@ -7,7 +7,6 @@ import { Point } from "../../../../shared/src/utils";
 import { getSandBallMass } from "../../ai/SandBallingAI";
 import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { SandBallComponent } from "../../components/SandBallComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
@@ -19,8 +18,6 @@ export function createSandBallConfig(position: Point, angle: number): EntityConf
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), angle, 8), getSandBallMass(1), HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
-   const physicsComponent = new PhysicsComponent();
-   
    const statusEffectComponent = new StatusEffectComponent(0);
 
    const healthComponent = new HealthComponent(1);
@@ -31,7 +28,6 @@ export function createSandBallConfig(position: Point, angle: number): EntityConf
       entityType: EntityType.sandBall,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.sandBall]: sandBallComponent,

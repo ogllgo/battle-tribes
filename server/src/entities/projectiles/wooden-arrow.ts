@@ -3,7 +3,6 @@ import { AMMO_INFO_RECORD, ServerComponentType } from "battletribes-shared/compo
 import { EntityType, DamageSource, Entity } from "battletribes-shared/entities";
 import { angleToPoint, Point } from "battletribes-shared/utils";
 import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { EntityRelationship, TribeComponent, TribeComponentArray, getEntityRelationship } from "../../components/TribeComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "../../components/StatusEffectComponent";
 import { EntityConfig } from "../../components";
@@ -19,12 +18,12 @@ import { applyKnockback, getHitboxVelocity, Hitbox } from "../../hitboxes";
 
 export function createWoodenArrowConfig(position: Point, rotation: number, tribe: Tribe, owner: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
+
+   transformComponent.isAffectedByGroundFriction = false;
    
    const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 12, 64), 0.05, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.arrowPassable, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
-   const physicsComponent = new PhysicsComponent();
-   physicsComponent.isAffectedByGroundFriction = false;
 
    const tribeComponent = new TribeComponent(tribe);
 
@@ -34,7 +33,6 @@ export function createWoodenArrowConfig(position: Point, rotation: number, tribe
       entityType: EntityType.woodenArrow,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.projectile]: projectileComponent
       },

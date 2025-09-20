@@ -2,7 +2,6 @@ import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collis
 import { EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { SlimeSpitComponent } from "../../components/SlimeSpitComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { EntityConfig } from "../../components";
 import { ServerComponentType } from "battletribes-shared/components";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
@@ -17,15 +16,12 @@ export function createSlimeSpitConfig(position: Point, rotation: number, size: n
    const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, hitboxSize, hitboxSize), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
-   const physicsComponent = new PhysicsComponent();
-   
    const slimeSpitComponent = new SlimeSpitComponent(size);
    
    return {
       entityType: EntityType.slimeSpit,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.slimeSpit]: slimeSpitComponent
       },
       lights: []

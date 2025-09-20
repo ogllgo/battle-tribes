@@ -10,7 +10,6 @@ import { EntityConfig, LightCreationInfo } from "../../components";
 import { GlurbSegmentComponent } from "../../components/GlurbSegmentComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { Hitbox } from "../../hitboxes";
@@ -26,8 +25,6 @@ export function createGlurbTailSegmentConfig(position: Point, angle: number): En
    
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), angle, 20), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.GLURB_TAIL_SEGMENT]);
    addHitboxToTransformComponent(transformComponent, hitbox);
-
-   const physicsComponent = new PhysicsComponent();
 
    const healthComponent = new HealthComponent(5);
    
@@ -47,7 +44,6 @@ export function createGlurbTailSegmentConfig(position: Point, angle: number): En
       entityType: EntityType.glurbTailSegment,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.loot]: lootComponent,

@@ -10,7 +10,6 @@ import { EnergyStoreComponent } from "../../components/EnergyStoreComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { OkrenClawComponent, OkrenClawGrowthStage } from "../../components/OkrenClawComponent";
 import { OkrenAgeStage } from "../../components/OkrenComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { Hitbox } from "../../hitboxes";
@@ -173,8 +172,6 @@ export function createOkrenClawConfig(position: Point, angle: number, size: Okre
    slashingArmSegmentHitbox.box.pivot = createNormalisedPivotPoint(-0.1, -0.5);
    addHitboxToTransformComponent(transformComponent, slashingArmSegmentHitbox);
 
-   const physicsComponent = new PhysicsComponent();
-
    const statusEffectComponent = new StatusEffectComponent(0);
    
    const healthComponent = new HealthComponent(MAX_HEALTHS[size]);
@@ -187,7 +184,6 @@ export function createOkrenClawConfig(position: Point, angle: number, size: Okre
       entityType: EntityType.okrenClaw,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.energyStore]: energyStoreComponent,

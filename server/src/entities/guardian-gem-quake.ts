@@ -6,7 +6,6 @@ import { EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { EntityConfig } from "../components";
 import { GuardianGemQuakeComponent } from "../components/GuardianGemQuakeComponent";
-import { PhysicsComponent } from "../components/PhysicsComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../components/TransformComponent";
 import { Hitbox } from "../hitboxes";
 
@@ -16,15 +15,12 @@ export function createGuardianGemQuakeConfig(position: Point, rotation: number):
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
-   const physicsComponent = new PhysicsComponent();
-
    const guardianGemQuakeComponent = new GuardianGemQuakeComponent();
    
    return {
       entityType: EntityType.guardianGemQuake,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.guardianGemQuake]: guardianGemQuakeComponent
       },
       lights: []

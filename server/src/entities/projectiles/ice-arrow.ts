@@ -12,7 +12,6 @@ import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import RectangularBox from "battletribes-shared/boxes/RectangularBox";
 import { destroyEntity } from "../../world";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import Tribe from "../../Tribe";
 import { ProjectileComponent } from "../../components/ProjectileComponent";
 import { IceArrowComponent } from "../../components/IceArrowComponent";
@@ -21,12 +20,12 @@ import { Hitbox } from "../../hitboxes";
 export function createIceArrowConfig(position: Point, rotation: number, tribe: Tribe, creator: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
 
+   transformComponent.isAffectedByGroundFriction = false;
+
    const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 20, 56), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
    
-   const physicsComponent = new PhysicsComponent();
-   physicsComponent.isAffectedByGroundFriction = false;
 
    const tribeComponent = new TribeComponent(tribe);
    
@@ -38,7 +37,6 @@ export function createIceArrowConfig(position: Point, rotation: number, tribe: T
       entityType: EntityType.iceArrow,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.projectile]: projectileComponent,
          [ServerComponentType.iceArrow]: iceArrowComponent

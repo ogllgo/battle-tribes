@@ -14,7 +14,6 @@ import { LootComponent, registerEntityLootOnHit } from "../../components/LootCom
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerDirtyEntity } from "../../server/player-clients";
 import { Hitbox } from "../../hitboxes";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 registerEntityLootOnHit(EntityType.berryBush, {
    itemType: ItemType.berry,
@@ -40,8 +39,6 @@ export function createBerryBushConfig(position: Point, rotation: number): Entity
    addHitboxToTransformComponent(transformComponent, hitbox);
    transformComponent.collisionBit = CollisionBit.plants;
 
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(10);
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);
@@ -54,7 +51,6 @@ export function createBerryBushConfig(position: Point, rotation: number): Entity
       entityType: EntityType.berryBush,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.loot]: lootComponent,

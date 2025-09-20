@@ -10,7 +10,6 @@ import { EntityConfig } from "../../components";
 import { BracingsComponent } from "../../components/BracingsComponent";
 import { BuildingMaterialComponent } from "../../components/BuildingMaterialComponent";
 import { HealthComponent } from "../../components/HealthComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { StructureComponent } from "../../components/StructureComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
@@ -33,8 +32,6 @@ export function createBracingsConfig(position: Point, rotation: number, tribe: T
    hitbox2.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox2);
    
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(HEALTHS[material]);
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
@@ -51,7 +48,6 @@ export function createBracingsConfig(position: Point, rotation: number, tribe: T
       entityType: EntityType.bracings,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,

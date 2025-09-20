@@ -7,7 +7,6 @@ import { StatusEffect } from "../../../../shared/src/status-effects";
 import { Point } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { SandstoneRockComponent } from "../../components/SandstoneRockComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
@@ -45,8 +44,6 @@ export function createSandstoneRockConfig(position: Point, angle: number, size: 
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-   
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding);
    
    const healthComponent = new HealthComponent(health);
@@ -57,7 +54,6 @@ export function createSandstoneRockConfig(position: Point, angle: number, size: 
       entityType: EntityType.sandstoneRock,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.sandstoneRock]: sandstoneRockComponent

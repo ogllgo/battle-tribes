@@ -1,37 +1,34 @@
 import { PathfindingNodeIndex } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { getEntityCollisionGroup } from "battletribes-shared/collision-groups";
-import { assert, Point, randAngle, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { angleToPoint, assert, getAngleDiff, Point, polarVec2, randAngle, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import Layer from "../Layer";
 import Chunk from "../Chunk";
-import { Entity, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
 import { ServerComponentType } from "battletribes-shared/components";
 import { AIHelperComponentArray, entityIsNoticedByAI } from "./AIHelperComponent";
-import { tickEntityPhysics } from "./PhysicsComponent";
 import { clearEntityPathfindingNodes, entityCanBlockPathfinding, updateEntityPathfindingNodeOccupance } from "../pathfinding";
 import { resolveWallCollision } from "../collision-resolution";
 import { Packet } from "battletribes-shared/packets";
 import { Box, boxIsCircular, getBoxArea, HitboxFlag, updateBox } from "battletribes-shared/boxes/boxes";
 import { destroyEntity, getEntityLayer, getEntityType, setEntityLayer } from "../world";
 import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
-import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { removeEntityLights, updateEntityLights } from "../lights";
 import { registerDirtyEntity } from "../server/player-clients";
-import { surfaceLayer } from "../layers";
+import { surfaceLayer, undergroundLayer } from "../layers";
 import { addHitboxDataToPacket, getHitboxDataLength } from "../server/packet-hitboxes";
-import { getHitboxVelocity, getRootHitbox, Hitbox, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox } from "../hitboxes";
+import { addHitboxAngularAcceleration, applyAcceleration, applyForce, getHitboxAngularVelocity, getHitboxTile, getHitboxTotalMassIncludingChildren, getHitboxVelocity, getRootHitbox, Hitbox, hitboxIsInRiver, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox } from "../hitboxes";
 import { EntityConfig } from "../components";
 import { addEntityTethersToWorld, destroyTether as destroyTether } from "../tethers";
+import { TILE_PHYSICS_INFO_RECORD, TileType } from "../../../shared/src/tiles";
+import { getSubtileIndex } from "../../../shared/src/subtiles";
 
 // @Cleanup: move mass/hitbox related stuff out? (Are there any entities which could take advantage of that extraction?)
 
 export class TransformComponent {
    // @Speed: may want to re-introduce the totalMass property
    
-   // @Cleanup: unused?
-   public collisionPushForceMultiplier = 1;
- 
    /** All chunks the entity is contained in */
    public readonly chunks = new Array<Chunk>();
    
@@ -39,20 +36,13 @@ export class TransformComponent {
    public readonly hitboxes = new Array<Hitbox>();
    /** Hitboxes not attached to any hitbox interal to the same entity. Root hitboxes can either be hitboxes with no parent, or hitboxes with a different entity's hitbox as a parent. */
    public readonly rootHitboxes = new Array<Hitbox>();
-
-   // // @Speed: mix and matching 2 types is very bad for performance. Is there some architecture which won't do this?
-   // // @Robustness: also having it be one or the other can easily introduce bugs where you assume it's one or the other. Should completely remove that architecturally
-   // /** All children attached to the entity */
-   // public readonly children = new Array<TransformNode>();
-   // /** Children not attached to any hitbox interal to the same entity. Root children can either be children with no parent, or children with a different entity's hitbox as a parent. */
-   // public readonly rootChildren = new Array<TransformNode>();
    
    public boundingAreaMinX = Number.MAX_SAFE_INTEGER;
    public boundingAreaMaxX = Number.MIN_SAFE_INTEGER;
    public boundingAreaMinY = Number.MAX_SAFE_INTEGER;
    public boundingAreaMaxY = Number.MIN_SAFE_INTEGER;
 
-   /** Whether the entities' position/angle/hitboxes have changed during the current tick or not. */
+   /** Whether the entities' hitboxes' transforms have been changed at all during the current tick. */
    public isDirty = false;
 
    public pathfindingNodesAreDirty = false;
@@ -66,48 +56,27 @@ export class TransformComponent {
 
    public nextHitboxLocalID = 1;
 
-   public resolveWallCollisions(entity: Entity): void {
-      // Looser check that there are any wall tiles in any of the entities' chunks
-      let hasWallTiles = false;
-      for (let i = 0; i < this.chunks.length; i++) {
-         const chunk = this.chunks[i];
-         if (chunk.hasWallTiles) {
-            hasWallTiles = true;
-         }
-      }
-      if (!hasWallTiles) {
-         return;
-      }
-      
-      const layer = getEntityLayer(entity);
-      
-      for (const hitbox of this.hitboxes) {
-         if (hitbox.flags.includes(HitboxFlag.IGNORES_WALL_COLLISIONS)) {
-            continue;
-         }
-         
-         const box = hitbox.box;
+   // @CLEANUP all of the following shit was copied from the past 'PhysicsComponent' but really makes sense to either be on hitboxes themselves, or jsut removed comlpetely
 
-         const boundsMinX = box.calculateBoundsMinX();
-         const boundsMaxX = box.calculateBoundsMaxX();
-         const boundsMinY = box.calculateBoundsMinY();
-         const boundsMaxY = box.calculateBoundsMaxY();
+   public moveSpeedMultiplier = 1;
 
-         const minSubtileX = Math.max(Math.floor(boundsMinX / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
-         const maxSubtileX = Math.min(Math.floor(boundsMaxX / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
-         const minSubtileY = Math.max(Math.floor(boundsMinY / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
-         const maxSubtileY = Math.min(Math.floor(boundsMaxY / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+   /** The higher this number is the faster the entity reaches its maximum speed. 1 = normal */
+   public traction = 1;
 
-         for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
-            for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
-               const subtileIndex = getSubtileIndex(subtileX, subtileY);
-               if (layer.subtileIsWall(subtileIndex)) {
-                  resolveWallCollision(hitbox, subtileX, subtileY);
-               }
-            }
-         }
-      }
-   }
+   // @Cleanup awfully cumbersome to work with and look at
+   public overrideMoveSpeedMultiplier = false;
+
+   public isAffectedByAirFriction = true;
+   public isAffectedByGroundFriction = true;
+}
+
+// @Cleanup: Variable names (also is shit generally, shouldn't keep)
+const a = [0];
+const b = [0];
+for (let i = 0; i < 8; i++) {
+   const angle = i / 4 * Math.PI;
+   a.push(Math.sin(angle));
+   b.push(Math.cos(angle));
 }
 
 /** Should only be called during entity creation */
@@ -455,6 +424,306 @@ export function resolveEntityBorderCollisions(transformComponent: TransformCompo
    }
 }
 
+
+
+const tickHitboxAngularPhysics = (hitbox: Hitbox, transformComponent: TransformComponent): void => {
+   if (hitbox.box.relativeAngle === hitbox.previousRelativeAngle && hitbox.angularAcceleration === 0) {
+      return;
+   }
+
+   // We don't use the getAngularVelocity function as that multplies it by the tps (it's the instantaneous angular velocity)
+   let angularVelocityTick = getAngleDiff(hitbox.previousRelativeAngle, hitbox.box.relativeAngle);
+   // @Hack??
+   angularVelocityTick *= 0.98;
+   
+   const newAngle = hitbox.box.relativeAngle + angularVelocityTick + hitbox.angularAcceleration * Settings.DELTA_TIME * Settings.DELTA_TIME;
+
+   hitbox.previousRelativeAngle = hitbox.box.relativeAngle;
+   hitbox.box.relativeAngle = newAngle;
+   hitbox.angularAcceleration = 0;
+
+   transformComponent.isDirty = true;
+   registerDirtyEntity(hitbox.entity);
+}
+
+const applyHitboxKinematics = (hitbox: Hitbox, transformComponent: TransformComponent): void => {
+   if (isNaN(hitbox.box.position.x) || isNaN(hitbox.box.position.y)) {
+      throw new Error();
+   }
+   
+   const entity = hitbox.entity;
+   const layer = getEntityLayer(entity);
+   
+   const tileIndex = getHitboxTile(hitbox);
+   const tileType = layer.getTileType(tileIndex);
+
+   // If the game object is in a river, push them in the flow direction of the river
+   // The tileMoveSpeedMultiplier check is so that game objects on stepping stones aren't pushed
+   if (hitboxIsInRiver(hitbox) && !transformComponent.overrideMoveSpeedMultiplier && transformComponent.isAffectedByGroundFriction) {
+      const flowDirectionIdx = layer.riverFlowDirections[tileIndex];
+      // @HACK
+      applyAcceleration(hitbox, new Point(240 * Settings.DELTA_TIME * a[flowDirectionIdx], 240 * Settings.DELTA_TIME * b[flowDirectionIdx]));
+   }
+
+   // @Cleanup: shouldn't be used by air friction.
+   const tilePhysicsInfo = TILE_PHYSICS_INFO_RECORD[tileType];
+   const friction = tilePhysicsInfo.friction;
+   
+   let velX = hitbox.box.position.x - hitbox.previousPosition.x;
+   let velY = hitbox.box.position.y - hitbox.previousPosition.y;
+
+   // Air friction
+   if (transformComponent.isAffectedByAirFriction) {
+      // @IncompletE: shouldn't use tile friction!!
+      velX *= 1 - friction * Settings.DELTA_TIME * 2;
+      velY *= 1 - friction * Settings.DELTA_TIME * 2;
+   }
+
+   if (transformComponent.isAffectedByGroundFriction) {
+      // Ground friction
+      const velocityMagnitude = Math.hypot(velX, velY);
+      if (velocityMagnitude > 0) {
+         const groundFriction = Math.min(friction, velocityMagnitude);
+         velX -= groundFriction * velX / velocityMagnitude * Settings.DELTA_TIME;
+         velY -= groundFriction * velY / velocityMagnitude * Settings.DELTA_TIME;
+      }
+   }
+   
+   // Verlet integration update:
+   // new position = current position + (damped implicit velocity) + acceleration * (dt^2)
+   const newX = hitbox.box.position.x + velX + hitbox.acceleration.x * Settings.DELTA_TIME * Settings.DELTA_TIME;
+   const newY = hitbox.box.position.y + velY + hitbox.acceleration.y * Settings.DELTA_TIME * Settings.DELTA_TIME;
+
+   hitbox.previousPosition.x = hitbox.box.position.x;
+   hitbox.previousPosition.y = hitbox.box.position.y;
+
+   hitbox.box.position.x = newX;
+   hitbox.box.position.y = newY;
+
+   hitbox.acceleration.x = 0;
+   hitbox.acceleration.y = 0;
+
+   transformComponent.isDirty = true;
+   registerDirtyEntity(entity);
+}
+
+const dirtifyPathfindingNodes = (entity: Entity, transformComponent: TransformComponent): void => {
+   if (entityCanBlockPathfinding(entity)) {
+      transformComponent.pathfindingNodesAreDirty = true;
+   }
+}
+
+const resolveWallCollisions = (entity: Entity, transformComponent: TransformComponent): void => {
+   // Looser check that there are any wall tiles in any of the entities' chunks
+   let hasWallTiles = false;
+   for (let i = 0; i < transformComponent.chunks.length; i++) {
+      const chunk = transformComponent.chunks[i];
+      if (chunk.hasWallTiles) {
+         hasWallTiles = true;
+      }
+   }
+   if (!hasWallTiles) {
+      return;
+   }
+   
+   const layer = getEntityLayer(entity);
+   
+   for (const hitbox of transformComponent.hitboxes) {
+      if (hitbox.flags.includes(HitboxFlag.IGNORES_WALL_COLLISIONS)) {
+         continue;
+      }
+      
+      const box = hitbox.box;
+
+      const boundsMinX = box.calculateBoundsMinX();
+      const boundsMaxX = box.calculateBoundsMaxX();
+      const boundsMinY = box.calculateBoundsMinY();
+      const boundsMaxY = box.calculateBoundsMaxY();
+
+      const minSubtileX = Math.max(Math.floor(boundsMinX / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
+      const maxSubtileX = Math.min(Math.floor(boundsMaxX / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+      const minSubtileY = Math.max(Math.floor(boundsMinY / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
+      const maxSubtileY = Math.min(Math.floor(boundsMaxY / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+
+      for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
+         for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
+            const subtileIndex = getSubtileIndex(subtileX, subtileY);
+            if (layer.subtileIsWall(subtileIndex)) {
+               resolveWallCollision(hitbox, subtileX, subtileY);
+            }
+         }
+      }
+   }
+}
+
+const updatePosition = (entity: Entity, transformComponent: TransformComponent): void => {
+   if (!transformComponent.isDirty) {
+      return;
+   }
+   
+   cleanEntityTransform(entity);
+
+   // @Correctness: Is this correct? Or should we dirtify these things wherever the isDirty flag is set?
+   dirtifyPathfindingNodes(entity, transformComponent);
+   registerDirtyEntity(entity);
+
+   // (Potentially introduces dirt)
+   resolveWallCollisions(entity, transformComponent);
+
+   // If the object moved due to resolving wall tile collisions, recalculate
+   if (transformComponent.isDirty) {
+      cleanEntityTransform(entity);
+      // @Cleanup: pointless, if always done above?
+      registerDirtyEntity(entity);
+   }
+
+   // (Potentially introduces dirt)
+   resolveEntityBorderCollisions(transformComponent);
+
+   // If the object moved due to resolving border collisions, recalculate
+   if (transformComponent.isDirty) {
+      cleanEntityTransform(entity);
+      // @Cleanup: pointless, if always done above?
+      registerDirtyEntity(entity);
+   }
+
+   // Check to see if the entity has descended into the underground layer
+   const entityType = getEntityType(entity);
+   if (entityType !== EntityType.guardian && entityType !== EntityType.guardianSpikyBall) {
+      // Update the last valid layer
+      const layer = getEntityLayer(entity);
+      // @Hack
+      const hitbox = transformComponent.hitboxes[0];
+      const tileIndex = getHitboxTile(hitbox);
+      if (layer.getTileType(tileIndex) !== TileType.dropdown) {
+         transformComponent.lastValidLayer = layer;
+      // If the layer is valid and the entity is on a dropdown, move down
+      } else if (layer === transformComponent.lastValidLayer) {
+         // @Temporary
+         changeEntityLayer(entity, undergroundLayer);
+      }
+   }
+
+   updateEntityLights(entity);
+}
+
+const applyHitboxAngularTethers = (hitbox: Hitbox): void => {
+   for (const angularTether of hitbox.angularTethers) {
+      const originHitbox = angularTether.originHitbox;
+
+      const originToHitboxDirection = originHitbox.box.position.angleTo(hitbox.box.position);
+      const idealAngle = originHitbox.box.angle + angularTether.idealAngle;
+      
+      const directionDiff = getAngleDiff(originToHitboxDirection, idealAngle);
+      
+      if (Math.abs(directionDiff) > angularTether.padding) {
+         const rotationForce = (directionDiff - angularTether.padding * Math.sign(directionDiff)) * angularTether.springConstant;
+
+         const hitboxAccDir = originToHitboxDirection + Math.PI/2;
+         const originHitboxAccDir = originToHitboxDirection - Math.PI/2;
+         
+         const hitboxTorque = getHitboxVelocity(hitbox).scalarProj(angleToPoint(hitboxAccDir));
+         const originHitboxTorque = getHitboxVelocity(originHitbox).scalarProj(angleToPoint(originHitboxAccDir));
+         
+         const relVel = hitboxTorque - originHitboxTorque;
+         const dampingForce = -relVel * angularTether.damping;
+         
+         // @HACK: the * 0.1
+         let force = (rotationForce + dampingForce) * 0.1;
+
+         if (angularTether.useLeverage) {
+            force *= originHitbox.box.position.distanceTo(hitbox.box.position);
+         }
+
+         // @HACK: the * 4
+         applyForce(hitbox, polarVec2(force * 4, hitboxAccDir));
+
+         // @HACK: the * 4
+         // @Speed: don't need to call 2nd polarVec2 cuz this is in the exact reverse direction
+         applyForce(originHitbox, polarVec2(force * 4, originHitboxAccDir));
+      }
+
+      // Restrict the hitboxes' angle to match its direction
+      const angleDiff = getAngleDiff(hitbox.box.angle, originToHitboxDirection + angularTether.idealHitboxAngleOffset);
+      // @Hack @Cleanup: hardcoded for cow head
+      // const anglePadding = 0.3;
+      const anglePadding = 0.05;
+      const angleSpringConstant = 15;
+      const angleDamping = 0.8;
+      if (Math.abs(angleDiff) > anglePadding) {
+         const rotationForce = (angleDiff - anglePadding * Math.sign(angleDiff)) * angleSpringConstant;
+
+         const dampingForce = -getHitboxAngularVelocity(hitbox) * angleDamping;
+
+         const force = rotationForce + dampingForce;
+         addHitboxAngularAcceleration(hitbox, force / getHitboxTotalMassIncludingChildren(hitbox));
+      }
+   }
+}
+
+const applyHitboxRelativeAngleConstraints = (hitbox: Hitbox): void => {
+   for (const constraint of hitbox.relativeAngleConstraints) {
+      // Restrict the hitboxes' angle to match its direction
+      const angleDiff = getAngleDiff(hitbox.box.relativeAngle, constraint.idealAngle);
+      // @Hack @Cleanup: hardcoded
+      const anglePadding = 0;
+      if (Math.abs(angleDiff) > anglePadding) {
+         const rotationForce = (angleDiff - anglePadding * Math.sign(angleDiff)) * constraint.springConstant;
+
+         const dampingForce = -getHitboxAngularVelocity(hitbox) * constraint.damping;
+
+         const force = rotationForce + dampingForce;
+         
+         addHitboxAngularAcceleration(hitbox, force / getHitboxTotalMassIncludingChildren(hitbox));
+      }
+   }
+}
+
+const applyHitboxTethers = (hitbox: Hitbox, transformComponent: TransformComponent): void => {
+   // @Cleanup: basically a wrapper now
+   
+   applyHitboxAngularTethers(hitbox);
+   applyHitboxRelativeAngleConstraints(hitbox);
+
+   if (hitbox.angularTethers.length > 0 || hitbox.relativeAngleConstraints.length > 0) {
+      // @Speed: Is this necessary every tick?
+      transformComponent.isDirty = true;
+   }
+}
+
+const tickHitboxPhysics = (hitbox: Hitbox): void => {
+   // @CLEANUP
+   const transformComponent = TransformComponentArray.getComponent(hitbox.entity);
+
+   tickHitboxAngularPhysics(hitbox, transformComponent);
+
+   if (hitbox.parent === null) {
+      applyHitboxKinematics(hitbox, transformComponent);
+   }
+   
+   applyHitboxTethers(hitbox, transformComponent);
+
+   updatePosition(hitbox.entity, transformComponent);
+
+   for (const childHitbox of hitbox.children) {
+      tickHitboxPhysics(childHitbox);
+   }
+}
+
+// @Hack: this function used to be called from the physicscomponent, but I realised that all entities need to tick this regardless, so it's now called from the transformcomponent's onTick function. but it's still here, i guess.
+const tickEntityPhysics = (entity: Entity): void => {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   for (const rootHitbox of transformComponent.rootHitboxes) {
+      tickHitboxPhysics(rootHitbox);
+   }
+
+   // @Speed: what if the hitboxes don't change?
+   // (just for carried entities)
+   if (transformComponent.rootHitboxes.length > 0) {
+      registerDirtyEntity(entity);
+   }
+}
+
 function onInitialise(config: EntityConfig, entity: Entity): void {
    // This used to be done in the onJoin function, but since entities can now be attached just before the onJoin functions
    // are called, we have to initialise the root entity before that.
@@ -547,6 +816,20 @@ function onRemove(entity: Entity): void {
    removeEntityLights(entity);
 }
 
+function getDataLength(entity: Entity): number {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+
+   let lengthBytes = 3 * Float32Array.BYTES_PER_ELEMENT;
+   
+   for (const hitbox of transformComponent.hitboxes) {
+      lengthBytes += getHitboxDataLength(hitbox);
+   }
+
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+
+   return lengthBytes;
+}
+
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
@@ -557,18 +840,8 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    for (const hitbox of transformComponent.hitboxes) {
       addHitboxDataToPacket(packet, hitbox);
    }
-}
 
-function getDataLength(entity: Entity): number {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-
-   let lengthBytes = 3 * Float32Array.BYTES_PER_ELEMENT;
-   
-   for (const hitbox of transformComponent.hitboxes) {
-      lengthBytes += getHitboxDataLength(hitbox);
-   }
-
-   return lengthBytes;
+   packet.addNumber(transformComponent.traction);
 }
 
 const propagateRootEntityChange = (hitbox: Hitbox, rootEntity: Entity): void => {

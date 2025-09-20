@@ -4,7 +4,6 @@ import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
 import { HealthComponent } from "../../components/HealthComponent";
 import { PebblumComponent } from "../../components/PebblumComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
@@ -23,8 +22,6 @@ export function createPebblumConfig(position: Point, rotation: number): EntityCo
    const noseHitbox = new Hitbox(transformComponent, bodyHitbox, true, new CircularBox(new Point(0, 0), new Point(0, 6), 0, 8 * 2), 0.3, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, noseHitbox);
    
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(20);
 
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.burning | StatusEffect.poisoned);
@@ -36,7 +33,6 @@ export function createPebblumConfig(position: Point, rotation: number): EntityCo
       entityType: EntityType.pebblum,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.pebblum]: pebblumComponent

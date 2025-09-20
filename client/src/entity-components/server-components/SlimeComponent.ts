@@ -7,13 +7,10 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { playSoundOnHitbox } from "../../sound";
-import { getHitboxTile, TransformComponentArray } from "./TransformComponent";
-import { EntityParams, getEntityLayer, getEntityRenderInfo } from "../../world";
+import { TransformComponentArray } from "./TransformComponent";
+import { EntityParams, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { PhysicsComponentArray, resetIgnoredTileSpeedMultipliers } from "./PhysicsComponent";
-import { TileType } from "../../../../shared/src/tiles";
 import { createSlimePoolParticle, createSlimeSpeckParticle } from "../../particles";
-import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface SlimeComponentParams {
@@ -59,8 +56,6 @@ const EYE_SHAKE_START_FREQUENCY = 0.5;
 const EYE_SHAKE_END_FREQUENCY = 1.25;
 const EYE_SHAKE_START_AMPLITUDE = 0.07;
 const EYE_SHAKE_END_AMPLITUDE = 0.2;
-
-const IGNORED_TILE_SPEED_MULTIPLIERS = [TileType.slime];
 
 const NUM_PUDDLE_PARTICLES_ON_HIT: ReadonlyArray<number> = [1, 2, 3];
 const NUM_PUDDLE_PARTICLES_ON_DEATH: ReadonlyArray<number> = [3, 5, 7];
@@ -156,17 +151,6 @@ function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.hitboxes[0];
    
-   const layer = getEntityLayer(entity);
-
-   // Slimes move at normal speed on slime tiles
-   const tile = getHitboxTile(layer, hitbox);
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
-   if (tile.type === TileType.slime) {
-      physicsComponent.ignoredTileSpeedMultipliers = IGNORED_TILE_SPEED_MULTIPLIERS;
-   } else {
-      resetIgnoredTileSpeedMultipliers(physicsComponent);
-   }
-
    if (Math.random() < 0.2 * Settings.DELTA_TIME) {
       playSoundOnHitbox("slime-ambient-" + randInt(1, 4) + ".mp3", 0.4, 1, entity, hitbox, false);
    }

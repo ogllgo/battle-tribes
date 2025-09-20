@@ -13,7 +13,6 @@ import { HealthComponent } from "../../components/HealthComponent";
 import { InguYetuksnoglurblidokowfleaComponent } from "../../components/InguYetuksnoglurblidokowfleaComponent";
 import { OkrenClawGrowthStage } from "../../components/OkrenClawComponent";
 import { OkrenAgeStage } from "../../components/OkrenComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../hitboxes";
@@ -317,8 +316,6 @@ export function createInguYetuksnoglurblidokowfleaConfig(position: Point, angle:
       }
    }
    
-   const physicsComponent = new PhysicsComponent();
-
    const healthComponent = new HealthComponent(1000);
 
    const statusEffectComponent = new StatusEffectComponent(0);
@@ -331,7 +328,6 @@ export function createInguYetuksnoglurblidokowfleaConfig(position: Point, angle:
       entityType: EntityType.inguYetuksnoglurblidokowflea,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,

@@ -7,7 +7,6 @@ import { Settings } from "../../shared/src/settings";
 import { TILE_PHYSICS_INFO_RECORD, TileType } from "../../shared/src/tiles";
 import { entityIsInRiver, getHitboxTile, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { getEntityLayer } from "./world";
-import { PhysicsComponentArray } from "./entity-components/server-components/PhysicsComponent";
 
 export interface HitboxTether {
    readonly originBox: Box;
@@ -143,13 +142,11 @@ export function translateHitbox(hitbox: Hitbox, translationX: number, translatio
 export function applyAcceleration(entity: Entity, hitbox: Hitbox, accelerationX: number, accelerationY: number): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   const physicsComponent = PhysicsComponentArray.getComponent(entity);
-
    const tile = getHitboxTile(getEntityLayer(entity), hitbox);
    const tilePhysicsInfo = TILE_PHYSICS_INFO_RECORD[tile.type];
       
    let tileMoveSpeedMultiplier = tilePhysicsInfo.moveSpeedMultiplier;
-   if (physicsComponent.ignoredTileSpeedMultipliers.includes(tile.type) || (tile.type === TileType.water && !entityIsInRiver(transformComponent, entity))) {
+   if (transformComponent.ignoredTileSpeedMultipliers.includes(tile.type) || (tile.type === TileType.water && !entityIsInRiver(transformComponent, entity))) {
       tileMoveSpeedMultiplier = 1;
    }
    
@@ -161,8 +158,8 @@ export function applyAcceleration(entity: Entity, hitbox: Hitbox, accelerationX:
    const currentVelocity = getHitboxVelocity(hitbox);
    
    // Apply velocity with traction (blend towards desired velocity)
-   hitbox.acceleration.x += (desiredVelocityX - currentVelocity.x) * physicsComponent.traction;
-   hitbox.acceleration.y += (desiredVelocityY - currentVelocity.y) * physicsComponent.traction;
+   hitbox.acceleration.x += (desiredVelocityX - currentVelocity.x) * transformComponent.traction;
+   hitbox.acceleration.y += (desiredVelocityY - currentVelocity.y) * transformComponent.traction;
 }
 
 export function setHitboxAngularVelocity(hitbox: Hitbox, angularVelocity: number): void {

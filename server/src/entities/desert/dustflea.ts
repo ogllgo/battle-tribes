@@ -5,12 +5,10 @@ import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/col
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { Settings } from "../../../../shared/src/settings";
-import { angle, getAbsAngleDiff, Point, polarVec2 } from "../../../../shared/src/utils";
+import { getAbsAngleDiff, Point, polarVec2 } from "../../../../shared/src/utils";
 import { turnToPosition } from "../../ai-shared";
 import { DustfleaHibernateAI } from "../../ai/DustfleaHibernateAI";
 import { EscapeAI } from "../../ai/EscapeAI";
-import { FollowAI } from "../../ai/FollowAI";
-import { PatrolAI } from "../../ai/PatrolAI";
 import WanderAI from "../../ai/WanderAI";
 import { EntityConfig } from "../../components";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
@@ -19,7 +17,6 @@ import { DustfleaComponent } from "../../components/DustfleaComponent";
 import { EnergyStomachComponent } from "../../components/EnergyStomachComponent";
 import { EnergyStoreComponent } from "../../components/EnergyStoreComponent";
 import { HealthComponent } from "../../components/HealthComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { applyAbsoluteKnockback, Hitbox } from "../../hitboxes";
@@ -68,8 +65,6 @@ export function createDustfleaConfig(position: Point, angle: number): EntityConf
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), angle, 8), 0.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
-   const physicsComponent = new PhysicsComponent();
-
    const statusEffectComponent = new StatusEffectComponent(0);
 
    const healthComponent = new HealthComponent(2);
@@ -94,7 +89,6 @@ export function createDustfleaConfig(position: Point, angle: number): EntityConf
       entityType: EntityType.dustflea,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,

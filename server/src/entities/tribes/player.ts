@@ -15,7 +15,6 @@ import { addHitboxToTransformComponent, TransformComponent, TransformComponentAr
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { entityExists, getEntityType, getGameTicks } from "../../world";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import Tribe from "../../Tribe";
@@ -43,11 +42,10 @@ const getHitboxRadius = (tribeType: TribeType): number => {
 export function createPlayerConfig(position: Point, rotation: number, tribe: Tribe, playerClient: PlayerClient): EntityConfig {
    const transformComponent = new TransformComponent();
 
+   transformComponent.traction = 1.4;
+
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, getHitboxRadius(tribe.tribeType)), 1.25, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
-   
-   const physicsComponent = new PhysicsComponent();
-   physicsComponent.traction = 1.4;
 
    const tribeInfo = TRIBE_INFO_RECORD[tribe.tribeType];
    const healthComponent = new HealthComponent(tribeInfo.maxHealthPlayer);
@@ -70,7 +68,6 @@ export function createPlayerConfig(position: Point, rotation: number, tribe: Tri
       entityType: EntityType.player,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.tribe]: tribeComponent,
@@ -85,6 +82,7 @@ export function createPlayerConfig(position: Point, rotation: number, tribe: Tri
 }
 
 // @Cleanup: ton of copy and paste between these functions
+// @Cleanup: none of these should be in the player entity creation file
 
 export function startChargingBow(player: Entity, inventoryName: InventoryName): void {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(player);

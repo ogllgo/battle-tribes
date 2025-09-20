@@ -17,7 +17,6 @@ import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../../shared/src/col
 import { Hitbox } from "../../hitboxes";
 import { StructureConnection } from "../../structure-placement";
 import { createLight } from "../../lights";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 // @Cleanup: shouldn't be globally exported!
 export const FIRE_TORCH_RADIUS = 10;
@@ -30,8 +29,6 @@ export function createFireTorchConfig(position: Point, rotation: number, tribe: 
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(3);
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.poisoned);
@@ -52,7 +49,6 @@ export function createFireTorchConfig(position: Point, rotation: number, tribe: 
       entityType: EntityType.fireTorch,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.structure]: structureComponent,

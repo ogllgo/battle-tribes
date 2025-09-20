@@ -2,7 +2,6 @@ import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collis
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityType, Entity } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { TribeComponent } from "../../components/TribeComponent";
 import { EntityConfig } from "../../components";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
@@ -15,12 +14,12 @@ import { Hitbox } from "../../hitboxes";
 export function createBallistaFrostcicleConfig(position: Point, rotation: number, tribe: Tribe, creator: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
 
+   transformComponent.isAffectedByGroundFriction = false;
+
    const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 12, 80), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.arrowPassable, []);
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
 
-   const physicsComponent = new PhysicsComponent();
-   physicsComponent.isAffectedByGroundFriction = false;
 
    const tribeComponent = new TribeComponent(tribe);
 
@@ -30,7 +29,6 @@ export function createBallistaFrostcicleConfig(position: Point, rotation: number
       entityType: EntityType.ballistaFrostcicle,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.projectile]: projectileComponent
       },

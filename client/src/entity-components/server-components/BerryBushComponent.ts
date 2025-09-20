@@ -10,7 +10,6 @@ import { randAngle, randFloat, randInt } from "../../../../shared/src/utils";
 import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle } from "../../particles";
 import { playSoundOnHitbox } from "../../sound";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
-import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 export interface BerryBushComponentParams {

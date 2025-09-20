@@ -13,7 +13,6 @@ import { getEntityType } from "../../world";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { SpitPoisonAreaComponent } from "../../components/SpitPoisonAreaComponent";
 import { Hitbox } from "../../hitboxes";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 
 export function createSpitPoisonAreaConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
@@ -21,15 +20,12 @@ export function createSpitPoisonAreaConfig(position: Point, rotation: number): E
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 55), Number.EPSILON, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
-   const physicsComponent = new PhysicsComponent();
-   
    const spitPoisonAreaComponent = new SpitPoisonAreaComponent();
    
    return {
       entityType: EntityType.spitPoisonArea,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.spitPoisonArea]: spitPoisonAreaComponent
       },
       lights: []

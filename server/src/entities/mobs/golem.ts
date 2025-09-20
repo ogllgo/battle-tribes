@@ -5,7 +5,6 @@ import { StatusEffect } from "battletribes-shared/status-effects";
 import { distance, Point, randAngle, randInt } from "battletribes-shared/utils";
 import { HealthComponent } from "../../components/HealthComponent";
 import { GolemComponent } from "../../components/GolemComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig, LightCreationInfo } from "../../components";
@@ -135,8 +134,6 @@ export function createGolemConfig(position: Point, rotation: number): EntityConf
       addHitboxToTransformComponent(transformComponent, wristHitbox);
    }
    
-   const physicsComponent = new PhysicsComponent();
-
    const healthComponent = new HealthComponent(150);
    
    const statusEffectComponent = new StatusEffectComponent(StatusEffect.bleeding | StatusEffect.burning | StatusEffect.poisoned);
@@ -147,7 +144,6 @@ export function createGolemConfig(position: Point, rotation: number): EntityConf
       entityType: EntityType.golem,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.golem]: golemComponent

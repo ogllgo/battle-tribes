@@ -12,7 +12,6 @@ import { HealthComponent } from "../../../components/HealthComponent";
 import { InventoryComponent } from "../../../components/InventoryComponent";
 import { InventoryUseComponent } from "../../../components/InventoryUseComponent";
 import { PatrolAI } from "../../../ai/PatrolAI";
-import { PhysicsComponent } from "../../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../../components/TransformComponent";
 import { TribeComponent } from "../../../components/TribeComponent";
@@ -35,11 +34,10 @@ const turnFunc = () => {
 export function createCogwalkerConfig(position: Point, rotation: number, tribe: Tribe): EntityConfig {
    const transformComponent = new TransformComponent();
 
+   transformComponent.traction = 1.4;
+
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 28), 1.2, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
-   
-   const physicsComponent = new PhysicsComponent();
-   physicsComponent.traction = 1.4;
 
    const healthComponent = new HealthComponent(25);
 
@@ -71,7 +69,6 @@ export function createCogwalkerConfig(position: Point, rotation: number, tribe: 
       entityType: EntityType.cogwalker,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.tribe]: tribeComponent,

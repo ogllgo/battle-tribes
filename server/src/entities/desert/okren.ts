@@ -17,7 +17,6 @@ import { EnergyStomachComponent } from "../../components/EnergyStomachComponent"
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
 import { OkrenClawGrowthStage } from "../../components/OkrenClawComponent";
 import { OkrenAgeStage, OkrenComponent, OkrenComponentArray } from "../../components/OkrenComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { Hitbox } from "../../hitboxes";
@@ -198,8 +197,6 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
       });
    }
    
-   const physicsComponent = new PhysicsComponent();
-   
    const statusEffectComponent = new StatusEffectComponent(0);
 
    const healthComponent = new HealthComponent(HEALTHS[size]);
@@ -228,7 +225,6 @@ export function createOkrenConfig(position: Point, angle: number, size: OkrenAge
       entityType: EntityType.okren,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,

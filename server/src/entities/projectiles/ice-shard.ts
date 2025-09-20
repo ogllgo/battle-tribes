@@ -2,7 +2,6 @@ import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collis
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { EntityConfig } from "../../components";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -14,11 +13,10 @@ export function createIceShardConfig(position: Point, rotation: number): EntityC
    const transformComponent = new TransformComponent();
    transformComponent.collisionMask = DEFAULT_COLLISION_MASK & ~CollisionBit.planterBox;
 
+   transformComponent.isAffectedByGroundFriction = false;
+
    const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 24, 24), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
-   
-   const physicsComponent = new PhysicsComponent();
-   physicsComponent.isAffectedByGroundFriction = false;
 
    const iceShardComponent = new IceShardComponent();
    
@@ -26,7 +24,6 @@ export function createIceShardConfig(position: Point, rotation: number): EntityC
       entityType: EntityType.iceShardProjectile,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.iceShard]: iceShardComponent
       },
       lights: []

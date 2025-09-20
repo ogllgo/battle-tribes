@@ -6,7 +6,6 @@ import { EntityType } from "../../../../shared/src/entities";
 import { Point, polarVec2 } from "../../../../shared/src/utils";
 import { EntityConfig } from "../../components";
 import { HealthComponent } from "../../components/HealthComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { TukmokTrunkComponent } from "../../components/TukmokTrunkComponent";
@@ -63,8 +62,6 @@ export function createTukmokTrunkConfig(position: Point, angle: number, trunkBas
       lastHitbox = hitbox;
    }
    
-   const physicsComponent = new PhysicsComponent();
-
    const healthComponent = new HealthComponent(75);
    
    const statusEffectComponent = new StatusEffectComponent(0);
@@ -75,7 +72,6 @@ export function createTukmokTrunkConfig(position: Point, angle: number, trunkBas
       entityType: EntityType.tukmokTrunk,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.tukmokTrunk]: tukmokTrunkComponent

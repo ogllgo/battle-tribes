@@ -1,30 +1,26 @@
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collision";
-import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
-import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
-import { ThrowingProjectileComponent, ThrowingProjectileComponentArray } from "../../components/ThrowingProjectileComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
-import { EntityRelationship, getEntityRelationship, TribeComponent } from "../../components/TribeComponent";
+import { ThrowingProjectileComponent } from "../../components/ThrowingProjectileComponent";
+import { TribeComponent } from "../../components/TribeComponent";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
-import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
+import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import CircularBox from "battletribes-shared/boxes/CircularBox";
-import { validateEntity } from "../../world";
 import Tribe from "../../Tribe";
 import { BattleaxeProjectileComponent } from "../../components/BattleaxeProjectileComponent";
 import { Hitbox } from "../../hitboxes";
 
 export function createBattleaxeProjectileConfig(position: Point, rotation: number, tribe: Tribe, tribeMember: Entity, itemID: number | null): EntityConfig {
    const transformComponent = new TransformComponent();
+
+   transformComponent.isAffectedByGroundFriction = false;
    
    const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 32), 0.6, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);   
    
-   const physicsComponent = new PhysicsComponent();
-   physicsComponent.isAffectedByGroundFriction = false;
    
    const tribeComponent = new TribeComponent(tribe);
    
@@ -36,7 +32,6 @@ export function createBattleaxeProjectileConfig(position: Point, rotation: numbe
       entityType: EntityType.battleaxeProjectile,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.throwingProjectile]: throwingProjectileComponent,
          [ServerComponentType.battleaxeProjectile]: battleaxeProjectileComponent

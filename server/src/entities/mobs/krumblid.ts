@@ -9,7 +9,6 @@ import WanderAI from "../../ai/WanderAI";
 import { Biome } from "battletribes-shared/biomes";
 import Layer from "../../Layer";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
@@ -110,6 +109,8 @@ const extraEscapeCondition = (krumblid: Entity, escapeTarget: Entity): boolean =
 
 export function createKrumblidConfig(position: Point, angle: number): EntityConfig {
    const transformComponent = new TransformComponent();
+
+   transformComponent.traction = 1.5;
    
    const bodyHitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), angle, 24), 0.75, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.cactus, [HitboxFlag.KRUMBLID_BODY]);
    addHitboxToTransformComponent(transformComponent, bodyHitbox);
@@ -128,9 +129,6 @@ export function createKrumblidConfig(position: Point, angle: number): EntityConf
       mandibleHitbox.box.pivot = createNormalisedPivotPoint(-0.5, -0.5);
       addHitboxToTransformComponent(transformComponent, mandibleHitbox);
    }
-   
-   const physicsComponent = new PhysicsComponent();
-   physicsComponent.traction = 1.5;
    
    const healthComponent = new HealthComponent(15);
    
@@ -161,7 +159,6 @@ export function createKrumblidConfig(position: Point, angle: number): EntityConf
       entityType: EntityType.krumblid,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,

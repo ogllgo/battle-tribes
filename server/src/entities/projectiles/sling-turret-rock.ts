@@ -2,7 +2,6 @@ import { DEFAULT_COLLISION_MASK, CollisionBit } from "battletribes-shared/collis
 import {ServerComponentType } from "battletribes-shared/components";
 import { EntityType, Entity } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
-import { PhysicsComponent } from "../../components/PhysicsComponent";
 import { TribeComponent, TribeComponentArray } from "../../components/TribeComponent";
 import { EntityConfig } from "../../components";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
@@ -15,12 +14,11 @@ import { Hitbox } from "../../hitboxes";
 export function createSlingTurretRockConfig(position: Point, rotation: number, owner: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
 
+   transformComponent.isAffectedByGroundFriction = false;
+
    const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 12, 64), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.arrowPassable, []);
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
-   
-   const physicsComponent = new PhysicsComponent();
-   physicsComponent.isAffectedByGroundFriction = false;
    
    const ownerTribeComponent = TribeComponentArray.getComponent(owner);
    const tribeComponent = new TribeComponent(ownerTribeComponent.tribe);
@@ -33,7 +31,6 @@ export function createSlingTurretRockConfig(position: Point, rotation: number, o
       entityType: EntityType.slingTurretRock,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.tribe]: tribeComponent,
          [ServerComponentType.projectile]: projectileComponent,
          [ServerComponentType.slingTurretRock]: slingTurretRockComponent

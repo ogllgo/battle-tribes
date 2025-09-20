@@ -9,7 +9,6 @@ import { applyAbsoluteKnockback, Hitbox } from "../../hitboxes";
 import { HealthComponent } from "../../components/HealthComponent";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { SnobeComponent } from "../../components/SnobeComponent";
-import { PhysicsComponent, PhysicsComponentArray } from "../../components/PhysicsComponent";
 import { AIHelperComponent, AIType } from "../../components/AIHelperComponent";
 import { turnToPosition } from "../../ai-shared";
 import { EscapeAI } from "../../ai/EscapeAI";
@@ -70,8 +69,7 @@ const moveFunc = (snobe: Entity, pos: Point, acceleration: number): void => {
       
       const direction = hitbox.box.position.angleTo(pos);
       // @HACK: so that snobes get affected by freezing from ingu serpents. But this shouldn't have to be thought about here!!
-      const physicsComponent = PhysicsComponentArray.getComponent(snobe);
-      applyAbsoluteKnockback(hitbox, polarVec2(320 / 1600 * acceleration * physicsComponent.moveSpeedMultiplier, direction));
+      applyAbsoluteKnockback(hitbox, polarVec2(320 / 1600 * acceleration * transformComponent.moveSpeedMultiplier, direction));
    }
 }
 
@@ -123,8 +121,6 @@ export function createSnobeConfig(position: Point, angle: number): EntityConfig 
       addHitboxToTransformComponent(transformComponent, earHitbox);
    }
    
-   const physicsComponent = new PhysicsComponent();
-   
    const healthComponent = new HealthComponent(10);
 
    const statusEffectComponent = new StatusEffectComponent(0);
@@ -148,7 +144,6 @@ export function createSnobeConfig(position: Point, angle: number): EntityConfig 
       entityType: EntityType.snobe,
       components: {
          [ServerComponentType.transform]: transformComponent,
-         [ServerComponentType.physics]: physicsComponent,
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.aiHelper]: aiHelperComponent,
