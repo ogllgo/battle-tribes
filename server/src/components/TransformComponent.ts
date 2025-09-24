@@ -1052,6 +1052,8 @@ export function getRandomPositionInEntity(transformComponent: TransformComponent
 }
 
 export function changeEntityLayer(entity: Entity, newLayer: Layer): void {
+   // @Correctness should probably instead collate all layer changes then do them all at once at the end of a tick
+   
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    // Remove from previous chunks
