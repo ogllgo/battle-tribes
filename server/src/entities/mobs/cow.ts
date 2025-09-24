@@ -147,7 +147,7 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
    headHitbox.box.pivot = createNormalisedPivotPoint(0, -0.5);
    addHitboxToTransformComponent(transformComponent, headHitbox);
 
-   tetherHitboxes(headHitbox, bodyHitbox, idealHeadDist, 35, 1);
+   tetherHitboxes(headHitbox, bodyHitbox, idealHeadDist, 60, 1);
    // @Hack: method of adding
    headHitbox.angularTethers.push({
       originHitbox: bodyHitbox,

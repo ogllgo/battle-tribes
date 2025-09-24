@@ -25,6 +25,8 @@ import { OkrenCombatAI } from "../ai/OkrenCombatAI";
 import { getCircleCircleCollisionResult, getCircleRectangleCollisionResult } from "../../../shared/src/collision";
 import { Point } from "../../../shared/src/utils";
 
+// @CLEANUP @ROBUSTNESS: whole 'ai class' system is ass and weird. idk why i made this in the first place
+
 export const enum AIType {
    wander,
    follow,
@@ -182,7 +184,7 @@ const boxIsVisible = (seeingHitbox: Hitbox, box: Box, visionRange: number): bool
 }
 
 const hitboxWithChildrenIsVisible = (seeingHitbox: Hitbox, hitbox: Hitbox, visionRange: number): boolean => {
-   // @Hack? There surely must be some cases in which we do want an entity to see the entities in its carry heirarchy
+   // @Hack? There surely must be some cases in which we do want an entity to see the entities in its attach heirarchy
    if (hitbox.rootEntity === seeingHitbox.rootEntity) {
       return false;
    }

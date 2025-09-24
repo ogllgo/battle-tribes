@@ -344,12 +344,13 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
    } else if (RideableComponentArray.hasComponent(entity)) {
       // If the entity requires taming before it is rideable, make sure it has the appropriate skill
       let isRideable = true;
-      if (TamingComponentArray.hasComponent(entity)) {
-         const tamingComponent = TamingComponentArray.getComponent(entity);
-         if (!hasTamingSkill(tamingComponent, TamingSkillID.riding)) {
-            isRideable = false;
-         }
-      }
+      // @SQUEAM
+      // if (TamingComponentArray.hasComponent(entity)) {
+      //    const tamingComponent = TamingComponentArray.getComponent(entity);
+      //    if (!hasTamingSkill(tamingComponent, TamingSkillID.riding)) {
+      //       isRideable = false;
+      //    }
+      // }
       
       if (isRideable) {
          const carrySlotIdx = getSelectedCarrySlotIdx(entity);

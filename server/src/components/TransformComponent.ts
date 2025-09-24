@@ -415,7 +415,7 @@ export function resolveEntityBorderCollisions(transformComponent: TransformCompo
    }
 
    // If the entity is outside the world border after resolving border collisions, throw an error
-   // @Robustness this should be impossible to trigger
+   // @Robustness this should be impossible to trigger, so i can remove it and sleep peacefully
    for (const hitbox of transformComponent.hitboxes) {
       if (hitbox.box.position.x < 0 || hitbox.box.position.x >= Settings.BOARD_UNITS || hitbox.box.position.y < 0 || hitbox.box.position.y >= Settings.BOARD_UNITS) {
          const entity = TransformComponentArray.getEntityFromComponentNONOSQUARE(transformComponent);
@@ -808,7 +808,7 @@ function onRemove(entity: Entity): void {
       removeFromChunk(entity, layer, chunk);
    }
 
-   // @Cleanup: Same as above. should we make a separate PathfindingOccupancyComponent?
+   // @Cleanup: Same as above. should i make a separate PathfindingOccupancyComponent?
    if (entityCanBlockPathfinding(entity)) {
       clearEntityPathfindingNodes(entity);
    }

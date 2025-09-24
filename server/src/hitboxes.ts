@@ -18,7 +18,7 @@ export interface HitboxAngularTether {
    /** Radians either side of the ideal angle for which the link is allowed to be in without being pulled */
    readonly padding: number;
 
-   // @HACK: haven't fully thought this through; it's extremely unclear what this is
+   // @HACK: haven't fully thought this through; it's extremely unclear what this is to people reading through this (HI! if anyone else does read this)
    readonly idealHitboxAngleOffset: number;
 
    /** If true, then the tether will be as effective at maintaining the restriction at long distances as it is at short distances. If false then the force used to correct the restriction will be the same regardless of distance between the hitboxes. */
@@ -51,7 +51,7 @@ export class Hitbox {
    
    public readonly previousPosition: Point;
    public readonly acceleration = new Point(0, 0);
-   // @Incomplete: make it impossible to add or remove from here
+   // @Incomplete: make it impossible to add or remove from here unless its through the proper functions
    public readonly tethers = new Array<HitboxTether>();
    
    public previousRelativeAngle: number;
@@ -66,7 +66,7 @@ export class Hitbox {
    public collisionMask: number;
    public readonly flags: ReadonlyArray<HitboxFlag>;
 
-   // @Memory: entities without physics components don't need these 4.
+   // @Memory: entities without physics components don't need these 4. (?????)
    public boundsMinX = 0;
    public boundsMaxX = 0;
    public boundsMinY = 0;
@@ -117,7 +117,7 @@ export function setHitboxVelocity(hitbox: Hitbox, vx: number, vy: number): void 
 }
 
 export function getRootHitbox(hitbox: Hitbox): Hitbox {
-   // @Bug: This can cause infinite loops. We should do a check here, or just rework the whole shitass system so this can never occur
+   // @Bug: This can cause infinite loops. I should do a check here, or just rework the whole shitass system so this can never occur
    let currentHitbox = hitbox;
    while (currentHitbox.parent !== null) {
       currentHitbox = currentHitbox.parent;
