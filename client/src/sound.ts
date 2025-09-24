@@ -7,6 +7,7 @@ import { TransformComponentArray } from "./entity-components/server-components/T
 import { Entity } from "../../shared/src/entities";
 import Layer from "./Layer";
 import { Hitbox } from "./hitboxes";
+import { playerInstance } from "./player";
 
 type SoundID = number;
 
@@ -396,6 +397,11 @@ export interface SoundInfo {
 export function playSound(filePath: string, volume: number, pitchMultiplier: number, source: Point, layer: Layer | null): SoundInfo | null {
    // Only play sounds from the current layer
    if (layer !== null && layer !== getCurrentLayer()) {
+      return null;
+   }
+   
+   // @SQUEAME
+   if (playerInstance !== null) {
       return null;
    }
    

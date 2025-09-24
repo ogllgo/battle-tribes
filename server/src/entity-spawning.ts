@@ -344,7 +344,7 @@ export function spawnInitialEntities(): void {
       // createEntity(ancientOkrenConfig, surfaceLayer, 0);
       
       if(1+1===2)return;
-      // const config = createGlurbConfig(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5, 0);
+      // const config = createGlurbConfig(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5, 0, randInt(3, 5));
       // createEntity(config, surfaceLayer, 0);
 
       if(1+1===2)return;

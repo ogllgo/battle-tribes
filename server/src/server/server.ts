@@ -25,7 +25,7 @@ import { destroyFlaggedEntities, entityExists, getEntityLayer, pushEntityJoinBuf
 import { resolveEntityCollisions } from "../collision-detection";
 import { runCollapses } from "../collapses";
 import { updateTribes } from "../tribes";
-import { surfaceLayer, layers } from "../layers";
+import { surfaceLayer, layers, undergroundLayer } from "../layers";
 import { generateReeds } from "../world-generation/reed-generation";
 import { riverMainTiles } from "../world-generation/surface-layer-generation";
 import { updateWind } from "../wind";
@@ -143,9 +143,7 @@ class GameServer {
       // } else {
       //    SRandom.seed(randInt(0, 9999999999));
       // }
-      SRandom.seed(9079734040);
-      // : the one with the tundra colliding the top and bottom world borders @Squeam
-      // SRandom.seed(5128141131);
+      SRandom.seed(7233487323);
 
       const builtinRandomFunc = Math.random;
       Math.random = () => SRandom.next();
@@ -175,7 +173,7 @@ class GameServer {
       generateGrassStrands();
       console.log("grass",performance.now() - _SHITTYCUMMERY)
       _SHITTYCUMMERY = performance.now();
-      generateDecorations();
+      // generateDecorations();
       console.log("decorations",performance.now() - _SHITTYCUMMERY)
       _SHITTYCUMMERY = performance.now();
       // spawnGuardians();
@@ -207,14 +205,15 @@ class GameServer {
                const username = reader.readString();
                // @Temporary
                const tribeType = reader.readNumber() as TribeType;
-               const tribeType2 = TribeType.goblins;
                const screenWidth = reader.readNumber();
                const screenHeight = reader.readNumber();
 
                const isSpectating = reader.readBoolean();
                reader.padOffset(3);
 
-               const spawnPosition = generatePlayerSpawnPosition(tribeType);
+               // @SQUEAM
+               // const spawnPosition = generatePlayerSpawnPosition(tribeType);
+               const spawnPosition = new Point(1838 - 60, 5676);
                // @Incomplete? Unused?
                const visibleChunkBounds = estimateVisibleChunkBounds(spawnPosition, screenWidth, screenHeight);
    

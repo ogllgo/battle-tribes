@@ -201,13 +201,6 @@ const hitboxWithChildrenIsVisible = (seeingHitbox: Hitbox, hitbox: Hitbox, visio
 }
 
 const entityIsVisible = (seeingHitbox: Hitbox, checkEntity: Entity, checkEntityTransformComponent: TransformComponent, visionRange: number): boolean => {
-   // @SQUEAM
-   // if (getEntityType(seeingHitbox.entity) === EntityType.tukmok) {
-   //    if (!entityIsInLineOfSight(seeingHitbox.box.position, checkEntity, seeingHitbox.entity)) {
-   //       return false;
-   //    }
-   // }
-   
    for (const rootHitbox of checkEntityTransformComponent.rootHitboxes) {
       if (hitboxWithChildrenIsVisible(seeingHitbox, rootHitbox, visionRange)) {
          return true;

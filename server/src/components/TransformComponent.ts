@@ -752,7 +752,7 @@ function onJoin(entity: Entity): void {
 
    updateContainingChunks(transformComponent, entity);
 
-   // @Cleanup: should we make a separate PathfindingOccupancyComponent?
+   // @Cleanup: should i make a separate PathfindingOccupancyComponent?
    if (entityCanBlockPathfinding(entity)) {
       updateEntityPathfindingNodeOccupance(entity);
    }
