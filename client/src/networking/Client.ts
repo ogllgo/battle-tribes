@@ -11,8 +11,8 @@ import { definiteGameState, latencyGameState } from "../game-state/game-states";
 import { windowHeight, windowWidth } from "../webgl";
 import { closeCurrentMenu } from "../menus";
 import { getStringLengthBytes, Packet, PacketReader, PacketType } from "battletribes-shared/packets";
-import { processForcePositionUpdatePacket, processGameDataPacket, processInitialGameDataPacket, processSyncDataPacket } from "./packet-processing";
-import { createActivatePacket, createPlayerDataPacket, createSyncRequestPacket, sendSetSpectatingPositionPacket } from "./packet-creation";
+import { processForcePositionUpdatePacket, processGameDataPacket, processInitialGameDataPacket, processSyncDataPacket, receiveChatMessagePacket } from "./packet-receiving";
+import { createActivatePacket, createPlayerDataPacket, createSyncRequestPacket, sendSetSpectatingPositionPacket } from "./packet-sending";
 import { AppState } from "../components/App";
 import { LoadingScreenStatus } from "../components/LoadingScreen";
 import Board from "../Board";
@@ -137,12 +137,12 @@ abstract class Client {
                   Game.sync();
                   break;
                }
-               // case PacketType.respawnData: {
-               //    processRespawnDataPacket(reader);
-               //    break;
-               // }
                case PacketType.forcePositionUpdate: {
                   processForcePositionUpdatePacket(reader);
+                  break;
+               }
+               case PacketType.serverToClientChatMessage: {
+                  receiveChatMessagePacket(reader);
                   break;
                }
             }
@@ -229,14 +229,6 @@ abstract class Client {
 
       this.socket.close();
       this.socket = null;
-   }
-
-   // @Incomplete
-   public static sendChatMessage(message: string): void {
-      // Send the chat message to the server
-      if (this.socket !== null) {
-         // this.socket.emit("chat_message", message);
-      }
    }
 
    public static sendInitialPlayerData(username: string, tribeType: TribeType, isSpectating: boolean): void {

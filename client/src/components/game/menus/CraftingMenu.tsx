@@ -7,16 +7,17 @@ import { countItemTypesInInventory } from "../../../inventory-manipulation";
 import Game from "../../../Game";
 import { playSound } from "../../../sound";
 import { CraftingRecipe, CraftingStation, CRAFTING_RECIPES, forceGetItemRecipe } from "battletribes-shared/items/crafting-recipes";
-import { ItemType, Item, Inventory } from "battletribes-shared/items/items";
+import { ItemType, Item, Inventory, InventoryName } from "battletribes-shared/items/items";
 import { ItemTally2, tallyInventoryItems } from "battletribes-shared/items/ItemTally";
 import InventoryContainer from "../inventories/InventoryContainer";
 import { deselectHighlightedEntity } from "../../../entity-selection";
 import { addMenuCloseFunction } from "../../../menus";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
-import { sendCraftItemPacket } from "../../../networking/packet-creation";
+import { sendCraftItemPacket, sendItemDropPacket, sendItemReleasePacket } from "../../../networking/packet-sending";
 import { playerTribe } from "../../../tribes";
 import { playerInstance } from "../../../player";
 import { Hitbox } from "../../../hitboxes";
+import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 
 interface RecipeViewerProps {
    readonly recipe: CraftingRecipe;
@@ -250,43 +251,6 @@ const CraftingMenu = (props: CraftingMenuProps) => {
       setHoverPosition([e.clientX, e.clientY]);
    }
 
-   // @Incomplete?
-   // const pickUpCraftingOutputItem = (e: MouseEvent): void => {
-   //    leftClickItemSlot(e, Player.instance!.id, definiteGameState.craftingOutputSlot!, 1);
-   // }
-
-   // // Find which of the available recipes can be crafted
-   // useEffect(() => {
-   //    // Find which item slots are available for use in crafting
-   //    const availableItemSlots = new Array<ItemSlots>();
-   //    if (definiteGameState.hotbar !== null) {
-   //       availableItemSlots.push(definiteGameState.hotbar.itemSlots);
-   //    }
-   //    if (definiteGameState.backpack !== null) {
-   //       availableItemSlots.push(definiteGameState.backpack.itemSlots);
-   //    }
-      
-   //    if (availableItemSlots.length === 0) {
-   //       return;
-   //    }
-      
-   //    const craftableRecipesArray = new Array<CraftingRecipe>();
-   //    for (const recipe of availableRecipes) {
-   //       if (hasEnoughItems(availableItemSlots, recipe.ingredients)) {
-   //          craftableRecipesArray.push(recipe);
-   //       }
-   //    }
-
-   //    craftableRecipes.current = craftableRecipesArray;
-   // }, [availableRecipes]);
-
-   // useEffect(() => {
-   //    if (selectedRecipe !== null && !availableRecipes.includes(selectedRecipe)) {
-   //       setSelectedRecipe(null);
-   //       selectedRecipeIndex.current = -1;
-   //    }
-   // }, [availableRecipes, selectedRecipe]);
-
    useEffect(() => {
       // @Temporary
       setCraftingMenuAvailableRecipes = (recipes: Array<CraftingRecipe>): void => {
@@ -320,6 +284,20 @@ const CraftingMenu = (props: CraftingMenuProps) => {
             }
             
             setIsVisible(false);
+
+            // @INVESTIGATE: this might actually be bad for gameplay, cuz what if you randomly drop something or someone attacks you while you're doing something and you're forced to find a place to put your held item...
+            // When the crafting menu is closed, if an item was being dragged, drop the item
+            if (playerInstance !== null) {
+               const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
+               const heldItemInventory = getInventory(inventoryComponent, InventoryName.heldItemSlot)!;
+               const heldItem = heldItemInventory.itemSlots[1];
+               if (typeof heldItem !== "undefined") {
+                  const playerTransformComponent = TransformComponentArray.getComponent(playerInstance);
+                  const playerHitbox = playerTransformComponent.hitboxes[0];
+            
+                  sendItemDropPacket(InventoryName.heldItemSlot, 1, heldItem.count, playerHitbox.box.angle);
+               }
+            }
          });
       }
       

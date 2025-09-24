@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Client from "../../networking/Client";
 import Game from "../../Game";
 import { AppState } from "../App";
-import { sendRespawnPacket } from "../../networking/packet-creation";
+import { sendRespawnPacket } from "../../networking/packet-sending";
 
 const enum Vars {
    RESPAWN_TIME_SECONDS = 8

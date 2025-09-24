@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { sendAscendPacket } from "../../networking/packet-creation";
+import { sendAscendPacket } from "../../networking/packet-sending";
 
 const LayerChangeMessage = () => {
    useEffect(() => {

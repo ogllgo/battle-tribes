@@ -9,7 +9,7 @@ import { TribeType, TRIBE_INFO_RECORD } from "../../../../shared/src/tribes";
 import Board, { getElapsedTimeInSeconds } from "../../Board";
 import Camera from "../../Camera";
 import Client from "../../networking/Client";
-import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItemUsePacket, sendStartItemUsePacket, sendSpectateEntityPacket, sendDismountCarrySlotPacket, sendSetMoveTargetPositionPacket } from "../../networking/packet-creation";
+import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItemUsePacket, sendStartItemUsePacket, sendSpectateEntityPacket, sendDismountCarrySlotPacket, sendSetMoveTargetPositionPacket, sendSelectRiderDepositLocationPacket } from "../../networking/packet-sending";
 import { createHealthComponentParams, HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
 import { createInventoryComponentParams, getInventory, InventoryComponentArray, updatePlayerHeldItem } from "../../entity-components/server-components/InventoryComponent";
 import { getCurrentLimbState, getLimbByInventoryName, getLimbConfiguration, InventoryUseComponentArray, LimbInfo } from "../../entity-components/server-components/InventoryUseComponent";
@@ -808,12 +808,11 @@ export function createPlayerInputListeners(): void {
             return;
          }
 
-         const isOffhand = selectedItemInfo.inventoryName === InventoryName.offhand;
          const playerTransformComponent = TransformComponentArray.getComponent(playerInstance);
          const playerHitbox = playerTransformComponent.hitboxes[0];
          
          const dropAmount = keyIsPressed("shift") ? 99999 : 1;
-         sendItemDropPacket(isOffhand, hotbarSelectedItemSlot, dropAmount, playerHitbox.box.angle);
+         sendItemDropPacket(selectedItemInfo.inventoryName, hotbarSelectedItemSlot, dropAmount, playerHitbox.box.angle);
       }
    });
 
@@ -1709,6 +1708,10 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
             const didSelectEntity = attemptEntitySelection(props.gameInteractState, props.setGameInteractState);
             if (didSelectEntity) {
                e.preventDefault();
+            }
+         } else if (props.gameInteractState === GameInteractState.selectRiderDepositLocation) {
+            if (Game.cursorX !== null && Game.cursorY !== null) {
+               sendSelectRiderDepositLocationPacket(getSelectedEntityID(), new Point(Game.cursorX, Game.cursorY));
             }
          } else {
             attemptAttack();

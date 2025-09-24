@@ -6,7 +6,7 @@ import Layer from "../Layer";
 import { registerCommand } from "../commands";
 import PlayerClient, { HitData } from "./PlayerClient";
 import { SERVER } from "./server";
-import { createInitialGameDataPacket } from "./packet-creation";
+import { createInitialGameDataPacket } from "./packet-sending";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { TRIBE_INFO_RECORD, TribeType } from "battletribes-shared/tribes";
 import { InventoryComponentArray, addItemToInventory, getInventory } from "../components/InventoryComponent";

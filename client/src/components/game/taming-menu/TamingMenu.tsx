@@ -6,7 +6,7 @@ import { TamingSkill, TamingSkillID, TamingSkillNode, TamingTier } from "battlet
 import { hasTamingSkill, TamingComponent, TamingComponentArray } from "../../../entity-components/server-components/TamingComponent";
 import Menu from "../menus/Menu";
 import { keyIsPressed } from "../../../keyboard-input";
-import { sendAcquireTamingSkillPacket, sendCompleteTamingTierPacket, sendForceAcquireTamingSkillPacket, sendForceCompleteTamingTierPacket } from "../../../networking/packet-creation";
+import { sendAcquireTamingSkillPacket, sendCompleteTamingTierPacket, sendForceAcquireTamingSkillPacket, sendForceCompleteTamingTierPacket } from "../../../networking/packet-sending";
 import { isDev } from "../../../utils";
 import TamingSkillTooltip from "./TamingSkillTooltip";
 import { getEntityTamingSpec } from "../../../taming-specs";

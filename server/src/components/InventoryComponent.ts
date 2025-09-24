@@ -9,7 +9,7 @@ import { InventoryName, Inventory, ItemType, Item, itemIsStackable, ITEM_INFO_RE
 import { Entity } from "battletribes-shared/entities";
 import { getRandomPositionInEntity, TransformComponentArray } from "./TransformComponent";
 import { Packet } from "battletribes-shared/packets";
-import { addInventoryDataToPacket, getInventoryDataLength } from "../server/packet-creation";
+import { addInventoryDataToPacket, getInventoryDataLength } from "../server/packet-sending";
 import { EntityRelationship, getEntityRelationship } from "./TribeComponent";
 import { createEntity, destroyEntity, getEntityLayer } from "../world";
 import { registerDirtyEntity } from "../server/player-clients";

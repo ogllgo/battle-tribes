@@ -1,6 +1,6 @@
 import ItemCatalogue from "./ItemCatalogue";
 import { ItemSlotCallbackInfo } from "../../inventories/ItemSlot";
-import { sendDevGiveItemPacket } from "../../../../networking/packet-creation";
+import { sendDevGiveItemPacket } from "../../../../networking/packet-sending";
 import { getItemStackSize } from "../../../../../../shared/src/items/items";
 
 const ItemsTab = () => {

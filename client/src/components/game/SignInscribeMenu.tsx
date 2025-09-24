@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Entity } from "../../../../shared/src/entities";
 import Menu from "./menus/Menu";
 import { FloorSignComponentArray } from "../../entity-components/server-components/FloorSignComponent";
-import { sendSetSignMessagePacket } from "../../networking/packet-creation";
+import { sendSetSignMessagePacket } from "../../networking/packet-sending";
 import { closeCurrentMenu } from "../../menus";
 
 export let SignInscribeMenu_setEntity: (entity: Entity | null) => void = () => {};

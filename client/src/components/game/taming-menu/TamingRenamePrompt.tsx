@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Menu from "../menus/Menu";
 import { closeCurrentMenu } from "../../../menus";
-import { sendRenameAnimalPacket } from "../../../networking/packet-creation";
+import { sendRenameAnimalPacket } from "../../../networking/packet-sending";
 import { Entity } from "../../../../../shared/src/entities";
 
 export let TamingRenamePrompt_open: (entity: Entity) => void = () => {};

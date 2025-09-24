@@ -4,7 +4,7 @@ import OPTIONS from "../../../options";
 import Board from "../../../Board";
 import Camera from "../../../Camera";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
-import { sendDevSetViewedSpawnDistributionPacket, sendSpectateEntityPacket, sendToggleSimulationPacket } from "../../../networking/packet-creation";
+import { sendDevSetViewedSpawnDistributionPacket, sendSpectateEntityPacket, sendToggleSimulationPacket } from "../../../networking/packet-sending";
 import { getCurrentLayer } from "../../../world";
 import { GameInteractState } from "../GameScreen";
 import { playerInstance } from "../../../player";

@@ -21,7 +21,7 @@ import { SpikesComponentArray } from "../../entity-components/server-components/
 import { HutComponentArray } from "../../entity-components/server-components/HutComponent";
 import { PlanterBoxComponentArray } from "../../entity-components/server-components/PlanterBoxComponent";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
-import { sendModifyBuildingPacket, sendPlaceBlueprintPacket } from "../../networking/packet-creation";
+import { sendModifyBuildingPacket, sendPlaceBlueprintPacket } from "../../networking/packet-sending";
 import { playerTribe } from "../../tribes";
 import { playerInstance } from "../../player";
 import { Hitbox } from "../../hitboxes";

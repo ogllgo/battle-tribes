@@ -9,7 +9,8 @@ interface SelectCarryTargetCursorOverlayProps {
 const SelectTargetCursorOverlay = (props: SelectCarryTargetCursorOverlayProps) => {
    let className: string;
    switch (props.gameInteractState) {
-      case GameInteractState.selectCarryTarget: {
+      case GameInteractState.selectCarryTarget:
+      case GameInteractState.selectRiderDepositLocation: {
          className = "carry";
          break;
       }

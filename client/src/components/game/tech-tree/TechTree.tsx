@@ -16,7 +16,7 @@ import { InventoryName } from "battletribes-shared/items/items";
 import { addMenuCloseFunction } from "../../../menus";
 import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import { playerTribe } from "../../../tribes";
-import { sendSelectTechPacket, sendUnlockTechPacket } from "../../../networking/packet-creation";
+import { sendSelectTechPacket, sendUnlockTechPacket } from "../../../networking/packet-sending";
 import { playerInstance } from "../../../player";
 
 const boundsScale = 16;

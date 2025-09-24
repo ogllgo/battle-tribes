@@ -1,8 +1,9 @@
-import { Packet, PacketReader, PacketType } from "battletribes-shared/packets";
+import { getStringLengthBytes, Packet, PacketReader, PacketType } from "battletribes-shared/packets";
 import PlayerClient from "./PlayerClient";
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { BowItemInfo, ConsumableItemCategory, ConsumableItemInfo, getItemAttackInfo, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType } from "battletribes-shared/items/items";
 import { TribeType } from "battletribes-shared/tribes";
+import WebSocket from "ws";
 import Layer from "../Layer";
 import { getCurrentLimbState, getHeldItem, InventoryUseComponentArray, setLimbActions } from "../components/InventoryUseComponent";
 import { PlayerComponentArray } from "../components/PlayerComponent";
@@ -14,7 +15,7 @@ import { beginSwing } from "../entities/tribes/limb-use";
 import { InventoryComponentArray, getInventory, addItemToInventory, addItemToSlot, consumeItemFromSlot, consumeItemTypeFromInventory, craftRecipe, inventoryComponentCanAffordRecipe, addItem } from "../components/InventoryComponent";
 import { BlueprintType } from "battletribes-shared/components";
 import { Point, randAngle } from "battletribes-shared/utils";
-import { generatePlayerSpawnPosition, registerDirtyEntity, registerPlayerDroppedItemPickup } from "./player-clients";
+import { generatePlayerSpawnPosition, getPlayerClients, registerDirtyEntity, registerPlayerDroppedItemPickup } from "./player-clients";
 import { createItem } from "../items";
 import { createEntity, destroyEntity, entityExists, getEntityLayer, getEntityType, getTribe } from "../world";
 import { createCowConfig } from "../entities/mobs/cow";
@@ -329,13 +330,10 @@ export function processItemDropPacket(playerClient: PlayerClient, reader: Packet
       return;
    }
 
-   const isOffhand = reader.readBoolean();
-   reader.padOffset(3);
+   const inventoryName = reader.readNumber() as InventoryName;
    const itemSlot = reader.readNumber();
    const dropAmount = reader.readNumber();
    const throwDirection = reader.readNumber();
-
-   const inventoryName = isOffhand ? InventoryName.offhand : InventoryName.hotbar;
    throwItem(playerClient.instance, inventoryName, itemSlot, dropAmount, throwDirection);
 }
 
@@ -708,6 +706,16 @@ export function processMountCarrySlotPacket(playerClient: PlayerClient, reader: 
    mountCarrySlot(player, carrySlot);
 }
 
+export function receiveSelectRiderDepositLocation(reader: PacketReader): void {
+   const mount = reader.readNumber() as Entity;
+   if (!entityExists(mount)) {
+      return;
+   }
+
+   const depositLocation = reader.readPoint();
+   console.log(depositLocation);
+}
+
 export function processDismountCarrySlotPacket(playerClient: PlayerClient): void {
    const player = playerClient.instance;
    if (!entityExists(player)) {
@@ -777,7 +785,11 @@ export function processSetMoveTargetPositionPacket(playerClient: PlayerClient, r
    const targetX = reader.readNumber();
    const targetY = reader.readNumber();
    
+   if (!CowComponentArray.hasComponent(entity)) {
+      return;
+   }
    const cowComponent = CowComponentArray.getComponent(entity);
+
    cowComponent.targetMovePosition = new Point(targetX, targetY);
 }
 
@@ -789,7 +801,11 @@ export function processSetCarryTargetPacket(playerClient: PlayerClient, reader: 
    const entity = reader.readNumber() as Entity;
    const carryTarget = reader.readNumber();
    
+   if (!TamingComponentArray.hasComponent(entity)) {
+      return;
+   }
    const tamingComponent = TamingComponentArray.getComponent(entity);
+
    tamingComponent.carryTarget = carryTarget;
 }
 
@@ -805,6 +821,7 @@ export function processSetAttackTargetPacket(playerClient: PlayerClient, reader:
       return;
    }
    const tamingComponent = TamingComponentArray.getComponent(entity);
+
    tamingComponent.attackTarget = attackTarget;
 }
 
@@ -814,6 +831,10 @@ export function processCompleteTamingTierPacket(playerClient: PlayerClient, read
    }
 
    const entity = reader.readNumber() as Entity;
+
+   if (!TamingComponentArray.hasComponent(entity)) {
+      return;
+   }
    const tamingComponent = TamingComponentArray.getComponent(entity);
 
    // @Hack
@@ -900,4 +921,16 @@ export function processRenameAnimalPacket(reader: PacketReader): void {
    const tamingComponent = TamingComponentArray.getComponent(entity);
    tamingComponent.name = name;
    registerDirtyEntity(entity);
+}
+
+export function receiveChatMessagePacket(reader: PacketReader, playerClient: PlayerClient): void {
+   const message = reader.readString();
+
+   const packet = new Packet(PacketType.serverToClientChatMessage, Float32Array.BYTES_PER_ELEMENT + getStringLengthBytes(playerClient.username) + getStringLengthBytes(message));
+   packet.addString(playerClient.username);
+   packet.addString(message);
+
+   for (const playerClient of getPlayerClients()) {
+      playerClient.socket.send(packet.buffer);
+   }
 }

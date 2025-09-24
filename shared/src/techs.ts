@@ -22,10 +22,13 @@ export enum TechID {
    basicArchitecture,
    storage,
    frostshaping,
+   mithrilworking,
    basicMachinery,
    herbalMedicine,
    gardening,
-   healingTotem
+   healingTotem,
+   lights,
+   exoticArmour
 }
 
 // @Cleanup: rename study to work everywhere
@@ -308,14 +311,30 @@ export const TECHS: ReadonlyArray<Tech> = [
    {
       id: TechID.frostshaping,
       name: "Frostshaping",
-      description: "",
+      description: "Make tundra gear from various tundra items.",
       iconSrc: "frostshaping.png",
-      unlockedItems: [ItemType.frostArmour],
-      positionX: -65,
-      positionY: 0,
+      unlockedItems: [ItemType.frostArmour, ItemType.winterskinArmour, ItemType.iceWringer, ItemType.ivorySpear],
+      positionX: -57,
+      positionY: 7,
       dependencies: [TechID.stoneTools],
       researchItemRequirements: createTallyFromRecord({
          [ItemType.frostcicle]: 15
+      }),
+      researchStudyRequirements: 50,
+      blacklistedTribes: [],
+      conflictingTechs: []
+   },
+   {
+      id: TechID.mithrilworking,
+      name: "Mithrilworking",
+      description: "Forge the strongest metal into the strongest equipment",
+      iconSrc: "mithrilworking.png",
+      unlockedItems: [ItemType.mithrilAnvil, ItemType.mithrilBar, ItemType.mithrilSword, ItemType.mithrilPickaxe, ItemType.mithrilAnvil, ItemType.mithrilPickaxe, ItemType.mithrilArmour],
+      positionX: -64,
+      positionY: -4,
+      dependencies: [TechID.stoneTools],
+      researchItemRequirements: createTallyFromRecord({
+         [ItemType.rock]: 50
       }),
       researchStudyRequirements: 50,
       blacklistedTribes: [],
@@ -389,7 +408,41 @@ export const TECHS: ReadonlyArray<Tech> = [
       researchStudyRequirements: 100,
       blacklistedTribes: [],
       conflictingTechs: []
-   }
+   },
+   {
+      id: TechID.lights,
+      name: "Lights",
+      description: "Items to fend off the dark",
+      iconSrc: "lights.png",
+      unlockedItems: [ItemType.fireTorch, ItemType.slurbTorch],
+      positionX: 83,
+      positionY: 4,
+      dependencies: [TechID.basicArchitecture],
+      researchItemRequirements: createTallyFromRecord({
+         [ItemType.campfire]: 3,
+         [ItemType.slurb]: 15
+      }),
+      researchStudyRequirements: 80,
+      blacklistedTribes: [],
+      conflictingTechs: []
+   },
+   {
+      id: TechID.exoticArmour,
+      name: "Exotic Armour",
+      description: "Armour for those best excluded from society",
+      iconSrc: "exotic-armour.png",
+      unlockedItems: [ItemType.leaf_suit, ItemType.meat_suit],
+      positionX: -66,
+      positionY: -33,
+      dependencies: [TechID.leatherworking],
+      researchItemRequirements: createTallyFromRecord({
+         [ItemType.leaf]: 50,
+         [ItemType.raw_beef]: 25
+      }),
+      researchStudyRequirements: 30,
+      blacklistedTribes: [],
+      conflictingTechs: []
+   },
 ];
 
 export function getTechByID(techID: TechID): Tech {

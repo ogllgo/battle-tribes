@@ -17,7 +17,7 @@ import { EntitySummonPacket } from "../../../../shared/src/dev-packets";
 import { Mutable, randAngle } from "../../../../shared/src/utils";
 import { calculateCursorWorldPositionX, calculateCursorWorldPositionY } from "../../mouse";
 import GameInteractableLayer from "./GameInteractableLayer";
-import { sendEntitySummonPacket } from "../../networking/packet-creation";
+import { sendEntitySummonPacket } from "../../networking/packet-sending";
 import { copyInventory, Inventory, InventoryName } from "../../../../shared/src/items/items";
 import { Settings } from "../../../../shared/src/settings";
 import { getCurrentLayer, surfaceLayer, undergroundLayer } from "../../world";
@@ -39,6 +39,7 @@ export const enum GameInteractState {
    summonEntity,
    spectateEntity,
    selectCarryTarget,
+   selectRiderDepositLocation,
    selectMoveTargetPosition,
    selectAttackTarget
 }

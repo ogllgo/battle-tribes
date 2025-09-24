@@ -36,11 +36,13 @@ export const enum PacketType {
    pickUpEntity,
    modifyBuilding,
    setCarryTarget,
+   selectRiderDepositLocation,
    setMoveTargetPosition,
    setAttackTarget,
    completeTamingTier,
    setSignMessage,
    renameAnimal,
+   chatMessage,
    // @Hack
    setSpectatingPosition,
    forceCompleteTamingTier, // ((DEV))
@@ -59,7 +61,9 @@ export const enum PacketType {
    // @Cleanup: unused?
    syncData,
    sync,
-   forcePositionUpdate
+   forcePositionUpdate,
+   // @CLEANUP i snapped on the 'serverToClient' prefix to this cuz chatMessage was taken to the client-to-server packet
+   serverToClientChatMessage
 }
 
 // @Bandwidth: figure out a way to be tightly packed (not have to add padding)

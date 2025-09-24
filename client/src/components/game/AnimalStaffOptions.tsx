@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import Camera from "../../Camera";
-import { sendAnimalStaffFollowCommandPacket } from "../../networking/packet-creation";
+import { sendAnimalStaffFollowCommandPacket } from "../../networking/packet-sending";
 import { deselectSelectedEntity } from "../../entity-selection";
 import { InventoryUseComponentArray } from "../../entity-components/server-components/InventoryUseComponent";
 import { entityExists, getCurrentLayer } from "../../world";
@@ -15,6 +15,7 @@ import { playerInstance } from "../../player";
 import { hasTamingSkill, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
 import { setShittyCarrier } from "./GameInteractableLayer";
 import { TamingSkillID } from "../../../../shared/src/taming";
+import { RideableComponentArray } from "../../entity-components/server-components/RideableComponent";
 
 export const enum AnimalStaffCommandType {
    follow,
@@ -182,8 +183,22 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
 
    const pressCarryOption = useCallback((): void => {
       if (entity !== null) {
+         // @COPYNPASTE
+         const rideableComponent = RideableComponentArray.getComponent(entity);
+         let isCarrying = false;
+         for (const carrySlot of rideableComponent.carrySlots) {
+            if (entityExists(carrySlot.occupiedEntity)) {
+               isCarrying = true;
+               break;
+            }
+         }
+
          setShittyCarrier(entity);
-         props.setGameInteractState(GameInteractState.selectCarryTarget);
+         if (isCarrying) {
+            props.setGameInteractState(GameInteractState.selectRiderDepositLocation);
+         } else {
+            props.setGameInteractState(GameInteractState.selectCarryTarget);
+         }
       }
    }, [entity]);
 
@@ -200,6 +215,15 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
 
    const tamingComponent = TamingComponentArray.getComponent(entity);
 
+   const rideableComponent = RideableComponentArray.getComponent(entity);
+   let isCarrying = false;
+   for (const carrySlot of rideableComponent.carrySlots) {
+      if (entityExists(carrySlot.occupiedEntity)) {
+         isCarrying = true;
+         break;
+      }
+   }
+
    return <div id="animal-staff-options" style={{left: x + "px", bottom: y + "px"}} onContextMenu={e => e.preventDefault()} onMouseOver={onMouseOver} onMouseMove={onMouseMove} onMouseOut={onMouseOut}>
       {hasTamingSkill(tamingComponent, TamingSkillID.follow) ? (
          <div className={`option follow${followOptionIsSelected ? " active" : ""}`} onClick={pressFollowOption}></div>
@@ -208,7 +232,7 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
          <div className="option move" onClick={pressMoveOption}></div>
       ) : null}
       {hasTamingSkill(tamingComponent, TamingSkillID.carry) ? (
-         <div className="option carry" onClick={pressCarryOption}></div>
+         <div className={`option carry${isCarrying ? " active" : ""}`} onClick={pressCarryOption}></div>
       ) : null}
       {hasTamingSkill(tamingComponent, TamingSkillID.attack) ? (
          <div className="option attack" onClick={pressAttackOption}></div>

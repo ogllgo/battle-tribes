@@ -4,7 +4,7 @@ import Client from "../networking/Client";
 import Game from "../Game";
 import { AppState } from "./App";
 import { definiteGameState } from "../game-state/game-states";
-import { processGameDataPacket } from "../networking/packet-processing";
+import { processGameDataPacket } from "../networking/packet-receiving";
 import Camera from "../Camera";
 
 // @Cleanup: This file does too much logic on its own. It should really only have UI/loading state

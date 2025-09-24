@@ -14,6 +14,7 @@ import { TechID } from "../../../shared/src/techs";
 import { playerInstance } from "../player";
 import { TamingSkillID } from "../../../shared/src/taming";
 import Camera from "../Camera";
+import { Point } from "../../../shared/src/utils";
 
 export function createPlayerDataPacket(): ArrayBuffer {
    // Position, rotation
@@ -160,11 +161,10 @@ export function sendStopItemUsePacket(): void {
    Client.sendPacket(packet.buffer);
 }
 
-export function sendItemDropPacket(isOffhand: boolean, itemSlot: number, dropAmount: number, throwDirection: number): void {
+export function sendItemDropPacket(inventoryName: InventoryName, itemSlot: number, dropAmount: number, throwDirection: number): void {
    const packet = new Packet(PacketType.dropItem, 5 * Float32Array.BYTES_PER_ELEMENT);
 
-   packet.addBoolean(isOffhand);
-   packet.padOffset(3);
+   packet.addNumber(inventoryName);
    packet.addNumber(itemSlot);
    packet.addNumber(dropAmount);
    packet.addNumber(throwDirection);
@@ -336,6 +336,13 @@ export function sendSetCarryTargetPacket(entity: Entity, carryTarget: Entity): v
    Client.sendPacket(packet.buffer);
 }
 
+export function sendSelectRiderDepositLocationPacket(entity: Entity, depositLocation: Point): void {
+   const packet = new Packet(PacketType.selectRiderDepositLocation, 4 * Float32Array.BYTES_PER_ELEMENT);
+   packet.addNumber(entity);
+   packet.addPoint(depositLocation);
+   Client.sendPacket(packet.buffer);
+}
+
 export function sendSetAttackTargetPacket(entity: Entity, attackTarget: Entity): void {
    const packet = new Packet(PacketType.setAttackTarget, 3 * Float32Array.BYTES_PER_ELEMENT);
    packet.addNumber(entity);
@@ -393,5 +400,11 @@ export function sendRenameAnimalPacket(entity: Entity, name: string): void {
    const packet = new Packet(PacketType.renameAnimal, 2 * Float32Array.BYTES_PER_ELEMENT + getStringLengthBytes(name));
    packet.addNumber(entity);
    packet.addString(name);
+   Client.sendPacket(packet.buffer);
+}
+
+export function sendChatMessagePacket(message: string): void {
+   const packet = new Packet(PacketType.chatMessage, Float32Array.BYTES_PER_ELEMENT + getStringLengthBytes(message));
+   packet.addString(message);
    Client.sendPacket(packet.buffer);
 }

@@ -45,6 +45,7 @@ import { addHitboxVelocity, getHitboxVelocity, setHitboxVelocity } from "../hitb
 import { STRUCTURE_TYPES } from "../../../shared/src/structures";
 import { definiteGameState, latencyGameState } from "../game-state/game-states";
 import { closeCurrentMenu } from "../menus";
+import { addChatMessage } from "../components/game/ChatBox";
 
 // @Cleanup: location
 // Use prime numbers / 100 to ensure a decent distribution of different types of particles
@@ -916,4 +917,10 @@ export function processForcePositionUpdatePacket(reader: PacketReader): void {
    const playerHitbox = transformComponent.hitboxes[0];
    playerHitbox.box.position.x = x;
    playerHitbox.box.position.y = y;
+}
+
+export function receiveChatMessagePacket(reader: PacketReader): void {
+   const username = reader.readString();
+   const message = reader.readString();
+   addChatMessage(username, message);
 }

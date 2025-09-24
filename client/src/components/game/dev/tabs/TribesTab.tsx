@@ -8,7 +8,7 @@ import DevmodeDropdownInput from "../DevmodeDropdownInput";
 import { setRenderedTribePlanID } from "../../../../rendering/tribe-plan-visualiser/tribe-plan-visualiser";
 import { tribeHasExtendedInfo, tribes } from "../../../../tribes";
 import CLIENT_ENTITY_INFO_RECORD from "../../../../client-entity-info";
-import { sendSetAutogiveBaseResourcesPacket, sendTPTOEntityPacket } from "../../../../networking/packet-creation";
+import { sendSetAutogiveBaseResourcesPacket, sendTPTOEntityPacket } from "../../../../networking/packet-sending";
 
 export let TribesTab_refresh: () => void = () => {};
 

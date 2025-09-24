@@ -189,7 +189,7 @@ export default class Tribe {
 
       addTribe(this);
 
-      // @TEMPORARY
+      // @TEMPORARY @Squeam
       setTimeout(() => {
          this.unlockAllTechs();
       }, 3000);

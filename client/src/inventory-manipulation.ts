@@ -2,7 +2,7 @@ import { craftingMenuIsOpen } from "./components/game/menus/CraftingMenu";
 import { InventorySelector_inventoryIsOpen } from "./components/game/inventories/InventorySelector";
 import { Inventory, InventoryName, ItemType } from "battletribes-shared/items/items";
 import { getInventory, InventoryComponentArray } from "./entity-components/server-components/InventoryComponent";
-import { sendItemPickupPacket, sendItemReleasePacket } from "./networking/packet-creation";
+import { sendItemPickupPacket, sendItemReleasePacket } from "./networking/packet-sending";
 import { playerInstance } from "./player";
 
 const canInteractWithItemSlots = (): boolean => {

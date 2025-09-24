@@ -2,7 +2,7 @@ import { Entity } from "../../shared/src/entities";
 import Camera from "./Camera";
 import { nerdVisionIsVisible } from "./components/game/dev/NerdVision";
 import { getMouseTargetEntity } from "./mouse";
-import { sendSetDebugEntityPacket } from "./networking/packet-creation";
+import { sendSetDebugEntityPacket } from "./networking/packet-sending";
 import { playerInstance } from "./player";
 import { isDev } from "./utils";
 import { entityExists } from "./world";

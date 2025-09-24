@@ -12,7 +12,7 @@ import { getRandomPositionInEntity, TransformComponentArray } from "./entity-com
 import { entityExists, getEntityType } from "./world";
 import { InventoryUseComponentArray } from "./entity-components/server-components/InventoryUseComponent";
 import { TribesmanComponentArray, tribesmanHasTitle } from "./entity-components/server-components/TribesmanComponent";
-import { sendStudyTechPacket } from "./networking/packet-creation";
+import { sendStudyTechPacket } from "./networking/packet-sending";
 import { playerInstance } from "./player";
 import { Hitbox } from "./hitboxes";
 
