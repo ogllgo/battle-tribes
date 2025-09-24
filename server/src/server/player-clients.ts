@@ -73,8 +73,8 @@ export function handlePlayerDisconnect(playerClient: PlayerClient): void {
 }
 
 export function generatePlayerSpawnPosition(tribeType: TribeType): Point {
-   // @Temporary
-   return new Point(Settings.BOARD_UNITS * 0.5 - 0, Settings.BOARD_UNITS * 0.5 - 500 - 320);
+   // @Temporary @Squeam
+   return new Point(Settings.BOARD_UNITS * 0.5, Settings.BOARD_UNITS * 0.5);
    
    const tribeInfo = TRIBE_INFO_RECORD[tribeType];
    for (let numAttempts = 0; numAttempts < 50; numAttempts++) {

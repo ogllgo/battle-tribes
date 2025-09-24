@@ -3,12 +3,13 @@ import { createIdentityMatrix, createTranslationMatrix, Matrix3x2, matrixMultipl
 import { Settings } from "battletribes-shared/settings";
 import { RenderPartParent, RenderPart } from "../render-parts/render-parts";
 import { renderLayerIsChunkRendered, updateChunkRenderedEntity } from "./webgl/chunked-entity-rendering";
-import { getEntityRenderInfo } from "../world";
+import { getEntityRenderInfo, getEntityType } from "../world";
 import { Point, randAngle } from "../../../shared/src/utils";
 import { gl } from "../webgl";
 import { HealthComponentArray } from "../entity-components/server-components/HealthComponent";
 import { getHitboxVelocity, Hitbox } from "../hitboxes";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
+import { EntityType } from "../../../shared/src/entities";
 
 // @Cleanup: file name
 
@@ -119,11 +120,22 @@ export function undirtyRenderInfo(renderInfo: EntityRenderInfo): void {
 
 /** Marks all render infos which will move due to the frame progress */
 export function dirtifyMovingEntities(): void {
+   // @SPEED
    for (let i = 0; i < TransformComponentArray.entities.length; i++) {
       const entity = TransformComponentArray.entities[i];
+      const transformComponent = TransformComponentArray.components[i];
 
-      const renderInfo = getEntityRenderInfo(entity);
-      registerDirtyRenderInfo(renderInfo);
+      for (const hitbox of transformComponent.hitboxes) {
+         const velocity = getHitboxVelocity(hitbox);
+         if (velocity.x !== 0 || velocity.y !== 0) {
+            // Is moving!!
+
+            const renderInfo = getEntityRenderInfo(entity);
+            registerDirtyRenderInfo(renderInfo);
+
+            break;
+         }
+      }
    }
 }
 
@@ -240,7 +252,7 @@ export function updateRenderPartMatrices(frameProgress: number): void {
    // Do this before so that binding buffers during the loop doesn't mess up any previously bound vertex array.
    gl.bindVertexArray(null);
 
-   // @HACK: to fix the flash bug
+   // @HACK: to fix the flash bug where the damage flash doesn't play
    for (const entity of HealthComponentArray.entities) {
       const renderInfo = getEntityRenderInfo(entity);
       registerDirtyRenderInfo(renderInfo);

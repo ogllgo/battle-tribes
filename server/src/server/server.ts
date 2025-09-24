@@ -211,9 +211,7 @@ class GameServer {
                const isSpectating = reader.readBoolean();
                reader.padOffset(3);
 
-               // @SQUEAM
-               // const spawnPosition = generatePlayerSpawnPosition(tribeType);
-               const spawnPosition = new Point(1838 - 60, 5676);
+               const spawnPosition = generatePlayerSpawnPosition(tribeType);
                // @Incomplete? Unused?
                const visibleChunkBounds = estimateVisibleChunkBounds(spawnPosition, screenWidth, screenHeight);
    

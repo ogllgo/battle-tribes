@@ -531,7 +531,10 @@ function onTick(entity: Entity): void {
 function onUpdate(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    if (transformComponent.boundingAreaMinX < 0 || transformComponent.boundingAreaMaxX >= Settings.BOARD_UNITS || transformComponent.boundingAreaMinY < 0 || transformComponent.boundingAreaMaxY >= Settings.BOARD_UNITS) {
-      throw new Error();
+      // @BUG @HACK: This warning should not be a thing. This can occur if I mistakenly set the player spawn position to be outside of the world, then this runs on the player.
+      
+      console.warn("wat")
+      return;
    }
 
    for (const child of transformComponent.hitboxes) {
