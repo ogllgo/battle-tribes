@@ -125,10 +125,10 @@ abstract class Client {
                   processGameDataPacket(reader);
                   Board.tickEntities();
                   resetTickInterp();
-                  if (playerInstance !== null) {
-                     callEntityOnUpdateFunctions(playerInstance);
-                     resolvePlayerCollisions();
-                  }
+                  // if (playerInstance !== null) {
+                  //    callEntityOnUpdateFunctions(playerInstance);
+                  //    resolvePlayerCollisions();
+                  // }
 
                   break;
                }

@@ -76,8 +76,8 @@ import { playerInstance } from "./player";
 import { TamingMenu_forceUpdate } from "./components/game/taming-menu/TamingMenu";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { setHitboxAngularVelocity } from "./hitboxes";
-import { getComponentArrays } from "./entity-components/ComponentArray";
-import { resolveEntityCollisions } from "./collision";
+import { callEntityOnUpdateFunctions, getComponentArrays } from "./entity-components/ComponentArray";
+import { resolveEntityCollisions, resolvePlayerCollisions } from "./collision";
 import { Point } from "../../shared/src/utils";
 
 // @Cleanup: remove.
@@ -155,7 +155,7 @@ export function resetTickInterp(): void {
    tickInterp = 0;
 }
 
-/** Update and tick all entities (including player) */
+/** Update and tick all entities EXCEPT the player. */
 const simulateTick = (): void => {
    const componentArrays = getComponentArrays();
    
@@ -164,13 +164,17 @@ const simulateTick = (): void => {
       if (typeof componentArray.onUpdate !== "undefined") {
          for (let j = 0; j < componentArray.activeEntities.length; j++) {
             const entity = componentArray.activeEntities[j];
-            componentArray.onUpdate(entity);
+            if (entity !== playerInstance) {
+               componentArray.onUpdate(entity);
+            }
          }
       }
       if (typeof componentArray.onTick !== "undefined") {
          for (let j = 0; j < componentArray.activeEntities.length; j++) {
             const entity = componentArray.activeEntities[j];
-            componentArray.onTick(entity);
+            if (entity !== playerInstance) {
+               componentArray.onTick(entity);
+            }
          }
       }
       
@@ -198,10 +202,10 @@ const runFrame = (currentTime: number): void => {
       // Tick the player (independently from all other entities)
       Game.lag2 += deltaTime;
       while (Game.lag2 >= 1000 / Settings.TICK_RATE) {
-         // if (playerInstance !== null) {
-         //    callEntityOnUpdateFunctions(playerInstance);
-         //    resolvePlayerCollisions();
-         // }
+         if (playerInstance !== null) {
+            callEntityOnUpdateFunctions(playerInstance);
+            resolvePlayerCollisions();
+         }
 
          Game.lag2 -= 1000 / Settings.TICK_RATE;
          
@@ -250,8 +254,8 @@ const runFrame = (currentTime: number): void => {
       
       const renderStartTime = performance.now();
 
-      // const tickInterp = (renderStartTime - getLastPacketTime()) / 1000 * Settings.TICK_RATE;
-      Game.render(tickInterp);
+      const clientTickInterp = Game.lag2 / 1000 * Settings.TICK_RATE;
+      Game.render(tickInterp, clientTickInterp);
 
       const renderEndTime = performance.now();
 
@@ -549,9 +553,9 @@ abstract class Game {
 
    /**
     * 
-    * @param tickInterp How far the game is into the current frame (0 = frame just started, 0.99 means frame is about to end)
+    * @param serverTickInterp How far the game is into the current frame (0 = frame just started, 0.99 means frame is about to end)
     */
-   public static render(tickInterp: number): void {
+   public static render(serverTickInterp: number, clientTickInterp: number): void {
       // Player rotation is updated each render, but only sent each update
       if (cursorX !== null && cursorY !== null) {
          updatePlayerRotation(cursorX, cursorY);
@@ -582,19 +586,19 @@ abstract class Game {
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
       // @Cleanup: weird. shouldn't be global anyway
-      _frameProgress = tickInterp;
+      _frameProgress = serverTickInterp;
 
       const playerLayer = getCurrentLayer();
 
       updateUBOs();
 
       dirtifyMovingEntities();
-      updateRenderPartMatrices(tickInterp);
+      updateRenderPartMatrices(serverTickInterp, clientTickInterp);
 
       // @Cleanup: move to update function in camera
       // Update the camera
       if (!Camera.isSpectating) {
-         Camera.updatePosition(tickInterp);
+         Camera.updatePosition(clientTickInterp);
       } else {
          Camera.updateSpectatorPosition(deltaTime);
       }
@@ -603,11 +607,11 @@ abstract class Game {
 
       // @Hack
       if (layers.indexOf(playerLayer) === 0) {
-         renderLayer(layers[1], tickInterp);
+         renderLayer(layers[1], serverTickInterp);
          renderDarkening();
-         renderLayer(layers[0], tickInterp);
+         renderLayer(layers[0], serverTickInterp);
       } else {
-         renderLayer(layers[1], tickInterp);
+         renderLayer(layers[1], serverTickInterp);
       }
 
       if (OPTIONS.showSubtileSupports) {

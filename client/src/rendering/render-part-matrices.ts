@@ -10,6 +10,7 @@ import { HealthComponentArray } from "../entity-components/server-components/Hea
 import { getHitboxVelocity, Hitbox } from "../hitboxes";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { EntityType } from "../../../shared/src/entities";
+import { playerInstance } from "../player";
 
 // @Cleanup: file name
 
@@ -248,7 +249,7 @@ export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo, tickInterp: 
    renderInfo.renderPartsAreDirty = false;
 }
 
-export function updateRenderPartMatrices(frameInterp: number): void {
+export function updateRenderPartMatrices(serverTickInterp: number, clientTickInterp: number): void {
    // Do this before so that binding buffers during the loop doesn't mess up any previously bound vertex array.
    gl.bindVertexArray(null);
 
@@ -262,7 +263,8 @@ export function updateRenderPartMatrices(frameInterp: number): void {
    // To fix: temporarily set Settings.TICK_RATE to like 10 or something and then fix the subsequent slideshow
    for (let i = 0; i < dirtyEntityRenderInfos.length; i++) {
       const renderInfo = dirtyEntityRenderInfos[i];
-      cleanEntityRenderInfo(renderInfo, frameInterp);
+      const tickInterp = renderInfo.associatedEntity === playerInstance ? clientTickInterp : serverTickInterp;
+      cleanEntityRenderInfo(renderInfo, tickInterp);
    }
 
    // Reset dirty entities
