@@ -69,9 +69,7 @@ export function createDustfleaConfig(position: Point, angle: number): EntityConf
 
    const healthComponent = new HealthComponent(2);
 
-   // const aiHelperComponent = new AIHelperComponent(hitbox, 180, moveFunc, turnFunc);
-   // @SQUEAM more vision range for the inguYetuk shot
-   const aiHelperComponent = new AIHelperComponent(hitbox, 600, moveFunc, turnFunc);
+   const aiHelperComponent = new AIHelperComponent(hitbox, 180, moveFunc, turnFunc);
    aiHelperComponent.ais[AIType.wander] = new WanderAI(200, 4 * Math.PI, 0.25, 99999, wanderPositionIsValid);
    aiHelperComponent.ais[AIType.escape] = new EscapeAI(200, 4 * Math.PI, 0.25, 1, extraEscapeCondition);
    aiHelperComponent.ais[AIType.dustfleaHibernate] = new DustfleaHibernateAI(200, 4 * Math.PI, 0.25);

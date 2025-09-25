@@ -84,15 +84,14 @@ registerEntityTamingSpec(EntityType.cow, {
    }
 });
 
-// @SQUEAM
-// registerEntityLootOnDeath(EntityType.cow, {
-//    itemType: ItemType.raw_beef,
-//    getAmount: () => randInt(2, 3)
-// });
-// registerEntityLootOnDeath(EntityType.cow, {
-//    itemType: ItemType.leather,
-//    getAmount: () => randInt(1, 2)
-// });
+registerEntityLootOnDeath(EntityType.cow, {
+   itemType: ItemType.raw_beef,
+   getAmount: () => randInt(2, 3)
+});
+registerEntityLootOnDeath(EntityType.cow, {
+   itemType: ItemType.leather,
+   getAmount: () => randInt(1, 2)
+});
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return layer.getBiomeAtPosition(x, y) === Biome.grasslands;

@@ -225,8 +225,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
       case "healing": {
          // Don't use food if already at maximum health
          const healthComponent = HealthComponentArray.getComponent(tribeMember);
-         // @SQUEAM
-         // if (healthComponent.health >= healthComponent.maxHealth) return;
+         if (healthComponent.health >= healthComponent.maxHealth) return;
 
          const itemInfo = ITEM_INFO_RECORD[item.type] as ConsumableItemInfo;
          
@@ -252,10 +251,9 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
 
          // If all of the item was consumed, stop the eating action
          if (!inventory.hasItem(itemSlot)) {
-            // @SQUEAM
-            // limb.action = LimbAction.none;
-            // limb.currentActionElapsedTicks = 0;
-            // limb.currentActionDurationTicks = 0;
+            limb.action = LimbAction.none;
+            limb.currentActionElapsedTicks = 0;
+            limb.currentActionDurationTicks = 0;
          }
          
          const event: EntityTickEvent = {

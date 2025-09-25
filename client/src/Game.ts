@@ -155,9 +155,8 @@ export function resetTickInterp(): void {
    tickInterp = 0;
 }
 
+/** Update and tick all entities (including player) */
 const simulateTick = (): void => {
-   // Update and tick all entities (including player)
-
    const componentArrays = getComponentArrays();
    
    for (let i = 0; i < componentArrays.length; i++) {
@@ -251,7 +250,6 @@ const runFrame = (currentTime: number): void => {
       
       const renderStartTime = performance.now();
 
-      
       // const tickInterp = (renderStartTime - getLastPacketTime()) / 1000 * Settings.TICK_RATE;
       Game.render(tickInterp);
 

@@ -117,7 +117,6 @@ abstract class Client {
                      return;
                   }
                   
-                  // queuedGameDataPackets.push(reader);
                   lastPacketTime = performance.now();
 
                   // Done before so that server data can override particles
