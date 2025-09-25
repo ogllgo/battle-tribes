@@ -77,9 +77,9 @@ const LoadingScreen = (props: LoadingScreenProps) => {
          const gameDataPacket = await Client.getNextGameDataPacket();
          processGameDataPacket(gameDataPacket);
 
-         Game.start();
-
          props.setAppState(AppState.game);
+         
+         Game.start();
       })();
    }, []);
 

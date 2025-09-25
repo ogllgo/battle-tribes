@@ -114,6 +114,8 @@ export function addHitboxDataToPacket(packet: Packet, hitbox: Hitbox): void {
 
    packet.addBoolean(hitbox.isPartOfParent);
    packet.padOffset(3);
+   packet.addBoolean(hitbox.isStatic);
+   packet.padOffset(3);
 }
 export function getHitboxDataLength(hitbox: Hitbox): number {
    let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
@@ -132,8 +134,8 @@ export function getHitboxDataLength(hitbox: Hitbox): number {
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += 4 * Float32Array.BYTES_PER_ELEMENT;
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT * hitbox.flags.length;
-   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT; // entity and rootEntity
-   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT; // parent hitbox entity and local id
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT; // isPartOfParent
+   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT; // entity, rootEntity
+   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT; // parent hitbox entity, local id
+   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT; // isPartOfParent, isStatic
    return lengthBytes;
 }

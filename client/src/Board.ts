@@ -102,7 +102,7 @@ abstract class Board {
       this.updateParticleArray(this.highTexturedParticles, highTexturedBufferContainer);
    }
 
-   /** Ticks all game objects without updating them */
+   /** Ticks all entities without updating them */
    public static tickEntities(): void {
       const componentArrays = getComponentArrays();
       

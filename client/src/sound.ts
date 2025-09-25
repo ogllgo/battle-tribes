@@ -400,11 +400,6 @@ export function playSound(filePath: string, volume: number, pitchMultiplier: num
       return null;
    }
    
-   // @SQUEAME
-   if (playerInstance !== null) {
-      return null;
-   }
-   
    const audioBuffer = audioBuffers[filePath];
    assert(typeof audioBuffer !== "undefined");
 

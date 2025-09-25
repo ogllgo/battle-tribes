@@ -130,8 +130,7 @@ export function runAssignmentAI(entity: Entity, visibleItemEntities: ReadonlyArr
          assert(aiAssignmentComponent.currentAssignment !== null);
          
          aiAssignmentComponent.currentAssignment.assignedEntity = entity;
-         // @TEMPORARY
-         // availableAssignment.assignedEntity = entity;
+         availableAssignment.assignedEntity = entity;
       }
    }
 

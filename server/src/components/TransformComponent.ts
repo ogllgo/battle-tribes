@@ -411,11 +411,15 @@ export function resolveEntityBorderCollisions(transformComponent: TransformCompo
          // @SPEED if we're doing this then shouldn't we do the root hitbox recursion thing??
          const rootHitbox = getRootHitbox(hitbox);
          cleanHitboxTransformIncludingChildren(rootHitbox);
+
+         // gotta clean the big 
+         // @Speed i just slapped this in here so it has correct logic.
+         cleanEntityTransform(hitbox.entity);
       }
    }
 
    // If the entity is outside the world border after resolving border collisions, throw an error
-   // @Robustness this should be impossible to trigger
+   // @Robustness this should be impossible to trigger, so i can remove it and sleep peacefully
    for (const hitbox of transformComponent.hitboxes) {
       if (hitbox.box.position.x < 0 || hitbox.box.position.x >= Settings.BOARD_UNITS || hitbox.box.position.y < 0 || hitbox.box.position.y >= Settings.BOARD_UNITS) {
          const entity = TransformComponentArray.getEntityFromComponentNONOSQUARE(transformComponent);
@@ -808,7 +812,7 @@ function onRemove(entity: Entity): void {
       removeFromChunk(entity, layer, chunk);
    }
 
-   // @Cleanup: Same as above. should we make a separate PathfindingOccupancyComponent?
+   // @Cleanup: Same as above. should i make a separate PathfindingOccupancyComponent?
    if (entityCanBlockPathfinding(entity)) {
       clearEntityPathfindingNodes(entity);
    }
@@ -1052,6 +1056,8 @@ export function getRandomPositionInEntity(transformComponent: TransformComponent
 }
 
 export function changeEntityLayer(entity: Entity, newLayer: Layer): void {
+   // @Correctness should probably instead collate all layer changes then do them all at once at the end of a tick
+   
    const transformComponent = TransformComponentArray.getComponent(entity);
    
    // Remove from previous chunks

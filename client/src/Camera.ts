@@ -8,7 +8,7 @@ import Layer from "./Layer";
 import { entityExists } from "./world";
 import { Entity } from "../../shared/src/entities";
 import { calculateHitboxRenderPosition } from "./rendering/render-part-matrices";
-import { Hitbox } from "./hitboxes";
+import { getHitboxVelocity, Hitbox } from "./hitboxes";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 
 export type VisiblePositionBounds = [minX: number, maxX: number, minY: number, maxY: number];
@@ -167,7 +167,7 @@ abstract class Camera {
       this.position.y += this.velocity.y * deltaTime;
    }
 
-   public static updatePosition(frameProgress: number): void {
+   public static updatePosition(tickInterp: number): void {
       if (this.isSpectating) {
          // this.position.x = this.lastTickPosition.x + this.velocity.x * Settings.DELTA_TIME * frameProgress;
          // this.position.y = this.lastTickPosition.y + this.velocity.y * Settings.DELTA_TIME * frameProgress;
@@ -183,7 +183,7 @@ abstract class Camera {
       if (entityExists(this.trackedEntity)) {
          assert(this.trackedHitbox !== null);
 
-         const pos = calculateHitboxRenderPosition(this.trackedHitbox, frameProgress);
+         const pos = calculateHitboxRenderPosition(this.trackedHitbox, tickInterp);
          this.position.x = pos.x;
          this.position.y = pos.y;
       } else {

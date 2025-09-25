@@ -186,7 +186,7 @@ export function addEntityToWorld(entity: Entity, spawnTicks: number, layer: Laye
       const componentIntermediateInfo = creationInfo.componentIntermediateInfoRecord[componentArray.id]!;
       const component = componentArray.createComponent(creationInfo.entityParams, componentIntermediateInfo, creationInfo.renderInfo);
       
-      componentArray.addComponent(entity, component);
+      componentArray.addComponent(entity, component, creationInfo.entityParams.entityType);
    }
 
    registerBasicEntityInfo(entity, creationInfo.entityParams.entityType, spawnTicks, layer, creationInfo.renderInfo);

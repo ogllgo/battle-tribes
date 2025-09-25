@@ -33,6 +33,7 @@ import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
 import { applyTethers } from "../tethers";
 import { createTukmokConfig } from "../entities/tundra/tukmok";
 import { generateGrassStrands } from "../world-generation/grass-generation";
+import { Hitbox } from "../hitboxes";
 
 /*
 
@@ -57,16 +58,11 @@ const entityIsHiddenFromPlayer = (entity: Entity, playerTribe: Tribe): boolean =
    return false;
 }
 
-const addEntityHierarchy = (playerClient: PlayerClient, entitiesToSend: Set<Entity>, entity: Entity): void => {
-   entitiesToSend.add(entity);
-
-   // @INCOMPLETE
-   // const transformComponent = TransformComponentArray.getComponent(entity);
-   // for (const child of transformComponent.children) {
-   //    if (entityChildIsEntity(child)) {
-   //       addEntityHierarchy(playerClient, entitiesToSend, child.attachedEntity);
-   //    }
-   // }
+const addHitboxHeirarchyToEntities = (playerClient: PlayerClient, entitiesToSend: Set<Entity>, hitbox: Hitbox): void => {
+   entitiesToSend.add(hitbox.entity);
+   for (const child of hitbox.children) {
+      addHitboxHeirarchyToEntities(playerClient, entitiesToSend, child);
+   }
 }
 
 const getPlayerVisibleEntities = (playerClient: PlayerClient): Set<Entity> => {
@@ -89,15 +85,16 @@ const getPlayerVisibleEntities = (playerClient: PlayerClient): Set<Entity> => {
             }
 
             const transformComponent = TransformComponentArray.getComponent(entity);
-            // @Hack @Temporary
-            // if (!TransformComponentArray.hasComponent(transformComponent.rootEntity)) {
-            //    continue;
-            // }
             if (transformComponent.boundingAreaMinX <= maxVisibleX && transformComponent.boundingAreaMaxX >= minVisibleX && transformComponent.boundingAreaMinY <= maxVisibleY && transformComponent.boundingAreaMaxY >= minVisibleY) {
-               // @Speed?
-               // addEntityHierarchy(playerClient, visibleEntities, transformComponent.rootEntity);
-               // @INCOMPLETE: NOT ADDING ROOT!
-               addEntityHierarchy(playerClient, visibleEntities, entity);
+               // Add the roots of the entity
+               for (const rootHitbox of transformComponent.rootHitboxes) {
+                  const rootEntity = rootHitbox.rootEntity;
+                  const rootTransformComponent = TransformComponentArray.getComponent(rootEntity);
+                  // @Cleanup lolllllllll
+                  for (const rootRootHitbox of rootTransformComponent.rootHitboxes) {
+                     addHitboxHeirarchyToEntities(playerClient, visibleEntities, rootRootHitbox);
+                  }
+               }
             }
          }
       }
@@ -211,9 +208,7 @@ class GameServer {
                const isSpectating = reader.readBoolean();
                reader.padOffset(3);
 
-               // @SQUEAM
-               // const spawnPosition = generatePlayerSpawnPosition(tribeType);
-               const spawnPosition = new Point(1838 - 60, 5676);
+               const spawnPosition = generatePlayerSpawnPosition(tribeType);
                // @Incomplete? Unused?
                const visibleChunkBounds = estimateVisibleChunkBounds(spawnPosition, screenWidth, screenHeight);
    

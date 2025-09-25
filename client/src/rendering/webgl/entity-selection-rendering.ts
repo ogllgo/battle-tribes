@@ -126,7 +126,7 @@ export function createStructureHighlightShaders(): void {
    framebufferVertexData[11] = 1;
 }
 
-export function renderEntitySelection(renderInfo: EntityRenderInfo, frameProgress: number, isSelected: boolean): void {
+export function renderEntitySelection(renderInfo: EntityRenderInfo, tickInterp: number, isSelected: boolean): void {
    // 
    // Framebuffer Program
    // 
@@ -158,49 +158,49 @@ export function renderEntitySelection(renderInfo: EntityRenderInfo, frameProgres
    translateEntityRenderParts(renderInfo, 4, 0);
    updateEntityRenderInfoRenderData(renderInfo);
    renderEntity(renderInfo);
-   cleanEntityRenderInfo(renderInfo, frameProgress);
+   cleanEntityRenderInfo(renderInfo, tickInterp);
 
    // Left
    translateEntityRenderParts(renderInfo, -4, 0);
    updateEntityRenderInfoRenderData(renderInfo);
    renderEntity(renderInfo);
-   cleanEntityRenderInfo(renderInfo, frameProgress);
+   cleanEntityRenderInfo(renderInfo, tickInterp);
 
    // Top
    translateEntityRenderParts(renderInfo, 0, 4);
    updateEntityRenderInfoRenderData(renderInfo);
    renderEntity(renderInfo);
-   cleanEntityRenderInfo(renderInfo, frameProgress);
+   cleanEntityRenderInfo(renderInfo, tickInterp);
 
    // Bottom
    translateEntityRenderParts(renderInfo, 0, -4);
    updateEntityRenderInfoRenderData(renderInfo);
    renderEntity(renderInfo);
-   cleanEntityRenderInfo(renderInfo, frameProgress);
+   cleanEntityRenderInfo(renderInfo, tickInterp);
 
    // Top right
    translateEntityRenderParts(renderInfo, 4, 4);
    updateEntityRenderInfoRenderData(renderInfo);
    renderEntity(renderInfo);
-   cleanEntityRenderInfo(renderInfo, frameProgress);
+   cleanEntityRenderInfo(renderInfo, tickInterp);
 
    // Bottom right
    translateEntityRenderParts(renderInfo, 4, -4);
    updateEntityRenderInfoRenderData(renderInfo);
    renderEntity(renderInfo);
-   cleanEntityRenderInfo(renderInfo, frameProgress);
+   cleanEntityRenderInfo(renderInfo, tickInterp);
 
    // Bottom left
    translateEntityRenderParts(renderInfo, -4, -4);
    updateEntityRenderInfoRenderData(renderInfo);
    renderEntity(renderInfo);
-   cleanEntityRenderInfo(renderInfo, frameProgress);
+   cleanEntityRenderInfo(renderInfo, tickInterp);
 
    // Top left
    translateEntityRenderParts(renderInfo, -4, 4);
    updateEntityRenderInfoRenderData(renderInfo);
    renderEntity(renderInfo);
-   cleanEntityRenderInfo(renderInfo, frameProgress);
+   cleanEntityRenderInfo(renderInfo, tickInterp);
 
    // Then, we want to subtract the middle area. To do this we multiply the existing drawn pixels
    // (dfactor) by 1 minus the middle alpha.

@@ -3,12 +3,14 @@ import { createIdentityMatrix, createTranslationMatrix, Matrix3x2, matrixMultipl
 import { Settings } from "battletribes-shared/settings";
 import { RenderPartParent, RenderPart } from "../render-parts/render-parts";
 import { renderLayerIsChunkRendered, updateChunkRenderedEntity } from "./webgl/chunked-entity-rendering";
-import { getEntityRenderInfo } from "../world";
+import { getEntityRenderInfo, getEntityType } from "../world";
 import { Point, randAngle } from "../../../shared/src/utils";
 import { gl } from "../webgl";
 import { HealthComponentArray } from "../entity-components/server-components/HealthComponent";
 import { getHitboxVelocity, Hitbox } from "../hitboxes";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
+import { EntityType } from "../../../shared/src/entities";
+import { playerInstance } from "../player";
 
 // @Cleanup: file name
 
@@ -119,11 +121,22 @@ export function undirtyRenderInfo(renderInfo: EntityRenderInfo): void {
 
 /** Marks all render infos which will move due to the frame progress */
 export function dirtifyMovingEntities(): void {
+   // @SPEED
    for (let i = 0; i < TransformComponentArray.entities.length; i++) {
       const entity = TransformComponentArray.entities[i];
+      const transformComponent = TransformComponentArray.components[i];
 
-      const renderInfo = getEntityRenderInfo(entity);
-      registerDirtyRenderInfo(renderInfo);
+      for (const hitbox of transformComponent.hitboxes) {
+         const velocity = getHitboxVelocity(hitbox);
+         if (velocity.x !== 0 || velocity.y !== 0) {
+            // Is moving!!
+
+            const renderInfo = getEntityRenderInfo(entity);
+            registerDirtyRenderInfo(renderInfo);
+
+            break;
+         }
+      }
    }
 }
 
@@ -152,7 +165,7 @@ const calculateAndOverrideRenderThingMatrix = (thing: RenderPart): void => {
    translateMatrix(matrix, tx, ty);
 }
 
-const calculateHitboxMatrix = (hitbox: Hitbox, frameProgress: number): Matrix3x2 => {
+const calculateHitboxMatrix = (hitbox: Hitbox, tickInterp: number): Matrix3x2 => {
    const matrix = createIdentityMatrix();
 
    const scale = hitbox.box.scale;
@@ -168,8 +181,8 @@ const calculateHitboxMatrix = (hitbox: Hitbox, frameProgress: number): Matrix3x2
    // scaleMatrix(matrix, scale, scale);
    
    const velocity = getHitboxVelocity(hitbox);
-   const tx = hitbox.box.position.x + velocity.x * frameProgress * Settings.DELTA_TIME;
-   const ty = hitbox.box.position.y + velocity.y * frameProgress * Settings.DELTA_TIME;
+   const tx = hitbox.box.position.x + velocity.x * tickInterp * Settings.DELTA_TIME;
+   const ty = hitbox.box.position.y + velocity.y * tickInterp * Settings.DELTA_TIME;
 
    // Translation
    translateMatrix(matrix, tx, ty);
@@ -177,8 +190,8 @@ const calculateHitboxMatrix = (hitbox: Hitbox, frameProgress: number): Matrix3x2
    return matrix;
 }
 
-export function calculateHitboxRenderPosition(hitbox: Hitbox, frameProgress: number): Point {
-   const matrix = calculateHitboxMatrix(hitbox, frameProgress);
+export function calculateHitboxRenderPosition(hitbox: Hitbox, tickInterp: number): Point {
+   const matrix = calculateHitboxMatrix(hitbox, tickInterp);
    return getMatrixPosition(matrix);
 }
 
@@ -194,7 +207,7 @@ export function translateEntityRenderParts(renderInfo: EntityRenderInfo, tx: num
    }
 }
 
-const cleanRenderPartModelMatrix = (renderPart: RenderPart, frameProgress: number): void => {
+const cleanRenderPartModelMatrix = (renderPart: RenderPart, tickInterp: number): void => {
    // Model matrix for the render part
    calculateAndOverrideRenderThingMatrix(renderPart);
 
@@ -202,7 +215,7 @@ const cleanRenderPartModelMatrix = (renderPart: RenderPart, frameProgress: numbe
    let parentModelMatrix: Readonly<Matrix3x2>;
    if (renderParentIsHitbox(renderPart.parent)) {
       // @Speed? @Garbage: Should override
-      parentModelMatrix = calculateHitboxMatrix(renderPart.parent, frameProgress);
+      parentModelMatrix = calculateHitboxMatrix(renderPart.parent, tickInterp);
       parentRotation = renderPart.parent.box.angle;
    } else {
       parentModelMatrix = renderPart.parent.modelMatrix;
@@ -218,13 +231,13 @@ const cleanRenderPartModelMatrix = (renderPart: RenderPart, frameProgress: numbe
    matrixMultiplyInPlace(parentModelMatrix, renderPart.modelMatrix);
 
    for (const child of renderPart.children) {
-      cleanRenderPartModelMatrix(child, frameProgress);
+      cleanRenderPartModelMatrix(child, tickInterp);
    }
 }
 
-export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo, frameProgress: number): void {
+export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo, tickInterp: number): void {
    for (const renderPart of renderInfo.rootRenderParts) {
-      cleanRenderPartModelMatrix(renderPart, frameProgress);
+      cleanRenderPartModelMatrix(renderPart, tickInterp);
    }
 
    if (renderLayerIsChunkRendered(renderInfo.renderLayer)) {
@@ -236,11 +249,11 @@ export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo, frameProgres
    renderInfo.renderPartsAreDirty = false;
 }
 
-export function updateRenderPartMatrices(frameProgress: number): void {
+export function updateRenderPartMatrices(serverTickInterp: number, clientTickInterp: number): void {
    // Do this before so that binding buffers during the loop doesn't mess up any previously bound vertex array.
    gl.bindVertexArray(null);
 
-   // @HACK: to fix the flash bug
+   // @HACK: to fix the flash bug where the damage flash doesn't play
    for (const entity of HealthComponentArray.entities) {
       const renderInfo = getEntityRenderInfo(entity);
       registerDirtyRenderInfo(renderInfo);
@@ -250,7 +263,8 @@ export function updateRenderPartMatrices(frameProgress: number): void {
    // To fix: temporarily set Settings.TICK_RATE to like 10 or something and then fix the subsequent slideshow
    for (let i = 0; i < dirtyEntityRenderInfos.length; i++) {
       const renderInfo = dirtyEntityRenderInfos[i];
-      cleanEntityRenderInfo(renderInfo, frameProgress);
+      const tickInterp = renderInfo.associatedEntity === playerInstance ? clientTickInterp : serverTickInterp;
+      cleanEntityRenderInfo(renderInfo, tickInterp);
    }
 
    // Reset dirty entities

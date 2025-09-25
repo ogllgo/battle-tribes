@@ -14,7 +14,6 @@ const TamingRenamePrompt = () => {
 
    useEffect(() => {
       TamingRenamePrompt_open = (entity: Entity): void => {
-         console.log(entity);
          setEntity(entity);
          setIsVisible(true);
       }

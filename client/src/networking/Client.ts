@@ -4,7 +4,7 @@ import { Settings } from "battletribes-shared/settings";
 import { TechID } from "battletribes-shared/techs";
 import { TribeType } from "battletribes-shared/tribes";
 import { TribesmanTitle } from "battletribes-shared/titles";
-import Game from "../Game";
+import Game, { getCursorWorldPos, resetTickInterp } from "../Game";
 import { Tile } from "../Tile";
 import { gameScreenSetIsDead } from "../components/game/GameScreen";
 import { definiteGameState, latencyGameState } from "../game-state/game-states";
@@ -17,6 +17,8 @@ import { AppState } from "../components/App";
 import { LoadingScreenStatus } from "../components/LoadingScreen";
 import Board from "../Board";
 import { setPlayerInstance, playerInstance } from "../player";
+import { callEntityOnUpdateFunctions } from "../entity-components/ComponentArray";
+import { resolvePlayerCollisions } from "../collision";
 
 export type GameData = {
    readonly gameTicks: number;
@@ -42,16 +44,14 @@ export function getVisibleBuildingPlans(): ReadonlyArray<BuildingPlanData> {
 }
 
 export function getHoveredBuildingPlan(): BuildingPlanData | null {
-   if (Game.cursorX === null || Game.cursorY === null) {
-      return null;
-   }
+   const cursorWorldPos = getCursorWorldPos();
    
    let minDist = 64;
    let closestPlanToCursor: BuildingPlanData | null = null;
    for (let i = 0; i < buildingPlans.length; i++) {
       const plan = buildingPlans[i];
       
-      const cursorDist = distance(plan.x, plan.y, Game.cursorX, Game.cursorY);
+      const cursorDist = distance(plan.x, plan.y, cursorWorldPos.x, cursorWorldPos.y);
       if (cursorDist < minDist) {
          minDist = cursorDist;
          closestPlanToCursor = plan;
@@ -117,15 +117,18 @@ abstract class Client {
                      return;
                   }
                   
-                  // queuedGameDataPackets.push(reader);
                   lastPacketTime = performance.now();
 
                   // Done before so that server data can override particles
                   Board.updateParticles();
                   
                   processGameDataPacket(reader);
-                  
                   Board.tickEntities();
+                  resetTickInterp();
+                  // if (playerInstance !== null) {
+                  //    callEntityOnUpdateFunctions(playerInstance);
+                  //    resolvePlayerCollisions();
+                  // }
 
                   break;
                }

@@ -53,7 +53,7 @@ import { countItemTypesInInventory } from "../../inventory-manipulation";
 import SelectTargetCursorOverlay from "./SelectCarryTargetCursorOverlay";
 import { playerInstance } from "../../player";
 import { AnimalStaffCommandType, createControlCommandParticles } from "./AnimalStaffOptions";
-import Game from "../../Game";
+import  { getCursorWorldPos } from "../../Game";
 import { calculateEntityPlaceInfo } from "../../structure-placement";
 import { assert, Point } from "../../../../shared/src/utils";
 import { getEntityClientComponentConfigs } from "../../entity-components/client-components";
@@ -1714,9 +1714,7 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
                e.preventDefault();
             }
          } else if (props.gameInteractState === GameInteractState.selectRiderDepositLocation) {
-            if (Game.cursorX !== null && Game.cursorY !== null) {
-               sendSelectRiderDepositLocationPacket(getSelectedEntityID(), new Point(Game.cursorX, Game.cursorY));
-            }
+            sendSelectRiderDepositLocationPacket(getSelectedEntityID(), getCursorWorldPos());
          } else {
             attemptAttack();
          }
@@ -1729,7 +1727,9 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
          }
 
          if (props.gameInteractState === GameInteractState.selectMoveTargetPosition) {
-            sendSetMoveTargetPositionPacket(getSelectedEntityID(), Game.cursorX!, Game.cursorY!);
+            const cursorWorldPos = getCursorWorldPos();
+            
+            sendSetMoveTargetPositionPacket(getSelectedEntityID(), cursorWorldPos.x, cursorWorldPos.y);
             props.setGameInteractState(GameInteractState.none);
             createControlCommandParticles(AnimalStaffCommandType.move);
             return;

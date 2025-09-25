@@ -55,8 +55,7 @@ export function createTribeWorkerConfig(position: Point, rotation: number, tribe
    
 
    const tribeInfo = TRIBE_INFO_RECORD[tribe.tribeType];
-   // @SQUEAM
-   const healthComponent = new HealthComponent(tribeInfo.maxHealthWorker * 10);
+   const healthComponent = new HealthComponent(tribeInfo.maxHealthWorker);
 
    const statusEffectComponent = new StatusEffectComponent(0);
 

@@ -84,15 +84,14 @@ registerEntityTamingSpec(EntityType.cow, {
    }
 });
 
-// @SQUEAM
-// registerEntityLootOnDeath(EntityType.cow, {
-//    itemType: ItemType.raw_beef,
-//    getAmount: () => randInt(2, 3)
-// });
-// registerEntityLootOnDeath(EntityType.cow, {
-//    itemType: ItemType.leather,
-//    getAmount: () => randInt(1, 2)
-// });
+registerEntityLootOnDeath(EntityType.cow, {
+   itemType: ItemType.raw_beef,
+   getAmount: () => randInt(2, 3)
+});
+registerEntityLootOnDeath(EntityType.cow, {
+   itemType: ItemType.leather,
+   getAmount: () => randInt(1, 2)
+});
 
 function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: number): boolean {
    return layer.getBiomeAtPosition(x, y) === Biome.grasslands;
@@ -147,7 +146,7 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
    headHitbox.box.pivot = createNormalisedPivotPoint(0, -0.5);
    addHitboxToTransformComponent(transformComponent, headHitbox);
 
-   tetherHitboxes(headHitbox, bodyHitbox, idealHeadDist, 35, 1);
+   tetherHitboxes(headHitbox, bodyHitbox, idealHeadDist, 60, 2);
    // @Hack: method of adding
    headHitbox.angularTethers.push({
       originHitbox: bodyHitbox,

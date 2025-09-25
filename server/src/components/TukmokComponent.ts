@@ -228,14 +228,6 @@ const isValidCombatTarget = (tukmok: Entity, entity: Entity): boolean => {
       return true;
    }
 
-   // @SQUEAM
-   if (getEntityType(entity) === EntityType.tribeWorker) {
-      const tribeComponent = TribeComponentArray.getComponent(entity);
-      if (tribeComponent.tribe.tribeType === TribeType.barbarians) {
-         return true;
-      }
-   }
-
    // @HACK @SPEED
    if (TribeComponentArray.hasComponent(entity)) {
       const entityTribeComponent = TribeComponentArray.getComponent(entity);

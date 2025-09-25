@@ -76,8 +76,9 @@ import { playerInstance } from "./player";
 import { TamingMenu_forceUpdate } from "./components/game/taming-menu/TamingMenu";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { setHitboxAngularVelocity } from "./hitboxes";
-import { updateEntity } from "./entity-components/ComponentArray";
-import { resolvePlayerCollisions } from "./collision";
+import { callEntityOnUpdateFunctions, getComponentArrays } from "./entity-components/ComponentArray";
+import { resolveEntityCollisions, resolvePlayerCollisions } from "./collision";
+import { Point } from "../../shared/src/utils";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -92,9 +93,15 @@ export let gameFramebufferTexture: WebGLTexture;
 let lastTextureWidth = 0;
 let lastTextureHeight = 0;
 
+const cursorWorldPos = new Point(0, 0);
+
 // @Cleanup: remove.
 export function getFrameProgress(): number {
    return _frameProgress;
+}
+
+export function getCursorWorldPos(): Readonly<Point> {
+   return cursorWorldPos;
 }
 
 const createEventListeners = (): void => {
@@ -142,31 +149,113 @@ const updatePlayerRotation = (cursorX: number, cursorY: number): void => {
    // registerDirtyRenderInfo(renderInfo);
 }
 
-const main = (currentTime: number): void => {
+let tickInterp = 0;
+
+export function resetTickInterp(): void {
+   tickInterp = 0;
+}
+
+/** Update and tick all entities EXCEPT the player. */
+const simulateTick = (): void => {
+   const componentArrays = getComponentArrays();
+   
+   for (let i = 0; i < componentArrays.length; i++) {
+      const componentArray = componentArrays[i];
+      if (typeof componentArray.onUpdate !== "undefined") {
+         for (let j = 0; j < componentArray.activeEntities.length; j++) {
+            const entity = componentArray.activeEntities[j];
+            if (entity !== playerInstance) {
+               componentArray.onUpdate(entity);
+            }
+         }
+      }
+      if (typeof componentArray.onTick !== "undefined") {
+         for (let j = 0; j < componentArray.activeEntities.length; j++) {
+            const entity = componentArray.activeEntities[j];
+            if (entity !== playerInstance) {
+               componentArray.onTick(entity);
+            }
+         }
+      }
+      
+      componentArray.deactivateQueue();
+   }
+   
+   // Resolve collisions
+   for (const layer of layers) {
+      resolveEntityCollisions(layer);
+   }
+}
+
+const runFrame = (currentTime: number): void => {
    if (Game.isSynced) {
       const deltaTime = currentTime - Game.lastTime;
       Game.lastTime = currentTime;
    
+      // send player packets to server
       Game.lag += deltaTime;
       while (Game.lag >= 1000 / Settings.CLIENT_PACKET_SEND_RATE) {
          Client.sendPlayerDataPacket();
          Game.lag -= 1000 / Settings.CLIENT_PACKET_SEND_RATE;
       }
 
+      // Tick the player (independently from all other entities)
       Game.lag2 += deltaTime;
       while (Game.lag2 >= 1000 / Settings.TICK_RATE) {
          if (playerInstance !== null) {
-            updateEntity(playerInstance);
+            callEntityOnUpdateFunctions(playerInstance);
             resolvePlayerCollisions();
          }
-         Game.tickPlayer();
+
          Game.lag2 -= 1000 / Settings.TICK_RATE;
+         
+         Board.clientTicks++;
+         
+         updateSpamFilter();
+
+         Camera.applyCameraKinematics();
+         
+         updatePlayerItems();
+         updateActiveResearchBench();
+         updateResearchOrb();
+         attemptToResearch();
+
+         const gameInteractState = GameScreen_getGameInteractState();
+         // @Cleanup: can probs just combine these 2
+         updateHighlightedAndHoveredEntities(gameInteractState);
+         updateSelectedEntity(gameInteractState);
+         BuildMenu_updateBuilding();
+         BuildMenu_refreshBuildingID();
+         AnimalStaffOptions_update();
+         // @Incomplete?
+         // updateInspectHealthBar();
+         InventorySelector_forceUpdate();
+         // @Hack @Speed
+         TamingMenu_forceUpdate();
+
+         updateTechTreeItems();
+         
+         updateSounds();
+         playRiverSounds();
+
+         createCollapseParticles();
+         updateSlimeTrails();
+
+         if (isDev()) refreshDebugInfo();
+         updateDebugEntity();
       }
 
-      const renderStartTime = performance.now();
+      tickInterp += deltaTime / 1000 * Settings.TICK_RATE;
+      // For interps >= 1, we simulate a tick
+      while (tickInterp >= 1) {
+         tickInterp--;
+         simulateTick();
+      }
       
-      const progressToNextPacket = (renderStartTime - getLastPacketTime()) / 1000 * Settings.SERVER_PACKET_SEND_RATE;
-      Game.render(progressToNextPacket);
+      const renderStartTime = performance.now();
+
+      const clientTickInterp = Game.lag2 / 1000 * Settings.TICK_RATE;
+      Game.render(tickInterp, clientTickInterp);
 
       const renderEndTime = performance.now();
 
@@ -179,13 +268,16 @@ const main = (currentTime: number): void => {
       updateTextNumbers();
       Board.updateTickCallbacks();
       Board.updateParticles();
-      //       // for (const layer of layers) {
-      //       //    resolveEntityCollisions(layer);
-      //       // }
+      
+      updatePlayerMovement();
+
+      cursorWorldPos.x = calculateCursorWorldPositionX(cursorX!) || 0;
+      cursorWorldPos.y = calculateCursorWorldPositionY(cursorY!) || 0;
+      renderCursorTooltip();
    }
 
    if (Game.isRunning) {
-      requestAnimationFrame(main);
+      requestAnimationFrame(runFrame);
    }
 }
 
@@ -315,10 +407,6 @@ abstract class Game {
    public static lag = 0;
    public static lag2 = 0;
 
-   // @Cleanup: Make these not be able to be null, just number
-   public static cursorX: number | null = null;
-   public static cursorY: number | null = null;
-
    public static setGameObjectDebugData(newEntityDebugData: EntityDebugData | null): void {
       entityDebugData = newEntityDebugData;
       setDebugInfoDebugData(entityDebugData);
@@ -342,7 +430,7 @@ abstract class Game {
       this.isSynced = true;
       this.isRunning = true;
       this.lastTime = performance.now();
-      requestAnimationFrame(main);
+      requestAnimationFrame(runFrame);
    }
 
    public static stop(): void {
@@ -452,7 +540,7 @@ abstract class Game {
             console.log("render chunks",performance.now() - l);
             console.log(performance.now() - start);
             this.hasInitialised = true;
-   
+
             resolve();
          });
       } else {
@@ -463,53 +551,11 @@ abstract class Game {
       }
    }
 
-   public static tickPlayer(): void {
-      Board.clientTicks++;
-      
-      updateSpamFilter();
-
-      updatePlayerMovement();
-      Camera.applyCameraKinematics();
-      
-      updatePlayerItems();
-      updateActiveResearchBench();
-      updateResearchOrb();
-      attemptToResearch();
-
-      const gameInteractState = GameScreen_getGameInteractState();
-      // @Cleanup: can probs just combine these 2
-      updateHighlightedAndHoveredEntities(gameInteractState);
-      updateSelectedEntity(gameInteractState);
-      BuildMenu_updateBuilding();
-      BuildMenu_refreshBuildingID();
-      AnimalStaffOptions_update();
-      // @Incomplete?
-      // updateInspectHealthBar();
-      InventorySelector_forceUpdate();
-      // @Hack @Speed
-      TamingMenu_forceUpdate();
-
-      updateTechTreeItems();
-      
-      updateSounds();
-      playRiverSounds();
-
-      this.cursorX = calculateCursorWorldPositionX(cursorX!);
-      this.cursorY = calculateCursorWorldPositionY(cursorY!);
-      renderCursorTooltip();
-
-      createCollapseParticles();
-      updateSlimeTrails();
-
-      if (isDev()) refreshDebugInfo();
-      updateDebugEntity();
-   }
-
    /**
     * 
-    * @param frameProgress How far the game is into the current frame (0 = frame just started, 0.99 means frame is about to end)
+    * @param serverTickInterp How far the game is into the current frame (0 = frame just started, 0.99 means frame is about to end)
     */
-   public static render(frameProgress: number): void {
+   public static render(serverTickInterp: number, clientTickInterp: number): void {
       // Player rotation is updated each render, but only sent each update
       if (cursorX !== null && cursorY !== null) {
          updatePlayerRotation(cursorX, cursorY);
@@ -540,19 +586,19 @@ abstract class Game {
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
       // @Cleanup: weird. shouldn't be global anyway
-      _frameProgress = frameProgress;
+      _frameProgress = serverTickInterp;
 
       const playerLayer = getCurrentLayer();
 
       updateUBOs();
 
       dirtifyMovingEntities();
-      updateRenderPartMatrices(frameProgress);
+      updateRenderPartMatrices(serverTickInterp, clientTickInterp);
 
       // @Cleanup: move to update function in camera
       // Update the camera
       if (!Camera.isSpectating) {
-         Camera.updatePosition(frameProgress);
+         Camera.updatePosition(clientTickInterp);
       } else {
          Camera.updateSpectatorPosition(deltaTime);
       }
@@ -561,11 +607,11 @@ abstract class Game {
 
       // @Hack
       if (layers.indexOf(playerLayer) === 0) {
-         renderLayer(layers[1], frameProgress);
+         renderLayer(layers[1], serverTickInterp);
          renderDarkening();
-         renderLayer(layers[0], frameProgress);
+         renderLayer(layers[0], serverTickInterp);
       } else {
-         renderLayer(layers[1], frameProgress);
+         renderLayer(layers[1], serverTickInterp);
       }
 
       if (OPTIONS.showSubtileSupports) {

@@ -1,10 +1,10 @@
 import { ServerComponentType } from "battletribes-shared/components";
-import { Entity } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import ServerComponentArray from "./ServerComponentArray";
 import ClientComponentArray from "./ClientComponentArray";
 import { ClientComponentType } from "./client-component-types";
 import { assert, Point } from "../../../shared/src/utils";
-import { EntityParams } from "../world";
+import { EntityParams, getEntityType } from "../world";
 import { Hitbox } from "../hitboxes";
 import { EntityRenderInfo } from "../EntityRenderInfo";
 
@@ -55,6 +55,9 @@ export abstract class ComponentArray<
 > implements ComponentArrayFunctions<T, ComponentIntermediateInfo> {
    public readonly id = componentArrayIDCounter++;
    private readonly isActiveByDefault: boolean;
+
+   // @HACK here for hack
+   private readonly componentType: ComponentType;
    
    public entities = new Array<Entity>();
    public components = new Array<T>();
@@ -91,6 +94,8 @@ export abstract class ComponentArray<
 
    constructor(arrayType: ArrayType, componentType: ComponentType, isActiveByDefault: boolean, functions: ComponentArrayFunctions<T, ComponentIntermediateInfo>) {
       this.isActiveByDefault = isActiveByDefault;
+
+      this.componentType = componentType;
       
       this.populateIntermediateInfo = functions.populateIntermediateInfo;
       this.createComponent = functions.createComponent;
@@ -119,22 +124,26 @@ export abstract class ComponentArray<
       }
    }
 
-   public addComponent(entityID: Entity, component: T): void {
+   // @HACK: the entity type param
+   public addComponent(entity: Entity, component: T, entityType: EntityType): void {
       // Put new entry at end and update the maps
       const newIndex = this.components.length;
-      this.entityToIndexMap[entityID] = newIndex;
-      this.indexToEntityMap[newIndex] = entityID;
+      this.entityToIndexMap[entity] = newIndex;
+      this.indexToEntityMap[newIndex] = entity;
       this.components.push(component);
-      this.entities.push(entityID);
+      this.entities.push(entity);
 
       if (this.isActiveByDefault) {
-         this.activateComponent(component, entityID);
+         // @Hack so that Board.updateEntities doesn't kill everything with slow
+         if (!(this.componentType === ServerComponentType.transform && entityType === EntityType.grassStrand)) {
+            this.activateComponent(component, entity);
+         }
       }
    }
 
-   public removeComponent(entityID: Entity): void {
+   public removeComponent(entity: Entity): void {
 		// Copy element at end into deleted element's place to maintain density
-      const indexOfRemovedEntity = this.entityToIndexMap[entityID]!;
+      const indexOfRemovedEntity = this.entityToIndexMap[entity]!;
       this.components[indexOfRemovedEntity] = this.components[this.components.length - 1];
       this.entities[indexOfRemovedEntity] = this.entities[this.entities.length - 1];
 
@@ -143,14 +152,14 @@ export abstract class ComponentArray<
       this.entityToIndexMap[entityOfLastElement] = indexOfRemovedEntity;
       this.indexToEntityMap[indexOfRemovedEntity] = entityOfLastElement;
 
-      delete this.entityToIndexMap[entityID];
+      delete this.entityToIndexMap[entity];
       delete this.indexToEntityMap[this.components.length - 1];
 
       this.components.pop();
       this.entities.pop();
 
-      if (typeof this.activeEntityToIndexMap[entityID] !== "undefined") {
-         this.deactivateComponent(entityID);
+      if (typeof this.activeEntityToIndexMap[entity] !== "undefined") {
+         this.deactivateComponent(entity);
       }
    }
 
@@ -241,7 +250,7 @@ export function getServerComponentArray(componentType: ServerComponentType): Ser
    return serverComponentArrayRecord[componentType];
 }
 
-export function updateEntity(entity: Entity): void {
+export function callEntityOnUpdateFunctions(entity: Entity): void {
    for (let i = 0; i < componentArrays.length; i++) {
       const componentArray = componentArrays[i];
       if (typeof componentArray.onUpdate === "undefined") {

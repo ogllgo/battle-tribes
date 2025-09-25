@@ -479,9 +479,6 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
          surfaceLayer.tileTypes[tileIndex] = TileType.water;
       }
       
-      // @Incomplete
-      // tileIsWalls[tileIndex] = 0;
-
       surfaceLayer.riverFlowDirections[tileIndex] = tileInfo.flowDirectionIdx;
    }
 
@@ -820,52 +817,52 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       }
    });
 
-   // registerNewSpawnInfo({
-   //    entityTypes: [EntityType.dustflea],
-   //    layer: surfaceLayer,
-   //    spawnRate: 0,
-   //    biome: Biome.desert,
-   //    tileTypes: [TileType.sand],
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 150,
-   //    spawnDistribution: createRawSpawnDistribution(4, 0.013),
-   //    balanceSpawnDistribution: false,
-   //    doStrictTileTypeCheck: true,
-   //    createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
-   //       return [createDustfleaConfig(pos, angle)];
-   //    }
-   // });
-   // registerNewSpawnInfo({
-   //    entityTypes: [EntityType.krumblid],
-   //    layer: surfaceLayer,
-   //    spawnRate: 0,
-   //    biome: Biome.desert,
-   //    tileTypes: [TileType.sand],
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 150,
-   //    spawnDistribution: createRawSpawnDistribution(4, 0.003),
-   //    balanceSpawnDistribution: false,
-   //    doStrictTileTypeCheck: true,
-   //    createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
-   //       return [createKrumblidConfig(pos, angle)];
-   //    }
-   // });
+   registerNewSpawnInfo({
+      entityTypes: [EntityType.dustflea],
+      layer: surfaceLayer,
+      spawnRate: 0,
+      biome: Biome.desert,
+      tileTypes: [TileType.sand],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150,
+      spawnDistribution: createRawSpawnDistribution(4, 0.013),
+      balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
+      createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
+         return [createDustfleaConfig(pos, angle)];
+      }
+   });
+   registerNewSpawnInfo({
+      entityTypes: [EntityType.krumblid],
+      layer: surfaceLayer,
+      spawnRate: 0,
+      biome: Biome.desert,
+      tileTypes: [TileType.sand],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150,
+      spawnDistribution: createRawSpawnDistribution(4, 0.003),
+      balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
+      createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
+         return [createKrumblidConfig(pos, angle)];
+      }
+   });
    // @TEMPORARY cuz they are wandering out of the desert and messing stuff up
-   // registerNewSpawnInfo({
-   //    entityTypes: [EntityType.okren],
-   //    layer: surfaceLayer,
-   //    spawnRate: 0,
-   //    biome: Biome.desert,
-   //    tileTypes: [TileType.sand],
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 150,
-   //    spawnDistribution: createRawSpawnDistribution(4, 0.0007),
-   //    balanceSpawnDistribution: false,
-   //    doStrictTileTypeCheck: true,
-   //    createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
-   //       return [createOkrenConfig(pos, angle, 4)];
-   //    }
-   // });
+   registerNewSpawnInfo({
+      entityTypes: [EntityType.okren],
+      layer: surfaceLayer,
+      spawnRate: 0,
+      biome: Biome.desert,
+      tileTypes: [TileType.sand],
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150,
+      spawnDistribution: createRawSpawnDistribution(4, 0.0007),
+      balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: true,
+      createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
+         return [createOkrenConfig(pos, angle, 4)];
+      }
+   });
    
    registerNewSpawnInfo({
       entityTypes: [EntityType.fish],
