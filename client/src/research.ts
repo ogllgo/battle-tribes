@@ -4,7 +4,7 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import Board from "./Board";
-import Game from "./Game";
+import Game, { getCursorWorldPos } from "./Game";
 import { getSelectedEntityID } from "./entity-selection";
 import { playSound } from "./sound";
 import { createMagicParticle, createStarParticle } from "./particles";
@@ -132,13 +132,15 @@ const getResearchSpeedMultiplier = (): number => {
 }
 
 export function attemptToResearch(): void {
-   if (currentResearchOrb === null || Game.cursorX === null || Game.cursorY === null) {
+   if (currentResearchOrb === null) {
       return;
    }
    
+   const cursorWorldPos = getCursorWorldPos();
+   
    const nodeSize = RESEARCH_ORB_SIZES[currentResearchOrb.size];
 
-   const distFromOrb = distance(Game.cursorX, Game.cursorY, currentResearchOrb.positionX, currentResearchOrb.positionY);
+   const distFromOrb = distance(cursorWorldPos.x, cursorWorldPos.y, currentResearchOrb.positionX, currentResearchOrb.positionY);
    if (distFromOrb < nodeSize / 2) {
       orbCompleteProgress += getResearchSpeedMultiplier() * Settings.DELTA_TIME;
       if (orbCompleteProgress > RESEARCH_ORB_COMPLETE_TIME) {

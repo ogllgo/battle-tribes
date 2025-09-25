@@ -16,8 +16,8 @@ import ServerComponentArray from "../ServerComponentArray";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../../shared/src/collision";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playerInstance } from "../../player";
-import { applyAcceleration, getHitboxVelocity, Hitbox, HitboxTether, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox } from "../../hitboxes";
-import { padHitboxDataExceptLocalID, readBoxFromData, readHitboxFromData, updateHitboxExceptLocalIDFromData } from "../../networking/packet-hitboxes";
+import { applyAcceleration, getHitboxVelocity, getRootHitbox, Hitbox, HitboxTether, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox } from "../../hitboxes";
+import { padHitboxDataExceptLocalID, readBoxFromData, readHitboxFromData, updateHitboxExceptLocalIDFromData, updatePlayerHitboxFromData } from "../../networking/packet-hitboxes";
 import Particle from "../../Particle";
 import { createWaterSplashParticle } from "../../particles";
 import { addTexturedParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
@@ -115,14 +115,6 @@ export function getHitboxByLocalID(hitboxes: ReadonlyArray<Hitbox>, localID: num
       }
    }
    return null;
-}
-
-export function findEntityHitbox(entity: Entity, localID: number): Hitbox | null {
-   if (!TransformComponentArray.hasComponent(entity)) {
-      return null;
-   }
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   return getHitboxByLocalID(transformComponent.hitboxes, localID);
 }
 
 const addHitbox = (transformComponent: TransformComponent, hitbox: Hitbox): void => {
@@ -333,60 +325,71 @@ const applyHitboxKinematics = (transformComponent: TransformComponent, entity: E
    registerDirtyRenderInfo(renderInfo);
 }
 
-const resolveBorderCollisions = (entity: Entity): boolean => {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   
-   const EPSILON = 0.00001;
-   
-   let hasMoved = false;
-   
-   const baseHitbox = transformComponent.hitboxes[0];
+const collideWithVerticalWorldBorder = (hitbox: Hitbox, tx: number): void => {
+   const rootHitbox = getRootHitbox(hitbox);
+   translateHitbox(rootHitbox, tx, 0);
+   setHitboxVelocityX(rootHitbox, 0);
+}
 
-   // @Incomplete: do this using transform component bounds
+const collideWithHorizontalWorldBorder = (hitbox: Hitbox, ty: number): void => {
+   const rootHitbox = getRootHitbox(hitbox);
+   translateHitbox(rootHitbox, 0, ty);
+   setHitboxVelocityY(rootHitbox, 0);
+}
+
+const resolveAndCleanBorderCollisions = (entity: Entity, transformComponent: TransformComponent): void => {
+   const EPSILON = 0.0001;
    
-   // @Bug: if the entity is a lot of hitboxes stacked vertically, and they are all in the left border, then they will be pushed too far out.
+   let hasCorrected = false;
    for (const hitbox of transformComponent.hitboxes) {
-      const box = hitbox.box;
       
-      const minX = box.calculateBoundsMinX();
-      const maxX = box.calculateBoundsMaxX();
-      const minY = box.calculateBoundsMinY();
-      const maxY = box.calculateBoundsMaxY();
-
-      // Left wall
+      // Left border
+      const minX = hitbox.box.calculateBoundsMinX();
       if (minX < 0) {
-         translateHitbox(baseHitbox, -minX + EPSILON, 0);
-         setHitboxVelocityX(baseHitbox, 0);
-         hasMoved = true;
-         // Right wall
-      } else if (maxX > Settings.BOARD_UNITS) {
-         translateHitbox(baseHitbox, Settings.BOARD_UNITS - maxX - EPSILON, 0);
-         setHitboxVelocityX(baseHitbox, 0);
-         hasMoved = true;
-      }
-      
-      // Bottom wall
-      if (minY < 0) {
-         translateHitbox(baseHitbox, 0, -minY + EPSILON);
-         setHitboxVelocityY(baseHitbox, 0);
-         hasMoved = true;
-         // Top wall
-      } else if (maxY > Settings.BOARD_UNITS) {
-         translateHitbox(baseHitbox, 0, -maxY + Settings.BOARD_UNITS - EPSILON);
-         setHitboxVelocityY(baseHitbox, 0);
-         hasMoved = true;
+         collideWithVerticalWorldBorder(hitbox, -minX + EPSILON);
+         hasCorrected = true;
       }
 
-      // @Bug @Incomplete Can happen if maxX is something crazy like 1584104521169366000. fix!!!
-      if (box.calculateBoundsMinX() < 0 || box.calculateBoundsMaxX() >= Settings.BOARD_UNITS || box.calculateBoundsMinY() < 0 || box.calculateBoundsMaxY() >= Settings.BOARD_UNITS) {
-         throw new Error();
+      // Right border
+      const maxX = hitbox.box.calculateBoundsMaxX();
+      if (maxX > Settings.BOARD_UNITS) {
+         collideWithVerticalWorldBorder(hitbox, Settings.BOARD_UNITS - maxX - EPSILON);
+         hasCorrected = true;
+      }
+
+      // Bottom border
+      const minY = hitbox.box.calculateBoundsMinY();
+      if (minY < 0) {
+         hasCorrected = true;
+         collideWithHorizontalWorldBorder(hitbox, -minY + EPSILON);
+      }
+
+      // Top border
+      const maxY = hitbox.box.calculateBoundsMaxY();
+      if (maxY > Settings.BOARD_UNITS) {
+         hasCorrected = true;
+         collideWithHorizontalWorldBorder(hitbox, Settings.BOARD_UNITS - maxY - EPSILON);
+      }
+
+      // We then need to clean the hitbox so that its children have its position updated to reflect the move
+      if (hasCorrected) {
+         // we gotta clean the whole transform now, not just the hitbox tree, so that the big bounds are correct
+         cleanEntityTransform(entity);
       }
    }
 
-   return hasMoved;
+   // If the entity is outside the world border after resolving border collisions, throw an error
+   // @Robustness this should be impossible to trigger, so i can remove it and sleep peacefully
+   for (const hitbox of transformComponent.hitboxes) {
+      if (hitbox.box.calculateBoundsMinX() < 0 || hitbox.box.calculateBoundsMaxX() >= Settings.BOARD_UNITS || hitbox.box.calculateBoundsMinY() < 0 || hitbox.box.calculateBoundsMaxY() >= Settings.BOARD_UNITS) {
+         throw new Error();
+      }
+   }
 }
 
-const applyHitboxTethers = (transformComponent: TransformComponent, hitbox: Hitbox): void => {
+// @INCOMPLETE
+// const applyHitboxTethers = (hitbox: Hitbox, onlyAffectSelf: boolean): void => {
+const applyHitboxTethers = (hitbox: Hitbox): void => {
    // Apply the spring physics
    for (const tether of hitbox.tethers) {
       const originBox = tether.originBox;
@@ -409,7 +412,11 @@ const applyHitboxTethers = (transformComponent: TransformComponent, hitbox: Hitb
       
       hitbox.acceleration.x += springForceX / hitbox.mass;
       hitbox.acceleration.y += springForceY / hitbox.mass;
-      // Don't move the other hitbox, as that will be accounted for by the server!
+      // For ticking the player, we only want to affect the player's own tethers.
+      // if (!onlyAffectSelf) {
+         // @INCOMPLETE this no worky
+         // originBox.acc
+      // }
    }
 
 }
@@ -539,7 +546,7 @@ function onUpdate(entity: Entity): void {
 
    for (const child of transformComponent.hitboxes) {
       const hitbox = child;
-      applyHitboxTethers(transformComponent, hitbox);
+      applyHitboxTethers(hitbox);
    }
    
    for (const rootHitbox of transformComponent.rootHitboxes) {
@@ -558,10 +565,7 @@ function onUpdate(entity: Entity): void {
       }
    }
 
-   const hasMoved = resolveBorderCollisions(entity);
-   if (hasMoved) {
-      cleanEntityTransform(entity);
-   }
+   resolveAndCleanBorderCollisions(entity, transformComponent);
 
       // @INCOMPLETE!
       // The player is attached to a parent: need to snap them to the parent!
@@ -731,58 +735,6 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
          transformComponent.chunks.add(chunk);
       }
    }
-}
-
-const updatePlayerHitboxFromData = (hitbox: Hitbox, reader: PacketReader): void => {
-   // @Garbage
-   const dataBox = readBoxFromData(reader);
-
-   reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT);
-
-   // Remove all previous tethers and add new ones
-
-   hitbox.tethers.splice(0, hitbox.tethers.length);
-   
-   const numTethers = reader.readNumber();
-   for (let i = 0; i < numTethers; i++) {
-      const originBox = readBoxFromData(reader);
-      const idealDistance = reader.readNumber();
-      const springConstant = reader.readNumber();
-      const damping = reader.readNumber();
-      const tether: HitboxTether = {
-         originBox: originBox,
-         idealDistance: idealDistance,
-         springConstant: springConstant,
-         damping: damping
-      };
-      hitbox.tethers.push(tether);
-   }
-   
-   reader.padOffset(6 * Float32Array.BYTES_PER_ELEMENT);
-   
-   const numFlags = reader.readNumber();
-   reader.padOffset(numFlags * Float32Array.BYTES_PER_ELEMENT);
-
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT) // entity
-   hitbox.rootEntity = reader.readNumber();
-
-   const parentEntity = reader.readNumber();
-   const parentLocalID = reader.readNumber();
-   if (parentLocalID === -1) {
-      hitbox.parent = null;
-   } else {
-      assert(entityExists(parentEntity));
-      hitbox.parent = findEntityHitbox(parentEntity, parentLocalID);
-      assert(hitbox.parent !== null);
-
-      // If the player is attached to something, set the hitboxes' offset
-      hitbox.box.offset.x = dataBox.offset.x;
-      hitbox.box.offset.y = dataBox.offset.y;
-   }
-
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT); // isPartOfParent
-
-   hitbox.lastUpdateTicks = Board.serverTicks;
 }
 
 function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): void {

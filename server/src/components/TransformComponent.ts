@@ -411,6 +411,10 @@ export function resolveEntityBorderCollisions(transformComponent: TransformCompo
          // @SPEED if we're doing this then shouldn't we do the root hitbox recursion thing??
          const rootHitbox = getRootHitbox(hitbox);
          cleanHitboxTransformIncludingChildren(rootHitbox);
+
+         // gotta clean the big 
+         // @Speed i just slapped this in here so it has correct logic.
+         cleanEntityTransform(hitbox.entity);
       }
    }
 

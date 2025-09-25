@@ -1,6 +1,6 @@
 import { getLightLevelNodeX, getLightLevelNodeY, LightLevelVars } from "../../../shared/src/light-levels";
 import { distance, roundNum } from "../../../shared/src/utils";
-import Game from "../Game";
+import { getCursorWorldPos } from "../Game";
 import { getLightLevelNodeInfos } from "../light-levels";
 import { getTextContext, getXPosInTextCanvas, getYPosInTextCanvas } from "../text-canvas";
 
@@ -9,9 +9,7 @@ const enum Vars {
 }
 
 export function renderLightLevelsText() {
-   if (Game.cursorX === null || Game.cursorY === null) {
-      return;
-   }
+   const cursorWorldPos = getCursorWorldPos();
    
    const nodeInfos = getLightLevelNodeInfos();
    
@@ -36,7 +34,7 @@ export function renderLightLevelsText() {
       const x = (nodeX + 0.5) * LightLevelVars.LIGHT_NODE_SIZE;
       const y = (nodeY + 0.5) * LightLevelVars.LIGHT_NODE_SIZE;
 
-      const dist = distance(x, y, Game.cursorX, Game.cursorY);
+      const dist = distance(x, y, cursorWorldPos.x, cursorWorldPos.y);
       if (dist > Vars.NODE_DISPLAY_DIST) {
          continue;
       }

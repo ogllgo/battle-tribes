@@ -21,7 +21,7 @@ import { createStructureComponentParams } from "./entity-components/server-compo
 import { createTransformComponentParams } from "./entity-components/server-components/TransformComponent";
 import { createTribeComponentParams } from "./entity-components/server-components/TribeComponent";
 import { EntityRenderInfo, updateEntityRenderInfoRenderData } from "./EntityRenderInfo";
-import Game from "./Game";
+import Game, { getCursorWorldPos } from "./Game";
 import Layer from "./Layer";
 import { thingIsVisualRenderPart } from "./render-parts/render-parts";
 import { removeGhostRenderInfo } from "./rendering/webgl/entity-ghost-rendering";
@@ -270,9 +270,7 @@ export function readGhostVirtualBuildings(reader: PacketReader): void {
 }
 
 export function getVisibleBuildingPlan(): GhostBuildingPlan | null {
-   if (Game.cursorX === null || Game.cursorY === null) {
-      return null;
-   }
+   const cursorWorldPos = getCursorWorldPos();
    
    let closestGhostBuildingPlan: GhostBuildingPlan | undefined;
    let minDist = 64;
@@ -280,7 +278,7 @@ export function getVisibleBuildingPlan(): GhostBuildingPlan | null {
       const ghostBuildingPlan = pair[1];
       const virtualBuilding = ghostBuildingPlan.virtualBuilding;
       
-      const dist = distance(Game.cursorX, Game.cursorY, virtualBuilding.position.x, virtualBuilding.position.y);
+      const dist = distance(cursorWorldPos.x, cursorWorldPos.y, virtualBuilding.position.x, virtualBuilding.position.y);
       if (dist < minDist) {
          minDist = dist;
          closestGhostBuildingPlan = ghostBuildingPlan;

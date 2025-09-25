@@ -164,7 +164,7 @@ const calculateAndOverrideRenderThingMatrix = (thing: RenderPart): void => {
    translateMatrix(matrix, tx, ty);
 }
 
-const calculateHitboxMatrix = (hitbox: Hitbox, frameProgress: number): Matrix3x2 => {
+const calculateHitboxMatrix = (hitbox: Hitbox, tickInterp: number): Matrix3x2 => {
    const matrix = createIdentityMatrix();
 
    const scale = hitbox.box.scale;
@@ -180,8 +180,8 @@ const calculateHitboxMatrix = (hitbox: Hitbox, frameProgress: number): Matrix3x2
    // scaleMatrix(matrix, scale, scale);
    
    const velocity = getHitboxVelocity(hitbox);
-   const tx = hitbox.box.position.x + velocity.x * frameProgress * Settings.DELTA_TIME;
-   const ty = hitbox.box.position.y + velocity.y * frameProgress * Settings.DELTA_TIME;
+   const tx = hitbox.box.position.x + velocity.x * tickInterp * Settings.DELTA_TIME;
+   const ty = hitbox.box.position.y + velocity.y * tickInterp * Settings.DELTA_TIME;
 
    // Translation
    translateMatrix(matrix, tx, ty);
@@ -189,8 +189,8 @@ const calculateHitboxMatrix = (hitbox: Hitbox, frameProgress: number): Matrix3x2
    return matrix;
 }
 
-export function calculateHitboxRenderPosition(hitbox: Hitbox, frameProgress: number): Point {
-   const matrix = calculateHitboxMatrix(hitbox, frameProgress);
+export function calculateHitboxRenderPosition(hitbox: Hitbox, tickInterp: number): Point {
+   const matrix = calculateHitboxMatrix(hitbox, tickInterp);
    return getMatrixPosition(matrix);
 }
 
@@ -206,7 +206,7 @@ export function translateEntityRenderParts(renderInfo: EntityRenderInfo, tx: num
    }
 }
 
-const cleanRenderPartModelMatrix = (renderPart: RenderPart, frameProgress: number): void => {
+const cleanRenderPartModelMatrix = (renderPart: RenderPart, tickInterp: number): void => {
    // Model matrix for the render part
    calculateAndOverrideRenderThingMatrix(renderPart);
 
@@ -214,7 +214,7 @@ const cleanRenderPartModelMatrix = (renderPart: RenderPart, frameProgress: numbe
    let parentModelMatrix: Readonly<Matrix3x2>;
    if (renderParentIsHitbox(renderPart.parent)) {
       // @Speed? @Garbage: Should override
-      parentModelMatrix = calculateHitboxMatrix(renderPart.parent, frameProgress);
+      parentModelMatrix = calculateHitboxMatrix(renderPart.parent, tickInterp);
       parentRotation = renderPart.parent.box.angle;
    } else {
       parentModelMatrix = renderPart.parent.modelMatrix;
@@ -230,13 +230,13 @@ const cleanRenderPartModelMatrix = (renderPart: RenderPart, frameProgress: numbe
    matrixMultiplyInPlace(parentModelMatrix, renderPart.modelMatrix);
 
    for (const child of renderPart.children) {
-      cleanRenderPartModelMatrix(child, frameProgress);
+      cleanRenderPartModelMatrix(child, tickInterp);
    }
 }
 
-export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo, frameProgress: number): void {
+export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo, tickInterp: number): void {
    for (const renderPart of renderInfo.rootRenderParts) {
-      cleanRenderPartModelMatrix(renderPart, frameProgress);
+      cleanRenderPartModelMatrix(renderPart, tickInterp);
    }
 
    if (renderLayerIsChunkRendered(renderInfo.renderLayer)) {
@@ -248,7 +248,7 @@ export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo, frameProgres
    renderInfo.renderPartsAreDirty = false;
 }
 
-export function updateRenderPartMatrices(frameProgress: number): void {
+export function updateRenderPartMatrices(frameInterp: number): void {
    // Do this before so that binding buffers during the loop doesn't mess up any previously bound vertex array.
    gl.bindVertexArray(null);
 
@@ -262,7 +262,7 @@ export function updateRenderPartMatrices(frameProgress: number): void {
    // To fix: temporarily set Settings.TICK_RATE to like 10 or something and then fix the subsequent slideshow
    for (let i = 0; i < dirtyEntityRenderInfos.length; i++) {
       const renderInfo = dirtyEntityRenderInfos[i];
-      cleanEntityRenderInfo(renderInfo, frameProgress);
+      cleanEntityRenderInfo(renderInfo, frameInterp);
    }
 
    // Reset dirty entities

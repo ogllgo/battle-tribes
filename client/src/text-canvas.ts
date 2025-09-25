@@ -14,7 +14,7 @@ import { addGhostRenderInfo, removeGhostRenderInfo } from "./rendering/webgl/ent
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { calculateHitboxRenderPosition } from "./rendering/render-part-matrices";
 import { FloorSignComponentArray } from "./entity-components/server-components/FloorSignComponent";
-import Game from "./Game";
+import { getCursorWorldPos } from "./Game";
 import { TamingComponentArray } from "./entity-components/server-components/TamingComponent";
 
 // @Cleanup: The logic for damage, research and heal numbers is extremely similar, can probably be combined
@@ -340,7 +340,7 @@ const renderName = (x: number, y: number, name: string, colour: string): void =>
 // @Speed
 // @Speed
 // @Speed
-const renderNames = (frameProgress: number): void => {
+const renderNames = (tickInterp: number): void => {
    ctx.fillStyle = "#000";
    ctx.font = "400 20px Helvetica";
    ctx.lineJoin = "round";
@@ -358,7 +358,7 @@ const renderNames = (frameProgress: number): void => {
 
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.hitboxes[0];
-      const hitboxRenderPosition = calculateHitboxRenderPosition(hitbox, frameProgress);
+      const hitboxRenderPosition = calculateHitboxRenderPosition(hitbox, tickInterp);
       
       renderName(hitboxRenderPosition.x, hitboxRenderPosition.y + getHumanoidRadius(entity) + 4, tribeMemberComponent.name, getEntityType(entity) === EntityType.player ? "#fff" : "#bbb");
    }
@@ -374,7 +374,7 @@ const renderNames = (frameProgress: number): void => {
       if (name !== "") {
          const transformComponent = TransformComponentArray.getComponent(entity);
          const hitbox = transformComponent.hitboxes[1];
-         const hitboxRenderPosition = calculateHitboxRenderPosition(hitbox, frameProgress);
+         const hitboxRenderPosition = calculateHitboxRenderPosition(hitbox, tickInterp);
          
          renderName(hitboxRenderPosition.x, hitboxRenderPosition.y + 16 + 4, name, "#ccc");
       }
@@ -382,26 +382,25 @@ const renderNames = (frameProgress: number): void => {
 
    // @CLeanup: these aren't names!!
    // Floor signs
-   if (Game.cursorX !== null && Game.cursorY !== null) {
-      for (const entity of FloorSignComponentArray.entities) {
-         const floorSignComponent = FloorSignComponentArray.getComponent(entity);
-         if (floorSignComponent.message === "") {
-            continue;
-         }
-         
-         const transformComponent = TransformComponentArray.getComponent(entity);
-         const hitbox = transformComponent.hitboxes[0];
-         const hitboxRenderPosition = calculateHitboxRenderPosition(hitbox, frameProgress);
-   
-         const x = hitboxRenderPosition.x;
-         const y = hitboxRenderPosition.y;
-         
-         const cursorDist = distance(x, y, Game.cursorX, Game.cursorY);
-         if (cursorDist < 96) {
-            renderName(x, y, floorSignComponent.message, "#fff");
-         }
+   const cursorWorldPos = getCursorWorldPos();
+   for (const entity of FloorSignComponentArray.entities) {
+      const floorSignComponent = FloorSignComponentArray.getComponent(entity);
+      if (floorSignComponent.message === "") {
+         continue;
       }
-   }
+      
+      const transformComponent = TransformComponentArray.getComponent(entity);
+      const hitbox = transformComponent.hitboxes[0];
+      const hitboxRenderPosition = calculateHitboxRenderPosition(hitbox, tickInterp);
+
+      const x = hitboxRenderPosition.x;
+      const y = hitboxRenderPosition.y;
+      
+      const cursorDist = distance(x, y, cursorWorldPos.x, cursorWorldPos.y);
+      if (cursorDist < 96) {
+         renderName(x, y, floorSignComponent.message, "#fff");
+      }
+}
 }
 
 const getPotentialPlanStats = (ghostBuildingPlan: GhostBuildingPlan): PotentialPlanStats => {
@@ -678,9 +677,9 @@ const renderChunkWeights = (): void => {
    }
 }
 
-export function renderText(frameProgress: number): void {
+export function renderText(tickInterp: number): void {
    clearTextCanvas();
-   renderNames(frameProgress);
+   renderNames(tickInterp);
    renderDamageNumbers();
    renderResearchNumbers();
    renderHealNumbers();

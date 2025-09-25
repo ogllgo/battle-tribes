@@ -2,7 +2,7 @@ import { Entity, EntityType, PlantedEntityType } from "battletribes-shared/entit
 import { assert, distance, Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { TunnelDoorSide } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
-import Game from "./Game";
+import Game, { getCursorWorldPos } from "./Game";
 import Board from "./Board";
 import Client from "./networking/Client";
 import { latencyGameState } from "./game-state/game-states";
@@ -198,9 +198,7 @@ const getTunnelDoorSide = (groupNum: number): TunnelDoorSide => {
 }
 
 const getSelectedCarrySlotIdx = (entity: Entity): number | null => {
-   if (Game.cursorX === null || Game.cursorY === null) {
-      return null;
-   }
+   const cursorWorldPos = getCursorWorldPos();
    
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.hitboxes[0];
@@ -215,7 +213,7 @@ const getSelectedCarrySlotIdx = (entity: Entity): number | null => {
       const x = hitbox.box.position.x + rotateXAroundOrigin(carrySlot.offsetX, carrySlot.offsetY, hitbox.box.angle);
       const y = hitbox.box.position.y + rotateYAroundOrigin(carrySlot.offsetX, carrySlot.offsetY, hitbox.box.angle);
 
-      const dist = distance(x, y, Game.cursorX, Game.cursorY);
+      const dist = distance(x, y, cursorWorldPos.x, cursorWorldPos.y);
       if (dist < minDist) {
          minDist = dist;
          closestCarrySlotIdx = i;
@@ -645,13 +643,13 @@ const getEntityID = (gameInteractState: GameInteractState, doPlayerProximityChec
    const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
    const playerHitbox = playerTransformComponent.hitboxes[0];
    const layer = getEntityLayer(playerInstance!);
-   
-   const minChunkX = Math.max(Math.floor((Game.cursorX! - HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), 0);
-   const maxChunkX = Math.min(Math.floor((Game.cursorX! + HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-   const minChunkY = Math.max(Math.floor((Game.cursorY! - HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), 0);
-   const maxChunkY = Math.min(Math.floor((Game.cursorY! + HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
 
-   const cursorPosition = new Point(Game.cursorX!, Game.cursorY!);
+   const cursorPos = getCursorWorldPos();
+   
+   const minChunkX = Math.max(Math.floor((cursorPos.x - HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), 0);
+   const maxChunkX = Math.min(Math.floor((cursorPos.x + HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const minChunkY = Math.max(Math.floor((cursorPos.y - HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), 0);
+   const maxChunkY = Math.min(Math.floor((cursorPos.y + HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
 
    let minDist = HIGHLIGHT_CURSOR_RANGE + 1.1;
    let entityID = -1;
@@ -675,8 +673,8 @@ const getEntityID = (gameInteractState: GameInteractState, doPlayerProximityChec
             
             // Distance from cursor
             for (const hitbox of entityTransformComponent.hitboxes) {
-               if (boxIsWithinRange(hitbox.box, cursorPosition, HIGHLIGHT_CURSOR_RANGE)) {
-                  const distance = cursorPosition.distanceTo(hitbox.box.position);
+               if (boxIsWithinRange(hitbox.box, cursorPos, HIGHLIGHT_CURSOR_RANGE)) {
+                  const distance = cursorPos.distanceTo(hitbox.box.position);
                   if (distance < minDist) {
                      minDist = distance;
                      entityID = currentEntity;
@@ -763,10 +761,6 @@ const updateHighlightedEntity = (gameInteractState: GameInteractState, entity: E
 }
 
 export function updateHighlightedAndHoveredEntities(gameInteractState: GameInteractState): void {
-   if (Game.cursorX === null || Game.cursorY === null) {
-      return;
-   }
-
    // @Hack
    if (playerInstance === null) {
       hoveredEntityID = -1;

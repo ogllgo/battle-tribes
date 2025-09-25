@@ -30,7 +30,6 @@ export interface Hitbox {
    parent: Hitbox | null;
    
    readonly children: Array<Hitbox>;
-   isPartOfParent: boolean;
 
    readonly box: Box;
    
@@ -47,16 +46,18 @@ export interface Hitbox {
    readonly collisionMask: number;
    readonly flags: ReadonlyArray<HitboxFlag>;
 
+   isPartOfParent: boolean;
+   isStatic: boolean;
+
    lastUpdateTicks: number;
 }
 
-export function createHitbox(localID: number, entity: Entity, rootEntity: Entity, parent: Hitbox | null, isPartOfParent: boolean, box: Box, previousPosition: Point, acceleration: Point, tethers: Array<HitboxTether>, previousRelativeAngle: number, angularAcceleration: number, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
+export function createHitbox(localID: number, entity: Entity, rootEntity: Entity, parent: Hitbox | null, isPartOfParent: boolean, isStatic: boolean, box: Box, previousPosition: Point, acceleration: Point, tethers: Array<HitboxTether>, previousRelativeAngle: number, angularAcceleration: number, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
    return {
       localID: localID,
       entity: entity,
       rootEntity: rootEntity,
       parent: parent,
-      isPartOfParent: isPartOfParent,
       children: [],
       box: box,
       previousPosition: previousPosition,
@@ -69,6 +70,8 @@ export function createHitbox(localID: number, entity: Entity, rootEntity: Entity
       collisionBit: collisionBit,
       collisionMask: collisionMask,
       flags: flags,
+      isPartOfParent: isPartOfParent,
+      isStatic: isStatic,
       lastUpdateTicks: Board.serverTicks
    };
 }
@@ -81,6 +84,7 @@ export function createHitboxQuick(localID: number, parent: Hitbox | null, box: B
       rootEntity: 0,
       parent: parent,
       isPartOfParent: true,
+      isStatic: false,
       children: [],
       box: box,
       previousPosition: box.position.copy(),

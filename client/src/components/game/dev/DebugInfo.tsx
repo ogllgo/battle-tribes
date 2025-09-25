@@ -16,9 +16,9 @@ import InventoryContainer from "../inventories/InventoryContainer";
 import { InventoryNameString } from "../../../../../shared/src/items/items";
 import { StructureComponentArray } from "../../../entity-components/server-components/StructureComponent";
 import { getTileLocalBiome } from "../../../local-biomes";
-import { getHitboxVelocity, Hitbox } from "../../../hitboxes";
+import { getHitboxVelocity } from "../../../hitboxes";
 import { SnobeComponentArray } from "../../../entity-components/server-components/SnobeComponent";
-import Game from "../../../Game";
+import { getCursorWorldPos } from "../../../Game";
 
 export let updateDebugInfoTile: (tile: Tile | null) => void = () => {};
 
@@ -198,8 +198,10 @@ const DebugInfo = () => {
       }
    }, []);
 
+   const cursorWorldPos = getCursorWorldPos();
+   
    return <div id="debug-info">
-      <p>Looking at pos <span className="highlight">{Game.cursorX === null ? -1 : Game.cursorX.toFixed(0)}</span> <span className="highlight">{Game.cursorY === null ? -1 : Game.cursorY.toFixed(0)}</span></p>
+      <p>Looking at pos <span className="highlight">{cursorWorldPos.x.toFixed(0)}</span> <span className="highlight">{cursorWorldPos.y.toFixed(0)}</span></p>
       
       {tile !== null ? <TileDebugInfo layer={layer} tile={tile} /> : undefined}
       {entity !== null && entityExists(entity) ? <EntityDebugInfo entity={entity} debugData={debugData.current} /> : undefined}

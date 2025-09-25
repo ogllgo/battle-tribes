@@ -21,12 +21,12 @@ export interface HitboxCollisionPair {
 }
 
 interface EntityPairCollisionInfo {
-   readonly affectedEntity: Entity;
    readonly collidingEntity: Entity;
    readonly collidingHitboxPairs: Array<HitboxCollisionPair>;
 }
 
-type CollisionPairs = Record<number, Record<number, EntityPairCollisionInfo | null>>;
+/** For every affected entity, stores collision info for any colliding entities */
+type CollisionPairs = Map<number, Array<EntityPairCollisionInfo>>;
 
 const resolveHardCollision = (affectedHitbox: Hitbox, collisionResult: CollisionResult): void => {
    // @Temporary: once it's guaranteed that overlap !== 0 this won't be needed.
@@ -60,13 +60,12 @@ const resolveSoftCollision = (entity: Entity, affectedHitbox: Hitbox, pushingHit
    }
 }
 
-export function collide(entity: Entity, collidingEntity: Entity, pushedHitbox: Hitbox, pushingHitbox: Hitbox, collisionResult: CollisionResult, isPushed: boolean): void {
-   // @INCOMPLETE: i've removed the "PhysicsComponentArray.hasComponent(entity)" check from here. Do I now need to replace it with a !hitbox.isStatic check?
-   if (isPushed) {
+export function collide(entity: Entity, collidingEntity: Entity, hitbox: Hitbox, pushingHitbox: Hitbox, collisionResult: CollisionResult, isPushed: boolean): void {
+   if (!hitbox.isStatic) {
       if (pushingHitbox.collisionType === HitboxCollisionType.hard) {
-         resolveHardCollision(pushedHitbox, collisionResult);
+         resolveHardCollision(hitbox, collisionResult);
       } else {
-         resolveSoftCollision(entity, pushedHitbox, pushingHitbox, collisionResult);
+         resolveSoftCollision(entity, hitbox, pushingHitbox, collisionResult);
       }
    }
 
@@ -75,12 +74,12 @@ export function collide(entity: Entity, collidingEntity: Entity, pushedHitbox: H
    for (let i = 0; i < componentArrays.length; i++) {
       const componentArray = componentArrays[i];
       if (typeof componentArray.onCollision !== "undefined" && componentArray.hasComponent(entity)) {
-         componentArray.onCollision(entity, collidingEntity, pushedHitbox, pushingHitbox);
+         componentArray.onCollision(entity, collidingEntity, hitbox, pushingHitbox);
       }
    }
 }
 
-const getEntityPairCollisionInfo = (affectedEntity: Entity, collidingEntity: Entity): EntityPairCollisionInfo | null => {
+const calculateEntityPairCollisionInfo = (affectedEntity: Entity, collidingEntity: Entity): EntityPairCollisionInfo | null => {
    const transformComponent1 = TransformComponentArray.getComponent(affectedEntity);
    const transformComponent2 = TransformComponentArray.getComponent(collidingEntity);
    
@@ -119,7 +118,6 @@ const getEntityPairCollisionInfo = (affectedEntity: Entity, collidingEntity: Ent
 
    if (hitboxCollisionPairs.length > 0) {
       return {
-         affectedEntity: affectedEntity,
          collidingEntity: collidingEntity,
          collidingHitboxPairs: hitboxCollisionPairs
       };
@@ -127,96 +125,77 @@ const getEntityPairCollisionInfo = (affectedEntity: Entity, collidingEntity: Ent
    return null;
 }
 
-const entityCollisionPairHasAlreadyBeenChecked = (collisionPairs: CollisionPairs, minEntity: Entity, maxEntity: Entity): boolean => {
-   return typeof collisionPairs[minEntity] !== "undefined" && typeof collisionPairs[minEntity][maxEntity] !== "undefined";
+const entityCollisionPairHasAlreadyBeenChecked = (collisionPairs: CollisionPairs, affectedEntity: Entity, collidingEntity: Entity): boolean => {
+   const collisionInfos = collisionPairs.get(affectedEntity);
+   if (typeof collisionInfos === "undefined") {
+      return false;
+   }
+
+   for (const collisionInfo of collisionInfos) {
+      if (collisionInfo.collidingEntity === collidingEntity) {
+         return true;
+      }
+   }
+   return false;
 }
 
-const collectEntityCollisionsWithChunk = (collisionPairs: CollisionPairs, entity1: Entity, chunk: Chunk, a: boolean): void => {
-   for (let i = 0; i < chunk.entities.length; i++) {
-      const entity2 = chunk.entities[i];
-      // @Speed
-      if (entity1 === entity2) {
+const collectEntityCollisionsWithChunk = (collisionPairs: CollisionPairs, affectedEntity: Entity, chunk: Chunk): void => {
+   for (const collidingEntity of chunk.entities) {
+      if (collidingEntity === affectedEntity) {
          continue;
       }
 
       // @Speed: re-gotten further in the line
-      const entity1TransformComponent = TransformComponentArray.getComponent(entity1);
-      const entity2TransformComponent = TransformComponentArray.getComponent(entity2);
+      const entityTransformComponent = TransformComponentArray.getComponent(affectedEntity);
+      const otherEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
 
       // Make sure the entities aren't in the same carry heirarchy
       // @Hack
-      const entity1Hitbox = entity1TransformComponent.hitboxes[0];
-      const entity2Hitbox = entity2TransformComponent.hitboxes[0];
-      if (entity1Hitbox.rootEntity === entity2Hitbox.rootEntity) {
+      const entityHitbox = entityTransformComponent.hitboxes[0];
+      const otherEntityHitbox = otherEntityTransformComponent.hitboxes[0];
+      if (entityHitbox.rootEntity === otherEntityHitbox.rootEntity) {
          continue;
       }
 
-      let minID: number;
-      let maxID: number;
-      if (entity1 > entity2) {
-         minID = entity2;
-         maxID = entity1;
+      if (entityCollisionPairHasAlreadyBeenChecked(collisionPairs, affectedEntity, collidingEntity)) {
+         continue;
+      }
+
+      const collisionInfo = calculateEntityPairCollisionInfo(affectedEntity, collidingEntity);
+      if (collisionInfo === null) {
+         continue;
+      }
+      
+      const existingCollisionPairs = collisionPairs.get(affectedEntity);
+      if (typeof existingCollisionPairs === "undefined") {
+         collisionPairs.set(affectedEntity, [collisionInfo]);
       } else {
-         minID = entity1;
-         maxID = entity2;
-      }
-      if (entityCollisionPairHasAlreadyBeenChecked(collisionPairs, minID, maxID)) {
-         continue;
-      }
-
-      const collisionInfo = getEntityPairCollisionInfo(entity1, entity2);
-      if (collisionInfo !== null) {
-         if (typeof collisionPairs[minID] === "undefined") {
-            collisionPairs[minID] = {};
-         }
-         collisionPairs[minID][maxID] = collisionInfo;
+         existingCollisionPairs.push(collisionInfo);
       }
    }
 }
 
 const resolveCollisionPairs = (collisionPairs: CollisionPairs, onlyResolvePlayerCollisions: boolean): void => {
-   // @Speed @Garbage
-   for (const minEntity of Object.keys(collisionPairs).map(Number)) {
-      for (const maxEntity of Object.keys(collisionPairs[minEntity]).map(Number)) {
-         const collisionInfo = collisionPairs[minEntity][maxEntity];
-         if (collisionInfo === null) {
-            continue;
-         }
-
-         const affectedEntity = collisionInfo.affectedEntity;
-         const collidingEntity = collisionInfo.collidingEntity;
-
-         // Note: from here, entity1 < entity2 (by definition)
-
-         for (const pair of collisionInfo.collidingHitboxPairs) {
-            // Of entity 1
-            const affectedHitbox = pair.affectedHitbox;
-            // Of entity 2
-            const collidingHitbox = pair.collidingHitbox;
-
-            // @Correctness: is this ok? can we use the same collision result for both, or do we have to swap the axis before the 2nd one or something?
-            collide(affectedEntity, collidingEntity, affectedHitbox, collidingHitbox, pair.collisionResult, !onlyResolvePlayerCollisions || affectedEntity === playerInstance);
-            collide(collidingEntity, affectedEntity, collidingHitbox, affectedHitbox, pair.collisionResult, !onlyResolvePlayerCollisions || collidingEntity === playerInstance);
+   for (const [affectedEntity, collisionInfos] of collisionPairs.entries()) {
+      for (const collisionInfo of collisionInfos) {
+         for (const collidingHitboxPair of collisionInfo.collidingHitboxPairs) {
+            collide(affectedEntity, collisionInfo.collidingEntity, collidingHitboxPair.affectedHitbox, collidingHitboxPair.collidingHitbox, collidingHitboxPair.collisionResult, !onlyResolvePlayerCollisions || affectedEntity === playerInstance);
          }
       }
    }
 }
 
-// @CLEANP: unused?
 export function resolveEntityCollisions(layer: Layer): void {
-   const collisionPairs: CollisionPairs = {};
+   const collisionPairs: CollisionPairs = new Map();
    
    const numChunks = Settings.BOARD_SIZE * Settings.BOARD_SIZE;
    for (let i = 0; i < numChunks; i++) {
       const chunk = layer.chunks[i];
 
       // @Bug: collision can happen multiple times
-      // @Speed: physics-physics comparisons happen twice
       // For all physics entities, check for collisions with all other entities in the chunk
-      for (let j = 0; j < chunk.nonGrassEntities.length; j++) {
-         const entity1ID = chunk.nonGrassEntities[j];
-         
-         collectEntityCollisionsWithChunk(collisionPairs, entity1ID, chunk, false);
+      for (const entity of chunk.nonGrassEntities) {
+         collectEntityCollisionsWithChunk(collisionPairs, entity, chunk);
       }
    }
 
@@ -224,12 +203,15 @@ export function resolveEntityCollisions(layer: Layer): void {
 }
 
 export function resolvePlayerCollisions(): void {
-   const collisionPairs: CollisionPairs = {};
+   if (playerInstance === null) {
+      return;
+   }
+   
+   const collisionPairs: CollisionPairs = new Map();
 
-   const transformComponent = TransformComponentArray.getComponent(playerInstance!);
-
+   const transformComponent = TransformComponentArray.getComponent(playerInstance);
    for (const chunk of transformComponent.chunks) {
-      collectEntityCollisionsWithChunk(collisionPairs, playerInstance!, chunk, true);
+      collectEntityCollisionsWithChunk(collisionPairs, playerInstance, chunk);
    }
 
    resolveCollisionPairs(collisionPairs, true);
