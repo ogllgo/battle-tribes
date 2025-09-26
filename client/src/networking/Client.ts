@@ -4,12 +4,9 @@ import { Settings } from "battletribes-shared/settings";
 import { TechID } from "battletribes-shared/techs";
 import { TribeType } from "battletribes-shared/tribes";
 import { TribesmanTitle } from "battletribes-shared/titles";
-import Game, { getCursorWorldPos, resetTickInterp } from "../Game";
+import Game, { getCursorWorldPos, resetServerTickInterp } from "../Game";
 import { Tile } from "../Tile";
-import { gameScreenSetIsDead } from "../components/game/GameScreen";
-import { definiteGameState, latencyGameState } from "../game-state/game-states";
 import { windowHeight, windowWidth } from "../webgl";
-import { closeCurrentMenu } from "../menus";
 import { getStringLengthBytes, Packet, PacketReader, PacketType } from "battletribes-shared/packets";
 import { processForcePositionUpdatePacket, processGameDataPacket, processInitialGameDataPacket, processSyncDataPacket, receiveChatMessagePacket } from "./packet-receiving";
 import { createActivatePacket, createPlayerDataPacket, createSyncRequestPacket, sendSetSpectatingPositionPacket } from "./packet-sending";
@@ -17,8 +14,6 @@ import { AppState } from "../components/App";
 import { LoadingScreenStatus } from "../components/LoadingScreen";
 import Board from "../Board";
 import { setPlayerInstance, playerInstance } from "../player";
-import { callEntityOnUpdateFunctions } from "../entity-components/ComponentArray";
-import { resolvePlayerCollisions } from "../collision";
 
 export type GameData = {
    readonly gameTicks: number;
@@ -124,7 +119,7 @@ abstract class Client {
                   
                   processGameDataPacket(reader);
                   Board.tickEntities();
-                  resetTickInterp();
+                  resetServerTickInterp();
                   // if (playerInstance !== null) {
                   //    callEntityOnUpdateFunctions(playerInstance);
                   //    resolvePlayerCollisions();

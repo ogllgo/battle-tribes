@@ -978,8 +978,7 @@ export function onItemDeselect(itemType: ItemType, isOffhand: boolean): void {
    const itemCategory = ITEM_TYPE_RECORD[itemType];
    switch (itemCategory) {
       case "healing": {
-         // @SQUEAM
-         // unuseItem(itemType);
+         unuseItem(itemType);
          break;
       }
       case "spear":
@@ -1075,10 +1074,9 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
       case "healing": {
          const healthComponent = HealthComponentArray.getComponent(playerInstance!);
          const maxHealth = TRIBE_INFO_RECORD[playerTribe.tribeType].maxHealthPlayer;
-         // @SQUEAM
-         // if (healthComponent.health >= maxHealth) {
-         //    break;
-         // }
+         if (healthComponent.health >= maxHealth) {
+            break;
+         }
 
          const limb = getLimbByInventoryName(inventoryUseComponent, itemInventoryName);
          if (limb.action === LimbAction.none) {
@@ -1213,8 +1211,7 @@ const onItemEndUse = (item: Item, inventoryName: InventoryName): void => {
       case "healing": {
          // Stop healing
          if (limb.action === LimbAction.eat) {
-            // @SQUEAM
-            // unuseItem(item.type);
+            unuseItem(item.type);
          }
          break;
       }
@@ -1374,8 +1371,7 @@ const tickItem = (itemType: ItemType): void => {
          const healthComponent = HealthComponentArray.getComponent(playerInstance!);
          const maxHealth = TRIBE_INFO_RECORD[playerTribe.tribeType].maxHealthPlayer;
          const playerAction = getInstancePlayerAction(InventoryName.hotbar);
-         // @SQUEAM
-         if ((playerAction === LimbAction.eat || playerAction === LimbAction.useMedicine) && healthComponent.health >= maxHealth && 1+1===3) {
+         if ((playerAction === LimbAction.eat || playerAction === LimbAction.useMedicine) && healthComponent.health >= maxHealth) {
             unuseItem(itemType);
          }
 

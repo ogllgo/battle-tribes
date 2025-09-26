@@ -263,7 +263,19 @@ export function updateRenderPartMatrices(serverTickInterp: number, clientTickInt
    // To fix: temporarily set Settings.TICK_RATE to like 10 or something and then fix the subsequent slideshow
    for (let i = 0; i < dirtyEntityRenderInfos.length; i++) {
       const renderInfo = dirtyEntityRenderInfos[i];
-      const tickInterp = renderInfo.associatedEntity === playerInstance ? clientTickInterp : serverTickInterp;
+
+      // @CLEANUP
+      let tickInterp: number;
+      const entity = renderInfo.associatedEntity;
+      if (entity === playerInstance) {
+         const entityTransformComponent = TransformComponentArray.getComponent(entity);
+         const entityHitbox = entityTransformComponent.hitboxes[0];
+         const rootEntity = entityHitbox.rootEntity;
+         tickInterp = rootEntity === playerInstance ? clientTickInterp : serverTickInterp;
+      } else {
+         tickInterp = serverTickInterp;
+      }
+      
       cleanEntityRenderInfo(renderInfo, tickInterp);
    }
 
