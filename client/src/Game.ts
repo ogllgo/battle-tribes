@@ -50,7 +50,7 @@ import { createGrassBlockerShaders, renderGrassBlockers } from "./rendering/webg
 import { createTechTreeItemShaders, renderTechTreeItems, updateTechTreeItems } from "./rendering/webgl/tech-tree-item-rendering";
 import { createUBOs, updateUBOs } from "./rendering/ubos";
 import { createEntityOverlayShaders } from "./rendering/webgl/overlay-rendering";
-import { dirtifyMovingEntities, updateRenderPartMatrices } from "./rendering/render-part-matrices";
+import { calculateHitboxRenderPosition, dirtifyMovingEntities, getMatrixPosition, updateRenderPartMatrices } from "./rendering/render-part-matrices";
 import { renderNextRenderables, resetRenderOrder } from "./rendering/render-loop";
 import { MAX_RENDER_LAYER, RenderLayer } from "./render-layers";
 import { preloadTextureAtlasImages } from "./texture-atlases/texture-atlas-stitching";
@@ -74,8 +74,8 @@ import { AnimalStaffOptions_update } from "./components/game/AnimalStaffOptions"
 import { updateDebugEntity } from "./entity-debugging";
 import { playerInstance } from "./player";
 import { TamingMenu_forceUpdate } from "./components/game/taming-menu/TamingMenu";
-import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
-import { setHitboxAngularVelocity } from "./hitboxes";
+import { cleanEntityTransform, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { getHitboxVelocity, setHitboxAngularVelocity } from "./hitboxes";
 import { callEntityOnUpdateFunctions, getComponentArrays } from "./entity-components/ComponentArray";
 import { resolveEntityCollisions, resolvePlayerCollisions } from "./collision";
 import { Point } from "../../shared/src/utils";
@@ -95,6 +95,10 @@ let lastTextureHeight = 0;
 
 const cursorWorldPos = new Point(0, 0);
 
+let lastRenderTime = Math.floor(new Date().getTime() / 1000);
+
+let serverTickInterp = 0;
+
 // @Cleanup: remove.
 export function getFrameProgress(): number {
    return _frameProgress;
@@ -102,6 +106,10 @@ export function getFrameProgress(): number {
 
 export function getCursorWorldPos(): Readonly<Point> {
    return cursorWorldPos;
+}
+
+export function resetServerTickInterp(): void {
+   serverTickInterp = 0;
 }
 
 const createEventListeners = (): void => {
@@ -116,8 +124,6 @@ const createEventListeners = (): void => {
 
    window.addEventListener("mousemove", handleMouseMovement);
 }
-
-let lastRenderTime = Math.floor(new Date().getTime() / 1000);
 
 // @Location
 /** Updates the rotation of the player to match the cursor position */
@@ -147,12 +153,6 @@ const updatePlayerRotation = (cursorX: number, cursorY: number): void => {
    const renderInfo = getEntityRenderInfo(playerInstance);
    // @Temporary
    // registerDirtyRenderInfo(renderInfo);
-}
-
-let tickInterp = 0;
-
-export function resetTickInterp(): void {
-   tickInterp = 0;
 }
 
 /** Update and tick all entities EXCEPT the player. */
@@ -245,17 +245,17 @@ const runFrame = (currentTime: number): void => {
          updateDebugEntity();
       }
 
-      tickInterp += deltaTime / 1000 * Settings.TICK_RATE;
+      serverTickInterp += deltaTime / 1000 * Settings.TICK_RATE;
       // For interps >= 1, we simulate a tick
-      while (tickInterp >= 1) {
-         tickInterp--;
+      while (serverTickInterp >= 1) {
+         serverTickInterp--;
          simulateTick();
       }
       
       const renderStartTime = performance.now();
 
       const clientTickInterp = Game.lag2 / 1000 * Settings.TICK_RATE;
-      Game.render(tickInterp, clientTickInterp);
+      Game.render(serverTickInterp, clientTickInterp);
 
       const renderEndTime = performance.now();
 
@@ -592,13 +592,38 @@ abstract class Game {
 
       updateUBOs();
 
+      // @BUG: if this isn't here then the camera stutters like crazy when riding something.
+      {
+         const trackedEntityTransformComponent = TransformComponentArray.getComponent(Camera.trackedEntity);
+         const trackedEntityHitbox = trackedEntityTransformComponent.hitboxes[0];
+         const rootTrackedEntity = trackedEntityHitbox.rootEntity;
+         const rootTrackedEntityTransformComponent = TransformComponentArray.getComponent(rootTrackedEntity);
+         const rootTrackedEntityHitbox = rootTrackedEntityTransformComponent.hitboxes[0];
+
+         if (rootTrackedEntity !== playerInstance) {
+
+            trackedEntityHitbox.box.position.x = rootTrackedEntityHitbox.box.position.x;
+            trackedEntityHitbox.box.position.y = rootTrackedEntityHitbox.box.position.y;
+            trackedEntityHitbox.previousPosition.x = rootTrackedEntityHitbox.previousPosition.x;
+            trackedEntityHitbox.previousPosition.y = rootTrackedEntityHitbox.previousPosition.y;
+
+         }
+         // cleanEntityTransform(playerInstance!);
+      }
+
       dirtifyMovingEntities();
       updateRenderPartMatrices(serverTickInterp, clientTickInterp);
 
       // @Cleanup: move to update function in camera
       // Update the camera
       if (!Camera.isSpectating) {
-         Camera.updatePosition(clientTickInterp);
+         // @CRASH when the player dies
+         const trackedEntityTransformComponent = TransformComponentArray.getComponent(Camera.trackedEntity);
+         const trackedEntityHitbox = trackedEntityTransformComponent.hitboxes[0];
+         const rootTrackedEntity = trackedEntityHitbox.rootEntity;
+         
+         const tickInterp = rootTrackedEntity === playerInstance ? clientTickInterp : serverTickInterp;
+         Camera.updatePosition(tickInterp);
       } else {
          Camera.updateSpectatorPosition(deltaTime);
       }

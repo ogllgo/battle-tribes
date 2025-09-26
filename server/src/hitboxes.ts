@@ -66,7 +66,7 @@ export class Hitbox {
    public collisionMask: number;
    public readonly flags: ReadonlyArray<HitboxFlag>;
 
-   // @Memory: entities without physics components don't need these 4. (?????)
+   // @Memory @Cleanup: 4 floats per hitboxes used literally just for one shitty lil thing
    public boundsMinX = 0;
    public boundsMaxX = 0;
    public boundsMinY = 0;
@@ -98,8 +98,8 @@ export function cloneHitbox(transformComponent: TransformComponent, hitbox: Hitb
 }
 
 export function getHitboxVelocity(hitbox: Hitbox): Point {
-   const vx = (hitbox.box.position.x - hitbox.previousPosition.x) * Settings.DELTA_TIME;
-   const vy = (hitbox.box.position.y - hitbox.previousPosition.y) * Settings.DELTA_TIME;
+   const vx = (hitbox.box.position.x - hitbox.previousPosition.x) * Settings.TICK_RATE;
+   const vy = (hitbox.box.position.y - hitbox.previousPosition.y) * Settings.TICK_RATE;
    return new Point(vx, vy);
 }
 

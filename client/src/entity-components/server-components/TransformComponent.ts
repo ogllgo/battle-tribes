@@ -219,6 +219,7 @@ const cleanHitboxIncludingChildrenTransform = (hitbox: Hitbox): void => {
       updateBox(hitbox.box, hitbox.parent.box);
       // @Cleanup: maybe should be done in the updatebox function?? if it become updateHitbox??
       const parentVelocity = getHitboxVelocity(hitbox.parent);
+      // @Speed: updating the box already sets its position, so we only need to set its previousPosition.
       setHitboxVelocity(hitbox, parentVelocity.x, parentVelocity.y);
    }
 
@@ -557,7 +558,7 @@ function onUpdate(entity: Entity): void {
    cleanEntityTransform(entity);
    
    // Don't resolve wall tile collisions in lightspeed mode
-   if (entity !== playerInstance || !keyIsPressed("l")) { 
+   if (!(entity === playerInstance && keyIsPressed("l"))) { 
       const hasMoved = resolveWallCollisions(entity);
 
       if (hasMoved) {
@@ -566,16 +567,6 @@ function onUpdate(entity: Entity): void {
    }
 
    resolveAndCleanBorderCollisions(entity, transformComponent);
-
-      // @INCOMPLETE!
-      // The player is attached to a parent: need to snap them to the parent!
-      // for (const child of transformComponent.children) {
-      //    if (entityChildIsEntity(child)) {
-      //       cleanTransform(child.attachedEntity);
-      //    } else {
-      //       cleanTransform(child);
-      //    }
-      // }
 
    if (transformComponent.boundingAreaMinX < 0 || transformComponent.boundingAreaMaxX >= Settings.BOARD_UNITS || transformComponent.boundingAreaMinY < 0 || transformComponent.boundingAreaMaxY >= Settings.BOARD_UNITS) {
       throw new Error();

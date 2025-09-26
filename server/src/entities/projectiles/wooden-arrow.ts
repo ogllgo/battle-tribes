@@ -42,12 +42,6 @@ export function createWoodenArrowConfig(position: Point, rotation: number, tribe
 
 // @Cleanup: Copy and paste
 export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Entity, affectedHitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {
-   // Ignore friendlies, and friendly buildings if the ignoreFriendlyBuildings flag is set
-   const relationship = getEntityRelationship(arrow, collidingEntity);
-   if (relationship === EntityRelationship.friendly) {
-      return;
-   }
-   
    const tribeComponent = TribeComponentArray.getComponent(arrow);
    const collidingEntityType = getEntityType(collidingEntity);
 

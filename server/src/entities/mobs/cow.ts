@@ -24,7 +24,7 @@ import { getTamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerEntityTamingSpec } from "../../taming-specs";
 import { LootComponent, registerEntityLootOnDeath } from "../../components/LootComponent";
-import { applyAcceleration, applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../hitboxes";
+import { applyAcceleration, applyAccelerationFromGround, getRootHitbox, Hitbox, turnHitboxToAngle } from "../../hitboxes";
 import { tetherHitboxes } from "../../tethers";
 import { findAngleAlignment } from "../../ai-shared";
 import { createNormalisedPivotPoint } from "../../../../shared/src/boxes/BaseBox";
@@ -105,15 +105,15 @@ const moveFunc = (cow: Entity, pos: Point, accelerationMagnitude: number): void 
 
    // Move whole cow to the target
    const alignmentToTarget = findAngleAlignment(cowBodyHitbox.box.angle, bodyToTargetDirection);
-   const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget);
+   const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget) * 0.75;
    applyAccelerationFromGround(cowBodyHitbox, polarVec2(accelerationMagnitude * accelerationMultiplier, bodyToTargetDirection));
    
    // Move head to the target
    const headHitbox = transformComponent.hitboxes[1];
    const headToTargetDirection = headHitbox.box.position.angleTo(pos);
-   // @Hack?
-   const headForce = accelerationMagnitude * 1.6;
-   applyAcceleration(headHitbox, polarVec2(headForce, headToTargetDirection));
+   // @HACK @INCOMPLETE doesn't let ppl move the head faster or slower.
+   const headAcc = 1500 * 0.75;
+   applyAcceleration(headHitbox, polarVec2(headAcc, headToTargetDirection));
 }
 
 const turnFunc = (cow: Entity, pos: Point, turnSpeed: number, turnDamping: number): void => {
