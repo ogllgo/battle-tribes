@@ -59,7 +59,7 @@ export function moveSeekerHeadToTarget(seekerHead: Entity, target: Entity): void
       }
    }
 
-   if (Math.random() < 2 * Settings.DELTA_TIME) {
+   if (Math.random() < 2 * Settings.DT_S) {
       for (let i = 0; i < transformComponent.hitboxes.length; i++) {
          const hitbox = transformComponent.hitboxes[i];
          if (hitbox.flags.includes(HitboxFlag.COW_HEAD) || hitbox.flags.includes(HitboxFlag.TUKMOK_HEAD)) {

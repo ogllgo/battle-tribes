@@ -129,7 +129,7 @@ function onTick(fleshSword: Entity): void {
          }
       } else {
          // Chance to try to wander to a nearby tile
-         if (Math.random() < FLESH_SWORD_WANDER_RATE * Settings.DELTA_TIME) {
+         if (Math.random() < FLESH_SWORD_WANDER_RATE * Settings.DT_S) {
             const tileWanderTargets = getTileWanderTargets(fleshSword);
    
             // If any of the tiles are in a swamp, move to them
@@ -172,7 +172,7 @@ function onTick(fleshSword: Entity): void {
       
       const directMoveAngle = angle(targetPositionX - hitbox.box.position.x, targetPositionY - hitbox.box.position.y);
 
-      const moveAngleOffset = Math.sin(fleshSwordComponent.internalWiggleTicks * Settings.DELTA_TIME * 10) * Math.PI * 0.2;
+      const moveAngleOffset = Math.sin(fleshSwordComponent.internalWiggleTicks * Settings.DT_S * 10) * Math.PI * 0.2;
 
       // @Hack: should instead change angularvelocity
       const moveAngle = directMoveAngle + moveAngleOffset;

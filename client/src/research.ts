@@ -84,7 +84,7 @@ export function updateResearchOrb(): void {
       return;
    }
 
-   if (Math.random() < ORB_PARTICLES_PER_SECOND[currentResearchOrb.size] * Settings.DELTA_TIME) {
+   if (Math.random() < ORB_PARTICLES_PER_SECOND[currentResearchOrb.size] * Settings.DT_S) {
       const offsetDirection = randAngle();
       const offsetMagnitude = RESEARCH_ORB_SIZES[currentResearchOrb.size] / 2 * 1.25 * Math.random();
       const x = currentResearchOrb.positionX + offsetMagnitude * Math.sin(offsetDirection);
@@ -142,7 +142,7 @@ export function attemptToResearch(): void {
 
    const distFromOrb = distance(cursorWorldPos.x, cursorWorldPos.y, currentResearchOrb.positionX, currentResearchOrb.positionY);
    if (distFromOrb < nodeSize / 2) {
-      orbCompleteProgress += getResearchSpeedMultiplier() * Settings.DELTA_TIME;
+      orbCompleteProgress += getResearchSpeedMultiplier() * Settings.DT_S;
       if (orbCompleteProgress > RESEARCH_ORB_COMPLETE_TIME) {
          orbCompleteProgress = RESEARCH_ORB_COMPLETE_TIME;
       }

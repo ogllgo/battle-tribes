@@ -37,7 +37,7 @@ function onTick(snowball: Entity): void {
    // const hitbox = transformComponent.hitboxes[0];
    // if (hitbox.angleTurnSpeed !== 0) {
    //    const beforeSign = Math.sign(hitbox.angleTurnSpeed);
-   //    hitbox.angleTurnSpeed -= Math.PI * Settings.DELTA_TIME * beforeSign;
+   //    hitbox.angleTurnSpeed -= Math.PI * Settings.DT_S * beforeSign;
    //    if (beforeSign !== Math.sign(hitbox.angleTurnSpeed)) {
    //       hitbox.angleTurnSpeed = 0;
    //    }

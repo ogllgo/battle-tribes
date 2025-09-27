@@ -55,7 +55,7 @@ const resolveHardCollision = (affectedHitbox: Hitbox, collisionResult: Collision
 const resolveSoftCollision = (entity: Entity, affectedHitbox: Hitbox, pushingHitbox: Hitbox, collisionResult: CollisionResult): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
    if (transformComponent.totalMass !== 0) {
-      const pushForceMultiplier = Settings.ENTITY_PUSH_FORCE * Settings.DELTA_TIME * pushingHitbox.mass / transformComponent.totalMass;
+      const pushForceMultiplier = Settings.ENTITY_PUSH_FORCE * Settings.DT_S * pushingHitbox.mass / transformComponent.totalMass;
       addHitboxVelocity(affectedHitbox, collisionResult.overlap.x * pushForceMultiplier, collisionResult.overlap.y * pushForceMultiplier);
    }
 }

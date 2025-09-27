@@ -181,8 +181,8 @@ const calculateHitboxMatrix = (hitbox: Hitbox, tickInterp: number): Matrix3x2 =>
    // scaleMatrix(matrix, scale, scale);
    
    const velocity = getHitboxVelocity(hitbox);
-   const tx = hitbox.box.position.x + velocity.x * tickInterp * Settings.DELTA_TIME;
-   const ty = hitbox.box.position.y + velocity.y * tickInterp * Settings.DELTA_TIME;
+   const tx = hitbox.box.position.x + velocity.x * tickInterp * Settings.DT_S;
+   const ty = hitbox.box.position.y + velocity.y * tickInterp * Settings.DT_S;
 
    // Translation
    translateMatrix(matrix, tx, ty);

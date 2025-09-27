@@ -238,14 +238,14 @@ function onTick(turret: Entity): void {
          const clockwiseDist = getClockwiseAngleDistance(turretAimDirection, targetDirection);
          if (clockwiseDist >= Math.PI) {
             // Turn counterclockwise
-            turretComponent.aimDirection -= Math.PI / 3 * Settings.DELTA_TIME;
+            turretComponent.aimDirection -= Math.PI / 3 * Settings.DT_S;
             // @Incomplete: Will this sometimes cause snapping?
             if (turretComponent.aimDirection + turretHitbox.box.angle < targetDirection) {
                turretComponent.aimDirection = targetDirection - turretHitbox.box.angle;
             }
          } else {
             // Turn clockwise
-            turretComponent.aimDirection += Math.PI / 3 * Settings.DELTA_TIME;
+            turretComponent.aimDirection += Math.PI / 3 * Settings.DT_S;
             if (turretComponent.aimDirection + turretHitbox.box.angle > targetDirection) {
                turretComponent.aimDirection = targetDirection - turretHitbox.box.angle;
             }

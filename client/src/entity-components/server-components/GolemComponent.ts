@@ -211,7 +211,7 @@ function onTick(entity: Entity): void {
       }
    } else if (golemComponent.wakeProgress === 1) {
       for (let i = 0; i < transformComponent.hitboxes.length; i++) {
-         if (Math.random() >= 6 * Settings.DELTA_TIME) {
+         if (Math.random() >= 6 * Settings.DT_S) {
             continue;
          }
 

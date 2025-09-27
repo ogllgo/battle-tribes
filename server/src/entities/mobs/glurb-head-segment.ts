@@ -68,7 +68,7 @@ function positionIsValidCallback(_entity: Entity, layer: Layer, x: number, y: nu
 const getAcceleration = (glurb: Entity): number => {
    const age = getEntityAgeTicks(glurb);
    
-   const u = (Math.sin(age * Settings.DELTA_TIME * 6.5) + 1) * 0.5;
+   const u = (Math.sin(age * Settings.DT_S * 6.5) + 1) * 0.5;
    return lerp(375, 650, u);
 }
 

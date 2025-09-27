@@ -105,14 +105,16 @@ const moveFunc = (cow: Entity, pos: Point, accelerationMagnitude: number): void 
 
    // Move whole cow to the target
    const alignmentToTarget = findAngleAlignment(cowBodyHitbox.box.angle, bodyToTargetDirection);
-   const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget) * 0.75;
+   // const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget) * 0.75;
+   const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget) * 0.75 * 0.65;
    applyAccelerationFromGround(cowBodyHitbox, polarVec2(accelerationMagnitude * accelerationMultiplier, bodyToTargetDirection));
    
    // Move head to the target
    const headHitbox = transformComponent.hitboxes[1];
    const headToTargetDirection = headHitbox.box.position.angleTo(pos);
    // @HACK @INCOMPLETE doesn't let ppl move the head faster or slower.
-   const headAcc = 1500 * 0.75;
+   // const headAcc = 1500 * 0.75;
+   const headAcc = 1500 * 0.75 * 0.65;
    applyAcceleration(headHitbox, polarVec2(headAcc, headToTargetDirection));
 }
 

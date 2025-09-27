@@ -101,7 +101,7 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
       const previousSizeCategory = Math.floor(sandBallComponent.size);
       
       // grow balls
-      sandBallComponent.size += sandBallingAI.sandBallGrowRate * Settings.DELTA_TIME / sandBallComponent.size;
+      sandBallComponent.size += sandBallingAI.sandBallGrowRate * Settings.DT_S / sandBallComponent.size;
       // (max size)
       if (sandBallComponent.size > 6) {
          sandBallComponent.size = 6;
@@ -126,7 +126,7 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
          for (let i = 0; i < 2; i++) {
             // @Hack
             const mandibleHitbox = entityTransformComponent.hitboxes[i + 1];
-            const idealAngle = ((getEntityAgeTicks(entity) * 3.2 + (i === 0 ? Settings.TICK_RATE * 0.35 : 0)) % Settings.TICK_RATE) * Settings.DELTA_TIME < 0.5 ? -Math.PI * 0.3 : Math.PI * 0.1;
+            const idealAngle = ((getEntityAgeTicks(entity) * 3.2 + (i === 0 ? Settings.TICK_RATE * 0.35 : 0)) % Settings.TICK_RATE) * Settings.DT_S < 0.5 ? -Math.PI * 0.3 : Math.PI * 0.1;
             turnHitboxToAngle(mandibleHitbox, idealAngle, 3 * Math.PI, 0.5, true);
          }
       } else if (getEntityType(entity) === EntityType.okren) {
@@ -134,7 +134,7 @@ export function runSandBallingAI(entity: Entity, aiHelperComponent: AIHelperComp
             const side = OKREN_SIDES[i];
             const mandibleHitbox = getOkrenMandibleHitbox(entity, side);
             if (mandibleHitbox !== null) {
-               const idealAngle = ((getEntityAgeTicks(entity) * 3.2 + (i === 0 ? Settings.TICK_RATE * 0.35 : 0)) % Settings.TICK_RATE) * Settings.DELTA_TIME < 0.5 ? -Math.PI * 0.4 : Math.PI * 0.2;
+               const idealAngle = ((getEntityAgeTicks(entity) * 3.2 + (i === 0 ? Settings.TICK_RATE * 0.35 : 0)) % Settings.TICK_RATE) * Settings.DT_S < 0.5 ? -Math.PI * 0.4 : Math.PI * 0.2;
                turnHitboxToAngle(mandibleHitbox, idealAngle, 20 * Math.PI, 0.05, true);
             }
          }

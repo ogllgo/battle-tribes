@@ -41,7 +41,7 @@ function onTick(entity: Entity): void {
    
    // Update local invulnerability hashes
    for (let i = 0; i < healthComponent.localIframeHashes.length; i++) {
-      healthComponent.localIframeDurations[i] -= Settings.DELTA_TIME;
+      healthComponent.localIframeDurations[i] -= Settings.DT_S;
       if (healthComponent.localIframeDurations[i] <= 0) {
          healthComponent.localIframeHashes.splice(i, 1);
          healthComponent.localIframeDurations.splice(i, 1);

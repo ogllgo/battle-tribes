@@ -116,11 +116,11 @@ function onTick(entity: Entity): void {
    if (tombstoneComponent.zombieSpawnProgress !== -1) {
       // Create zombie digging particles
       if (tombstoneComponent.zombieSpawnProgress < 0.8) {
-         if (Math.random() < 7.5 * Settings.DELTA_TIME) {
+         if (Math.random() < 7.5 * Settings.DT_S) {
             createDirtParticle(tombstoneComponent.zombieSpawnX, tombstoneComponent.zombieSpawnY, ParticleRenderLayer.low);
          }
       } else {
-         if (Math.random() < 20 * Settings.DELTA_TIME) {
+         if (Math.random() < 20 * Settings.DT_S) {
             createDirtParticle(tombstoneComponent.zombieSpawnX, tombstoneComponent.zombieSpawnY, ParticleRenderLayer.low);
          }
       }

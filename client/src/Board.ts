@@ -45,7 +45,7 @@ abstract class Board {
    public static updateTickCallbacks(): void {
       for (let i = this.tickCallbacks.length - 1; i >= 0; i--) {
          const tickCallbackInfo = this.tickCallbacks[i];
-         tickCallbackInfo.time -= 1 * Settings.DELTA_TIME;
+         tickCallbackInfo.time -= 1 * Settings.DT_S;
          if (tickCallbackInfo.time <= 0) {
             tickCallbackInfo.callback();
             this.tickCallbacks.splice(i, 1);
@@ -66,7 +66,7 @@ abstract class Board {
       for (let i = 0; i < particles.length; i++) {
          const particle = particles[i];
 
-         particle.age += 1 * Settings.DELTA_TIME;
+         particle.age += 1 * Settings.DT_S;
          if (particle.age >= particle.lifetime) {
             removedParticleIndexes.push(i);
          } else {
@@ -137,19 +137,19 @@ export default Board;
 
 export function getSecondsSinceTickTimestamp(ticks: number): number {
    const ticksSince = Board.serverTicks - ticks;
-   let secondsSince = ticksSince * Settings.DELTA_TIME;
+   let secondsSince = ticksSince * Settings.DT_S;
 
    // Account for frame progress
-   secondsSince += getFrameProgress() * Settings.DELTA_TIME;
+   secondsSince += getFrameProgress() * Settings.DT_S;
 
    return secondsSince;
 }
 
 export function getElapsedTimeInSeconds(elapsedTicks: number): number {
-   let secondsSince = elapsedTicks * Settings.DELTA_TIME;
+   let secondsSince = elapsedTicks * Settings.DT_S;
 
    // Account for frame progress
-   secondsSince += getFrameProgress() * Settings.DELTA_TIME;
+   secondsSince += getFrameProgress() * Settings.DT_S;
 
    return secondsSince;
 }

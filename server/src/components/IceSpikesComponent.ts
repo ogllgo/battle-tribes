@@ -98,7 +98,7 @@ const grow = (iceSpikes: Entity): void => {
 
 function onTick(iceSpikes: Entity): void {
    const iceSpikesComponent = IceSpikesComponentArray.getComponent(iceSpikes);
-   if (canGrow(iceSpikesComponent) && Math.random() < Vars.GROWTH_TICK_CHANCE * Settings.DELTA_TIME) {
+   if (canGrow(iceSpikesComponent) && Math.random() < Vars.GROWTH_TICK_CHANCE * Settings.DT_S) {
       iceSpikesComponent.iceSpikeGrowProgressTicks++;
       if (iceSpikesComponent.iceSpikeGrowProgressTicks >= Vars.TICKS_TO_GROW) {
          grow(iceSpikes);

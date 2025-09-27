@@ -86,9 +86,9 @@ const AmmoBoxInventory = () => {
                <h3><img src={getItemTypeImage(itemType)} alt="" />{clientItemInfo.name}</h3>
                <p><span>{ammoInfo.damage}</span> damage</p>
                <p><span>{ammoInfo.ammoMultiplier}x</span> ammo multiplier</p>
-               <p><span>{(ammoInfo.shotCooldownTicks + ammoInfo.reloadTimeTicks) * Settings.DELTA_TIME}s</span> reload time</p>
+               <p><span>{(ammoInfo.shotCooldownTicks + ammoInfo.reloadTimeTicks) * Settings.DT_S}s</span> reload time</p>
                {ammoInfo.statusEffect !== null ? (
-                  <p><i>Inflicts <span>{ammoInfo.statusEffect.durationTicks * Settings.DELTA_TIME}s</span> of <span style={{"color": CLIENT_STATUS_EFFECT_INFO_RECORD[ammoInfo.statusEffect.type].colour}}>{CLIENT_STATUS_EFFECT_INFO_RECORD[ammoInfo.statusEffect.type].name}</span>.</i></p>
+                  <p><i>Inflicts <span>{ammoInfo.statusEffect.durationTicks * Settings.DT_S}s</span> of <span style={{"color": CLIENT_STATUS_EFFECT_INFO_RECORD[ammoInfo.statusEffect.type].colour}}>{CLIENT_STATUS_EFFECT_INFO_RECORD[ammoInfo.statusEffect.type].name}</span>.</i></p>
                ) : undefined}
             </div>
          })}

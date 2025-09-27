@@ -53,7 +53,7 @@ function onTick(slimewisp: Entity): void {
    
          // Continue merge
          if (entitiesAreColliding(slimewisp, mergingSlimewisp) !== CollisionVars.NO_COLLISION) {
-            slimewispComponent.mergeTimer -= Settings.DELTA_TIME;
+            slimewispComponent.mergeTimer -= Settings.DT_S;
             if (slimewispComponent.mergeTimer <= 0 && !entityIsFlaggedForDestruction(mergingSlimewisp)) {
                const x = (slimewispHitbox.box.position.x + mergingSlimewispHitbox.box.position.x) / 2;
                const y = (slimewispHitbox.box.position.y + mergingSlimewispHitbox.box.position.y) / 2;

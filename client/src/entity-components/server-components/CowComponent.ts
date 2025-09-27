@@ -124,7 +124,7 @@ function onTick(entity: Entity): void {
       createDirtParticle(spawnPositionX, spawnPositionY, ParticleRenderLayer.low);
    }
 
-   if (Math.random() < 0.1 * Settings.DELTA_TIME) {
+   if (Math.random() < 0.1 * Settings.DT_S) {
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.hitboxes[0];
       playSoundOnHitbox("cow-ambient-" + randInt(1, 3) + ".mp3", 0.2, 1, entity, hitbox, true);

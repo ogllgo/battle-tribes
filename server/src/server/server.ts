@@ -1,7 +1,7 @@
 import { VisibleChunkBounds } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { TribeType } from "battletribes-shared/tribes";
-import { Point, randFloat } from "battletribes-shared/utils";
+import { Point, randFloat, randInt } from "battletribes-shared/utils";
 import { PacketReader, PacketType } from "battletribes-shared/packets";
 import WebSocket, { Server } from "ws";
 import { runSpawnAttempt, spawnInitialEntities } from "../entity-spawning";
@@ -34,6 +34,7 @@ import { applyTethers } from "../tethers";
 import { createTukmokConfig } from "../entities/tundra/tukmok";
 import { generateGrassStrands } from "../world-generation/grass-generation";
 import { Hitbox } from "../hitboxes";
+import OPTIONS from "../options";
 
 /*
 
@@ -140,7 +141,7 @@ class GameServer {
       // } else {
       //    SRandom.seed(randInt(0, 9999999999));
       // }
-      SRandom.seed(7233487323);
+      SRandom.seed(2845700342);
 
       const builtinRandomFunc = Math.random;
       Math.random = () => SRandom.next();

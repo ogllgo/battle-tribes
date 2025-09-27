@@ -31,8 +31,8 @@ export function updateWind(): void {
 
    for (let cellY = 0; cellY < Vars.CELLS_IN_WORLD_WIDTH; cellY++) {
       for (let cellX = 0; cellX < Vars.CELLS_IN_WORLD_WIDTH; cellX++) {
-         const x = cellX + gameTicks * Settings.DELTA_TIME * 1.16345983;
-         const y = cellY + gameTicks * Settings.DELTA_TIME * 1.16345983;
+         const x = cellX + gameTicks * Settings.DT_S * 1.16345983;
+         const y = cellY + gameTicks * Settings.DT_S * 1.16345983;
          
          const noiseX = generatePointPerlinNoise(x, y, 8, "wind");
          const noiseY = generatePointPerlinNoise(x + 50, y + 100, 8, "wind");

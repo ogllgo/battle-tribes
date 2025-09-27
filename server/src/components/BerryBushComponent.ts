@@ -29,7 +29,7 @@ function onTick(entity: Entity): void {
       return;
    }
 
-   berryBushComponent.berryGrowTimer += Settings.DELTA_TIME;
+   berryBushComponent.berryGrowTimer += Settings.DT_S;
    if (berryBushComponent.berryGrowTimer >= Vars.BERRY_GROW_TIME) {
       // Grow a new berry
       berryBushComponent.berryGrowTimer = 0;

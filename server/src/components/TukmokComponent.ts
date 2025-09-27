@@ -331,9 +331,9 @@ const attackEntity = (tukmok: Entity, target: Entity): void => {
    const tailClub = getTailClub(transformComponent);
    if (tailClub !== null && tailHasTargetInRange(tukmok, aiHelperComponent)) {
       // Build up strength
-      tukmokComponent.tailFailStrength += 0.4 * Settings.DELTA_TIME;
+      tukmokComponent.tailFailStrength += 0.4 * Settings.DT_S;
       // Counteract the detraction done every tick
-      tukmokComponent.tailFailStrength += TAIL_FLAIL_STRENGTH_LOSS_PER_SECOND * Settings.DELTA_TIME;
+      tukmokComponent.tailFailStrength += TAIL_FLAIL_STRENGTH_LOSS_PER_SECOND * Settings.DT_S;
       if (tukmokComponent.tailFailStrength > 1) {
          tukmokComponent.tailFailStrength = 1;
       }
@@ -346,7 +346,7 @@ const attackEntity = (tukmok: Entity, target: Entity): void => {
 
       // Flail to target
       const flailDirection = tailBaseHitbox.box.position.angleTo(tailClubHitbox.box.position) + Math.PI * 0.5;
-      const forceAmount = flailForce * 0.5 * Math.sin(getEntityAgeTicks(tukmok) * Settings.DELTA_TIME * 4);
+      const forceAmount = flailForce * 0.5 * Math.sin(getEntityAgeTicks(tukmok) * Settings.DT_S * 4);
       applyForce(tailClubHitbox, polarVec2(forceAmount, flailDirection));
 
       for (const hitbox of transformComponent.hitboxes) {
@@ -356,7 +356,7 @@ const attackEntity = (tukmok: Entity, target: Entity): void => {
          
          if (hitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_BIG) || hitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_MEDIUM) || hitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_SMALL)) {
             const flailDirection = tailBaseHitbox.box.position.angleTo(hitbox.box.position) + Math.PI * 0.5;
-            const forceAmount = flailForce * 0.27 * Math.sin(getEntityAgeTicks(tukmok) * Settings.DELTA_TIME * 4);
+            const forceAmount = flailForce * 0.27 * Math.sin(getEntityAgeTicks(tukmok) * Settings.DT_S * 4);
             applyForce(hitbox, polarVec2(forceAmount, flailDirection));
          }
       }
@@ -373,7 +373,7 @@ function onTick(tukmok: Entity): void {
       tukmokComponent.grazeCooldownTicks--;
    }
 
-   tukmokComponent.tailFailStrength -= TAIL_FLAIL_STRENGTH_LOSS_PER_SECOND * Settings.DELTA_TIME;
+   tukmokComponent.tailFailStrength -= TAIL_FLAIL_STRENGTH_LOSS_PER_SECOND * Settings.DT_S;
    if (tukmokComponent.tailFailStrength < 0) {
       tukmokComponent.tailFailStrength = 0;
    }

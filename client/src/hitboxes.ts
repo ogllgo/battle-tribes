@@ -108,16 +108,16 @@ export function getHitboxVelocity(hitbox: Hitbox): Point {
 }
 
 export function setHitboxVelocityX(hitbox: Hitbox, vx: number): void {
-   hitbox.previousPosition.x = hitbox.box.position.x - vx * Settings.DELTA_TIME;
+   hitbox.previousPosition.x = hitbox.box.position.x - vx * Settings.DT_S;
 }
 
 export function setHitboxVelocityY(hitbox: Hitbox, vy: number): void {
-   hitbox.previousPosition.y = hitbox.box.position.y - vy * Settings.DELTA_TIME;
+   hitbox.previousPosition.y = hitbox.box.position.y - vy * Settings.DT_S;
 }
 
 export function setHitboxVelocity(hitbox: Hitbox, vx: number, vy: number): void {
-   hitbox.previousPosition.x = hitbox.box.position.x - vx * Settings.DELTA_TIME;
-   hitbox.previousPosition.y = hitbox.box.position.y - vy * Settings.DELTA_TIME;
+   hitbox.previousPosition.x = hitbox.box.position.x - vx * Settings.DT_S;
+   hitbox.previousPosition.y = hitbox.box.position.y - vy * Settings.DT_S;
 }
 
 export function getRootHitbox(hitbox: Hitbox): Hitbox {
@@ -130,8 +130,8 @@ export function getRootHitbox(hitbox: Hitbox): Hitbox {
 
 export function addHitboxVelocity(hitbox: Hitbox, pushX: number, pushY: number): void {
    const pushedHitbox = getRootHitbox(hitbox);
-   pushedHitbox.box.position.x += pushX * Settings.DELTA_TIME;
-   pushedHitbox.box.position.y += pushY * Settings.DELTA_TIME;
+   pushedHitbox.box.position.x += pushX * Settings.DT_S;
+   pushedHitbox.box.position.y += pushY * Settings.DT_S;
 }
 
 export function translateHitbox(hitbox: Hitbox, translationX: number, translationY: number): void {
@@ -167,5 +167,5 @@ export function applyAcceleration(entity: Entity, hitbox: Hitbox, accelerationX:
 }
 
 export function setHitboxAngularVelocity(hitbox: Hitbox, angularVelocity: number): void {
-   hitbox.previousRelativeAngle = hitbox.box.angle - angularVelocity * Settings.DELTA_TIME;
+   hitbox.previousRelativeAngle = hitbox.box.angle - angularVelocity * Settings.DT_S;
 }

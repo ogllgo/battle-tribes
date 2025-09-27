@@ -133,7 +133,7 @@ export function continueResearching(researchBench: Entity, researcher: Entity, t
       useInfo.lastAttackTicks = getGameTicks();
    }
 
-   if (TribeMemberComponentArray.hasComponent(researcher) && Math.random() < TITLE_REWARD_CHANCES.SHREWD_REWARD_CHANCE * Settings.DELTA_TIME) {
+   if (TribeMemberComponentArray.hasComponent(researcher) && Math.random() < TITLE_REWARD_CHANCES.SHREWD_REWARD_CHANCE * Settings.DT_S) {
       awardTitle(researcher, TribesmanTitle.shrewd);
    }
 }

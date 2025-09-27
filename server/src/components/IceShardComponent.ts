@@ -26,7 +26,7 @@ function onTick(iceShard: Entity): void {
    
    // @Cleanup @Speed: Don't even need a component for this, just do it based on age with a random chance
    const ageTicks = getEntityAgeTicks(iceShard);
-   if (ageTicks * Settings.DELTA_TIME >= iceShardComponent.lifetime) {
+   if (ageTicks * Settings.DT_S >= iceShardComponent.lifetime) {
       destroyEntity(iceShard);
    }
 }

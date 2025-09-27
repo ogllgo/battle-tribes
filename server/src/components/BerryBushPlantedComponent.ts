@@ -34,7 +34,7 @@ function onTick(entity: Entity): void {
          const tickChance = plantIsFertilised(entity) ? 0.45 : 0.3;
          
          // Grow fruit
-         if (Math.random() < tickChance * Settings.DELTA_TIME) {
+         if (Math.random() < tickChance * Settings.DT_S) {
             berryBushPlantedComponent.fruitRandomGrowthTicks++;
             if (berryBushPlantedComponent.fruitRandomGrowthTicks === 5) {
                berryBushPlantedComponent.numFruit++;

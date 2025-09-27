@@ -166,20 +166,20 @@ export function createTechTreeItemShaders(): void {
 export function updateTechTreeItems(): void {
    for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      item.age += Settings.DELTA_TIME;
+      item.age += Settings.DT_S;
       if (item.age >= item.lifetime) {
          items.splice(i, 1);
          i--;
          continue;
       }
       
-      const vx = item.velocity.x * Settings.DELTA_TIME;
-      const vy = item.velocity.y * Settings.DELTA_TIME;
+      const vx = item.velocity.x * Settings.DT_S;
+      const vy = item.velocity.y * Settings.DT_S;
 
       item.position.x += vx;
       item.position.y += vy;
 
-      item.rotation += item.angularVelocity * Settings.DELTA_TIME;
+      item.rotation += item.angularVelocity * Settings.DT_S;
    }
 }
 

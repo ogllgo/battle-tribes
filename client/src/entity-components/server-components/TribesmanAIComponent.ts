@@ -87,7 +87,7 @@ function onTick(entity: Entity): void {
    // Sounds
    switch (tribesmanAIComponent.aiType) {
       case TribesmanAIType.attacking: {
-         if (Math.random() < 0.2 * Settings.DELTA_TIME) {
+         if (Math.random() < 0.2 * Settings.DT_S) {
             switch (tribeComponent.tribeType) {
                case TribeType.goblins: {
                   playSoundOnHitbox(randItem(GOBLIN_ANGRY_SOUNDS), 0.4, 1, entity, hitbox, true);
@@ -102,7 +102,7 @@ function onTick(entity: Entity): void {
          break;
       }
       case TribesmanAIType.escaping: {
-         if (Math.random() < 0.2 * Settings.DELTA_TIME) {
+         if (Math.random() < 0.2 * Settings.DT_S) {
             switch (tribeComponent.tribeType) {
                case TribeType.goblins: {
                   playSoundOnHitbox(randItem(GOBLIN_ESCAPE_SOUNDS), 0.4, 1, entity, hitbox, true);
@@ -113,7 +113,7 @@ function onTick(entity: Entity): void {
          break;
       }
       default: {
-         if (Math.random() < 0.2 * Settings.DELTA_TIME) {
+         if (Math.random() < 0.2 * Settings.DT_S) {
             switch (tribeComponent.tribeType) {
                case TribeType.goblins: {
                   playSoundOnHitbox(randItem(GOBLIN_AMBIENT_SOUNDS), 0.4, 1, entity, hitbox, true);

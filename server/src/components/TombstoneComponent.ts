@@ -89,7 +89,7 @@ function onTick(tombstone: Entity): void {
    if (!isNight()) {
       const dayProgress = (getGameTime() - 6) / 12;
       const crumbleChance = Math.exp(dayProgress * 12 - 6);
-      if (Math.random() < crumbleChance * Settings.DELTA_TIME) {
+      if (Math.random() < crumbleChance * Settings.DT_S) {
          // Crumble
          destroyEntity(tombstone);
          return;
@@ -100,7 +100,7 @@ function onTick(tombstone: Entity): void {
 
    // Start zombie spawn
    if (tombstoneComponent.numZombies < Vars.MAX_SPAWNED_ZOMBIES && !tombstoneComponent.isSpawningZombie) {
-      if (Math.random() < Vars.ZOMBIE_SPAWN_RATE * Settings.DELTA_TIME) {
+      if (Math.random() < Vars.ZOMBIE_SPAWN_RATE * Settings.DT_S) {
          // Start spawning a zombie
          tombstoneComponent.isSpawningZombie = true;
          tombstoneComponent.zombieSpawnTimer = 0;
@@ -113,7 +113,7 @@ function onTick(tombstone: Entity): void {
 
    // Spawn zombies
    if (tombstoneComponent.isSpawningZombie) {
-      tombstoneComponent.zombieSpawnTimer += Settings.DELTA_TIME;
+      tombstoneComponent.zombieSpawnTimer += Settings.DT_S;
       if (tombstoneComponent.zombieSpawnTimer >= Vars.ZOMBIE_SPAWN_TIME) {
          spawnZombie(tombstone, tombstoneComponent);
       }
