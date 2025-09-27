@@ -11,13 +11,13 @@ export const enum Settings {
    SERVER_PACKET_SEND_RATE = 20,
    /** Amount of times a second the client sends updates to the server each second */
    CLIENT_PACKET_SEND_RATE = 20,
-   DELTA_TIME = 1 / Settings.TICK_RATE,
+   DT_S = 1 / Settings.TICK_RATE,
    TILE_SIZE = 64,
    SUBTILE_SIZE = TILE_SIZE / 4,
    SUBTILES_IN_TILE = TILE_SIZE / SUBTILE_SIZE,
    // @Temporary: for now the game uses too much memory to handle a board size of 64. thanks grass
    /** Number of chunks in the world's width and height */
-   BOARD_SIZE = 32,
+   BOARD_SIZE = 16,
    /** Number of tiles in a chunk's width and height */
    CHUNK_SIZE = 4,
    CHUNK_UNITS = CHUNK_SIZE * TILE_SIZE,

@@ -85,7 +85,7 @@ function onTick(entity: Entity): void {
    
    // Slurb particles
    const slurbTorchComponent = SlurbTorchComponentArray.getComponent(entity);
-   slurbTorchComponent.particleCreationTimer -= Settings.DELTA_TIME;
+   slurbTorchComponent.particleCreationTimer -= Settings.DT_S;
    if (slurbTorchComponent.particleCreationTimer <= 0) {
       slurbTorchComponent.particleCreationTimer += randFloat(Vars.MIN_PARTICLE_CREATION_INTERVAL_SECONDS, Vars.MAX_PARTICLE_CREATION_INTERVAL_SECONDS);
 

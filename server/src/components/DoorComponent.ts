@@ -9,7 +9,7 @@ import { Packet } from "battletribes-shared/packets";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import { setHitboxAngle, teleportHitbox } from "../hitboxes";
 
-const DOOR_SWING_SPEED = 5 * Settings.DELTA_TIME;
+const DOOR_SWING_SPEED = 5 * Settings.DT_S;
 
 export class DoorComponent {
    public originX = 0;

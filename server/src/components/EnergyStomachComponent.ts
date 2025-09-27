@@ -39,7 +39,7 @@ function onTick(entity: Entity): void {
    // @SQUEAM
    if(1+1===2)return;
    const energyStomachComponent = EnergyStomachComponentArray.getComponent(entity);
-   energyStomachComponent.energy -= energyStomachComponent.metabolism * Settings.DELTA_TIME;
+   energyStomachComponent.energy -= energyStomachComponent.metabolism * Settings.DT_S;
    if (energyStomachComponent.energy < 0) {
       energyStomachComponent.energy = 0;
       if (energyStomachComponent.damageTickTimer === 0) {

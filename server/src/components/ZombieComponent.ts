@@ -235,7 +235,7 @@ function onTick(zombie: Entity): void {
    if (!isNight()) {
       // Ignite randomly or stay on fire if already on fire
       const statusEffectComponent = StatusEffectComponentArray.getComponent(zombie);
-      if (hasStatusEffect(statusEffectComponent, StatusEffect.burning) || Math.random() < Vars.SPONTANEOUS_COMBUSTION_CHANCE * Settings.DELTA_TIME) {
+      if (hasStatusEffect(statusEffectComponent, StatusEffect.burning) || Math.random() < Vars.SPONTANEOUS_COMBUSTION_CHANCE * Settings.DT_S) {
          applyStatusEffect(zombie, StatusEffect.burning, 5 * Settings.TICK_RATE);
       }
    }

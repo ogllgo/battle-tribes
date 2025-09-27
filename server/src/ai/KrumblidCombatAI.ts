@@ -114,7 +114,7 @@ export function runKrumblidCombatAI(krumblid: Entity, aiHelperComponent: AIHelpe
       for (let i = 0; i < 2; i++) {
          // @Hack
          const mandibleHitbox = transformComponent.hitboxes[i + 1];
-         const idealAngle = ((getEntityAgeTicks(krumblid) * 3.2 + (i === 0 ? Settings.TICK_RATE * 0.35 : 0)) % Settings.TICK_RATE) * Settings.DELTA_TIME < 0.5 ? -Math.PI * 0.3 : Math.PI * 0.1;
+         const idealAngle = ((getEntityAgeTicks(krumblid) * 3.2 + (i === 0 ? Settings.TICK_RATE * 0.35 : 0)) % Settings.TICK_RATE) * Settings.DT_S < 0.5 ? -Math.PI * 0.3 : Math.PI * 0.1;
          turnHitboxToAngle(mandibleHitbox, idealAngle, 12 * Math.PI, 0.5, true);
       }
 

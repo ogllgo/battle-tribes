@@ -139,7 +139,7 @@ function onTick(glurb: Entity): void {
    const glurbSegmentComponent = GlurbSegmentComponentArray.getComponent(glurb);
    if (glurbSegmentComponent.mossBallRenderPart !== null) {
       // @Hack ! this will be better once the moss ball is its own entity
-      glurbSegmentComponent.mossBallRenderPart.angle += Math.PI * 0.25 * Settings.DELTA_TIME;
+      glurbSegmentComponent.mossBallRenderPart.angle += Math.PI * 0.25 * Settings.DT_S;
    }
 }
 

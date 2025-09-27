@@ -27,7 +27,7 @@ export interface HealingTotemComponent {
    readonly eyeLights: Array<Light>;
 }
 
-const EYE_LIGHTS_TRANSFORM_TICKS = Math.floor(0.5 * Settings.DELTA_TIME);
+const EYE_LIGHTS_TRANSFORM_TICKS = Math.floor(0.5 * Settings.DT_S);
 const BASELINE_EYE_LIGHT_INTENSITY = 0.5;
 
 export const HealingTotemComponentArray = new ServerComponentArray<HealingTotemComponent, HealingTotemComponentParams, IntermediateInfo>(ServerComponentType.healingTotem, true, {
@@ -135,7 +135,7 @@ function onTick(entity: Entity): void {
       if (healingTotemComponent.ticksSpentHealing < EYE_LIGHTS_TRANSFORM_TICKS) {
          lightIntensity = lerp(0, BASELINE_EYE_LIGHT_INTENSITY, healingTotemComponent.ticksSpentHealing / EYE_LIGHTS_TRANSFORM_TICKS);
       } else {
-         const interval = Math.sin((healingTotemComponent.ticksSpentHealing * Settings.DELTA_TIME - 1) * 2) * 0.5 + 0.5;
+         const interval = Math.sin((healingTotemComponent.ticksSpentHealing * Settings.DT_S - 1) * 2) * 0.5 + 0.5;
          lightIntensity = lerp(BASELINE_EYE_LIGHT_INTENSITY, 0.7, interval);
       }
 
@@ -148,7 +148,7 @@ function onTick(entity: Entity): void {
 
       if (healingTotemComponent.eyeLights.length > 0) {
          const previousIntensity = healingTotemComponent.eyeLights[0].intensity;
-         const newIntensity = previousIntensity - 0.7 * Settings.DELTA_TIME;
+         const newIntensity = previousIntensity - 0.7 * Settings.DT_S;
 
          if (newIntensity <= 0) {
             for (let i = 0; i < healingTotemComponent.eyeLights.length; i++) {
@@ -171,7 +171,7 @@ function onTick(entity: Entity): void {
    for (let i = 0; i < healingTotemComponent.healingTargetsData.length; i++) {    
       const targetData = healingTotemComponent.healingTargetsData[i];
       const beamLength = distance(healingTotemHitbox.box.position.x, healingTotemHitbox.box.position.y, targetData.x, targetData.y);
-      if (Math.random() > 0.02 * beamLength * Settings.DELTA_TIME) {
+      if (Math.random() > 0.02 * beamLength * Settings.DT_S) {
          continue;
       }
 

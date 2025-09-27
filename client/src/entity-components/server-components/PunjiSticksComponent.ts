@@ -84,8 +84,8 @@ function onTick(entity: Entity): void {
    const punjiSticksComponent = PunjiSticksComponentArray.getComponent(entity);
 
    punjiSticksComponent.ticksSinceLastFly++;
-   const flyChance = ((punjiSticksComponent.ticksSinceLastFly * Settings.DELTA_TIME) - 0.25) * 0.2;
-   if (Math.random() * Settings.DELTA_TIME < flyChance) {
+   const flyChance = ((punjiSticksComponent.ticksSinceLastFly * Settings.DT_S) - 0.25) * 0.2;
+   if (Math.random() * Settings.DT_S < flyChance) {
       const hitbox = transformComponent.hitboxes[0];
       
       const offsetMagnitude = 32 * Math.random();
@@ -97,8 +97,8 @@ function onTick(entity: Entity): void {
    }
 
    punjiSticksComponent.ticksSinceLastFlySound++;
-   const soundChance = ((punjiSticksComponent.ticksSinceLastFlySound * Settings.DELTA_TIME) - 0.3) * 2;
-   if (Math.random() < soundChance * Settings.DELTA_TIME) {
+   const soundChance = ((punjiSticksComponent.ticksSinceLastFlySound * Settings.DT_S) - 0.3) * 2;
+   if (Math.random() < soundChance * Settings.DT_S) {
       const hitbox = transformComponent.hitboxes[0];
       playSoundOnHitbox("flies.mp3", 0.15, randFloat(0.9, 1.1), entity, hitbox, false);
       punjiSticksComponent.ticksSinceLastFlySound = 0;

@@ -60,7 +60,7 @@ export function doMeleeAttack(tribesman: Entity, itemSlot: number): void {
 const getItemAttackExecuteTimeSeconds = (item: Item): number => {
    const attackInfo = getItemAttackInfo(item.type);
    const timings = attackInfo.attackTimings;
-   return (timings.windupTimeTicks + timings.swingTimeTicks + timings.returnTimeTicks) * Settings.DELTA_TIME;
+   return (timings.windupTimeTicks + timings.swingTimeTicks + timings.returnTimeTicks) * Settings.DT_S;
 }
 
 export function entityHasWeapon(tribesman: Entity): boolean {

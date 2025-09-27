@@ -109,7 +109,7 @@ function onTick(entity: Entity): void {
    if (cookingComponent.remainingHeatSeconds > 0) {
       registerDirtyEntity(entity);
    }
-   cookingComponent.remainingHeatSeconds -= Settings.DELTA_TIME;
+   cookingComponent.remainingHeatSeconds -= Settings.DT_S;
    if (cookingComponent.remainingHeatSeconds < 0) {
       cookingComponent.remainingHeatSeconds = 0;
    }
@@ -131,7 +131,7 @@ function onTick(entity: Entity): void {
       }
 
       if (cookingComponent.remainingHeatSeconds > 0) {
-         cookingComponent.heatingTimer += Settings.DELTA_TIME;
+         cookingComponent.heatingTimer += Settings.DT_S;
          registerDirtyEntity(entity);
          
          if (cookingComponent.heatingTimer >= cookingComponent.currentRecipe.cookTime) {

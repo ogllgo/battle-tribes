@@ -91,7 +91,7 @@ function onTick(sandBall: Entity): void {
       const hitboxRadius = (hitbox.box as CircularBox).radius;
       const hitboxVelocity = getHitboxVelocity(hitbox);
 
-      let particleChance = hitboxRadius * Settings.DELTA_TIME * 0.8;
+      let particleChance = hitboxRadius * Settings.DT_S * 0.8;
       while (Math.random() < particleChance--) {
          const offsetDirection = randAngle();
          const offsetAmount = hitboxRadius * randFloat(0.7, 1);

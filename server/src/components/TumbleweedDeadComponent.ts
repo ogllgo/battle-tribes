@@ -34,7 +34,7 @@ TumbleweedDeadComponentArray.onHitboxCollision = onHitboxCollision;
 function onTick(tumbleweed: Entity): void {
    const tumbleweedDeadComponent = TumbleweedDeadComponentArray.getComponent(tumbleweed);
    // @Incomplete: never gets unrooted!
-   // if (Math.random() < 0.04 * Settings.DELTA_TIME) {
+   // if (Math.random() < 0.04 * Settings.DT_S) {
    //    tumbleweedDeadComponent.isRooted = false;
    // }
    
@@ -48,7 +48,7 @@ function onTick(tumbleweed: Entity): void {
       tumbleweedDeadComponent.ticksUnrooted++;
 
       const decayChance = getTumbleweedDecayChance(tumbleweed, hitbox);
-      if (tumbleweedDeadComponent.ticksUnrooted >= 35 * Settings.TICK_RATE && Math.random() < decayChance * Settings.DELTA_TIME) {
+      if (tumbleweedDeadComponent.ticksUnrooted >= 35 * Settings.TICK_RATE && Math.random() < decayChance * Settings.DT_S) {
          destroyEntity(tumbleweed);
       }
    }

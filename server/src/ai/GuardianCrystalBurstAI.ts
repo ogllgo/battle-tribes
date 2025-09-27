@@ -96,7 +96,7 @@ export default class GuardianCrystalBurstAI {
          progress = Math.pow(progress, 3/2);
          this.setLimbDirection(guardian, Vars.BURST_LIMB_DIRECTION, GuardianVars.LIMB_ORBIT_RADIUS, guardianComponent);
 
-         if (Math.random() < Settings.DELTA_TIME * Vars.FRAGMENTS_PER_SECOND) {
+         if (Math.random() < Settings.DT_S * Vars.FRAGMENTS_PER_SECOND) {
             createFragmentProjectile(guardian);
          }
       } else if (this.returnProgressTicks < Vars.RETURN_TIME_TICKS) {

@@ -251,7 +251,7 @@ export function updatePlayerItems(): void {
       return;
    }
 
-   discombobulationTimer -= Settings.DELTA_TIME;
+   discombobulationTimer -= Settings.DT_S;
    if (discombobulationTimer < 0) {
       discombobulationTimer = 0;
    }
@@ -486,7 +486,7 @@ export function updatePlayerItems(): void {
             }
          }
          
-         attackBufferTime -= Settings.DELTA_TIME;
+         attackBufferTime -= Settings.DT_S;
          if (attackBufferTime <= 0) {
             attackBufferTime = 0;
          }

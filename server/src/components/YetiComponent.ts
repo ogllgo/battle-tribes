@@ -311,7 +311,7 @@ function onTick(yeti: Entity): void {
          
          switch (yetiComponent.snowThrowStage) {
             case SnowThrowStage.windup: {
-               yetiComponent.snowThrowAttackProgress -= Settings.DELTA_TIME / Vars.SNOW_THROW_WINDUP_TIME;
+               yetiComponent.snowThrowAttackProgress -= Settings.DT_S / Vars.SNOW_THROW_WINDUP_TIME;
                if (yetiComponent.snowThrowAttackProgress <= 0) {
                   throwSnow(yeti);
                   yetiComponent.snowThrowAttackProgress = 0;
@@ -325,7 +325,7 @@ function onTick(yeti: Entity): void {
                return;
             }
             case SnowThrowStage.hold: {
-               yetiComponent.snowThrowHoldTimer += Settings.DELTA_TIME;
+               yetiComponent.snowThrowHoldTimer += Settings.DT_S;
                if (yetiComponent.snowThrowHoldTimer >= Vars.SNOW_THROW_HOLD_TIME) {
                   yetiComponent.snowThrowStage = SnowThrowStage.return;
                }
@@ -335,7 +335,7 @@ function onTick(yeti: Entity): void {
                return;
             }
             case SnowThrowStage.return: {
-               yetiComponent.snowThrowAttackProgress += Settings.DELTA_TIME / Vars.SNOW_THROW_RETURN_TIME;
+               yetiComponent.snowThrowAttackProgress += Settings.DT_S / Vars.SNOW_THROW_RETURN_TIME;
                if (yetiComponent.snowThrowAttackProgress >= 1) {
                   yetiComponent.snowThrowAttackProgress = 1;
                   yetiComponent.isThrowingSnow = false;
@@ -353,7 +353,7 @@ function onTick(yeti: Entity): void {
       }
    }
 
-   yetiComponent.snowThrowCooldown -= Settings.DELTA_TIME;
+   yetiComponent.snowThrowCooldown -= Settings.DT_S;
    if (yetiComponent.snowThrowCooldown < 0) {
       yetiComponent.snowThrowCooldown = 0;
    }

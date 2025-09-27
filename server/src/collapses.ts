@@ -288,7 +288,7 @@ export function runCollapses(): void {
             const progressToMaxCollapse = 1 - support / Vars.COLLAPSE_THRESHOLD;
             const collapseChancePerSecond = (0.25 + progressToMaxCollapse) / 100;
    
-            if (Math.random() < collapseChancePerSecond * Settings.DELTA_TIME) {
+            if (Math.random() < collapseChancePerSecond * Settings.DT_S) {
                const subtile = pair[0];
                startCollapse(layer, subtile);
             }

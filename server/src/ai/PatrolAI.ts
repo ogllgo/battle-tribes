@@ -93,7 +93,7 @@ export function runPatrolAI(tribeMember: Entity, patrolAI: PatrolAI, patrolArea:
    }
    patrolAI.lastActiveTicks = currentTicks;
    
-   if (patrolAI.targetPatrolPosition === null && Math.random() < 0.4 * Settings.DELTA_TIME) {
+   if (patrolAI.targetPatrolPosition === null && Math.random() < 0.4 * Settings.DT_S) {
       patrolAI.targetPatrolPosition = generatePatrolTarget(tribeMember, patrolArea);
    }
    

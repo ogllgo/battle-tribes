@@ -130,7 +130,7 @@ function onTick(snobe: Entity): void {
       if (snobeComponent.ticksSpentDigging < DIG_TIME_TICKS) {
          snobeComponent.ticksSpentDigging++;
 
-         const progressSeconds = snobeComponent.ticksSpentDigging * Settings.DELTA_TIME;
+         const progressSeconds = snobeComponent.ticksSpentDigging * Settings.DT_S;
          // minus pi/2 so that it starts on the come up
          let acceleration = 64 * Math.PI * Math.sin(progressSeconds * 28 - Math.PI/2);
          acceleration *= 0.2 + progressSeconds * 1.66;
@@ -149,7 +149,7 @@ function onTick(snobe: Entity): void {
             createEntity(snowballConfig, getEntityLayer(snobe), 0);
          }
       // When dug in, chance to pop back up after a while
-      } else if (Math.random() < 0.1 * Settings.DELTA_TIME) {
+      } else if (Math.random() < 0.1 * Settings.DT_S) {
          snobeComponent.isDigging = false;
 
          // Return the collision mask back to normal
@@ -237,7 +237,7 @@ function onTick(snobe: Entity): void {
       }
    }
 
-   if (Math.abs(getHitboxAngularVelocity(hitbox)) < 0.02 && Math.random() < SNOW_DIG_CHANCE * Settings.DELTA_TIME) {
+   if (Math.abs(getHitboxAngularVelocity(hitbox)) < 0.02 && Math.random() < SNOW_DIG_CHANCE * Settings.DT_S) {
       snobeComponent.isDigging = true;
       snobeComponent.ticksSpentDigging = 0;
 

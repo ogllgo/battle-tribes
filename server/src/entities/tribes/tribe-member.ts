@@ -418,7 +418,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          const x = tribeMemberHitbox.box.position.x + 35 * Math.sin(offsetDirection);
          const y = tribeMemberHitbox.box.position.y + 35 * Math.cos(offsetDirection);
 
-         const secondsSinceLastAction = limbInfo.currentActionElapsedTicks * Settings.DELTA_TIME;
+         const secondsSinceLastAction = limbInfo.currentActionElapsedTicks * Settings.DT_S;
          const velocityMagnitude = lerp(1000, 1700, Math.min(secondsSinceLastAction / 3, 1));
 
          const config = createSpearProjectileConfig(new Point(x, y), tribeMemberHitbox.box.angle, tribeMember, null);
@@ -457,7 +457,7 @@ export function useItem(tribeMember: Entity, item: Item, inventoryName: Inventor
          const y = tribeMemberHitbox.box.position.y + 35 * Math.cos(offsetDirection);
 
          const ticksSinceLastAction = getGameTicks() - useInfo.lastBattleaxeChargeTicks;
-         const secondsSinceLastAction = ticksSinceLastAction * Settings.DELTA_TIME;
+         const secondsSinceLastAction = ticksSinceLastAction * Settings.DT_S;
          const velocityMagnitude = lerp(600, 1100, Math.min(secondsSinceLastAction / 3, 1));
 
          const config = createBattleaxeProjectileConfig(new Point(x, y), tribeMemberHitbox.box.angle, tribeComponent.tribe, tribeMember, item.id);

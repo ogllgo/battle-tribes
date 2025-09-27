@@ -310,12 +310,12 @@ function onTick(entity: Entity): void {
    // @Speed
    // @Bug: Will look jittery for low TPS values.
    if (tamingComponent.followHalo !== null) {
-      tamingComponent.followHalo.angle += 0.65 * UtilVars.PI * Settings.DELTA_TIME;
+      tamingComponent.followHalo.angle += 0.65 * UtilVars.PI * Settings.DT_S;
    }
 
    // @Copynpaste
    if (tamingComponent.attackHalo !== null) {
-      tamingComponent.attackHalo.angle += 0.65 * UtilVars.PI * Settings.DELTA_TIME;
+      tamingComponent.attackHalo.angle += 0.65 * UtilVars.PI * Settings.DT_S;
    }
 }
 

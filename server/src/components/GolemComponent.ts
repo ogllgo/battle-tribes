@@ -184,7 +184,7 @@ function onTick(golem: Entity): void {
       if (typeof target === "undefined" || target.timeSinceLastAggro >= Vars.TARGET_ENTITY_FORGET_TIME) {
          delete golemComponent.attackingEntities[targetID];
       } else {
-         target.timeSinceLastAggro += Settings.DELTA_TIME;
+         target.timeSinceLastAggro += Settings.DT_S;
       }
    }
 

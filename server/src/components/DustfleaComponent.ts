@@ -182,7 +182,7 @@ function onTick(dustflea: Entity): void {
    // if (dustfleaHitbox.parent !== null && entityIsSuckTarget(dustfleaHitbox.parent.entity)) {
    //    // wriggle around
    //    const ageTicks = getEntityAgeTicks(dustflea);
-   //    addHitboxAngularAcceleration(dustfleaHitbox, 8 * Math.sin((ageTicks * Settings.DELTA_TIME) * 40));
+   //    addHitboxAngularAcceleration(dustfleaHitbox, 8 * Math.sin((ageTicks * Settings.DT_S) * 40));
       
    //    // Suck
    //    const dustfleaComponent = DustfleaComponentArray.getComponent(dustflea);
@@ -224,7 +224,7 @@ function onTick(dustflea: Entity): void {
          return;
       }
    } else {
-      if (Math.random() < 0.15 * Settings.DELTA_TIME) {
+      if (Math.random() < 0.15 * Settings.DT_S) {
          dustfleaComponent.obstacleSitModeRemainingTicks = randInt(MIN_OBSTACLE_SIT_MODE_TICKS, MAX_OBSTACLE_SIT_MODE_TICKS);
       }
    }

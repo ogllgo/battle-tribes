@@ -23,7 +23,7 @@ const DOOR_HITBOX_HEIGHT = 16;
 const DOOR_HITBOX_OFFSET = 30;
 const THIN_HITBOX_HEIGHT = 0.1;
 
-const DOOR_SWING_SPEED = 5 * Settings.DELTA_TIME;
+const DOOR_SWING_SPEED = 5 * Settings.DT_S;
 
 export class TunnelComponent {
    public doorBitset = 0;

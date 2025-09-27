@@ -47,7 +47,7 @@ export function updateFollowAIComponent(followAI: FollowAI, visibleEntities: Rea
    }
    
    if (followAI.currentTargetIsForgettable) {
-      followAI.interestTimer += Settings.DELTA_TIME;
+      followAI.interestTimer += Settings.DT_S;
       if (followAI.interestTimer >= interestDuration) {
          followAI.followTargetID = 0;
       }
@@ -104,5 +104,5 @@ export function continueFollowingEntity(entity: Entity, followAI: FollowAI, foll
 }
 
 export function entityWantsToFollow(followAIComponent: FollowAI): boolean {
-   return followAIComponent.followCooldownTicks === 0 && Math.random() < followAIComponent.followChancePerSecond * Settings.DELTA_TIME;
+   return followAIComponent.followCooldownTicks === 0 && Math.random() < followAIComponent.followChancePerSecond * Settings.DT_S;
 }

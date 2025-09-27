@@ -111,7 +111,7 @@ function onTick(entity: Entity): void {
    const hitbox = transformComponent.hitboxes[0];
    
    // @Sync should be a server event
-   if (Math.random() < 0.1 * Settings.DELTA_TIME) {
+   if (Math.random() < 0.1 * Settings.DT_S) {
       playSoundOnHitbox("zombie-ambient-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, hitbox, true);
    }
 }

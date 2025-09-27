@@ -440,7 +440,7 @@ const tickHitboxAngularPhysics = (hitbox: Hitbox, transformComponent: TransformC
    // @Hack??
    angularVelocityTick *= 0.98;
    
-   const newAngle = hitbox.box.relativeAngle + angularVelocityTick + hitbox.angularAcceleration * Settings.DELTA_TIME * Settings.DELTA_TIME;
+   const newAngle = hitbox.box.relativeAngle + angularVelocityTick + hitbox.angularAcceleration * Settings.DT_S * Settings.DT_S;
 
    hitbox.previousRelativeAngle = hitbox.box.relativeAngle;
    hitbox.box.relativeAngle = newAngle;
@@ -466,7 +466,7 @@ const applyHitboxKinematics = (hitbox: Hitbox, transformComponent: TransformComp
    if (hitboxIsInRiver(hitbox) && !transformComponent.overrideMoveSpeedMultiplier && transformComponent.isAffectedByGroundFriction) {
       const flowDirectionIdx = layer.riverFlowDirections[tileIndex];
       // @HACK
-      applyAcceleration(hitbox, new Point(240 * Settings.DELTA_TIME * a[flowDirectionIdx], 240 * Settings.DELTA_TIME * b[flowDirectionIdx]));
+      applyAcceleration(hitbox, new Point(240 * Settings.DT_S * a[flowDirectionIdx], 240 * Settings.DT_S * b[flowDirectionIdx]));
    }
 
    // @Cleanup: shouldn't be used by air friction.
@@ -479,8 +479,8 @@ const applyHitboxKinematics = (hitbox: Hitbox, transformComponent: TransformComp
    // Air friction
    if (transformComponent.isAffectedByAirFriction) {
       // @IncompletE: shouldn't use tile friction!!
-      velX *= 1 - friction * Settings.DELTA_TIME * 2;
-      velY *= 1 - friction * Settings.DELTA_TIME * 2;
+      velX *= 1 - friction * Settings.DT_S * 2;
+      velY *= 1 - friction * Settings.DT_S * 2;
    }
 
    if (transformComponent.isAffectedByGroundFriction) {
@@ -488,15 +488,15 @@ const applyHitboxKinematics = (hitbox: Hitbox, transformComponent: TransformComp
       const velocityMagnitude = Math.hypot(velX, velY);
       if (velocityMagnitude > 0) {
          const groundFriction = Math.min(friction, velocityMagnitude);
-         velX -= groundFriction * velX / velocityMagnitude * Settings.DELTA_TIME;
-         velY -= groundFriction * velY / velocityMagnitude * Settings.DELTA_TIME;
+         velX -= groundFriction * velX / velocityMagnitude * Settings.DT_S;
+         velY -= groundFriction * velY / velocityMagnitude * Settings.DT_S;
       }
    }
    
    // Verlet integration update:
    // new position = current position + (damped implicit velocity) + acceleration * (dt^2)
-   const newX = hitbox.box.position.x + velX + hitbox.acceleration.x * Settings.DELTA_TIME * Settings.DELTA_TIME;
-   const newY = hitbox.box.position.y + velY + hitbox.acceleration.y * Settings.DELTA_TIME * Settings.DELTA_TIME;
+   const newX = hitbox.box.position.x + velX + hitbox.acceleration.x * Settings.DT_S * Settings.DT_S;
+   const newY = hitbox.box.position.y + velY + hitbox.acceleration.y * Settings.DT_S * Settings.DT_S;
 
    hitbox.previousPosition.x = hitbox.box.position.x;
    hitbox.previousPosition.y = hitbox.box.position.y;

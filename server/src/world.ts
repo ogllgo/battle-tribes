@@ -131,14 +131,14 @@ export function isNight(): boolean {
 export function tickGameTime(): void {
    ticks++;
    // @SQUEAM
-   // time += Settings.TIME_PASS_RATE * Settings.DELTA_TIME / 3600;
+   // time += Settings.TIME_PASS_RATE * Settings.DT_S / 3600;
    if (time >= 24) {
       time -= 24;
    }
 }
 
 export function ticksToGameHours(ticks: number): number {
-   return ticks * (Settings.TIME_PASS_RATE * Settings.DELTA_TIME / 3600);
+   return ticks * (Settings.TIME_PASS_RATE * Settings.DT_S / 3600);
 }
 
 export function getEntityType(entity: Entity): EntityType {

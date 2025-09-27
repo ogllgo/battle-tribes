@@ -7,7 +7,7 @@ import { setHitboxRelativeAngle } from "../hitboxes";
 import { Settings } from "../../../shared/src/settings";
 
 const enum Vars {
-   DOOR_SWING_SPEED = 5 * Settings.DELTA_TIME
+   DOOR_SWING_SPEED = 5 * Settings.DT_S
 }
 
 export class FenceGateComponent {

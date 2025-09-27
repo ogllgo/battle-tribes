@@ -85,8 +85,8 @@ abstract class Camera {
    public static verybadIsTracking = false;
 
    public static applyCameraKinematics(): void {
-      // this.lastTickPosition.x += this.velocity.x * Settings.DELTA_TIME;
-      // this.lastTickPosition.y += this.velocity.y * Settings.DELTA_TIME;
+      // this.lastTickPosition.x += this.velocity.x * Settings.DT_S;
+      // this.lastTickPosition.y += this.velocity.y * Settings.DT_S;
    }
 
    public static setInitialVisibleChunkBounds(layer: Layer): void {
@@ -169,8 +169,8 @@ abstract class Camera {
 
    public static updatePosition(tickInterp: number): void {
       if (this.isSpectating) {
-         // this.position.x = this.lastTickPosition.x + this.velocity.x * Settings.DELTA_TIME * frameProgress;
-         // this.position.y = this.lastTickPosition.y + this.velocity.y * Settings.DELTA_TIME * frameProgress;
+         // this.position.x = this.lastTickPosition.x + this.velocity.x * Settings.DT_S * frameProgress;
+         // this.position.y = this.lastTickPosition.y + this.velocity.y * Settings.DT_S * frameProgress;
          this.position.x = this.lastTickPosition.x;
          this.position.y = this.lastTickPosition.y;
          return;
