@@ -163,7 +163,7 @@ function onTick(snobe: Entity): void {
       }
 
       // @HACK AAAAAAAAAAAAAAAAAA
-      teleportHitbox(hitbox, transformComponent, snobeComponent.diggingStartPosition);
+      teleportHitbox(hitbox, snobeComponent.diggingStartPosition);
 
       return;
    }

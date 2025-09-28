@@ -14,7 +14,7 @@ import { VisualRenderPart, RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { Hotbar_updateRightThrownBattleaxeItemID } from "../../components/game/inventories/Hotbar";
-import { BLOCKING_LIMB_STATE, createZeroedLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, SPEAR_CHARGED_LIMB_STATE, interpolateLimbState, copyLimbState } from "battletribes-shared/attack-patterns";
+import { createZeroedLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, SPEAR_CHARGED_LIMB_STATE, interpolateLimbState, copyLimbState } from "battletribes-shared/attack-patterns";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { playSound } from "../../sound";
 import { EntityParams, getEntityRenderInfo } from "../../world";
@@ -24,7 +24,7 @@ import { Light, removeLight } from "../../lights";
 import { getRenderPartRenderPosition } from "../../rendering/render-part-matrices";
 import { getHumanoidRadius } from "./TribesmanComponent";
 import { playerInstance } from "../../player";
-import { getHitboxVelocity, Hitbox } from "../../hitboxes";
+import { getHitboxVelocity } from "../../hitboxes";
 
 export interface LimbInfo {
    selectedItemSlot: number;
@@ -559,7 +559,6 @@ export const InventoryUseComponentArray = new ServerComponentArray<InventoryUseC
    getMaxRenderParts: getMaxRenderParts,
    onLoad: onLoad,
    onTick: onTick,
-   onUpdate: onUpdate,
    padData: padData,
    updateFromData: updateFromData,
    updatePlayerFromData: updatePlayerFromData
@@ -1449,14 +1448,6 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
    // updateActiveItemRenderPart(inventoryUseComponent, limbIdx, limbInfo, heldItem, shouldShowActiveItemRenderPart);
 }
 
-function onUpdate(entity: Entity): void {
-   const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
-   for (let i = 0; i < inventoryUseComponent.limbInfos.length; i++) {
-      const useInfo = inventoryUseComponent.limbInfos[i];
-      updateLimb(inventoryUseComponent, entity, i, useInfo);
-   }
-}
-
 function padData(reader: PacketReader): void {
    const numUseInfos = reader.readNumber();
    for (let i = 0; i < numUseInfos; i++) {
@@ -1652,5 +1643,7 @@ function updatePlayerFromData(reader: PacketReader): void {
          limbInfo.thrownBattleaxeItemID = thrownBattleaxeItemID;
          Hotbar_updateRightThrownBattleaxeItemID(thrownBattleaxeItemID);
       }
+
+      updateLimb(inventoryUseComponent, playerInstance!, i, limbInfo);
    }
 }

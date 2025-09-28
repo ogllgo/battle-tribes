@@ -16,7 +16,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../../shared/src/collision";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playerInstance } from "../../player";
-import { applyAcceleration, getHitboxVelocity, getRootHitbox, Hitbox, HitboxTether, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox } from "../../hitboxes";
+import { applyAccelerationFromGround, getHitboxVelocity, getRootHitbox, Hitbox, HitboxTether, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox } from "../../hitboxes";
 import { padHitboxDataExceptLocalID, readBoxFromData, readHitboxFromData, updateHitboxExceptLocalIDFromData, updatePlayerHitboxFromData } from "../../networking/packet-hitboxes";
 import Particle from "../../Particle";
 import { createWaterSplashParticle } from "../../particles";
@@ -24,6 +24,7 @@ import { addTexturedParticleToBufferContainer, ParticleRenderLayer } from "../..
 import { playSoundOnHitbox } from "../../sound";
 import { resolveWallCollisions } from "../../collision";
 import { keyIsPressed } from "../../keyboard-input";
+import Camera from "../../Camera";
 
 export interface TransformComponentParams {
    readonly hitboxes: Array<Hitbox>;
@@ -33,8 +34,6 @@ export interface TransformComponentParams {
 }
 
 export interface TransformComponent {
-   totalMass: number;
-   
    readonly chunks: Set<Chunk>;
 
    hitboxes: Array<Hitbox>;
@@ -283,7 +282,7 @@ const applyHitboxKinematics = (transformComponent: TransformComponent, entity: E
    if (entityIsInRiver(transformComponent, entity)) {
       const flowDirection = layer.getRiverFlowDirection(tile.x, tile.y);
       if (flowDirection > 0) {
-         applyAcceleration(entity, hitbox, 240 * Settings.DT_S * Math.sin(flowDirection - 1), 240 * Settings.DT_S * Math.cos(flowDirection - 1));
+         applyAccelerationFromGround(entity, hitbox, 240 * Settings.DT_S * Math.sin(flowDirection - 1), 240 * Settings.DT_S * Math.cos(flowDirection - 1));
       }
    }
 
@@ -456,11 +455,9 @@ function createComponent(entityParams: EntityParams): TransformComponent {
    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
    
    // @INCOMPLETE
-   let totalMass = 0;
    const rootHitboxes = new Array<Hitbox>();
    const hitboxMap = new Map<number, Hitbox>();
    for (const hitbox of transformComponentParams.hitboxes) {
-      totalMass += hitbox.mass;
       hitboxMap.set(hitbox.localID, hitbox);
       if (hitbox.parent === null) {
          rootHitboxes.push(hitbox);
@@ -468,7 +465,6 @@ function createComponent(entityParams: EntityParams): TransformComponent {
    }
 
    return {
-      totalMass: totalMass,
       chunks: new Set(),
       hitboxes: transformComponentParams.hitboxes,
       hitboxMap: hitboxMap,
@@ -654,78 +650,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       }
    }
 
-   // @Speed
-   transformComponent.totalMass = 0;
-   for (const hitbox of transformComponent.hitboxes) {
-      transformComponent.totalMass += hitbox.mass;
-   }
-
-   // Update containing chunks and bounds
-   // @Copynpaste
-
-   // @Speed
-   // @Speed
-   // @Speed
-
-   transformComponent.boundingAreaMinX = Number.MAX_SAFE_INTEGER;
-   transformComponent.boundingAreaMaxX = Number.MIN_SAFE_INTEGER;
-   transformComponent.boundingAreaMinY = Number.MAX_SAFE_INTEGER;
-   transformComponent.boundingAreaMaxY = Number.MIN_SAFE_INTEGER;
-
-   const containingChunks = new Set<Chunk>();
-
-   const layer = getEntityLayer(entity);
-   for (const hitbox of transformComponent.hitboxes) {
-      const box = hitbox.box;
-
-      const minX = box.calculateBoundsMinX();
-      const maxX = box.calculateBoundsMaxX();
-      const minY = box.calculateBoundsMinY();
-      const maxY = box.calculateBoundsMaxY();
-
-      // Update bounding area
-      if (minX < transformComponent.boundingAreaMinX) {
-         transformComponent.boundingAreaMinX = minX;
-      }
-      if (maxX > transformComponent.boundingAreaMaxX) {
-         transformComponent.boundingAreaMaxX = maxX;
-      }
-      if (minY < transformComponent.boundingAreaMinY) {
-         transformComponent.boundingAreaMinY = minY;
-      }
-      if (maxY > transformComponent.boundingAreaMaxY) {
-         transformComponent.boundingAreaMaxY = maxY;
-      }
-
-      // Recalculate the game object's containing chunks based on the new hitbox bounds
-      const minChunkX = Math.max(Math.min(Math.floor(minX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const maxChunkX = Math.max(Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const minChunkY = Math.max(Math.min(Math.floor(minY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const maxChunkY = Math.max(Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      
-      for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-         for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-            const chunk = layer.getChunk(chunkX, chunkY);
-            containingChunks.add(chunk);
-         }
-      }
-   }
-
-   // Find all chunks which aren't present in the new chunks and remove them
-   for (const chunk of transformComponent.chunks) {
-      if (!containingChunks.has(chunk)) {
-         chunk.removeEntity(entity);
-         transformComponent.chunks.delete(chunk);
-      }
-   }
-
-   // Add all new chunks
-   for (const chunk of containingChunks) {
-      if (!transformComponent.chunks.has(chunk)) {
-         chunk.addEntity(entity);
-         transformComponent.chunks.add(chunk);
-      }
-   }
+   cleanEntityTransform(entity);
 }
 
 function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): void {

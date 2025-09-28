@@ -332,15 +332,9 @@ function onTick(cow: Entity): void {
       poop(cow, cowComponent);
    }
 
-   {
-      // @SQUEAM
-      const tamingComponent = TamingComponentArray.getComponent(cow);
-      // if (tamingComponent.name !== "27") {
-         cowComponent.bowelFullness -= 1 / Vars.BOWEL_EMPTY_TIME_TICKS * lerp(0.4, 1, cowComponent.randRate);
-         if (cowComponent.bowelFullness < 0) {
-            cowComponent.bowelFullness = 0;
-         }
-      // }
+   cowComponent.bowelFullness -= 1 / Vars.BOWEL_EMPTY_TIME_TICKS * lerp(0.4, 1, cowComponent.randRate);
+   if (cowComponent.bowelFullness < 0) {
+      cowComponent.bowelFullness = 0;
    }
 
    if (cowComponent.grazeCooldownTicks > 0) {
@@ -348,14 +342,11 @@ function onTick(cow: Entity): void {
    }
 
    
-   {
-      // @SQUEAM
-      const tamingComponent = TamingComponentArray.getComponent(cow);
-      if (tamingComponent.name !== "27") {
-         // @Temporary: cuz shouldn't it use the energy system now?????
-         if (cowComponent.bowelFullness === 0 && (getEntityAgeTicks(cow) + cow) % (2 * Settings.TICK_RATE) === 0) {
-            damageEntity(cow, cowBodyHitbox, null, 1, 0, AttackEffectiveness.effective, cowBodyHitbox.box.position.copy(), 0);
-         }
+   // @SQUEAM for the cow riding shot so they dont die while being ridden
+   if (1+1===3) {
+      // @Temporary: cuz shouldn't it use the energy system now?????
+      if (cowComponent.bowelFullness === 0 && (getEntityAgeTicks(cow) + cow) % (2 * Settings.TICK_RATE) === 0) {
+         damageEntity(cow, cowBodyHitbox, null, 1, 0, AttackEffectiveness.effective, cowBodyHitbox.box.position.copy(), 0);
       }
    }
    

@@ -133,23 +133,25 @@ export function addHitboxVelocity(hitbox: Hitbox, addVec: Point): void {
    }
 }
 
-export function translateHitbox(hitbox: Hitbox, transformComponent: TransformComponent, translation: Point): void {
-   const pushedHitbox = getRootHitbox(hitbox);
-   pushedHitbox.box.position.x += translation.x;
-   pushedHitbox.box.position.y += translation.y;
-   hitbox.previousPosition.x += translation.x;
-   hitbox.previousPosition.y += translation.y;
+export function translateHitbox(hitbox: Hitbox, translation: Point): void {
+   const rootHitbox = getRootHitbox(hitbox);
+   rootHitbox.box.position.x += translation.x;
+   rootHitbox.box.position.y += translation.y;
+   rootHitbox.previousPosition.x += translation.x;
+   rootHitbox.previousPosition.y += translation.y;
 
+   const transformComponent = TransformComponentArray.getComponent(hitbox.entity);
    transformComponent.isDirty = true;
 }
 
-export function teleportHitbox(hitbox: Hitbox, transformComponent: TransformComponent, pos: Point): void {
-   const pushedHitbox = getRootHitbox(hitbox);
-   pushedHitbox.box.position.x = pos.x;
-   pushedHitbox.box.position.y = pos.y;
-   hitbox.previousPosition.x = pos.x;
-   hitbox.previousPosition.y = pos.y;
+export function teleportHitbox(hitbox: Hitbox, pos: Point): void {
+   const rootHitbox = getRootHitbox(hitbox);
+   rootHitbox.box.position.x = pos.x;
+   rootHitbox.box.position.y = pos.y;
+   rootHitbox.previousPosition.x = pos.x;
+   rootHitbox.previousPosition.y = pos.y;
 
+   const transformComponent = TransformComponentArray.getComponent(hitbox.entity);
    transformComponent.isDirty = true;
 }
 

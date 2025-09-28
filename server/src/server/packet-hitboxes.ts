@@ -104,12 +104,21 @@ export function addHitboxDataToPacket(packet: Packet, hitbox: Hitbox): void {
    packet.addNumber(hitbox.entity);
    packet.addNumber(hitbox.rootEntity);
 
+   // Parent
    if (hitbox.parent !== null) {
       packet.addNumber(hitbox.parent.entity);
       packet.addNumber(hitbox.parent.localID);
    } else {
       packet.addNumber(0);
       packet.addNumber(-1);
+   }
+
+   // Children
+   // @BANDWIDTH: might be able to just... not send this, and have the client figure out the children from themselves since they already know all the parents
+   packet.addNumber(hitbox.children.length);
+   for (const child of hitbox.children) {
+      packet.addNumber(child.entity);
+      packet.addNumber(child.localID);
    }
 
    packet.addBoolean(hitbox.isPartOfParent);
@@ -136,6 +145,7 @@ export function getHitboxDataLength(hitbox: Hitbox): number {
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT * hitbox.flags.length;
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT; // entity, rootEntity
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT; // parent hitbox entity, local id
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT + 2 * Float32Array.BYTES_PER_ELEMENT * hitbox.children.length; // children
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT; // isPartOfParent, isStatic
    return lengthBytes;
 }

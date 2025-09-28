@@ -10,7 +10,7 @@ import { getEntityLayer } from "./world";
 import Layer from "./Layer";
 import { getComponentArrays } from "./entity-components/ComponentArray";
 import { playerInstance } from "./player";
-import { addHitboxVelocity, getHitboxVelocity, Hitbox, setHitboxVelocity, translateHitbox } from "./hitboxes";
+import { addHitboxVelocity, applyForce, getHitboxVelocity, Hitbox, setHitboxVelocity, translateHitbox } from "./hitboxes";
 import CircularBox from "../../shared/src/boxes/CircularBox";
 import { CollisionResult } from "../../shared/src/collision";
 
@@ -52,12 +52,9 @@ const resolveHardCollision = (affectedHitbox: Hitbox, collisionResult: Collision
    setHitboxVelocity(affectedHitbox, vx, vy);
 }
 
-const resolveSoftCollision = (entity: Entity, affectedHitbox: Hitbox, pushingHitbox: Hitbox, collisionResult: CollisionResult): void => {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   if (transformComponent.totalMass !== 0) {
-      const pushForceMultiplier = Settings.ENTITY_PUSH_FORCE * Settings.DT_S * pushingHitbox.mass / transformComponent.totalMass;
-      addHitboxVelocity(affectedHitbox, collisionResult.overlap.x * pushForceMultiplier, collisionResult.overlap.y * pushForceMultiplier);
-   }
+const resolveSoftCollision = (affectedHitbox: Hitbox, pushingHitbox: Hitbox, collisionResult: CollisionResult): void => {
+   const pushForce = Settings.ENTITY_PUSH_FORCE * pushingHitbox.mass;
+   applyForce(affectedHitbox, new Point(collisionResult.overlap.x * pushForce, collisionResult.overlap.y * pushForce));
 }
 
 export function collide(entity: Entity, collidingEntity: Entity, hitbox: Hitbox, pushingHitbox: Hitbox, collisionResult: CollisionResult, isPushed: boolean): void {
@@ -65,7 +62,7 @@ export function collide(entity: Entity, collidingEntity: Entity, hitbox: Hitbox,
       if (pushingHitbox.collisionType === HitboxCollisionType.hard) {
          resolveHardCollision(hitbox, collisionResult);
       } else {
-         resolveSoftCollision(entity, hitbox, pushingHitbox, collisionResult);
+         resolveSoftCollision(hitbox, pushingHitbox, collisionResult);
       }
    }
 

@@ -26,14 +26,14 @@ const hitboxesAreTethered = (transformComponent: TransformComponent, hitbox1: Hi
    return false;
 }
 
-const resolveHardCollision = (affectedHitbox: Hitbox, hitboxTransformComponent: TransformComponent, collisionResult: CollisionResult): void => {
+const resolveHardCollision = (affectedHitbox: Hitbox, collisionResult: CollisionResult): void => {
    // @Temporary: Won't be needed once this switches to C++ (use builtin /= 0 check)
    if (collisionResult.overlap.magnitude() === 0) {
       throw new Error();
    }
 
    // Transform the entity out of the hitbox
-   translateHitbox(affectedHitbox, hitboxTransformComponent, collisionResult.overlap);
+   translateHitbox(affectedHitbox, collisionResult.overlap);
 
    const previousVelocity = getHitboxVelocity(affectedHitbox);
 
@@ -51,7 +51,7 @@ const resolveHardCollision = (affectedHitbox: Hitbox, hitboxTransformComponent: 
    setHitboxVelocity(affectedHitbox, vx, vy);
 }
 
-const resolveHardCollisionAndFlip = (affectedHitbox: Hitbox, hitboxTransformComponent: TransformComponent, collisionResult: CollisionResult): void => {
+const resolveHardCollisionAndFlip = (affectedHitbox: Hitbox, collisionResult: CollisionResult): void => {
    // @Temporary: Won't be needed once this switches to C++ (use builtin /= 0 check)
    if (collisionResult.overlap.magnitude() === 0) {
       throw new Error();
@@ -60,7 +60,7 @@ const resolveHardCollisionAndFlip = (affectedHitbox: Hitbox, hitboxTransformComp
    const previousVelocity = getHitboxVelocity(affectedHitbox);
    
    // Transform the entity out of the hitbox
-   translateHitbox(affectedHitbox, hitboxTransformComponent, collisionResult.overlap);
+   translateHitbox(affectedHitbox, collisionResult.overlap);
 
    // Reverse the velocity going into the hitbox
    
@@ -129,7 +129,7 @@ export function collide(affectedEntity: Entity, collidingEntity: Entity, collidi
       // @Speed: what if there are many many hitbox pairs? will this be slow:?
       if (!affectedHitbox.isStatic) {
          if (collidingHitbox.collisionType === HitboxCollisionType.hard) {
-            resolveHardCollision(affectedHitbox, affectedEntityTransformComponent, pair.collisionResult);
+            resolveHardCollision(affectedHitbox, pair.collisionResult);
          } else {
             resolveSoftCollision(affectedHitbox, collidingHitbox, pair.collisionResult);
          }
@@ -178,12 +178,11 @@ export function resolveWallCollision(hitbox: Hitbox, subtileX: number, subtileY:
    }
 
    const entity = hitbox.entity;
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   
+   // @Hack
    if (getEntityType(entity) === EntityType.guardianSpikyBall) {
-      resolveHardCollisionAndFlip(hitbox, transformComponent, collisionResult);
+      resolveHardCollisionAndFlip(hitbox, collisionResult);
    } else {
-      resolveHardCollision(hitbox, transformComponent, collisionResult);
+      resolveHardCollision(hitbox, collisionResult);
    }
 
    const componentTypes = getEntityComponentTypes(entity);

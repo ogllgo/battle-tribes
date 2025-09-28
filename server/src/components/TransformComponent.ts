@@ -360,15 +360,15 @@ TransformComponentArray.onTick = {
 TransformComponentArray.preRemove = preRemove;
 TransformComponentArray.onRemove = onRemove;
 
-const collideWithVerticalWorldBorder = (hitbox: Hitbox, transformComponent: TransformComponent, tx: number): void => {
+const collideWithVerticalWorldBorder = (hitbox: Hitbox, tx: number): void => {
    const rootHitbox = getRootHitbox(hitbox);
-   translateHitbox(rootHitbox, transformComponent, new Point(tx, 0));
+   translateHitbox(rootHitbox, new Point(tx, 0));
    setHitboxVelocityX(rootHitbox, 0);
 }
 
-const collideWithHorizontalWorldBorder = (hitbox: Hitbox, transformComponent: TransformComponent, ty: number): void => {
+const collideWithHorizontalWorldBorder = (hitbox: Hitbox, ty: number): void => {
    const rootHitbox = getRootHitbox(hitbox);
-   translateHitbox(rootHitbox, transformComponent, new Point(0, ty));
+   translateHitbox(rootHitbox, new Point(0, ty));
    setHitboxVelocityY(rootHitbox, 0);
 }
 
@@ -381,14 +381,14 @@ export function resolveEntityBorderCollisions(transformComponent: TransformCompo
       // Left border
       const minX = hitbox.box.calculateBoundsMinX();
       if (minX < 0) {
-         collideWithVerticalWorldBorder(hitbox, transformComponent, -minX + EPSILON);
+         collideWithVerticalWorldBorder(hitbox, -minX + EPSILON);
          hasCorrected = true;
       }
 
       // Right border
       const maxX = hitbox.box.calculateBoundsMaxX();
       if (maxX > Settings.BOARD_UNITS) {
-         collideWithVerticalWorldBorder(hitbox, transformComponent, Settings.BOARD_UNITS - maxX - EPSILON);
+         collideWithVerticalWorldBorder(hitbox, Settings.BOARD_UNITS - maxX - EPSILON);
          hasCorrected = true;
       }
 
@@ -396,14 +396,14 @@ export function resolveEntityBorderCollisions(transformComponent: TransformCompo
       const minY = hitbox.box.calculateBoundsMinY();
       if (minY < 0) {
          hasCorrected = true;
-         collideWithHorizontalWorldBorder(hitbox, transformComponent, -minY + EPSILON);
+         collideWithHorizontalWorldBorder(hitbox, -minY + EPSILON);
       }
 
       // Top border
       const maxY = hitbox.box.calculateBoundsMaxY();
       if (maxY > Settings.BOARD_UNITS) {
          hasCorrected = true;
-         collideWithHorizontalWorldBorder(hitbox, transformComponent, Settings.BOARD_UNITS - maxY - EPSILON);
+         collideWithHorizontalWorldBorder(hitbox, Settings.BOARD_UNITS - maxY - EPSILON);
       }
 
       // We then need to clean the hitbox so that its children have its position updated to reflect the move

@@ -1,7 +1,8 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
-import { assert, rotateXAroundOrigin, rotateYAroundOrigin } from "../../../../shared/src/utils";
+import { assert, Point, rotatePoint, rotateXAroundOrigin, rotateYAroundOrigin } from "../../../../shared/src/utils";
+import { getHitboxVelocity, translateHitbox } from "../../hitboxes";
 import { playerInstance } from "../../player";
 import { playSound } from "../../sound";
 import { entityExists, EntityParams, getEntityLayer, getEntityType } from "../../world";
@@ -121,13 +122,18 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
             playSound("dismount.mp3", 0.4, 1, mountHitbox.box.position.copy(), layer);
 
             if (carrySlot.occupiedEntity === playerInstance) {
-               // Set the player to the dismount position
-   
+               // Dismount
+               
                const transformComponent = TransformComponentArray.getComponent(playerInstance);
                const playerHitbox = transformComponent.hitboxes[0];
-   
-               playerHitbox.box.position.x = mountHitbox.box.position.x + rotateXAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountHitbox.box.relativeAngle);
-               playerHitbox.box.position.y = mountHitbox.box.position.y + rotateYAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountHitbox.box.relativeAngle);
+
+               const tx = rotateXAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountHitbox.box.angle);
+               const ty = rotateYAroundOrigin(carrySlot.offsetX + carrySlot.dismountOffsetX, carrySlot.offsetY + carrySlot.dismountOffsetY, mountHitbox.box.angle);
+               translateHitbox(playerHitbox, tx, ty);
+
+               // @HACK reset acceleration because it's accumulated a bunch for some reason
+               playerHitbox.acceleration.x = 0;
+               playerHitbox.acceleration.y = 0;
             }
          }
       }

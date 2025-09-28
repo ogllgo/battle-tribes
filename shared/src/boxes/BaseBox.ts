@@ -30,6 +30,7 @@ export function createAbsolutePivotPoint(offsetX: number, offsetY: number): Pivo
 }
 
 abstract class BaseBox {
+   // @CLEANUP i should really make this only able to be manipulated through some supplied functions, so places can't mistakenly manipulate it thinking they're being correct
    public readonly position: Point;
    /** Offset of the box from its parent. If on a root hitbox of a base entity, does nothing. */
    public readonly offset: Point;
