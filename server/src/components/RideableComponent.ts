@@ -1,8 +1,8 @@
 import { ServerComponentType } from "../../../shared/src/components";
 import { Entity } from "../../../shared/src/entities";
 import { Packet } from "../../../shared/src/packets";
-import { Point, rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/utils";
-import { Hitbox } from "../hitboxes";
+import { Point, rotatePoint, rotateXAroundOrigin, rotateYAroundOrigin } from "../../../shared/src/utils";
+import { getHitboxVelocity, Hitbox, translateHitbox } from "../hitboxes";
 import { entityExists } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { attachHitbox, detachHitbox, TransformComponentArray } from "./TransformComponent";
@@ -86,9 +86,9 @@ export function dismountMount(entity: Entity, mount: Entity): void {
 
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   for (const hitbox of transformComponent.hitboxes) {
-      if (hitbox.parent !== null && hitbox.parent.entity === mount) {
-         detachHitbox(hitbox);
+   for (const rootHitbox of transformComponent.rootHitboxes) {
+      if (rootHitbox.parent !== null && rootHitbox.parent.entity === mount) {
+         detachHitbox(rootHitbox);
       }
    }
 
@@ -98,7 +98,5 @@ export function dismountMount(entity: Entity, mount: Entity): void {
 
    const entityHitbox = transformComponent.hitboxes[0];
    const mountHitbox = carrySlot.parentHitbox;
-   
-   entityHitbox.box.position.x = mountHitbox.box.position.x + rotateXAroundOrigin(carrySlot.offset.x + carrySlot.dismountOffset.x, carrySlot.offset.y + carrySlot.dismountOffset.y, mountHitbox.box.angle);
-   entityHitbox.box.position.y = mountHitbox.box.position.y + rotateYAroundOrigin(carrySlot.offset.x + carrySlot.dismountOffset.x, carrySlot.offset.y + carrySlot.dismountOffset.y, mountHitbox.box.angle);
+   translateHitbox(entityHitbox, rotatePoint(new Point(carrySlot.offset.x + carrySlot.dismountOffset.x, carrySlot.offset.y + carrySlot.dismountOffset.y), mountHitbox.box.angle));
 }

@@ -30,7 +30,7 @@ import { createEntity, entityExists, EntityParams, EntityServerComponentParams, 
 import { TribesmanComponentArray, tribesmanHasTitle } from "../../entity-components/server-components/TribesmanComponent";
 import { createStatusEffectComponentParams, StatusEffectComponentArray } from "../../entity-components/server-components/StatusEffectComponent";
 import { EntityComponents, ServerComponentType, BuildingMaterial } from "../../../../shared/src/components";
-import { applyAcceleration, getHitboxVelocity, Hitbox } from "../../hitboxes";
+import { applyAccelerationFromGround, getHitboxVelocity, Hitbox } from "../../hitboxes";
 import { createBracingsComponentParams } from "../../entity-components/server-components/BracingsComponent";
 import { createBuildingMaterialComponentParams } from "../../entity-components/server-components/BuildingMaterialComponent";
 import { createStructureComponentParams } from "../../entity-components/server-components/StructureComponent";
@@ -946,7 +946,7 @@ export function updatePlayerMovement(): void {
          
          const accelerationX = acceleration * Math.sin(moveDirection);
          const accelerationY = acceleration * Math.cos(moveDirection);
-         applyAcceleration(playerInstance, playerHitbox, accelerationX, accelerationY);
+         applyAccelerationFromGround(playerInstance, playerHitbox, accelerationX, accelerationY);
       } else {
          const MOVE_SPEED = 500;
          Camera.velocity.x = MOVE_SPEED * Math.sin(moveDirection);

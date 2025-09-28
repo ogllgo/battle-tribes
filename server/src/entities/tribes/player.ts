@@ -3,13 +3,13 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType, EntityTypeString, LimbAction, PlantedEntityType } from "battletribes-shared/entities";
 import { Point } from "battletribes-shared/utils";
 import { consumeItemFromSlot, consumeItemType, countItemType, getInventory, InventoryComponentArray, InventoryComponent } from "../../components/InventoryComponent";
-import { InventoryUseComponent, InventoryUseComponentArray } from "../../components/InventoryUseComponent";
+import { getCurrentLimbState, getLimbConfiguration, InventoryUseComponent, InventoryUseComponentArray } from "../../components/InventoryUseComponent";
 import { TribeComponent, TribeComponentArray } from "../../components/TribeComponent";
 import { TunnelComponentArray, updateTunnelDoorBitset } from "../../components/TunnelComponent";
 import { PlanterBoxComponentArray, fertilisePlanterBox, placePlantInPlanterBox } from "../../components/PlanterBoxComponent";
 import { HutComponentArray } from "../../components/HutComponent";
 import { SpikesComponentArray } from "../../components/SpikesComponent";
-import { InventoryName, ItemType } from "battletribes-shared/items/items";
+import { InventoryName, ItemType, QUIVER_ACCESS_TIME_TICKS, QUIVER_PULL_TIME_TICKS } from "battletribes-shared/items/items";
 import { EntityConfig } from "../../components";
 import { addHitboxToTransformComponent, TransformComponent, TransformComponentArray } from "../../components/TransformComponent";
 import { HitboxCollisionType } from "battletribes-shared/boxes/boxes";
@@ -24,6 +24,16 @@ import { TRIBE_INFO_RECORD, TribeType } from "battletribes-shared/tribes";
 import PlayerClient from "../../server/PlayerClient";
 import { TribesmanComponent } from "../../components/TribesmanComponent";
 import { Hitbox } from "../../hitboxes";
+import { LimbState, QUIVER_PULL_LIMB_STATE, RESTING_LIMB_STATES } from "../../../../shared/src/attack-patterns";
+
+// @COPYNPASTE a rare triple!!!!
+const BOW_HOLDING_LIMB_STATE: LimbState = {
+   direction: 0,
+   extraOffset: 36,
+   angle: -Math.PI * 0.4,
+   extraOffsetX: 4,
+   extraOffsetY: 0
+};
 
 const getHitboxRadius = (tribeType: TribeType): number => {
    switch (tribeType) {
@@ -84,10 +94,36 @@ export function createPlayerConfig(position: Point, rotation: number, tribe: Tri
 // @Cleanup: ton of copy and paste between these functions
 // @Cleanup: none of these should be in the player entity creation file
 
-export function startChargingBow(player: Entity, inventoryName: InventoryName): void {
+export function startChargingBow(player: Entity): void {
+   // @COPYNPASTE from the place in the tribesman combat ai which charges the bow
+
+   
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(player);
-   const limb = inventoryUseComponent.getLimbInfo(inventoryName);
-   limb.action = LimbAction.chargeBow;
+   const limbConfiguration = getLimbConfiguration(inventoryUseComponent);
+   
+   const hotbarLimb = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
+   const holdingLimb = hotbarLimb;
+
+   const startHoldingLimbState = RESTING_LIMB_STATES[limbConfiguration];
+   
+   holdingLimb.action = LimbAction.engageBow;
+   holdingLimb.currentActionElapsedTicks = 0;
+   holdingLimb.currentActionDurationTicks = QUIVER_ACCESS_TIME_TICKS + QUIVER_PULL_TIME_TICKS;
+   holdingLimb.currentActionRate = 1;
+   holdingLimb.currentActionStartLimbState = startHoldingLimbState;
+   holdingLimb.currentActionEndLimbState = BOW_HOLDING_LIMB_STATE;
+
+   // Meanwhile the drawing limb pulls an arrow out
+   
+   const drawingLimb = inventoryUseComponent.getLimbInfo(InventoryName.offhand);
+   const startDrawingLimbState = RESTING_LIMB_STATES[limbConfiguration];
+   
+   drawingLimb.action = LimbAction.moveLimbToQuiver;
+   drawingLimb.currentActionElapsedTicks = 0;
+   drawingLimb.currentActionDurationTicks = QUIVER_ACCESS_TIME_TICKS;
+   drawingLimb.currentActionRate = 1;
+   drawingLimb.currentActionStartLimbState = startDrawingLimbState;
+   drawingLimb.currentActionEndLimbState = QUIVER_PULL_LIMB_STATE;
 }
 
 export function startChargingSpear(player: Entity, inventoryName: InventoryName): void {

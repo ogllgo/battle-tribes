@@ -4,7 +4,7 @@ import CircularBox from "../../../shared/src/boxes/CircularBox";
 import RectangularBox from "../../../shared/src/boxes/RectangularBox";
 import { Entity } from "../../../shared/src/entities";
 import { PacketReader } from "../../../shared/src/packets";
-import { Point } from "../../../shared/src/utils";
+import { distBetweenPointAndRectangle, Point } from "../../../shared/src/utils";
 import Board from "../Board";
 import { getHitboxByLocalID, TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { createHitbox, Hitbox, HitboxTether } from "../hitboxes";
@@ -148,12 +148,25 @@ export function readHitboxFromData(reader: PacketReader, localID: number, entity
       parentHitbox = findEntityHitbox(parentEntity, parentHitboxLocalID);
    }
 
+   const children = new Array<Hitbox>();
+   const numChildren = reader.readNumber();
+   for (let i = 0; i < numChildren; i++) {
+      const childEntity = reader.readNumber();
+      const childLocalID = reader.readNumber();
+
+      // @BUG: This will often find nothing for the first
+      const child = findEntityHitbox(childEntity, childLocalID);
+      if (child !== null) {
+         children.push(child);
+      }
+   }
+
    const isPartOfParent = reader.readBoolean();
    reader.padOffset(3);
    const isStatic = reader.readBoolean();
    reader.padOffset(3);
 
-   return createHitbox(localID, entity, rootEntity, parentHitbox, isPartOfParent, isStatic, box, previousPosition, acceleration, tethers, previousRelativeAngle, angularAcceleration, mass, collisionType, collisionBit, collisionMask, flags);
+   return createHitbox(localID, entity, rootEntity, parentHitbox, children, isPartOfParent, isStatic, box, previousPosition, acceleration, tethers, previousRelativeAngle, angularAcceleration, mass, collisionType, collisionBit, collisionMask, flags);
 }
 export function padHitboxDataExceptLocalID(reader: PacketReader): void {
    padBoxData(reader);
@@ -177,6 +190,9 @@ export function padHitboxDataExceptLocalID(reader: PacketReader): void {
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT); // entity and rootEntity
 
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT); // parent hitbox entity and local id
+
+   const numChildren = reader.readNumber();
+   reader.padOffset(numChildren * 2 * Float32Array.BYTES_PER_ELEMENT);
 
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT); // isPartOfParent, isStatic
 }
@@ -271,6 +287,21 @@ export function updateHitboxExceptLocalIDFromData(hitbox: Hitbox, reader: Packet
    const parentHitboxLocalID = reader.readNumber();
    hitbox.parent = findEntityHitbox(parentEntity, parentHitboxLocalID);
 
+   // @Garbage
+   hitbox.children.splice(0, hitbox.children.length);
+   // @Copynpaste
+   const numChildren = reader.readNumber();
+   for (let i = 0; i < numChildren; i++) {
+      const childEntity = reader.readNumber();
+      const childLocalID = reader.readNumber();
+
+      // @BUG: This will often find nothing for the first
+      const child = findEntityHitbox(childEntity, childLocalID);
+      if (child !== null) {
+         hitbox.children.push(child);
+      }
+   }
+
    hitbox.isPartOfParent = reader.readBoolean();
    reader.padOffset(3);
    hitbox.isStatic = reader.readBoolean();
@@ -280,15 +311,12 @@ export function updateHitboxExceptLocalIDFromData(hitbox: Hitbox, reader: Packet
 }
 
 export function updatePlayerHitboxFromData(hitbox: Hitbox, reader: PacketReader): void {
-   // @Garbage
-   readBoxFromData(reader);
+   padBoxData(reader);
 
    reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT);
 
    // Remove all previous tethers and add new ones
-
    hitbox.tethers.splice(0, hitbox.tethers.length);
-   
    const numTethers = reader.readNumber();
    for (let i = 0; i < numTethers; i++) {
       const originBox = readBoxFromData(reader);
@@ -315,19 +343,21 @@ export function updatePlayerHitboxFromData(hitbox: Hitbox, reader: PacketReader)
    const parentEntity = reader.readNumber();
    const parentHitboxLocalID = reader.readNumber();
    hitbox.parent = findEntityHitbox(parentEntity, parentHitboxLocalID);
-   
-   // @INCOMPLETE: the offset setting??
-   // if (parentLocalID === -1) {
-   //    hitbox.parent = null;
-   // } else {
-   //    assert(entityExists(parentEntity));
-   //    hitbox.parent = findEntityHitbox(parentEntity, parentLocalID);
-   //    assert(hitbox.parent !== null);
 
-   //    // If the player is attached to something, set the hitboxes' offset
-   //    hitbox.box.offset.x = dataBox.offset.x;
-   //    hitbox.box.offset.y = dataBox.offset.y;
-   // }
+   // @Garbage
+   hitbox.children.splice(0, hitbox.children.length);
+   // @Copynpaste
+   const numChildren = reader.readNumber();
+   for (let i = 0; i < numChildren; i++) {
+      const childEntity = reader.readNumber();
+      const childLocalID = reader.readNumber();
+
+      // @BUG: This will often find nothing for the first
+      const child = findEntityHitbox(childEntity, childLocalID);
+      if (child !== null) {
+         hitbox.children.push(child);
+      }
+   }
 
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT); // isPartOfParent, isStatic
 

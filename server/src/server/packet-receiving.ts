@@ -9,7 +9,7 @@ import { getCurrentLimbState, getHeldItem, InventoryUseComponentArray, setLimbAc
 import { PlayerComponentArray } from "../components/PlayerComponent";
 import { changeEntityLayer, TransformComponentArray } from "../components/TransformComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
-import { startChargingSpear, startChargingBattleaxe, createPlayerConfig, modifyBuilding } from "../entities/tribes/player";
+import { startChargingSpear, startChargingBattleaxe, createPlayerConfig, modifyBuilding, startChargingBow } from "../entities/tribes/player";
 import { placeBlueprint, throwItem, useItem } from "../entities/tribes/tribe-member";
 import { beginSwing } from "../entities/tribes/limb-use";
 import { InventoryComponentArray, getInventory, addItemToInventory, addItemToSlot, consumeItemFromSlot, consumeItemTypeFromInventory, craftRecipe, inventoryComponentCanAffordRecipe, addItem } from "../components/InventoryComponent";
@@ -118,10 +118,13 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
    // @Bug: won't work for using medicine in offhand
    let overrideOffhand = false;
    
+   // @CLEANUP @HACK
    if (mainAction === LimbAction.chargeSpear && hotbarLimbInfo.action !== LimbAction.chargeSpear) {
       startChargingSpear(playerClient.instance, InventoryName.hotbar);
    } else if (mainAction === LimbAction.chargeBattleaxe && hotbarLimbInfo.action !== LimbAction.chargeBattleaxe) {
       startChargingBattleaxe(playerClient.instance, InventoryName.hotbar);
+   } else if (mainAction === LimbAction.engageBow && hotbarLimbInfo.action !== LimbAction.engageBow) {
+      startChargingBow(playerClient.instance);
    }
 
    if (!overrideOffhand) {

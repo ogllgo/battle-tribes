@@ -52,13 +52,13 @@ export interface Hitbox {
    lastUpdateTicks: number;
 }
 
-export function createHitbox(localID: number, entity: Entity, rootEntity: Entity, parent: Hitbox | null, isPartOfParent: boolean, isStatic: boolean, box: Box, previousPosition: Point, acceleration: Point, tethers: Array<HitboxTether>, previousRelativeAngle: number, angularAcceleration: number, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
+export function createHitbox(localID: number, entity: Entity, rootEntity: Entity, parent: Hitbox | null, children: Array<Hitbox>, isPartOfParent: boolean, isStatic: boolean, box: Box, previousPosition: Point, acceleration: Point, tethers: Array<HitboxTether>, previousRelativeAngle: number, angularAcceleration: number, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
    return {
       localID: localID,
       entity: entity,
       rootEntity: rootEntity,
       parent: parent,
-      children: [],
+      children: children,
       box: box,
       previousPosition: previousPosition,
       acceleration: acceleration,
@@ -128,6 +128,16 @@ export function getRootHitbox(hitbox: Hitbox): Hitbox {
    return currentHitbox;
 }
 
+export function getHitboxTotalMassIncludingChildren(hitbox: Hitbox): number {
+   let totalMass = hitbox.mass;
+   for (const childHitbox of hitbox.children) {
+      if (childHitbox.isPartOfParent) {
+         totalMass += getHitboxTotalMassIncludingChildren(childHitbox);
+      }
+   }
+   return totalMass;
+}
+
 export function addHitboxVelocity(hitbox: Hitbox, pushX: number, pushY: number): void {
    const pushedHitbox = getRootHitbox(hitbox);
    pushedHitbox.box.position.x += pushX * Settings.DT_S;
@@ -138,12 +148,12 @@ export function translateHitbox(hitbox: Hitbox, translationX: number, translatio
    const pushedHitbox = getRootHitbox(hitbox);
    pushedHitbox.box.position.x += translationX;
    pushedHitbox.box.position.y += translationY;
-   hitbox.previousPosition.x += translationX;
-   hitbox.previousPosition.y += translationY;
+   pushedHitbox.previousPosition.x += translationX;
+   pushedHitbox.previousPosition.y += translationY;
 }
 
 // @Cleanup: Passing in hitbox really isn't the best, ideally hitbox should self-contain all the necessary info... but is that really good? + memory efficient?
-export function applyAcceleration(entity: Entity, hitbox: Hitbox, accelerationX: number, accelerationY: number): void {
+export function applyAccelerationFromGround(entity: Entity, hitbox: Hitbox, accelerationX: number, accelerationY: number): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
    const tile = getHitboxTile(getEntityLayer(entity), hitbox);
@@ -164,6 +174,17 @@ export function applyAcceleration(entity: Entity, hitbox: Hitbox, accelerationX:
    // Apply velocity with traction (blend towards desired velocity)
    hitbox.acceleration.x += (desiredVelocityX - currentVelocity.x) * transformComponent.traction;
    hitbox.acceleration.y += (desiredVelocityY - currentVelocity.y) * transformComponent.traction;
+}
+
+export function applyForce(hitbox: Hitbox, force: Point): void {
+   const rootHitbox = getRootHitbox(hitbox);
+   if (!rootHitbox.isStatic) {
+      const hitboxConnectedMass = getHitboxTotalMassIncludingChildren(rootHitbox);
+      if (hitboxConnectedMass !== 0) {
+         rootHitbox.acceleration.x += force.x / hitboxConnectedMass;
+         rootHitbox.acceleration.y += force.y / hitboxConnectedMass;
+      }
+   }
 }
 
 export function setHitboxAngularVelocity(hitbox: Hitbox, angularVelocity: number): void {

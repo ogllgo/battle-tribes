@@ -1,6 +1,6 @@
 import { PlayerKnockbackData, HealData, ResearchOrbCompleteData } from "battletribes-shared/client-server-types";
 import { BuildingMaterial, MATERIAL_TO_ITEM_MAP } from "battletribes-shared/components";
-import { TechID } from "battletribes-shared/techs";
+import { getTechByID, TechID } from "battletribes-shared/techs";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import Layer from "../Layer";
 import { registerCommand } from "../commands";
@@ -117,8 +117,7 @@ const processTechForceUnlock = (playerClient: PlayerClient, techID: TechID): voi
       return;
    }
 
-   // @Incomplete
-   // playerClient.tribe.forceUnlockTech(techID);
+   playerClient.tribe.forceUnlockTech(getTechByID(techID));
 }
 
 const processDeconstructPacket = (playerClient: PlayerClient, structure: Entity): void => {

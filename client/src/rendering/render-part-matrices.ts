@@ -9,7 +9,7 @@ import { gl } from "../webgl";
 import { HealthComponentArray } from "../entity-components/server-components/HealthComponent";
 import { getHitboxVelocity, Hitbox } from "../hitboxes";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
-import { EntityType } from "../../../shared/src/entities";
+import { Entity, EntityType } from "../../../shared/src/entities";
 import { playerInstance } from "../player";
 
 // @Cleanup: file name
@@ -249,6 +249,18 @@ export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo, tickInterp: 
    renderInfo.renderPartsAreDirty = false;
 }
 
+export function getEntityTickInterp(entity: Entity, serverTickInterp: number, clientTickInterp: number): number {
+   // this happens sometimes for some reason
+   if (!TransformComponentArray.hasComponent(entity)) {
+      return serverTickInterp;
+   }
+   
+   const entityTransformComponent = TransformComponentArray.getComponent(entity);
+   const entityHitbox = entityTransformComponent.hitboxes[0];
+   const rootEntity = entityHitbox.rootEntity;
+   return rootEntity === playerInstance ? clientTickInterp : serverTickInterp;
+}
+
 export function updateRenderPartMatrices(serverTickInterp: number, clientTickInterp: number): void {
    // Do this before so that binding buffers during the loop doesn't mess up any previously bound vertex array.
    gl.bindVertexArray(null);
@@ -264,18 +276,7 @@ export function updateRenderPartMatrices(serverTickInterp: number, clientTickInt
    for (let i = 0; i < dirtyEntityRenderInfos.length; i++) {
       const renderInfo = dirtyEntityRenderInfos[i];
 
-      // @CLEANUP
-      let tickInterp: number;
-      const entity = renderInfo.associatedEntity;
-      if (entity === playerInstance) {
-         const entityTransformComponent = TransformComponentArray.getComponent(entity);
-         const entityHitbox = entityTransformComponent.hitboxes[0];
-         const rootEntity = entityHitbox.rootEntity;
-         tickInterp = rootEntity === playerInstance ? clientTickInterp : serverTickInterp;
-      } else {
-         tickInterp = serverTickInterp;
-      }
-      
+      const tickInterp = getEntityTickInterp(renderInfo.associatedEntity, serverTickInterp, clientTickInterp);
       cleanEntityRenderInfo(renderInfo, tickInterp);
    }
 
