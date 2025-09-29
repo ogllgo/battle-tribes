@@ -91,6 +91,7 @@ const getPlayerVisibleEntities = (playerClient: PlayerClient): Set<Entity> => {
                for (const rootHitbox of transformComponent.rootHitboxes) {
                   const rootEntity = rootHitbox.rootEntity;
                   const rootTransformComponent = TransformComponentArray.getComponent(rootEntity);
+                  // @Crash rootTransformComponent is undefined sometimes idfky
                   // @Cleanup lolllllllll
                   for (const rootRootHitbox of rootTransformComponent.rootHitboxes) {
                      addHitboxHeirarchyToEntities(playerClient, visibleEntities, rootRootHitbox);

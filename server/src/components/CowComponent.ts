@@ -62,6 +62,10 @@ const enum Vars {
    RAM_REST_TICKS = Settings.TICK_RATE * 0.6
 }
 
+const MAX_STAMINA = 10;
+const STAMINA_USE_RATE = 2;
+const STAMINA_REPLENISH_RATE = 1;
+
 export class CowComponent {
    public readonly species: CowSpecies;
    public grazeProgressTicks = 0;
@@ -90,8 +94,7 @@ export class CowComponent {
    /** Remaining amount of ticks that the cow has to rest after doing a ram attack. */
    public ramRestTicks: number;
 
-   // @SQUEAM
-   public randRate = Math.random();
+   public stamina = MAX_STAMINA;
 
    constructor(species: CowSpecies) {
       this.species = species;
@@ -289,14 +292,6 @@ const entityIsHoldingBerry = (entity: Entity): boolean => {
 }
 
 const getFollowTarget = (cow: Entity, followAI: FollowAI, visibleEntities: ReadonlyArray<Entity>): [Entity | null, boolean] => {
-   // @SQUEAM
-   const tamingComponent = TamingComponentArray.getComponent(cow);
-   if (tamingComponent.name === "27") {
-      return [PlayerComponentArray.activeEntities[0], true];
-   } else {
-      return [null, false];
-   }
-   
    const wantsToFollow = entityWantsToFollow(followAI);
 
    let currentTargetIsHoldingBerry = false;
@@ -332,7 +327,7 @@ function onTick(cow: Entity): void {
       poop(cow, cowComponent);
    }
 
-   cowComponent.bowelFullness -= 1 / Vars.BOWEL_EMPTY_TIME_TICKS * lerp(0.4, 1, cowComponent.randRate);
+   cowComponent.bowelFullness -= 1 / Vars.BOWEL_EMPTY_TIME_TICKS;
    if (cowComponent.bowelFullness < 0) {
       cowComponent.bowelFullness = 0;
    }
@@ -366,10 +361,26 @@ function onTick(cow: Entity): void {
    if (entityExists(rider)) {
       const targetPosition = getRiderTargetPosition(rider);
       if (targetPosition !== null) {
-         aiHelperComponent.moveFunc(cow, targetPosition, Vars.FAST_ACCELERATION);
+         const acceleration = cowComponent.stamina > 0 ? Vars.FAST_ACCELERATION : Vars.SLOW_ACCELERATION;
+         aiHelperComponent.moveFunc(cow, targetPosition, acceleration);
          aiHelperComponent.turnFunc(cow, targetPosition, Math.PI, 0.4);
+
+         // Use stamina
+         // @HACK this literally only works logically for 1 case
+         cowComponent.stamina -= STAMINA_USE_RATE * Settings.DT_S;
+         if (cowComponent.stamina < 0) {
+            cowComponent.stamina = 0;
+         }
+
          return;
       }
+   }
+
+   // Replenish stamina 
+   // @HACK this literally only works logically for 1 case
+   cowComponent.stamina += STAMINA_REPLENISH_RATE * Settings.DT_S;
+   if (cowComponent.stamina > MAX_STAMINA) {
+      cowComponent.stamina = MAX_STAMINA;
    }
 
    const escapeAI = aiHelperComponent.getEscapeAI();
@@ -633,7 +644,7 @@ function onTick(cow: Entity): void {
 }
 
 function getDataLength(): number {
-   return 3 * Float32Array.BYTES_PER_ELEMENT;
+   return 4 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
@@ -644,6 +655,8 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
 
    packet.addBoolean(cowComponent.isRamming);
    packet.padOffset(3);
+
+   packet.addNumber(cowComponent.stamina);
 }
 
 const eatBerry = (cow: Entity, berryItemEntity: Entity, cowComponent: CowComponent): void => {

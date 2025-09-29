@@ -380,6 +380,7 @@ const resolveAndCleanBorderCollisions = (entity: Entity, transformComponent: Tra
 
    // If the entity is outside the world border after resolving border collisions, throw an error
    // @Robustness this should be impossible to trigger, so i can remove it and sleep peacefully
+   // @CRASH if i hyperspeed into the top right
    for (const hitbox of transformComponent.hitboxes) {
       if (hitbox.box.calculateBoundsMinX() < 0 || hitbox.box.calculateBoundsMaxX() >= Settings.BOARD_UNITS || hitbox.box.calculateBoundsMinY() < 0 || hitbox.box.calculateBoundsMaxY() >= Settings.BOARD_UNITS) {
          throw new Error();

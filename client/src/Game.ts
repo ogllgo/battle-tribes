@@ -79,6 +79,7 @@ import { setHitboxAngularVelocity } from "./hitboxes";
 import { callEntityOnUpdateFunctions, getComponentArrays } from "./entity-components/ComponentArray";
 import { resolveEntityCollisions, resolvePlayerCollisions } from "./collision";
 import { Point } from "../../shared/src/utils";
+import { CowStaminaBar_forceUpdate } from "./components/game/CowStaminaBar";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -237,6 +238,7 @@ const runFrame = (currentTime: number): void => {
          InventorySelector_forceUpdate();
          // @Hack @Speed
          TamingMenu_forceUpdate();
+         CowStaminaBar_forceUpdate();
 
          updateTechTreeItems();
          

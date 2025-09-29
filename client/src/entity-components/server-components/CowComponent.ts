@@ -21,6 +21,7 @@ export interface CowComponentParams {
    readonly species: CowSpecies;
    readonly grazeProgress: number;
    readonly isRamming: boolean;
+   readonly stamina: number;
 }
 
 interface IntermediateInfo {
@@ -34,6 +35,8 @@ export interface CowComponent {
    isRamming: boolean;
    
    readonly headRenderPart: RenderPart;
+
+   stamina: number;
 }
 
 export const CowComponentArray = new ServerComponentArray<CowComponent, CowComponentParams, IntermediateInfo>(ServerComponentType.cow, true, {
@@ -53,11 +56,13 @@ function createParamsFromData(reader: PacketReader): CowComponentParams {
    const grazeProgress = reader.readNumber();
    const isRamming = reader.readBoolean();
    reader.padOffset(3);
+   const stamina = reader.readNumber();
 
    return {
       species: species,
       grazeProgress: grazeProgress,
-      isRamming: isRamming
+      isRamming: isRamming,
+      stamina: stamina
    };
 }
 
@@ -102,7 +107,8 @@ function createComponent(entityParams: EntityParams, intermediateInfo: Intermedi
       species: cowComponentParams.species,
       grazeProgress: cowComponentParams.grazeProgress,
       isRamming: cowComponentParams.isRamming,
-      headRenderPart: intermediateInfo.headRenderPart
+      headRenderPart: intermediateInfo.headRenderPart,
+      stamina: cowComponentParams.stamina
    };
 }
 
@@ -132,7 +138,7 @@ function onTick(entity: Entity): void {
 }
 
 function padData(reader: PacketReader): void {
-   reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
+   reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT);
 }
 
 function updateFromData(reader: PacketReader, entity: Entity): void {
@@ -164,6 +170,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       playSoundOnHitbox("cow-angry.mp3", 0.4, 1, entity, hitbox, true);
    }
    cowComponent.isRamming = isRamming;
+
+   cowComponent.stamina = reader.readNumber();
 }
 
 function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {

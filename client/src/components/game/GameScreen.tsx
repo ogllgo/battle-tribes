@@ -33,6 +33,7 @@ import { playerInstance } from "../../player";
 import TamingMenu from "./taming-menu/TamingMenu";
 import SignInscribeMenu from "./SignInscribeMenu";
 import TamingRenamePrompt from "./taming-menu/TamingRenamePrompt";
+import CowStaminaBar from "./CowStaminaBar";
 
 export const enum GameInteractState {
    none,
@@ -261,6 +262,8 @@ const GameScreen = (props: GameScreenProps) => {
       <TamingRenamePrompt />
 
       <SignInscribeMenu />
+
+      <CowStaminaBar />
 
       { canAscendLayer ? (
          <LayerChangeMessage />

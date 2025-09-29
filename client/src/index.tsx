@@ -41,6 +41,7 @@ import "./css/game/animal-staff-options.css";
 import "./css/game/select-carry-target-cursor-overlay.css";
 import "./css/game/taming-menu.css";
 import "./css/game/sign-inscribe-menu.css";
+import "./css/game/cow-stamina-bar.css";
 
 // We have to manually import this so that the component arrays are all detected
 import "./entity-components/components";
