@@ -36,7 +36,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
 
    const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
 
-   damageEntity(collidingEntity, collidingHitbox, hitbox.entity, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingHitbox, hitbox.entity, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingHitbox, 100, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, "spikyBastard", 0.3);
 }

@@ -299,7 +299,7 @@ const cleanRelativeAngle = (hitbox: Hitbox): void => {
 
 export function getHitboxAngularVelocity(hitbox: Hitbox): number {
    // Here we don't use getAngleDiff but just subtract them, so that e.g. adding 2pi to the relative angle will register as some angular velocity
-   // return 
+   // @INCOMPLETE @INVESTIGATE but the above comment is wrong??? we do just use getAngleDiff??
    return getAngleDiff(hitbox.previousRelativeAngle, hitbox.box.relativeAngle) * Settings.TICK_RATE;
 }
 

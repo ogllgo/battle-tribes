@@ -435,7 +435,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
       const slimeComponent = SlimeComponentArray.getComponent(slime);
       const damage = CONTACT_DAMAGE[slimeComponent.size];
 
-      damageEntity(collidingEntity, collidingHitbox, slime, damage, DamageSource.slime, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingHitbox, slime, damage, DamageSource.slime, AttackEffectiveness.effective, collisionPoint, 0);
       addLocalInvulnerabilityHash(collidingEntity, "slime", 0.3);
    }
 }

@@ -63,7 +63,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
 
    // @Incomplete: Cause of death
-   damageEntity(collidingEntity, collidingHitbox, pebblum, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingHitbox, pebblum, 1, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingHitbox, 150, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, "pebblum", 0.3);
 }

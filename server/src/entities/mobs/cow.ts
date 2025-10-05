@@ -143,7 +143,8 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
 
    // Head hitbox
    const headPosition = position.offset(idealHeadDist, angle);
-   const headHitbox = new Hitbox(transformComponent, null, true, new CircularBox(headPosition, new Point(0, 0), 0, 30), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
+   // @Hack(ish): head initial angle is set to the angle too cuz it's not a direct child
+   const headHitbox = new Hitbox(transformComponent, null, true, new CircularBox(headPosition, new Point(0, 0), angle, 30), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
    headHitbox.box.pivot = createNormalisedPivotPoint(0, -0.5);
    addHitboxToTransformComponent(transformComponent, headHitbox);
 

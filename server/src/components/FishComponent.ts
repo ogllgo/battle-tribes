@@ -96,7 +96,7 @@ function onTick(fish: Entity): void {
       fishComponent.secondsOutOfWater += Settings.DT_S;
       if (fishComponent.secondsOutOfWater >= 5 && customTickIntervalHasPassed(fishComponent.secondsOutOfWater * Settings.TICK_RATE, 1.5)) {
          const hitPosition = getRandomPositionInEntity(transformComponent);
-         damageEntity(fish, fishHitbox, null, 1, DamageSource.lackOfOxygen, AttackEffectiveness.effective, hitPosition, 0);
+         damageEntity(fishHitbox, null, 1, DamageSource.lackOfOxygen, AttackEffectiveness.effective, hitPosition, 0);
       }
    } else {
       fishComponent.secondsOutOfWater = 0;
@@ -152,7 +152,7 @@ function onTick(fish: Entity): void {
             // @Hack
             const collisionPoint = new Point((fishHitbox.box.position.x + targetHitbox.box.position.x) / 2, (fishHitbox.box.position.y + targetHitbox.box.position.y) / 2);
             
-            damageEntity(target, targetHitbox, fish, 2, DamageSource.fish, AttackEffectiveness.effective, collisionPoint, 0);
+            damageEntity(targetHitbox, fish, 2, DamageSource.fish, AttackEffectiveness.effective, collisionPoint, 0);
             applyKnockback(targetHitbox, 100, hitDirection);
             addLocalInvulnerabilityHash(target, "fish", 0.3);
          }

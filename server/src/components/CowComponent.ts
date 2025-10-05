@@ -341,7 +341,7 @@ function onTick(cow: Entity): void {
    if (1+1===3) {
       // @Temporary: cuz shouldn't it use the energy system now?????
       if (cowComponent.bowelFullness === 0 && (getEntityAgeTicks(cow) + cow) % (2 * Settings.TICK_RATE) === 0) {
-         damageEntity(cow, cowBodyHitbox, null, 1, 0, AttackEffectiveness.effective, cowBodyHitbox.box.position.copy(), 0);
+         damageEntity(cowBodyHitbox, null, 1, 0, AttackEffectiveness.effective, cowBodyHitbox.box.position.copy(), 0);
       }
    }
    
@@ -361,7 +361,9 @@ function onTick(cow: Entity): void {
    if (entityExists(rider)) {
       const targetPosition = getRiderTargetPosition(rider);
       if (targetPosition !== null) {
-         const acceleration = cowComponent.stamina > 0 ? Vars.FAST_ACCELERATION : Vars.SLOW_ACCELERATION;
+         // @SQUEAM
+         const acceleration = Vars.FAST_ACCELERATION;
+         // const acceleration = cowComponent.stamina > 0 ? Vars.FAST_ACCELERATION : Vars.SLOW_ACCELERATION;
          aiHelperComponent.moveFunc(cow, targetPosition, acceleration);
          aiHelperComponent.turnFunc(cow, targetPosition, Math.PI, 0.4);
 
@@ -374,6 +376,27 @@ function onTick(cow: Entity): void {
 
          return;
       }
+   }
+
+   // @SQUEAM
+   if(1+1===2) {
+      if (PlayerComponentArray.activeEntities.length === 0) {
+         return;
+      }
+      const player = PlayerComponentArray.activeEntities[0];
+
+      const playerTransformComponent = TransformComponentArray.getComponent(player);
+      const playerHitbox = playerTransformComponent.hitboxes[0];
+
+      const dir = cowBodyHitbox.box.position.angleTo(playerHitbox.box.position) - Math.PI * 0.35;
+
+      const targetPos = cowBodyHitbox.box.position.offset(900, dir);
+      
+      const aiHelperComponent = AIHelperComponentArray.getComponent(cow);
+      aiHelperComponent.moveFunc(cow, targetPos, 920)
+      aiHelperComponent.turnFunc(cow, targetPos, 1.7 * Math.PI, 0.8)
+      
+      return;
    }
 
    // Replenish stamina 
@@ -713,7 +736,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
 
    const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
    
-   damageEntity(collidingEntity, collidingHitbox, cow, 2, DamageSource.iceSpikes, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingHitbox, cow, 2, DamageSource.iceSpikes, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingHitbox, 180, hitDirection);
 
    stopRamming(cowComponent);

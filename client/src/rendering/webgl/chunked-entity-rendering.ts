@@ -248,16 +248,16 @@ export function removeChunkRenderedEntity(entity: Entity, layer: Layer, renderLa
 
 export function updateChunkRenderedEntity(renderInfo: EntityRenderInfo, renderLayer: ChunkedRenderLayer): void {
    // @Hack? Feels off
-   const layer = getEntityLayer(renderInfo.associatedEntity);
+   const layer = getEntityLayer(renderInfo.entity);
    
    const chunkDatas = layer.renderLayerChunkDataRecord[renderLayer];
-   const chunkIdx = getEntityChunkIndex(renderInfo.associatedEntity);
+   const chunkIdx = getEntityChunkIndex(renderInfo.entity);
    const chunkData = chunkDatas[chunkIdx];
    if (typeof chunkData === "undefined") {
       throw new Error();
    }
 
-   const bufferIndex = chunkData.entityIDToBufferIndexRecord[renderInfo.associatedEntity];
+   const bufferIndex = chunkData.entityIDToBufferIndexRecord[renderInfo.entity];
    if (typeof bufferIndex === "undefined") {
       throw new Error();
    }

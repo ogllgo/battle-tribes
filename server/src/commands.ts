@@ -18,7 +18,7 @@ const killPlayer = (player: Entity): void => {
    const hitbox = transformComponent.hitboxes[0];
    
    const hitPosition = getRandomPositionInEntity(transformComponent);
-   damageEntity(player, hitbox, null, 999999, DamageSource.god, AttackEffectiveness.effective, hitPosition, 0);
+   damageEntity(hitbox, null, 999999, DamageSource.god, AttackEffectiveness.effective, hitPosition, 0);
 }
 
 const damagePlayer = (player: Entity, damage: number): void => {
@@ -26,7 +26,7 @@ const damagePlayer = (player: Entity, damage: number): void => {
    const hitbox = transformComponent.hitboxes[0];
 
    const hitPosition = getRandomPositionInEntity(transformComponent);
-   damageEntity(player, hitbox, null, damage, DamageSource.god, AttackEffectiveness.effective, hitPosition, 0);
+   damageEntity(hitbox, null, damage, DamageSource.god, AttackEffectiveness.effective, hitPosition, 0);
 }
 
 const setTime = (time: number): void => {

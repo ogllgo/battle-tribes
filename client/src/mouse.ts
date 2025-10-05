@@ -11,10 +11,9 @@ import { TransformComponentArray } from "./entity-components/server-components/T
 import { getTileIndexIncludingEdges, tileIsInWorld } from "./Layer";
 import { getCurrentLayer, getEntityRenderInfo } from "./world";
 import { Entity } from "../../shared/src/entities";
-import { Hitbox } from "./hitboxes";
+import { Point } from "../../shared/src/utils";
 
-export let cursorX: number | null = null;
-export let cursorY: number | null = null;
+export const cursorScreenPos = new Point(0, 0);
 
 export function calculateCursorWorldPositionX(cursorX: number): number | null {
    if (cursorX === null) return null;
@@ -37,8 +36,8 @@ export function calculateCursorWorldPositionY(cursorY: number): number | null {
 }
 
 export function handleMouseMovement(e: MouseEvent): void {
-   cursorX = e.clientX;
-   cursorY = e.clientY;
+   cursorScreenPos.x = e.clientX;
+   cursorScreenPos.y = e.clientY;
 }
 
 /**

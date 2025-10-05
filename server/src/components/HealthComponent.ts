@@ -88,7 +88,9 @@ const callOnDeathCallbacks = (entity: Entity, attackingEntity: Entity | null, da
  * @param damage The amount of damage given
  * @returns Whether the damage was received
  */
-export function damageEntity(entity: Entity, hitHitbox: Hitbox, attackingEntity: Entity | null, damage: number, damageSource: DamageSource, attackEffectiveness: AttackEffectiveness, hitPosition: Point, hitFlags: number): boolean {
+export function damageEntity(hitHitbox: Hitbox, attackingEntity: Entity | null, damage: number, damageSource: DamageSource, attackEffectiveness: AttackEffectiveness, hitPosition: Point, hitFlags: number): boolean {
+   const entity = hitHitbox.entity;
+   
    const componentArrayRecord = getComponentArrayRecord();
 
    let damageMultiplier = 1;

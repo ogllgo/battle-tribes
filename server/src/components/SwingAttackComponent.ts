@@ -187,7 +187,7 @@ const gatherPlant = (plant: Entity, attacker: Entity, hitHitbox: Hitbox, gloves:
    // @HACK
    const collisionPoint = new Point(0, 0);
 
-   damageEntity(plant, plantHitbox, attacker, 0, 0, AttackEffectiveness.ineffective, collisionPoint, HitFlags.NON_DAMAGING_HIT);
+   damageEntity(plantHitbox, attacker, 0, 0, AttackEffectiveness.ineffective, collisionPoint, HitFlags.NON_DAMAGING_HIT);
 }
 
 const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, hitHitbox: Hitbox, collidingHitboxPairs: ReadonlyArray<HitboxCollisionPair>): boolean => {
@@ -233,7 +233,7 @@ const damageEntityFromSwing = (swingAttack: Entity, victim: Entity, hitHitbox: H
 
    // Register the hit
    const hitFlags = attackingItem !== null && attackingItem.type === ItemType.flesh_sword ? HitFlags.HIT_BY_FLESH_SWORD : 0;
-   damageEntity(victim, victimHitbox, attacker, attackDamage, DamageSource.tribeMember, attackEffectiveness, collisionPoint, hitFlags);
+   damageEntity(victimHitbox, attacker, attackDamage, DamageSource.tribeMember, attackEffectiveness, collisionPoint, hitFlags);
    // @SQUEAM
    if (getEntityType(victimHitbox.entity) === EntityType.tukmokTailClub || victimHitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_MEDIUM) || victimHitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_BIG) || victimHitbox.flags.includes(HitboxFlag.TUKMOK_TAIL_MIDDLE_SEGMENT_SMALL)) {
 

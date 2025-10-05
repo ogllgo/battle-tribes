@@ -363,7 +363,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
 
    // Damage and knock back the player
-   damageEntity(collidingEntity, collidingHitbox, zombie, 1, DamageSource.zombie, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingHitbox, zombie, 1, DamageSource.zombie, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingHitbox, 150, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, "zombie", 0.3);
 

@@ -121,7 +121,7 @@ function onTick(entity: Entity): void {
                const ticksElapsed = statusEffectComponent.activeStatusEffectTicksElapsed[i];
                if (customTickIntervalHasPassed(ticksElapsed, 0.75)) {
                   const hitPosition = getRandomPositionInEntity(transformComponent);
-                  damageEntity(entity, hitbox, null, 1, DamageSource.fire, AttackEffectiveness.effective, hitPosition, 0);
+                  damageEntity(hitbox, null, 1, DamageSource.fire, AttackEffectiveness.effective, hitPosition, 0);
                }
             }
             break;
@@ -133,7 +133,7 @@ function onTick(entity: Entity): void {
                // @Hack
                const hitbox = transformComponent.hitboxes[0];
                const hitPosition = getRandomPositionInEntity(transformComponent);
-               damageEntity(entity, hitbox, null, 1, DamageSource.poison, AttackEffectiveness.effective, hitPosition, 0);
+               damageEntity(hitbox, null, 1, DamageSource.poison, AttackEffectiveness.effective, hitPosition, 0);
             }
             break;
          }
@@ -144,7 +144,7 @@ function onTick(entity: Entity): void {
                // @Hack
                const hitbox = transformComponent.hitboxes[0];
                const hitPosition = getRandomPositionInEntity(transformComponent);
-               damageEntity(entity, hitbox, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
+               damageEntity(hitbox, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
             }
             break;
          }
@@ -155,7 +155,7 @@ function onTick(entity: Entity): void {
                // @Hack
                const hitbox = transformComponent.hitboxes[0];
                const hitPosition = getRandomPositionInEntity(transformComponent);
-               damageEntity(entity, hitbox, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
+               damageEntity(hitbox, null, 1, DamageSource.bloodloss, AttackEffectiveness.effective, hitPosition, 0);
             }
          }
       }

@@ -98,7 +98,7 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
 
       const damage = 2 * (projectileComponent.isBlocked ? 0.5 : 1);
       const knockback = 150 * (projectileComponent.isBlocked ? 0.5 : 1);
-      damageEntity(collidingEntity, collidingHitbox, attacker, damage, DamageSource.arrow, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingHitbox, attacker, damage, DamageSource.arrow, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingHitbox, knockback, hitDirection);
       addLocalInvulnerabilityHash(collidingEntity, attackHash, 9);
    

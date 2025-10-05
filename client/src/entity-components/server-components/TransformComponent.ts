@@ -1,4 +1,4 @@
-import { assert, customTickIntervalHasPassed, distance, lerp, Point, randAngle, randInt, randSign, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { assert, customTickIntervalHasPassed, distance, getAngleDiff, lerp, Point, randAngle, randInt, randSign, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { Tile } from "../../Tile";
 import { Settings } from "battletribes-shared/settings";
 import { TILE_PHYSICS_INFO_RECORD, TileType } from "battletribes-shared/tiles";
@@ -265,6 +265,23 @@ export function cleanEntityTransform(entity: Entity): void {
    updateContainingChunks(transformComponent, entity);
 }
 
+const tickHitboxAngularPhysics = (hitbox: Hitbox): void => {
+   // @Cleanup useless/pointless if it doesn't get dirtied in this func?
+   if (hitbox.box.relativeAngle === hitbox.previousRelativeAngle && hitbox.angularAcceleration === 0) {
+      return;
+   }
+
+   // We don't use the getAngularVelocity function as that multplies it by the tps (it's the instantaneous angular velocity)
+   let angularVelocityTick = getAngleDiff(hitbox.previousRelativeAngle, hitbox.box.relativeAngle);
+   // @Hack??
+   angularVelocityTick *= 0.98;
+   
+   const newRelativeAngle = hitbox.box.relativeAngle + angularVelocityTick + hitbox.angularAcceleration * Settings.DT_S * Settings.DT_S;
+
+   hitbox.previousRelativeAngle = hitbox.box.relativeAngle;
+   hitbox.box.relativeAngle = newRelativeAngle;
+}
+
 const applyHitboxKinematics = (transformComponent: TransformComponent, entity: Entity, hitbox: Hitbox): void => {
    if (isNaN(hitbox.box.position.x) || isNaN(hitbox.box.position.y)) {
       throw new Error("Position was NaN.");
@@ -425,7 +442,10 @@ const tickHitboxPhysics = (hitbox: Hitbox): void => {
    // @CLEANUP
    const transformComponent = TransformComponentArray.getComponent(hitbox.entity);
 
-   // tickHitboxAngularPhysics(hitbox.entity, hitbox, transformComponent);
+   // @Hackish We don't update the player's angular physics cuz it's handled entirely by the updatePlayerRotation function.
+   if (hitbox.entity !== playerInstance) {
+      tickHitboxAngularPhysics(hitbox);
+   }
 
    if (hitbox.parent === null) {
       applyHitboxKinematics(transformComponent, hitbox.entity, hitbox);

@@ -2,12 +2,11 @@ import { BuildingMaterial, ServerComponentType } from "battletribes-shared/compo
 import { Entity, EntityType, DamageSource } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
 import { Point } from "battletribes-shared/utils";
-import { HealthComponent, HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
-import { EntityRelationship, getEntityRelationship, TribeComponent } from "../../components/TribeComponent";
-import { SpikesComponent, SpikesComponentArray } from "../../components/SpikesComponent";
+import { HealthComponent } from "../../components/HealthComponent";
+import { TribeComponent } from "../../components/TribeComponent";
+import { SpikesComponent } from "../../components/SpikesComponent";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
 import { EntityConfig } from "../../components";
-import { getEntityType } from "../../world";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { StructureComponent } from "../../components/StructureComponent";

@@ -49,7 +49,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    const collidingEntityType = getEntityType(collidingEntity);
    if (collidingEntityType === EntityType.iceSpikes || collidingEntityType === EntityType.iceSpikesPlanted) {
       // Instantly destroy ice spikes
-      damageEntity(collidingEntity, collidingHitbox, null, 99999, DamageSource.iceShards, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingHitbox, null, 99999, DamageSource.iceShards, AttackEffectiveness.effective, collisionPoint, 0);
    } else {
       const healthComponent = HealthComponentArray.getComponent(collidingEntity);
       if (!canDamageEntity(healthComponent, "ice_shards")) {
@@ -58,7 +58,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
 
       const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
 
-      damageEntity(collidingEntity, collidingHitbox, null, 2, DamageSource.iceShards, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingHitbox, null, 2, DamageSource.iceShards, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingHitbox, 150, hitDirection);
       addLocalInvulnerabilityHash(collidingEntity, "ice_shards", 0.3);
 

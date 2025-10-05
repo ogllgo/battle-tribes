@@ -56,6 +56,8 @@ export function getHoveredBuildingPlan(): BuildingPlanData | null {
    return closestPlanToCursor;
 }
 
+let lastT = 0;
+
 // @Cleanup: De-singleton-ify
 abstract class Client {
    private static socket: WebSocket | null = null;
@@ -114,10 +116,14 @@ abstract class Client {
                   
                   lastPacketTime = performance.now();
 
+                  const dt = lastPacketTime - lastT;
+                  console.log("(PACKET RECEIVED dt=" + dt + ", reset interp)")
+                  lastT = lastPacketTime;
                   // Done before so that server data can override particles
                   Board.updateParticles();
                   
                   processGameDataPacket(reader);
+                  console.log("Now on server tick " + Board.serverTicks);
                   Board.tickEntities();
                   resetServerTickInterp();
 
@@ -141,51 +147,6 @@ abstract class Client {
                }
             }
          }
-
-         // let socketAlreadyExists = false;
-
-         // // Don't add events if the socket already exists
-         // if (this.socket !== null) {
-         //    socketAlreadyExists = true;
-            
-         //    // Reconnect
-         //    if (!this.socket.connected) {
-         //       this.socket.connect();
-         //    }
-
-         //    this.socket.off("connect");
-         //    this.socket.off("connect_error");
-         // } else {
-         //    // Create the socket
-         //    this.socket = this.createSocket();
-         //    this.socket.connect();
-         // }
-
-         // // If connection was successful, return true
-         // this.socket.on("connect", () => {
-         //    resolve(true);
-         // });
-         // // If couldn't connect to server, return false
-         // this.socket.on("connect_error", (err) => {
-         //    console.log(err);
-         //    resolve(false);
-         // });
-         
-         // if (!socketAlreadyExists) {
-         //    this.socket.on("game_data_packet", gameDataPacket => {
-         //       // Only unload game packets when the game is running
-         //       if (Game.getIsPaused() || !Game.isRunning || !Game.isSynced || document.visibilityState === "hidden") return;
-
-         //       registerServerTick();
-
-         //       Game.queuedPackets.push(gameDataPacket);
-         //    });
-
-         //    this.socket.on("game_data_sync_packet", (gameDataSyncPacket: GameDataSyncPacket) => {
-         //       this.registerGameDataSyncPacket(gameDataSyncPacket);
-         //    });
-
-         // }
       });
    }
 

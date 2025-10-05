@@ -404,7 +404,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
 
       const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
       
-      damageEntity(collidingEntity, collidingHitbox, hitbox.entity, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingHitbox, hitbox.entity, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingHitbox, 200, hitDirection);
       addLocalInvulnerabilityHash(collidingEntity, "guardianLimb", 0.3);
    }

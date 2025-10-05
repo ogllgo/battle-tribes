@@ -2,7 +2,7 @@ import { EntityType } from "../../../../../shared/src/entities";
 import { TamingSkillNode } from "../../../../../shared/src/taming";
 import CLIENT_ENTITY_INFO_RECORD from "../../../client-entity-info";
 import { getTamingSkillLearning, hasTamingSkill, skillLearningIsComplete, TamingComponent } from "../../../entity-components/server-components/TamingComponent";
-import { cursorX, cursorY } from "../../../mouse";
+import { cursorScreenPos } from "../../../mouse";
 
 interface TamingSkillTooltipProps {
    readonly entityType: EntityType;
@@ -15,8 +15,8 @@ const TamingSkillTooltip = (props: TamingSkillTooltipProps) => {
    const skillNode = props.skillNode;
    const skill = skillNode.skill;
    
-   const x = cursorX;
-   const y = cursorY;
+   const x = cursorScreenPos.x;
+   const y = cursorScreenPos.y;
 
    const skillLearning = getTamingSkillLearning(props.tamingComponent, skill.id);
    
