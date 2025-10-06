@@ -6,7 +6,7 @@ import { createTextCanvasContext, updateTextNumbers, renderText } from "./text-c
 import Camera from "./Camera";
 import { updateSpamFilter } from "./components/game/ChatBox";
 import { createEntityShaders } from "./rendering/webgl/entity-rendering";
-import Client, { getLastPacketTime } from "./networking/Client";
+import Client, { getLastPacketTime, packetBuffer } from "./networking/Client";
 import { calculateCursorWorldPositionX, calculateCursorWorldPositionY, cursorScreenPos, handleMouseMovement, renderCursorTooltip } from "./mouse";
 import { refreshDebugInfo, setDebugInfoDebugData } from "./components/game/dev/DebugInfo";
 import { createTexture, createWebGLContext, gl, halfWindowHeight, halfWindowWidth, resizeCanvas, windowHeight, windowWidth } from "./webgl";
@@ -82,6 +82,7 @@ import { Point } from "../../shared/src/utils";
 import { CowStaminaBar_forceUpdate } from "./components/game/CowStaminaBar";
 import { CowComponentArray } from "./entity-components/server-components/CowComponent";
 import { updateBox } from "../../shared/src/boxes/boxes";
+import { processGameDataPacket } from "./networking/packet-receiving";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -102,6 +103,9 @@ let lastRenderTime = Math.floor(new Date().getTime() / 1000);
 
 let serverTickInterp = 0;
 
+// @Squeam
+let lastPosX = 0;
+
 // @Cleanup: remove.
 export function getFrameProgress(): number {
    return _frameProgress;
@@ -112,7 +116,6 @@ export function getCursorWorldPos(): Readonly<Point> {
 }
 
 export function resetServerTickInterp(): void {
-   console.log("interp before override: " + serverTickInterp.toFixed(4));
    serverTickInterp = 0;
    // @SQUEAM
    // serverTickInterp -= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE;
@@ -267,10 +270,37 @@ const runFrame = (currentTime: number): void => {
       }
 
       serverTickInterp += deltaTime / 1000 * Settings.TICK_RATE;
-      // For interps >= 1, we simulate a tick
-      while (serverTickInterp >= 1) {
-         serverTickInterp--;
-         // simulateTick();
+      if (serverTickInterp >= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE) {
+         console.log("(requiring new, interp=" + serverTickInterp.toFixed(4) + ")")
+         if (packetBuffer.length === 0) {
+            // No buffered packets - guess we have to get a jitter here.
+            console.log("missing packet :( :( :(")
+         } else {
+            // If too many buffered, get back up to date
+            while (packetBuffer.length > 2) {
+               const reader = packetBuffer[0];
+               processGameDataPacket(reader);
+               packetBuffer.splice(0, 1);
+               console.log("(SKIPPING PACKET!!)")
+            }
+            
+            
+            const reader = packetBuffer[0];
+            
+            // Done before so that server data can override particles
+            Board.updateParticles();
+            
+            processGameDataPacket(reader);
+            console.log("(PROCESS PACKET) #" + Board.serverTicks)
+            Board.tickEntities();
+
+            packetBuffer.splice(0, 1);
+         }
+         serverTickInterp -= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE;
+      }
+      
+      while (serverTickInterp >= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE) {
+         serverTickInterp -= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE;
       }
       
       // @SQUEAM testing if putting this at the start will reduce variability
@@ -279,11 +309,11 @@ const runFrame = (currentTime: number): void => {
       const clientTickInterp = Game.lag2 / 1000 * Settings.TICK_RATE;
 
       // @SQUEAM
-      const ticksSinceLastFrame = (renderStartTime - getLastPacketTime()) / 1000 * Settings.TICK_RATE;
+      // const ticksSinceLastFrame = (renderStartTime - getLastPacketTime()) / 1000 * Settings.TICK_RATE;
 
-      // Game.render(serverTickInterp, clientTickInterp);
-      console.log("RENDERED TICK = " + (Board.serverTicks + ticksSinceLastFrame))
-      Game.render(ticksSinceLastFrame, clientTickInterp);
+      // console.log("RENDER, server tick interp: " + serverTickInterp.toFixed(4));
+      Game.render(serverTickInterp, clientTickInterp);
+      // Game.render(ticksSinceLastFrame, clientTickInterp);
 
       const renderEndTime = performance.now();
 
@@ -625,8 +655,14 @@ abstract class Game {
          const tickInterp = getEntityTickInterp(Camera.trackedEntity, serverTickInterp, clientTickInterp);
          Camera.updatePosition(tickInterp);
          console.log("RENDERING.");
-         console.log("tick interp:",tickInterp.toFixed(4));
-         console.log("Camera pos:",Camera.position.x,Camera.position.y);
+         // console.log("tick interp:",tickInterp.toFixed(4));
+         console.log("server tick interp:",serverTickInterp.toFixed(4))
+         const delta = (Camera.position.x - lastPosX)
+         console.log("Camera delta:",delta);
+         if (delta < 3 || delta > 6) {
+            console.warn("aaaaaaaaaaaaa")
+         }
+         lastPosX = Camera.position.x
       } else {
          Camera.updateSpectatorPosition(deltaTime);
       }

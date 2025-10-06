@@ -56,7 +56,7 @@ export function getHoveredBuildingPlan(): BuildingPlanData | null {
    return closestPlanToCursor;
 }
 
-let lastT = 0;
+export const packetBuffer = new Array<PacketReader>();
 
 // @Cleanup: De-singleton-ify
 abstract class Client {
@@ -113,19 +113,20 @@ abstract class Client {
                   if (!Game.isRunning || !Game.isSynced || document.visibilityState === "hidden") {
                      return;
                   }
+
+                  packetBuffer.push(reader);
+                  // commenting out cuz what if doing it here cause problemos
+                  // if (packetBuffer.length > 2) {
+                  //    packetBuffer.splice(0, 1);
+                  // }
                   
                   lastPacketTime = performance.now();
 
-                  const dt = lastPacketTime - lastT;
-                  console.log("(PACKET RECEIVED dt=" + dt + ", reset interp)")
-                  lastT = lastPacketTime;
-                  // Done before so that server data can override particles
-                  Board.updateParticles();
+                  // // Done before so that server data can override particles
+                  // Board.updateParticles();
                   
-                  processGameDataPacket(reader);
-                  console.log("Now on server tick " + Board.serverTicks);
-                  Board.tickEntities();
-                  resetServerTickInterp();
+                  // processGameDataPacket(reader);
+                  // Board.tickEntities();
 
                   break;
                }

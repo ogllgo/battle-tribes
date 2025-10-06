@@ -20,7 +20,7 @@ import { TribeComponentArray } from "../components/TribeComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { forceMaxGrowAllIceSpikes } from "../components/IceSpikesComponent";
 import { sortComponentArrays } from "../components/ComponentArray";
-import { destroyFlaggedEntities, entityExists, getEntityLayer, pushEntityJoinBuffer, tickGameTime, tickEntities, generateLayers, preDestroyFlaggedEntities, createEntity } from "../world";
+import { destroyFlaggedEntities, entityExists, getEntityLayer, pushEntityJoinBuffer, tickGameTime, tickEntities, generateLayers, preDestroyFlaggedEntities, createEntity, getGameTicks } from "../world";
 import { resolveEntityCollisions } from "../collision-detection";
 import { runCollapses } from "../collapses";
 import { updateTribes } from "../tribes";
@@ -482,14 +482,19 @@ class GameServer {
       }
       preDestroyFlaggedEntities();
 
-      const deltaTime = tickTime - lastTickTime;
-      packetSendTimer -= deltaTime;
-      if (packetSendTimer <= 0) {
+      // @HACKKK @HACK only works for this specific network send rate!!
+      // seems to reduce jitters, cuz there were some moments when packets were sent at server ticks with a diff 3 instead of 2.
+      if (getGameTicks() % 2 === 0) {
          SERVER.sendGameDataPackets();
-         while (packetSendTimer <= 0) {
-            packetSendTimer += 1000 / Settings.SERVER_PACKET_SEND_RATE;
-         }
       }
+      // const deltaTime = tickTime - lastTickTime;
+      // packetSendTimer -= deltaTime;
+      // if (packetSendTimer <= 0) {
+      //    SERVER.sendGameDataPackets();
+      //    while (packetSendTimer <= 0) {
+      //       packetSendTimer += 1000 / Settings.SERVER_PACKET_SEND_RATE;
+      //    }
+      // }
 
       destroyFlaggedEntities();
 
