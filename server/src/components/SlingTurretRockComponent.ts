@@ -62,7 +62,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
       const owner = validateEntity(projectileComponent.creator);
       const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
       
-      damageEntity(collidingEntity, collidingHitbox, owner, 2, DamageSource.arrow, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingHitbox, owner, 2, DamageSource.arrow, AttackEffectiveness.effective, collisionPoint, 0);
       applyKnockback(collidingHitbox, 75, hitDirection);
 
       destroyEntity(slingTurretRock);

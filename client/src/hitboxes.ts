@@ -6,7 +6,8 @@ import { Point } from "../../shared/src/utils";
 import { Settings } from "../../shared/src/settings";
 import { TILE_PHYSICS_INFO_RECORD, TileType } from "../../shared/src/tiles";
 import { entityIsInRiver, getHitboxTile, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
-import { getEntityLayer } from "./world";
+import { getEntityLayer, getEntityRenderInfo } from "./world";
+import { registerDirtyRenderInfo } from "./rendering/render-part-matrices";
 
 export interface HitboxTether {
    readonly originBox: Box;
@@ -37,6 +38,8 @@ export interface Hitbox {
    readonly acceleration: Point;
    readonly tethers: Array<HitboxTether>;
 
+   /** The angle the hitbox had last frame render. Just used to interpolate hitbox rotations. That's why this isn't present in the server definition */
+   previousAngle: number;
    previousRelativeAngle: number;
    angularAcceleration: number;
 
@@ -63,6 +66,7 @@ export function createHitbox(localID: number, entity: Entity, rootEntity: Entity
       previousPosition: previousPosition,
       acceleration: acceleration,
       tethers: tethers,
+      previousAngle: box.angle,
       previousRelativeAngle: previousRelativeAngle,
       angularAcceleration: angularAcceleration,
       mass: mass,
@@ -90,6 +94,7 @@ export function createHitboxQuick(localID: number, parent: Hitbox | null, box: B
       previousPosition: box.position.copy(),
       acceleration: new Point(0, 0),
       tethers: [],
+      previousAngle: box.angle,
       previousRelativeAngle: box.relativeAngle,
       angularAcceleration: 0,
       mass: mass,
@@ -176,6 +181,26 @@ export function applyAccelerationFromGround(entity: Entity, hitbox: Hitbox, acce
    hitbox.acceleration.y += (desiredVelocityY - currentVelocity.y) * transformComponent.traction;
 }
 
+/** Makes the hitboxes' angle be that as specified, by only changing its relative angle */
+export function setHitboxAngle(hitbox: Hitbox, angle: number): void {
+   const add = angle - hitbox.box.angle;
+   hitbox.box.relativeAngle += add;
+   hitbox.previousRelativeAngle += add;
+
+   const renderInfo = getEntityRenderInfo(hitbox.entity);
+   registerDirtyRenderInfo(renderInfo);
+}
+
+/** Makes the hitboxes' angle be that as specified, by only changing its relative angle */
+export function setHitboxRelativeAngle(hitbox: Hitbox, angle: number): void {
+   const add = angle - hitbox.box.relativeAngle;
+   hitbox.box.relativeAngle += add;
+   hitbox.previousRelativeAngle += add;
+
+   const renderInfo = getEntityRenderInfo(hitbox.entity);
+   registerDirtyRenderInfo(renderInfo);
+}
+
 export function applyForce(hitbox: Hitbox, force: Point): void {
    const rootHitbox = getRootHitbox(hitbox);
    if (!rootHitbox.isStatic) {
@@ -190,3 +215,14 @@ export function applyForce(hitbox: Hitbox, force: Point): void {
 export function setHitboxAngularVelocity(hitbox: Hitbox, angularVelocity: number): void {
    hitbox.previousRelativeAngle = hitbox.box.angle - angularVelocity * Settings.DT_S;
 }
+
+// export function getHitboxAngularVelocity(hitbox: Hitbox): number {
+//    // Here we don't use getAngleDiff but just subtract them, so that e.g. adding 2pi to the relative angle will register as some angular velocity
+//    // @INCOMPLETE @INVESTIGATE but the above comment is wrong??? we do just use getAngleDiff??
+//    return getAngleDiff(hitbox.previousRelativeAngle, hitbox.box.relativeAngle) * Settings.TICK_RATE;
+// }
+// export function getHitboxRelativeAngularVelocity(hitbox: Hitbox): number {
+//    // Here we don't use getAngleDiff but just subtract them, so that e.g. adding 2pi to the relative angle will register as some angular velocity
+//    // @INCOMPLETE @INVESTIGATE but the above comment is wrong??? we do just use getAngleDiff??
+//    return getAngleDiff(hitbox.previousRelativeAngle, hitbox.box.relativeAngle) * Settings.TICK_RATE;
+// }

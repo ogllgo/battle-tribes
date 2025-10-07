@@ -620,7 +620,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    if (!canDamageEntity(healthComponent, hash)) {
       return;
    }
-   damageEntity(collidingEntity, collidingHitbox, okren, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingHitbox, okren, 1, DamageSource.cactus, AttackEffectiveness.effective, collisionPoint, 0);
    addLocalInvulnerabilityHash(collidingEntity, hash, 0.3);
 }
 

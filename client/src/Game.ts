@@ -6,8 +6,8 @@ import { createTextCanvasContext, updateTextNumbers, renderText } from "./text-c
 import Camera from "./Camera";
 import { updateSpamFilter } from "./components/game/ChatBox";
 import { createEntityShaders } from "./rendering/webgl/entity-rendering";
-import Client, { getLastPacketTime } from "./networking/Client";
-import { calculateCursorWorldPositionX, calculateCursorWorldPositionY, cursorX, cursorY, handleMouseMovement, renderCursorTooltip } from "./mouse";
+import Client, { getLastPacketTime, packetBuffer } from "./networking/Client";
+import { calculateCursorWorldPositionX, calculateCursorWorldPositionY, cursorScreenPos, handleMouseMovement, renderCursorTooltip } from "./mouse";
 import { refreshDebugInfo, setDebugInfoDebugData } from "./components/game/dev/DebugInfo";
 import { createTexture, createWebGLContext, gl, halfWindowHeight, halfWindowWidth, resizeCanvas, windowHeight, windowWidth } from "./webgl";
 import { loadTextures, preloadTextureImages } from "./textures";
@@ -50,7 +50,7 @@ import { createGrassBlockerShaders, renderGrassBlockers } from "./rendering/webg
 import { createTechTreeItemShaders, renderTechTreeItems, updateTechTreeItems } from "./rendering/webgl/tech-tree-item-rendering";
 import { createUBOs, updateUBOs } from "./rendering/ubos";
 import { createEntityOverlayShaders } from "./rendering/webgl/overlay-rendering";
-import { calculateHitboxRenderPosition, dirtifyMovingEntities, getEntityTickInterp, getMatrixPosition, updateRenderPartMatrices } from "./rendering/render-part-matrices";
+import { calculateHitboxRenderPosition, dirtifyMovingEntities, getEntityTickInterp, getMatrixPosition, registerDirtyRenderInfo, updateRenderPartMatrices } from "./rendering/render-part-matrices";
 import { renderNextRenderables, resetRenderOrder } from "./rendering/render-loop";
 import { MAX_RENDER_LAYER, RenderLayer } from "./render-layers";
 import { preloadTextureAtlasImages } from "./texture-atlases/texture-atlas-stitching";
@@ -75,10 +75,14 @@ import { updateDebugEntity } from "./entity-debugging";
 import { playerInstance } from "./player";
 import { TamingMenu_forceUpdate } from "./components/game/taming-menu/TamingMenu";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
-import { setHitboxAngularVelocity } from "./hitboxes";
+import { setHitboxAngle, setHitboxAngularVelocity } from "./hitboxes";
 import { callEntityOnUpdateFunctions, getComponentArrays } from "./entity-components/ComponentArray";
 import { resolveEntityCollisions, resolvePlayerCollisions } from "./collision";
 import { Point } from "../../shared/src/utils";
+import { CowStaminaBar_forceUpdate } from "./components/game/CowStaminaBar";
+import { CowComponentArray } from "./entity-components/server-components/CowComponent";
+import { updateBox } from "../../shared/src/boxes/boxes";
+import { processGameDataPacket } from "./networking/packet-receiving";
 
 // @Cleanup: remove.
 let _frameProgress = Number.EPSILON;
@@ -99,6 +103,9 @@ let lastRenderTime = Math.floor(new Date().getTime() / 1000);
 
 let serverTickInterp = 0;
 
+// @Squeam
+let lastPosX = 0;
+
 // @Cleanup: remove.
 export function getFrameProgress(): number {
    return _frameProgress;
@@ -110,6 +117,11 @@ export function getCursorWorldPos(): Readonly<Point> {
 
 export function resetServerTickInterp(): void {
    serverTickInterp = 0;
+   // @SQUEAM
+   // serverTickInterp -= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE;
+   // while (serverTickInterp < 0) {
+   //    serverTickInterp++;
+   // }
 }
 
 const createEventListeners = (): void => {
@@ -127,11 +139,11 @@ const createEventListeners = (): void => {
 
 // @Location
 /** Updates the rotation of the player to match the cursor position */
-const updatePlayerRotation = (cursorX: number, cursorY: number): void => {
-   if (playerInstance === null || cursorX === null || cursorY === null) return;
+const updatePlayerRotation = (): void => {
+   if (playerInstance === null) return;
 
-   const relativeCursorX = cursorX - halfWindowWidth;
-   const relativeCursorY = -cursorY + halfWindowHeight;
+   const relativeCursorX = cursorScreenPos.x - halfWindowWidth;
+   const relativeCursorY = -cursorScreenPos.y + halfWindowHeight;
 
    let cursorDirection = Math.atan2(relativeCursorY, relativeCursorX);
    cursorDirection = Math.PI/2 - cursorDirection;
@@ -139,24 +151,28 @@ const updatePlayerRotation = (cursorX: number, cursorY: number): void => {
    const transformComponent = TransformComponentArray.getComponent(playerInstance);
    const playerHitbox = transformComponent.hitboxes[0];
    
-   const previousRelativeAngle = playerHitbox.box.relativeAngle;
+   const previousAngle = playerHitbox.box.angle;
 
-   // @HACK: without this silliness occurs
-   if (playerHitbox.parent === null) {
+   setHitboxAngle(playerHitbox, cursorDirection);
+   // We've changed the relative angle, in a weird place where idk if its guaranteed that it will be cleaned in time for it to register correctly.
+   // so now do this
+   if (playerHitbox.parent !== null) {
+      updateBox(playerHitbox.box, playerHitbox.parent.box);
+   } else {
       playerHitbox.box.angle = playerHitbox.box.relativeAngle;
    }
-   playerHitbox.box.relativeAngle = cursorDirection - playerHitbox.box.angle + playerHitbox.box.relativeAngle;
 
    // Angular velocity
-   setHitboxAngularVelocity(playerHitbox, (playerHitbox.box.relativeAngle - previousRelativeAngle) * Settings.TICK_RATE);
+   // We don't use relativeAngle here cuz that wouldn't work for when the player is mounted.
+   setHitboxAngularVelocity(playerHitbox, (playerHitbox.box.angle - previousAngle) * Settings.TICK_RATE);
 
    const renderInfo = getEntityRenderInfo(playerInstance);
-   // @Temporary
-   // registerDirtyRenderInfo(renderInfo);
+   registerDirtyRenderInfo(renderInfo);
 }
 
 /** Update and tick all entities EXCEPT the player. */
 const simulateTick = (): void => {
+   console.log("(SIMULATING TICK)")
    const componentArrays = getComponentArrays();
    
    for (let i = 0; i < componentArrays.length; i++) {
@@ -189,6 +205,8 @@ const simulateTick = (): void => {
 
 const runFrame = (currentTime: number): void => {
    if (Game.isSynced) {
+      const renderStartTime = performance.now();
+      
       const deltaTime = currentTime - Game.lastTime;
       Game.lastTime = currentTime;
    
@@ -237,6 +255,7 @@ const runFrame = (currentTime: number): void => {
          InventorySelector_forceUpdate();
          // @Hack @Speed
          TamingMenu_forceUpdate();
+         CowStaminaBar_forceUpdate();
 
          updateTechTreeItems();
          
@@ -251,16 +270,50 @@ const runFrame = (currentTime: number): void => {
       }
 
       serverTickInterp += deltaTime / 1000 * Settings.TICK_RATE;
-      // For interps >= 1, we simulate a tick
-      while (serverTickInterp >= 1) {
-         serverTickInterp--;
-         simulateTick();
+      if (serverTickInterp >= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE) {
+         console.log("(requiring new, interp=" + serverTickInterp.toFixed(4) + ")")
+         if (packetBuffer.length === 0) {
+            // No buffered packets - guess we have to get a jitter here.
+            console.log("missing packet :( :( :(")
+         } else {
+            // If too many buffered, get back up to date
+            while (packetBuffer.length > 2) {
+               const reader = packetBuffer[0];
+               processGameDataPacket(reader);
+               packetBuffer.splice(0, 1);
+               console.log("(SKIPPING PACKET!!)")
+            }
+            
+            
+            const reader = packetBuffer[0];
+            
+            // Done before so that server data can override particles
+            Board.updateParticles();
+            
+            processGameDataPacket(reader);
+            console.log("(PROCESS PACKET) #" + Board.serverTicks)
+            Board.tickEntities();
+
+            packetBuffer.splice(0, 1);
+         }
+         serverTickInterp -= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE;
       }
       
-      const renderStartTime = performance.now();
+      while (serverTickInterp >= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE) {
+         serverTickInterp -= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE;
+      }
+      
+      // @SQUEAM testing if putting this at the start will reduce variability
+      // const renderStartTime = performance.now();
 
       const clientTickInterp = Game.lag2 / 1000 * Settings.TICK_RATE;
+
+      // @SQUEAM
+      // const ticksSinceLastFrame = (renderStartTime - getLastPacketTime()) / 1000 * Settings.TICK_RATE;
+
+      // console.log("RENDER, server tick interp: " + serverTickInterp.toFixed(4));
       Game.render(serverTickInterp, clientTickInterp);
+      // Game.render(ticksSinceLastFrame, clientTickInterp);
 
       const renderEndTime = performance.now();
 
@@ -276,8 +329,8 @@ const runFrame = (currentTime: number): void => {
       
       updatePlayerMovement();
 
-      cursorWorldPos.x = calculateCursorWorldPositionX(cursorX!) || 0;
-      cursorWorldPos.y = calculateCursorWorldPositionY(cursorY!) || 0;
+      cursorWorldPos.x = calculateCursorWorldPositionX(cursorScreenPos.x) || 0;
+      cursorWorldPos.y = calculateCursorWorldPositionY(cursorScreenPos.y) || 0;
       renderCursorTooltip();
    }
 
@@ -427,9 +480,7 @@ abstract class Game {
       resizeCanvas();
 
       // Set the player's initial rotation
-      if (cursorX !== null && cursorY !== null) {
-         updatePlayerRotation(cursorX, cursorY);
-      }
+      updatePlayerRotation();
                
       // Start the game loop
       this.isSynced = true;
@@ -562,9 +613,7 @@ abstract class Game {
     */
    public static render(serverTickInterp: number, clientTickInterp: number): void {
       // Player rotation is updated each render, but only sent each update
-      if (cursorX !== null && cursorY !== null) {
-         updatePlayerRotation(cursorX, cursorY);
-      }
+      updatePlayerRotation();
       
       const currentRenderTime = performance.now(); // @Speed
       if (Math.floor(currentRenderTime / 1000) !== Math.floor(lastRenderTime / 1000)) {
@@ -605,6 +654,15 @@ abstract class Game {
       if (!Camera.isSpectating) {
          const tickInterp = getEntityTickInterp(Camera.trackedEntity, serverTickInterp, clientTickInterp);
          Camera.updatePosition(tickInterp);
+         console.log("RENDERING.");
+         // console.log("tick interp:",tickInterp.toFixed(4));
+         console.log("server tick interp:",serverTickInterp.toFixed(4))
+         const delta = (Camera.position.x - lastPosX)
+         console.log("Camera delta:",delta);
+         if (delta < 3 || delta > 6) {
+            console.warn("aaaaaaaaaaaaa")
+         }
+         lastPosX = Camera.position.x
       } else {
          Camera.updateSpectatorPosition(deltaTime);
       }

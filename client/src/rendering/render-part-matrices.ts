@@ -4,7 +4,7 @@ import { Settings } from "battletribes-shared/settings";
 import { RenderPartParent, RenderPart } from "../render-parts/render-parts";
 import { renderLayerIsChunkRendered, updateChunkRenderedEntity } from "./webgl/chunked-entity-rendering";
 import { getEntityRenderInfo, getEntityType } from "../world";
-import { Point, randAngle } from "../../../shared/src/utils";
+import { getAngleDiff, Point, randAngle } from "../../../shared/src/utils";
 import { gl } from "../webgl";
 import { HealthComponentArray } from "../entity-components/server-components/HealthComponent";
 import { getHitboxVelocity, Hitbox } from "../hitboxes";
@@ -172,19 +172,22 @@ const calculateHitboxMatrix = (hitbox: Hitbox, tickInterp: number): Matrix3x2 =>
    overrideWithScaleMatrix(matrix, scale * (hitbox.box.flipX ? -1 : 1), scale);
 
    // Rotation
-   rotateMatrix(matrix, hitbox.box.angle)
+   // we don't want the relative angular velocity here, we want to interpolate the ACTUAL angle not the local thing.
+   const angularVelocity_t = getAngleDiff(hitbox.previousAngle, hitbox.box.angle);
+   const angle = hitbox.box.angle + (angularVelocity_t + hitbox.angularAcceleration * Settings.DT_S * Settings.DT_S) * tickInterp;
+   rotateMatrix(matrix, angle);
    // overrideWithRotationMatrix(matrix, hitbox.box.angle);
    
    // Scale
+   // @INCOMPLETE?
    // const scale = hitbox.box.scale;
    // scaleMatrix(matrix, scale * (hitbox.box.flipX ? -1 : 1), scale);
    // scaleMatrix(matrix, scale, scale);
    
+   // Translation
    const velocity = getHitboxVelocity(hitbox);
    const tx = hitbox.box.position.x + velocity.x * tickInterp * Settings.DT_S;
    const ty = hitbox.box.position.y + velocity.y * tickInterp * Settings.DT_S;
-
-   // Translation
    translateMatrix(matrix, tx, ty);
 
    return matrix;
@@ -276,8 +279,22 @@ export function updateRenderPartMatrices(serverTickInterp: number, clientTickInt
    for (let i = 0; i < dirtyEntityRenderInfos.length; i++) {
       const renderInfo = dirtyEntityRenderInfos[i];
 
-      const tickInterp = getEntityTickInterp(renderInfo.associatedEntity, serverTickInterp, clientTickInterp);
+      const tickInterp = getEntityTickInterp(renderInfo.entity, serverTickInterp, clientTickInterp);
       cleanEntityRenderInfo(renderInfo, tickInterp);
+   }
+
+   // Then update previous angles
+   // @SPEEDD!!!!
+   // (this is just for getting the angular velocity right...)
+   for (const renderInfo of dirtyEntityRenderInfos) {
+      // @HACK this shouldn't be needed...
+      if (TransformComponentArray.hasComponent(renderInfo.entity)) {
+         const transformComponent = TransformComponentArray.getComponent(renderInfo.entity);
+         
+         for (const hitbox of transformComponent.hitboxes) {
+            hitbox.previousAngle = hitbox.box.angle;
+         }
+      }
    }
 
    // Reset dirty entities

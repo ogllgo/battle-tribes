@@ -56,6 +56,6 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    }
    
    // @Incomplete: Cause of death, damage source
-   damageEntity(collidingEntity, collidingHitbox, spikes, 1, 0, AttackEffectiveness.effective, collisionPoint, 0)
+   damageEntity(collidingHitbox, spikes, 1, 0, AttackEffectiveness.effective, collisionPoint, 0)
    addLocalInvulnerabilityHash(collidingEntity, "woodenSpikes", 0.3);
 }

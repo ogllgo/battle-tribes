@@ -105,16 +105,15 @@ const moveFunc = (cow: Entity, pos: Point, accelerationMagnitude: number): void 
 
    // Move whole cow to the target
    const alignmentToTarget = findAngleAlignment(cowBodyHitbox.box.angle, bodyToTargetDirection);
-   const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget) * 0.75;
-   // const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget) * 0.75 * 0.65;
+   const accelerationMultiplier = lerp(0.3, 1, alignmentToTarget);
    applyAccelerationFromGround(cowBodyHitbox, polarVec2(accelerationMagnitude * accelerationMultiplier, bodyToTargetDirection));
    
    // Move head to the target
    const headHitbox = transformComponent.hitboxes[1];
    const headToTargetDirection = headHitbox.box.position.angleTo(pos);
    // @HACK @INCOMPLETE doesn't let ppl move the head faster or slower.
-   const headAcc = 1500 * 0.75;
-   // const headAcc = 1500 * 0.75 * 0.65;
+   // const headAcc = 1500 * 0.9;
+   const headAcc = 1500 * 0.5 * 0.65;
    applyAcceleration(headHitbox, polarVec2(headAcc, headToTargetDirection));
 }
 
@@ -144,7 +143,8 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
 
    // Head hitbox
    const headPosition = position.offset(idealHeadDist, angle);
-   const headHitbox = new Hitbox(transformComponent, null, true, new CircularBox(headPosition, new Point(0, 0), 0, 30), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
+   // @Hack(ish): head initial angle is set to the angle too cuz it's not a direct child
+   const headHitbox = new Hitbox(transformComponent, null, true, new CircularBox(headPosition, new Point(0, 0), angle, 30), 0.5, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.COW_HEAD]);
    headHitbox.box.pivot = createNormalisedPivotPoint(0, -0.5);
    addHitboxToTransformComponent(transformComponent, headHitbox);
 

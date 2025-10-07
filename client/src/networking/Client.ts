@@ -56,6 +56,8 @@ export function getHoveredBuildingPlan(): BuildingPlanData | null {
    return closestPlanToCursor;
 }
 
+export const packetBuffer = new Array<PacketReader>();
+
 // @Cleanup: De-singleton-ify
 abstract class Client {
    private static socket: WebSocket | null = null;
@@ -111,15 +113,20 @@ abstract class Client {
                   if (!Game.isRunning || !Game.isSynced || document.visibilityState === "hidden") {
                      return;
                   }
+
+                  packetBuffer.push(reader);
+                  // commenting out cuz what if doing it here cause problemos
+                  // if (packetBuffer.length > 2) {
+                  //    packetBuffer.splice(0, 1);
+                  // }
                   
                   lastPacketTime = performance.now();
 
-                  // Done before so that server data can override particles
-                  Board.updateParticles();
+                  // // Done before so that server data can override particles
+                  // Board.updateParticles();
                   
-                  processGameDataPacket(reader);
-                  Board.tickEntities();
-                  resetServerTickInterp();
+                  // processGameDataPacket(reader);
+                  // Board.tickEntities();
 
                   break;
                }
@@ -141,51 +148,6 @@ abstract class Client {
                }
             }
          }
-
-         // let socketAlreadyExists = false;
-
-         // // Don't add events if the socket already exists
-         // if (this.socket !== null) {
-         //    socketAlreadyExists = true;
-            
-         //    // Reconnect
-         //    if (!this.socket.connected) {
-         //       this.socket.connect();
-         //    }
-
-         //    this.socket.off("connect");
-         //    this.socket.off("connect_error");
-         // } else {
-         //    // Create the socket
-         //    this.socket = this.createSocket();
-         //    this.socket.connect();
-         // }
-
-         // // If connection was successful, return true
-         // this.socket.on("connect", () => {
-         //    resolve(true);
-         // });
-         // // If couldn't connect to server, return false
-         // this.socket.on("connect_error", (err) => {
-         //    console.log(err);
-         //    resolve(false);
-         // });
-         
-         // if (!socketAlreadyExists) {
-         //    this.socket.on("game_data_packet", gameDataPacket => {
-         //       // Only unload game packets when the game is running
-         //       if (Game.getIsPaused() || !Game.isRunning || !Game.isSynced || document.visibilityState === "hidden") return;
-
-         //       registerServerTick();
-
-         //       Game.queuedPackets.push(gameDataPacket);
-         //    });
-
-         //    this.socket.on("game_data_sync_packet", (gameDataSyncPacket: GameDataSyncPacket) => {
-         //       this.registerGameDataSyncPacket(gameDataSyncPacket);
-         //    });
-
-         // }
       });
    }
 

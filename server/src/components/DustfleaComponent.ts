@@ -248,7 +248,7 @@ function onWallCollision(dustflea: Entity): void {
 
    // Die when crushed against a wall
    if (dustfleaHitbox.parent !== null) {
-      damageEntity(dustflea, dustfleaHitbox, null, 999, 0, AttackEffectiveness.effective, dustfleaHitbox.box.position.copy(), 0);
+      damageEntity(dustfleaHitbox, null, 999, 0, AttackEffectiveness.effective, dustfleaHitbox.box.position.copy(), 0);
    }
 }
 

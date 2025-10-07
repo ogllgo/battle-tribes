@@ -63,7 +63,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
    // Damage the entity
    // @Temporary
    const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
-   damageEntity(collidingEntity, collidingHitbox, tribeMember, damage, DamageSource.spear, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingHitbox, tribeMember, damage, DamageSource.spear, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingHitbox, 200, hitDirection);
    
    destroyEntity(spear);

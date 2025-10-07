@@ -14,18 +14,17 @@ import PlayerClient, { PlayerClientVars } from "./PlayerClient";
 import { addPlayerClient, generatePlayerSpawnPosition, getPlayerClients, handlePlayerDisconnect, resetDirtyEntities } from "./player-clients";
 import { createPlayerConfig } from "../entities/tribes/player";
 import { processAcquireTamingSkillPacket, processAnimalStaffFollowCommandPacket, processAscendPacket, processCompleteTamingTierPacket, processDevGiveItemPacket, processDevSetViewedSpawnDistribution, processDismountCarrySlotPacket, processEntitySummonPacket, processForceAcquireTamingSkillPacket, processForceCompleteTamingTierPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processModifyBuildingPacket, processMountCarrySlotPacket, processPickUpEntityPacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRenameAnimalPacket, processRespawnPacket, processSelectTechPacket, processSetAttackTargetPacket, processSetAutogiveBaseResourcesPacket, processSetCarryTargetPacket, processSetMoveTargetPositionPacket, processSetSignMessagePacket, processSetSpectatingPositionPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processTechStudyPacket, processTechUnlockPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket, receiveChatMessagePacket, receiveSelectRiderDepositLocation } from "./packet-receiving";
-import { Entity } from "battletribes-shared/entities";
+import { CowSpecies, Entity } from "battletribes-shared/entities";
 import { SpikesComponentArray } from "../components/SpikesComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
-import { generateDecorations } from "../world-generation/decoration-generation";
 import { forceMaxGrowAllIceSpikes } from "../components/IceSpikesComponent";
 import { sortComponentArrays } from "../components/ComponentArray";
-import { destroyFlaggedEntities, entityExists, getEntityLayer, pushEntityJoinBuffer, tickGameTime, tickEntities, generateLayers, preDestroyFlaggedEntities, createEntity } from "../world";
+import { destroyFlaggedEntities, entityExists, getEntityLayer, pushEntityJoinBuffer, tickGameTime, tickEntities, generateLayers, preDestroyFlaggedEntities, createEntity, getGameTicks } from "../world";
 import { resolveEntityCollisions } from "../collision-detection";
 import { runCollapses } from "../collapses";
 import { updateTribes } from "../tribes";
-import { surfaceLayer, layers, undergroundLayer } from "../layers";
+import { surfaceLayer, layers } from "../layers";
 import { generateReeds } from "../world-generation/reed-generation";
 import { riverMainTiles } from "../world-generation/surface-layer-generation";
 import { updateWind } from "../wind";
@@ -35,6 +34,7 @@ import { createTukmokConfig } from "../entities/tundra/tukmok";
 import { generateGrassStrands } from "../world-generation/grass-generation";
 import { Hitbox } from "../hitboxes";
 import OPTIONS from "../options";
+import { createCowConfig } from "../entities/mobs/cow";
 
 /*
 
@@ -91,6 +91,7 @@ const getPlayerVisibleEntities = (playerClient: PlayerClient): Set<Entity> => {
                for (const rootHitbox of transformComponent.rootHitboxes) {
                   const rootEntity = rootHitbox.rootEntity;
                   const rootTransformComponent = TransformComponentArray.getComponent(rootEntity);
+                  // @Crash rootTransformComponent is undefined sometimes idfky
                   // @Cleanup lolllllllll
                   for (const rootRootHitbox of rootTransformComponent.rootHitboxes) {
                      addHitboxHeirarchyToEntities(playerClient, visibleEntities, rootRootHitbox);
@@ -184,6 +185,9 @@ class GameServer {
          port: Settings.SERVER_PORT
       });
 
+      // @SQUEAM
+      let BB = false;
+
       // Handle player connections
       this.server.on("connection", (socket: WebSocket) => {
          let playerClient: PlayerClient | undefined;
@@ -230,53 +234,11 @@ class GameServer {
 
                // @SQUEAM
                setTimeout(() => {
-                  if (1+1===2)return;
-                  
-               // // const trib = new Tribe(TribeType.plainspeople, false, spawnPosition.copy());
-
-                  const tukConfig = createTukmokConfig(new Point(spawnPosition.x + 150, spawnPosition.y - 50), Math.PI * 1.25);
-                  for (const c of tukConfig) {
-                     createEntity(c, layer, 0);
-                  }
-
-               //    setTimeout(() => {
-               //    }, 100)
-
-               //    setTimeout(() => {
-               //       const pos3 = spawnPosition.copy();
-               //       pos3.x -= 150;
-               //       const t3 = createTribeWorkerConfig(pos3, 0, tribe);
-               //       createEntity(t3, layer, 0);
-               //    }, 316)
-
-               //    setTimeout(() => {
-               //       const pos4 = spawnPosition.copy();
-               //       pos4.x -= 200;
-               //       const t4 = createTribeWorkerConfig(pos4, 0, tribe);
-               //       createEntity(t4, layer, 0);
-               //    }, 602)
-
-                  setTimeout(() => {
-                     const p = spawnPosition.copy();
-                     p.y -= 300;
-                     const tribe = new Tribe(TribeType.barbarians, false, p);
-                     
-                     const pos2 = p.copy();
-                     pos2.x -= 100;
-                     pos2.y += randFloat(-30, 30);
-                     const t2 = createTribeWorkerConfig(pos2, 0, tribe);
-                     createEntity(t2, layer, 0);
-
-                     setTimeout(() => {
-                        const pos3 = p.copy();
-                        pos3.x += 375;
-                        pos3.y -= 80;
-                        pos3.y -= randFloat(-30, 30);
-                        const t3 = createTribeWorkerConfig(pos3, 0, tribe);
-                        createEntity(t3, layer, 0);
-                     }, 4000)
-                  }, 5000);
-               }, 6000);
+                  if (BB) return;
+                  BB = true;
+                  const cowConfig = createCowConfig(new Point(spawnPosition.x, spawnPosition.y + 200), Math.PI * 0.5, CowSpecies.brown);
+                  createEntity(cowConfig, layer, 0);
+               }, 4000);
                
                addPlayerClient(playerClient, surfaceLayer, spawnPosition);
 
@@ -520,14 +482,19 @@ class GameServer {
       }
       preDestroyFlaggedEntities();
 
-      const deltaTime = tickTime - lastTickTime;
-      packetSendTimer -= deltaTime;
-      if (packetSendTimer <= 0) {
+      // @HACKKK @HACK only works for this specific network send rate!!
+      // seems to reduce jitters, cuz there were some moments when packets were sent at server ticks with a diff 3 instead of 2.
+      if (getGameTicks() % 2 === 0) {
          SERVER.sendGameDataPackets();
-         while (packetSendTimer <= 0) {
-            packetSendTimer += 1000 / Settings.SERVER_PACKET_SEND_RATE;
-         }
       }
+      // const deltaTime = tickTime - lastTickTime;
+      // packetSendTimer -= deltaTime;
+      // if (packetSendTimer <= 0) {
+      //    SERVER.sendGameDataPackets();
+      //    while (packetSendTimer <= 0) {
+      //       packetSendTimer += 1000 / Settings.SERVER_PACKET_SEND_RATE;
+      //    }
+      // }
 
       destroyFlaggedEntities();
 

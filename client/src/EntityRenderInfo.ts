@@ -27,7 +27,7 @@ export function createComponentTint(tintR: number, tintG: number, tintB: number)
 
 /** Internally contains all the information required to render an entity to the screen. */
 export class EntityRenderInfo {
-   public readonly associatedEntity: Entity;
+   public readonly entity: Entity;
    public readonly renderLayer: RenderLayer;
    public readonly renderHeight: number;
 
@@ -58,7 +58,7 @@ export class EntityRenderInfo {
    public readonly vertexData: Float32Array;
 
    constructor(associatedEntity: Entity, renderLayer: RenderLayer, renderHeight: number, maxRenderParts: number) {
-      this.associatedEntity = associatedEntity;
+      this.entity = associatedEntity;
       this.renderLayer = renderLayer;
       this.renderHeight = renderHeight;
       this.maxRenderParts = maxRenderParts;
@@ -169,7 +169,7 @@ export class EntityRenderInfo {
          }
       }
 
-      throw new Error("No render part with tag '" + tag + "' could be found on entity type " + EntityTypeString[getEntityType(this.associatedEntity)]);
+      throw new Error("No render part with tag '" + tag + "' could be found on entity type " + EntityTypeString[getEntityType(this.entity)]);
    }
 
    public getRenderThings(tag: string, expectedAmount?: number): Array<RenderPart> {
@@ -183,7 +183,7 @@ export class EntityRenderInfo {
       }
 
       if (typeof expectedAmount !== "undefined" && renderThings.length !== expectedAmount) {
-         throw new Error("Expected " + expectedAmount + " render parts with tag '" + tag + "' on " + EntityTypeString[getEntityType(this.associatedEntity)] + " but got " + renderThings.length);
+         throw new Error("Expected " + expectedAmount + " render parts with tag '" + tag + "' on " + EntityTypeString[getEntityType(this.entity)] + " but got " + renderThings.length);
       }
       
       return renderThings;
@@ -195,7 +195,7 @@ export class EntityRenderInfo {
          this.renderPartOverlayGroups.splice(idx, 1);
       }
       
-      removeRenderable(getEntityLayer(this.associatedEntity), overlayGroup, this.renderLayer);
+      removeRenderable(getEntityLayer(this.entity), overlayGroup, this.renderLayer);
    }
 
    public recalculateTint(): void {
@@ -207,8 +207,8 @@ export class EntityRenderInfo {
       const serverComponentArrays = getServerComponentArrays();
       for (let i = 0; i < serverComponentArrays.length; i++) {
          const componentArray = serverComponentArrays[i];
-         if (componentArray.hasComponent(this.associatedEntity) && typeof componentArray.calculateTint !== "undefined") {
-            const tint = componentArray.calculateTint!(this.associatedEntity);
+         if (componentArray.hasComponent(this.entity) && typeof componentArray.calculateTint !== "undefined") {
+            const tint = componentArray.calculateTint!(this.entity);
 
             this.tintR += tint.tintR;
             this.tintG += tint.tintG;

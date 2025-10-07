@@ -65,7 +65,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
 
    const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
 
-   damageEntity(collidingEntity, collidingHitbox, fragment, 3, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+   damageEntity(collidingHitbox, fragment, 3, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
    applyKnockback(collidingHitbox, 100, hitDirection);
    addLocalInvulnerabilityHash(collidingEntity, fragment.toString(), 0.3);
 }

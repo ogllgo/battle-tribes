@@ -428,8 +428,6 @@ export function resolveEntityBorderCollisions(transformComponent: TransformCompo
    }
 }
 
-
-
 const tickHitboxAngularPhysics = (hitbox: Hitbox, transformComponent: TransformComponent): void => {
    if (hitbox.box.relativeAngle === hitbox.previousRelativeAngle && hitbox.angularAcceleration === 0) {
       return;

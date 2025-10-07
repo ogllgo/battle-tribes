@@ -170,7 +170,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
       if (canDamageEntity(healthComponent, "ice_spikes")) {
          const hitDirection = hitbox.box.position.angleTo(collidingHitbox.box.position);
          
-         damageEntity(collidingEntity, collidingHitbox, hitbox.entity, 1, DamageSource.iceSpikes, AttackEffectiveness.effective, collisionPoint, 0);
+         damageEntity(collidingHitbox, hitbox.entity, 1, DamageSource.iceSpikes, AttackEffectiveness.effective, collisionPoint, 0);
          applyKnockback(collidingHitbox, 180, hitDirection);
          addLocalInvulnerabilityHash(collidingEntity, "ice_spikes", 0.3);
    

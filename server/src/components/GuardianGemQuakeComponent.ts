@@ -55,7 +55,7 @@ function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoi
          return;
       }
 
-      damageEntity(collidingEntity, collidingHitbox, guardian, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
+      damageEntity(collidingHitbox, guardian, 2, DamageSource.yeti, AttackEffectiveness.effective, collisionPoint, 0);
       addLocalInvulnerabilityHash(collidingEntity, "gemQuake", 0.3);
    }
 }

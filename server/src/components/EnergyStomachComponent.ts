@@ -48,7 +48,7 @@ function onTick(entity: Entity): void {
          const transformComponent = TransformComponentArray.getComponent(entity);
          // @Hack
          const hitbox = transformComponent.hitboxes[0];
-         damageEntity(entity, hitbox, null, energyStomachComponent.hungerDamage, 0, AttackEffectiveness.effective, getRandomPositionInBox(hitbox.box), 0);
+         damageEntity(hitbox, null, energyStomachComponent.hungerDamage, 0, AttackEffectiveness.effective, getRandomPositionInBox(hitbox.box), 0);
       } else {
          energyStomachComponent.damageTickTimer--;
       }
