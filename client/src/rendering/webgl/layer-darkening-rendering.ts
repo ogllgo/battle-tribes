@@ -52,7 +52,7 @@ export function createDarkeningShaders(): void {
    gl.bindVertexArray(null);
 }
 
-export function renderDarkening(): void {
+export function renderLayerDarkening(): void {
    gl.useProgram(program);
 
    gl.enable(gl.BLEND);

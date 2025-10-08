@@ -244,6 +244,8 @@ export function updateBoxFromData(box: Box, reader: PacketReader): void {
 }
 
 export function updateHitboxExceptLocalIDFromData(hitbox: Hitbox, reader: PacketReader): void {
+   hitbox.previousAngle = hitbox.box.angle;
+   
    updateBoxFromData(hitbox.box, reader);
 
    hitbox.previousPosition.x = reader.readNumber();
@@ -311,6 +313,8 @@ export function updateHitboxExceptLocalIDFromData(hitbox: Hitbox, reader: Packet
 }
 
 export function updatePlayerHitboxFromData(hitbox: Hitbox, reader: PacketReader): void {
+   hitbox.previousAngle = hitbox.box.angle;
+   
    padBoxData(reader);
 
    reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT);

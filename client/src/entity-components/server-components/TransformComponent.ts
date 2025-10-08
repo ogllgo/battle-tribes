@@ -9,22 +9,21 @@ import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { boxIsCircular, updateBox, Box } from "battletribes-shared/boxes/boxes";
 import Layer, { getTileIndexIncludingEdges } from "../../Layer";
-import { entityExists, EntityParams, getCurrentLayer, getEntityLayer, getEntityRenderInfo, getEntityType, surfaceLayer } from "../../world";
+import { EntityParams, getCurrentLayer, getEntityAgeTicks, getEntityLayer, getEntityRenderInfo, getEntityType, surfaceLayer } from "../../world";
 import Board from "../../Board";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../../shared/src/collision";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playerInstance } from "../../player";
-import { applyAccelerationFromGround, getHitboxVelocity, getRootHitbox, Hitbox, HitboxTether, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox } from "../../hitboxes";
-import { padHitboxDataExceptLocalID, readBoxFromData, readHitboxFromData, updateHitboxExceptLocalIDFromData, updatePlayerHitboxFromData } from "../../networking/packet-hitboxes";
+import { applyAccelerationFromGround, getHitboxVelocity, getRootHitbox, Hitbox, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox } from "../../hitboxes";
+import { padHitboxDataExceptLocalID, readHitboxFromData, updateHitboxExceptLocalIDFromData, updatePlayerHitboxFromData } from "../../networking/packet-hitboxes";
 import Particle from "../../Particle";
 import { createWaterSplashParticle } from "../../particles";
 import { addTexturedParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { playSoundOnHitbox } from "../../sound";
 import { resolveWallCollisions } from "../../collision";
 import { keyIsPressed } from "../../keyboard-input";
-import Camera from "../../Camera";
 
 export interface TransformComponentParams {
    readonly hitboxes: Array<Hitbox>;
@@ -515,13 +514,13 @@ function onTick(entity: Entity): void {
 
    // Water droplet particles
    // @Cleanup: Don't hardcode fish condition
-   if (entityIsInRiver(transformComponent, entity) && customTickIntervalHasPassed(Board.clientTicks, 0.05) && (getEntityType(entity) !== EntityType.fish)) {
+   if (entityIsInRiver(transformComponent, entity) && customTickIntervalHasPassed(getEntityAgeTicks(entity), 0.05) && (getEntityType(entity) !== EntityType.fish)) {
       createWaterSplashParticle(hitbox.box.position.x, hitbox.box.position.y);
    }
    
    // Water splash particles
    // @Cleanup: Move to particles file
-   if (entityIsInRiver(transformComponent, entity) && customTickIntervalHasPassed(Board.clientTicks, 0.15) && getHitboxVelocity(hitbox).magnitude() > 0&& getEntityType(entity) !== EntityType.fish) {
+   if (entityIsInRiver(transformComponent, entity) && customTickIntervalHasPassed(getEntityAgeTicks(entity), 0.15) && getHitboxVelocity(hitbox).magnitude() > 0&& getEntityType(entity) !== EntityType.fish) {
       const lifetime = 2.5;
 
       const particle = new Particle(lifetime);

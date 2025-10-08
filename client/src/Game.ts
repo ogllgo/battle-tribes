@@ -6,14 +6,14 @@ import { createTextCanvasContext, updateTextNumbers, renderText } from "./text-c
 import Camera from "./Camera";
 import { updateSpamFilter } from "./components/game/ChatBox";
 import { createEntityShaders } from "./rendering/webgl/entity-rendering";
-import Client, { getLastPacketTime, packetBuffer } from "./networking/Client";
+import Client from "./networking/Client";
 import { calculateCursorWorldPositionX, calculateCursorWorldPositionY, cursorScreenPos, handleMouseMovement, renderCursorTooltip } from "./mouse";
 import { refreshDebugInfo, setDebugInfoDebugData } from "./components/game/dev/DebugInfo";
 import { createTexture, createWebGLContext, gl, halfWindowHeight, halfWindowWidth, resizeCanvas, windowHeight, windowWidth } from "./webgl";
 import { loadTextures, preloadTextureImages } from "./textures";
 import { GameScreen_getGameInteractState, GameScreen_update, toggleSettingsMenu } from "./components/game/GameScreen";
 import { createHitboxShaders, renderHitboxes } from "./rendering/webgl/box-wireframe-rendering";
-import { clearServerTicks, updateDebugScreenFPS, updateDebugScreenRenderTime } from "./components/game/dev/GameInfoDisplay";
+import { updateDebugScreen, updateDebugScreenRenderTime } from "./components/game/dev/GameInfoDisplay";
 import { createWorldBorderShaders, renderWorldBorder } from "./rendering/webgl/world-border-rendering";
 import { clearSolidTileRenderingData, createSolidTileShaders, renderSolidTiles } from "./rendering/webgl/solid-tile-rendering";
 import { calculateVisibleRiverInfo, createRiverShaders, renderLowerRiverFeatures, renderUpperRiverFeatures } from "./rendering/webgl/river-rendering";
@@ -50,15 +50,15 @@ import { createGrassBlockerShaders, renderGrassBlockers } from "./rendering/webg
 import { createTechTreeItemShaders, renderTechTreeItems, updateTechTreeItems } from "./rendering/webgl/tech-tree-item-rendering";
 import { createUBOs, updateUBOs } from "./rendering/ubos";
 import { createEntityOverlayShaders } from "./rendering/webgl/overlay-rendering";
-import { calculateHitboxRenderPosition, dirtifyMovingEntities, getEntityTickInterp, getMatrixPosition, registerDirtyRenderInfo, updateRenderPartMatrices } from "./rendering/render-part-matrices";
+import { dirtifyMovingEntities, getEntityTickInterp, registerDirtyRenderInfo, updateRenderPartMatrices } from "./rendering/render-part-matrices";
 import { renderNextRenderables, resetRenderOrder } from "./rendering/render-loop";
 import { MAX_RENDER_LAYER, RenderLayer } from "./render-layers";
 import { preloadTextureAtlasImages } from "./texture-atlases/texture-atlas-stitching";
 import { updatePlayerMovement, updatePlayerItems, playerIsHoldingPlaceableItem } from "./components/game/GameInteractableLayer";
 import { refreshChunkedEntityRenderingBuffers } from "./rendering/webgl/chunked-entity-rendering";
-import { entityExists, getCurrentLayer, getEntityLayer, getEntityRenderInfo, layers } from "./world";
+import { entityExists, getCurrentLayer, getEntityRenderInfo, layers } from "./world";
 import Layer from "./Layer";
-import { createDarkeningShaders, renderDarkening } from "./rendering/webgl/darkening-rendering";
+import { createDarkeningShaders, renderLayerDarkening } from "./rendering/webgl/layer-darkening-rendering";
 import { createLightDebugShaders, renderLightingDebug } from "./rendering/webgl/light-debug-rendering";
 import { createTileBreakProgressShaders, renderTileBreakProgress } from "./rendering/webgl/tile-break-progress-rendering";
 import { createCollapseParticles } from "./collapses";
@@ -80,12 +80,9 @@ import { callEntityOnUpdateFunctions, getComponentArrays } from "./entity-compon
 import { resolveEntityCollisions, resolvePlayerCollisions } from "./collision";
 import { Point } from "../../shared/src/utils";
 import { CowStaminaBar_forceUpdate } from "./components/game/CowStaminaBar";
-import { CowComponentArray } from "./entity-components/server-components/CowComponent";
 import { updateBox } from "../../shared/src/boxes/boxes";
 import { processGameDataPacket } from "./networking/packet-receiving";
-
-// @Cleanup: remove.
-let _frameProgress = Number.EPSILON;
+import { PacketReader } from "../../shared/src/packets";
 
 let listenersHaveBeenCreated = false;
 
@@ -99,29 +96,41 @@ let lastTextureHeight = 0;
 
 const cursorWorldPos = new Point(0, 0);
 
-let lastRenderTime = Math.floor(new Date().getTime() / 1000);
+let lastFrameTime = performance.now();
 
+let clientTickInterp = 0;
 let serverTickInterp = 0;
 
-// @Squeam
-let lastPosX = 0;
+const bufferedPackets = new Array<PacketReader>();
 
-// @Cleanup: remove.
-export function getFrameProgress(): number {
-   return _frameProgress;
+const TPS_ADJUST_REACTIVENESS = 10;
+let lastPacketTime = 0;
+let measuredServerPacketIntervalMS = 1000 / Settings.SERVER_PACKET_SEND_RATE; // Start it off at the value we expect it to be at
+
+export function receivePacket(reader: PacketReader): void {
+   bufferedPackets.push(reader);
+
+   const timeNow = performance.now();
+   
+   const delta = timeNow - lastPacketTime;
+
+   // Calculate new server packet interval using la "Exponential Moving Average"
+   const smoothingFactor = 2 / (TPS_ADJUST_REACTIVENESS + 1);
+   measuredServerPacketIntervalMS = measuredServerPacketIntervalMS * (1 - smoothingFactor) + smoothingFactor * delta;
+   
+   lastPacketTime = timeNow;
+}
+
+export function getNumBufferedPackets(): number {
+   return bufferedPackets.length;
+}
+
+export function getMeasuredServerTPS(): number {
+   return 1000 / measuredServerPacketIntervalMS;
 }
 
 export function getCursorWorldPos(): Readonly<Point> {
    return cursorWorldPos;
-}
-
-export function resetServerTickInterp(): void {
-   serverTickInterp = 0;
-   // @SQUEAM
-   // serverTickInterp -= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE;
-   // while (serverTickInterp < 0) {
-   //    serverTickInterp++;
-   // }
 }
 
 const createEventListeners = (): void => {
@@ -170,9 +179,9 @@ const updatePlayerRotation = (): void => {
    registerDirtyRenderInfo(renderInfo);
 }
 
+// @Cleanup this doesn't exist now?
 /** Update and tick all entities EXCEPT the player. */
 const simulateTick = (): void => {
-   console.log("(SIMULATING TICK)")
    const componentArrays = getComponentArrays();
    
    for (let i = 0; i < componentArrays.length; i++) {
@@ -203,23 +212,28 @@ const simulateTick = (): void => {
    }
 }
 
-const runFrame = (currentTime: number): void => {
+const runFrame = (frameStartTime: number): void => {
    if (Game.isSynced) {
       const renderStartTime = performance.now();
       
-      const deltaTime = currentTime - Game.lastTime;
-      Game.lastTime = currentTime;
+      const deltaTimeMS = frameStartTime - lastFrameTime;
+      lastFrameTime = frameStartTime;
    
       // send player packets to server
-      Game.lag += deltaTime;
-      while (Game.lag >= 1000 / Settings.CLIENT_PACKET_SEND_RATE) {
+      Game.playerPacketAccumulator += deltaTimeMS;
+      while (Game.playerPacketAccumulator >= 1000 / Settings.CLIENT_PACKET_SEND_RATE) {
          Client.sendPlayerDataPacket();
-         Game.lag -= 1000 / Settings.CLIENT_PACKET_SEND_RATE;
+         Game.playerPacketAccumulator -= 1000 / Settings.CLIENT_PACKET_SEND_RATE;
       }
 
+      // @Cleanup: try to cancel out tick_rate and server_packet_send_rate from these.
+      
+      // To account for the ACTUAL tps of the server
+      const lagFactor = 1000 / measuredServerPacketIntervalMS / Settings.SERVER_PACKET_SEND_RATE;
+
       // Tick the player (independently from all other entities)
-      Game.lag2 += deltaTime;
-      while (Game.lag2 >= 1000 / Settings.TICK_RATE) {
+      clientTickInterp += deltaTimeMS / 1000 * lagFactor;
+      while (clientTickInterp >= 1 / Settings.SERVER_PACKET_SEND_RATE) {
          if (playerInstance !== null) {
             const trackedEntityTransformComponent = TransformComponentArray.getComponent(Camera.trackedEntity);
             const trackedEntityHitbox = trackedEntityTransformComponent.hitboxes[0];
@@ -230,9 +244,7 @@ const runFrame = (currentTime: number): void => {
             }
          }
 
-         Game.lag2 -= 1000 / Settings.TICK_RATE;
-         
-         Board.clientTicks++;
+         clientTickInterp -= 1 / Settings.SERVER_PACKET_SEND_RATE;
          
          updateSpamFilter();
 
@@ -269,54 +281,37 @@ const runFrame = (currentTime: number): void => {
          updateDebugEntity();
       }
 
-      serverTickInterp += deltaTime / 1000 * Settings.TICK_RATE;
+      serverTickInterp += deltaTimeMS / 1000 * Settings.TICK_RATE * lagFactor;
       if (serverTickInterp >= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE) {
-         console.log("(requiring new, interp=" + serverTickInterp.toFixed(4) + ")")
-         if (packetBuffer.length === 0) {
+         if (bufferedPackets.length === 0) {
             // No buffered packets - guess we have to get a jitter here.
-            console.log("missing packet :( :( :(")
          } else {
             // If too many buffered, get back up to date
-            while (packetBuffer.length > 2) {
-               const reader = packetBuffer[0];
+            while (bufferedPackets.length > 2) {
+               const reader = bufferedPackets[0];
                processGameDataPacket(reader);
-               packetBuffer.splice(0, 1);
-               console.log("(SKIPPING PACKET!!)")
+               bufferedPackets.splice(0, 1);
             }
             
-            
-            const reader = packetBuffer[0];
+            const reader = bufferedPackets[0];
             
             // Done before so that server data can override particles
             Board.updateParticles();
             
             processGameDataPacket(reader);
-            console.log("(PROCESS PACKET) #" + Board.serverTicks)
             Board.tickEntities();
 
-            packetBuffer.splice(0, 1);
+            bufferedPackets.splice(0, 1);
          }
          serverTickInterp -= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE;
       }
-      
       while (serverTickInterp >= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE) {
          serverTickInterp -= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE;
       }
       
-      // @SQUEAM testing if putting this at the start will reduce variability
-      // const renderStartTime = performance.now();
-
-      const clientTickInterp = Game.lag2 / 1000 * Settings.TICK_RATE;
-
-      // @SQUEAM
-      // const ticksSinceLastFrame = (renderStartTime - getLastPacketTime()) / 1000 * Settings.TICK_RATE;
-
-      // console.log("RENDER, server tick interp: " + serverTickInterp.toFixed(4));
-      Game.render(serverTickInterp, clientTickInterp);
-      // Game.render(ticksSinceLastFrame, clientTickInterp);
+      Game.render(clientTickInterp, serverTickInterp);
 
       const renderEndTime = performance.now();
-
       const renderTime = renderEndTime - renderStartTime;
       registerFrame(renderStartTime, renderEndTime);
       updateFrameGraph();
@@ -451,8 +446,6 @@ const renderLayer = (layer: Layer, frameProgress: number): void => {
 }
 
 abstract class Game {
-   public static lastTime = 0;
-
    public static isRunning = false;
 
    /** If the game has recevied up-to-date game data from the server. Set to false when paused */
@@ -462,8 +455,7 @@ abstract class Game {
    public static hasInitialised = false;
 
    /** Amount of time the game is through the current frame */
-   public static lag = 0;
-   public static lag2 = 0;
+   public static playerPacketAccumulator = 0;
 
    public static setGameObjectDebugData(newEntityDebugData: EntityDebugData | null): void {
       entityDebugData = newEntityDebugData;
@@ -485,7 +477,7 @@ abstract class Game {
       // Start the game loop
       this.isSynced = true;
       this.isRunning = true;
-      this.lastTime = performance.now();
+      lastFrameTime = performance.now();
       requestAnimationFrame(runFrame);
    }
 
@@ -494,7 +486,7 @@ abstract class Game {
    }
    
    public static sync(): void {
-      Game.lastTime = performance.now();
+      lastFrameTime = performance.now();
       this.isSynced = true;
    }
    
@@ -611,17 +603,10 @@ abstract class Game {
     * 
     * @param serverTickInterp How far the game is into the current frame (0 = frame just started, 0.99 means frame is about to end)
     */
-   public static render(serverTickInterp: number, clientTickInterp: number): void {
+   public static render(clientTickInterp: number, serverTickInterp: number): void {
       // Player rotation is updated each render, but only sent each update
       updatePlayerRotation();
       
-      const currentRenderTime = performance.now(); // @Speed
-      if (Math.floor(currentRenderTime / 1000) !== Math.floor(lastRenderTime / 1000)) {
-         clearServerTicks();
-      }
-      const deltaTime = (currentRenderTime - lastRenderTime) / 1000;
-      lastRenderTime = currentRenderTime;
-
       gl.bindFramebuffer(gl.FRAMEBUFFER, gameFramebuffer);
    
       if (lastTextureWidth !== windowWidth || lastTextureHeight !== windowHeight) {
@@ -639,40 +624,19 @@ abstract class Game {
       gl.clearColor(1, 1, 1, 1);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-      // @Cleanup: weird. shouldn't be global anyway
-      _frameProgress = serverTickInterp;
-
-      const playerLayer = getCurrentLayer();
-
       updateUBOs();
 
       dirtifyMovingEntities();
       updateRenderPartMatrices(serverTickInterp, clientTickInterp);
 
-      // @Cleanup: move to update function in camera
-      // Update the camera
-      if (!Camera.isSpectating) {
-         const tickInterp = getEntityTickInterp(Camera.trackedEntity, serverTickInterp, clientTickInterp);
-         Camera.updatePosition(tickInterp);
-         console.log("RENDERING.");
-         // console.log("tick interp:",tickInterp.toFixed(4));
-         console.log("server tick interp:",serverTickInterp.toFixed(4))
-         const delta = (Camera.position.x - lastPosX)
-         console.log("Camera delta:",delta);
-         if (delta < 3 || delta > 6) {
-            console.warn("aaaaaaaaaaaaa")
-         }
-         lastPosX = Camera.position.x
-      } else {
-         Camera.updateSpectatorPosition(deltaTime);
-      }
-      Camera.updateVisibleChunkBounds();
-      Camera.updateVisibleRenderChunkBounds();
+      const cameraTickInterp = getEntityTickInterp(Camera.trackedEntity, serverTickInterp, clientTickInterp);
+      Camera.update(cameraTickInterp);
 
+      // Render layers
       // @Hack
-      if (layers.indexOf(playerLayer) === 0) {
+      if (layers.indexOf(getCurrentLayer()) === 0) {
          renderLayer(layers[1], serverTickInterp);
-         renderDarkening();
+         renderLayerDarkening();
          renderLayer(layers[0], serverTickInterp);
       } else {
          renderLayer(layers[1], serverTickInterp);
@@ -687,7 +651,7 @@ abstract class Game {
          renderLightLevelsText();
       }
 
-      updateDebugScreenFPS();
+      updateDebugScreen();
       updateInspectHealthBar();
       
       renderTechTree();

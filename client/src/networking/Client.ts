@@ -4,15 +4,14 @@ import { Settings } from "battletribes-shared/settings";
 import { TechID } from "battletribes-shared/techs";
 import { TribeType } from "battletribes-shared/tribes";
 import { TribesmanTitle } from "battletribes-shared/titles";
-import Game, { getCursorWorldPos, resetServerTickInterp } from "../Game";
+import Game, { getCursorWorldPos, receivePacket } from "../Game";
 import { Tile } from "../Tile";
 import { windowHeight, windowWidth } from "../webgl";
 import { getStringLengthBytes, Packet, PacketReader, PacketType } from "battletribes-shared/packets";
-import { processForcePositionUpdatePacket, processGameDataPacket, processInitialGameDataPacket, processSyncDataPacket, receiveChatMessagePacket } from "./packet-receiving";
+import { processForcePositionUpdatePacket, processInitialGameDataPacket, processSyncDataPacket, receiveChatMessagePacket } from "./packet-receiving";
 import { createActivatePacket, createPlayerDataPacket, createSyncRequestPacket, sendSetSpectatingPositionPacket } from "./packet-sending";
 import { AppState } from "../components/App";
 import { LoadingScreenStatus } from "../components/LoadingScreen";
-import Board from "../Board";
 import { setPlayerInstance, playerInstance } from "../player";
 
 export type GameData = {
@@ -23,12 +22,6 @@ export type GameData = {
 
 let visibleWalls: ReadonlyArray<TribeWallData> = [];
 let buildingPlans: ReadonlyArray<BuildingPlanData> = [];
-
-let lastPacketTime = 0;
-
-export function getLastPacketTime(): number {
-   return lastPacketTime;
-}
 
 export function getVisibleWalls(): ReadonlyArray<TribeWallData> {
    return visibleWalls;
@@ -56,8 +49,6 @@ export function getHoveredBuildingPlan(): BuildingPlanData | null {
    return closestPlanToCursor;
 }
 
-export const packetBuffer = new Array<PacketReader>();
-
 // @Cleanup: De-singleton-ify
 abstract class Client {
    private static socket: WebSocket | null = null;
@@ -67,7 +58,7 @@ abstract class Client {
 
    public static connectToServer(setAppState: (appState: AppState) => void, setLoadingScreenStatus: (status: LoadingScreenStatus) => void): Promise<boolean> {
       return new Promise(resolve => {
-         this.socket = new WebSocket(`ws://10.0.0.20:${Settings.SERVER_PORT}`);
+         this.socket = new WebSocket(`ws://127.0.0.1:${Settings.SERVER_PORT}`);
          this.socket.binaryType = "arraybuffer";
 
          this.socket.onopen = () => {
@@ -114,19 +105,7 @@ abstract class Client {
                      return;
                   }
 
-                  packetBuffer.push(reader);
-                  // commenting out cuz what if doing it here cause problemos
-                  // if (packetBuffer.length > 2) {
-                  //    packetBuffer.splice(0, 1);
-                  // }
-                  
-                  lastPacketTime = performance.now();
-
-                  // // Done before so that server data can override particles
-                  // Board.updateParticles();
-                  
-                  // processGameDataPacket(reader);
-                  // Board.tickEntities();
+                  receivePacket(reader);
 
                   break;
                }

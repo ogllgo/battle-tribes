@@ -6,7 +6,6 @@ import ObjectBufferContainer from "./rendering/ObjectBufferContainer";
 import { tempFloat32ArrayLength1 } from "./webgl";
 import { RenderPart } from "./render-parts/render-parts";
 import { getComponentArrays } from "./entity-components/ComponentArray";
-import { getFrameProgress } from "./Game";
 
 export interface EntityHitboxInfo {
    readonly vertexPositions: readonly [Point, Point, Point, Point];
@@ -21,7 +20,6 @@ interface TickCallback {
 // @CLEANUP: "Board" is weird...
 abstract class Board {
    public static serverTicks: number;
-   public static clientTicks = 0;
    public static time: number;
 
    public static renderPartRecord: Record<number, RenderPart> = {};
@@ -139,17 +137,11 @@ export function getSecondsSinceTickTimestamp(ticks: number): number {
    const ticksSince = Board.serverTicks - ticks;
    let secondsSince = ticksSince * Settings.DT_S;
 
-   // Account for frame progress
-   secondsSince += getFrameProgress() * Settings.DT_S;
-
    return secondsSince;
 }
 
 export function getElapsedTimeInSeconds(elapsedTicks: number): number {
    let secondsSince = elapsedTicks * Settings.DT_S;
-
-   // Account for frame progress
-   secondsSince += getFrameProgress() * Settings.DT_S;
 
    return secondsSince;
 }
@@ -157,7 +149,6 @@ export function getElapsedTimeInSeconds(elapsedTicks: number): number {
 if (module.hot) {
    module.hot.dispose(data => {
       data.serverTicks = Board.serverTicks;
-      data.clientTicks = Board.clientTicks;
       data.time = Board.time;
       data.renderPartRecord = Board.renderPartRecord;
       data.lowMonocolourParticles = Board.lowMonocolourParticles;
@@ -169,7 +160,6 @@ if (module.hot) {
 
    if (module.hot.data) {
       Board.serverTicks = module.hot.data.serverTicks;
-      Board.clientTicks = module.hot.data.clientTicks;
       Board.time = module.hot.data.time;
       Board.renderPartRecord = module.hot.data.renderPartRecord;
       Board.lowMonocolourParticles = module.hot.data.lowMonocolourParticles;

@@ -43,9 +43,6 @@ node --prof-process isolate-0xnnnnnnnnnnnn-v8.log > processed.txt
 
 */
 
-let lastTickTime = 0;
-let packetSendTimer = 0;
-
 const entityIsHiddenFromPlayer = (entity: Entity, playerTribe: Tribe): boolean => {
    if (SpikesComponentArray.hasComponent(entity) && TribeComponentArray.hasComponent(entity)) {
       const tribeComponent = TribeComponentArray.getComponent(entity);
@@ -169,7 +166,7 @@ class GameServer {
       forceMaxGrowAllIceSpikes();
       console.log("ice spikes",performance.now() - _SHITTYCUMMERY)
       _SHITTYCUMMERY = performance.now();
-      generateGrassStrands();
+      // generateGrassStrands();
       console.log("grass",performance.now() - _SHITTYCUMMERY)
       _SHITTYCUMMERY = performance.now();
       // generateDecorations();
@@ -441,13 +438,13 @@ class GameServer {
       
       if (typeof SERVER.tickInterval === "undefined") {
          console.log("Server started on port " + Settings.SERVER_PORT);
+         // @SQUEAM to test low TPS scenario
          setInterval(SERVER.tick, 1000 / Settings.TICK_RATE);
+         // setInterval(SERVER.tick, 1000 / Settings.TICK_RATE * 2);
       }
    }
 
    private async tick(): Promise<void> {
-      const tickTime = performance.now();
-      
       // These are done before each tick to account for player packets causing entities to be removed/added between ticks.
       pushEntityJoinBuffer(false);
       preDestroyFlaggedEntities();
@@ -501,8 +498,6 @@ class GameServer {
       // Update server ticks and time
       // This is done at the end of the tick so that information sent by players is associated with the next tick to run
       tickGameTime();
-
-      lastTickTime = tickTime;
    }
 
    // @Cleanup: maybe move this function to player-clients?

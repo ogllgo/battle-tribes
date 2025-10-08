@@ -102,43 +102,8 @@ abstract class Camera {
       // }
    }
 
-   public static updateVisibleChunkBounds(): void {
-      // const previousChunks = getChunksFromRange(layer, this.minVisibleChunkX, this.maxVisibleChunkX, this.minVisibleChunkY, this.maxVisibleChunkY);
-      
-      this.minVisibleX = this.position.x - halfWindowWidth / this.zoom;
-      this.maxVisibleX = this.position.x + halfWindowWidth / this.zoom;
-      this.minVisibleY = this.position.y - halfWindowHeight / this.zoom;
-      this.maxVisibleY = this.position.y + halfWindowHeight / this.zoom;
-      
-      this.minVisibleChunkX = Math.max(Math.floor(this.minVisibleX / Settings.CHUNK_UNITS), 0);
-      this.maxVisibleChunkX = Math.min(Math.floor(this.maxVisibleX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-      this.minVisibleChunkY = Math.max(Math.floor(this.minVisibleY / Settings.CHUNK_UNITS), 0);
-      this.maxVisibleChunkY = Math.min(Math.floor(this.maxVisibleY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-
-      // const newChunks = getChunksFromRange(layer, this.minVisibleChunkX, this.maxVisibleChunkX, this.minVisibleChunkY, this.maxVisibleChunkY);
-
-      // const removedChunks = getMissingChunks(newChunks, previousChunks);
-      // for (const chunk of removedChunks) {
-      //    deregisterVisibleChunk(chunk);
-      // }
-
-      // const addedChunks = getMissingChunks(previousChunks, newChunks);
-      // for (const chunk of addedChunks) {
-      //    registerVisibleChunk(chunk);
-      // }
-   }
-
    public static getVisibleChunkBounds(): VisibleChunkBounds {
       return [this.minVisibleChunkX, this.maxVisibleChunkX, this.minVisibleChunkY, this.maxVisibleChunkY];
-   }
-
-   public static updateVisibleRenderChunkBounds(): void {
-      const unitsInChunk = Settings.TILE_SIZE * RENDER_CHUNK_SIZE;
-      
-      this.minVisibleRenderChunkX = Math.max(Math.floor((this.position.x - halfWindowWidth / this.zoom) / unitsInChunk), -RENDER_CHUNK_EDGE_GENERATION);
-      this.maxVisibleRenderChunkX = Math.min(Math.floor((this.position.x + halfWindowWidth / this.zoom) / unitsInChunk), WORLD_RENDER_CHUNK_SIZE + RENDER_CHUNK_EDGE_GENERATION - 1);
-      this.minVisibleRenderChunkY = Math.max(Math.floor((this.position.y - halfWindowHeight / this.zoom) / unitsInChunk), -RENDER_CHUNK_EDGE_GENERATION);
-      this.maxVisibleRenderChunkY = Math.min(Math.floor((this.position.y + halfWindowHeight / this.zoom) / unitsInChunk), WORLD_RENDER_CHUNK_SIZE + RENDER_CHUNK_EDGE_GENERATION - 1);
    }
 
    public static trackEntity(trackedEntity: Entity): void {
@@ -167,7 +132,7 @@ abstract class Camera {
       this.position.y += this.velocity.y * deltaTime;
    }
 
-   public static updatePosition(tickInterp: number): void {
+   public static update(tickInterp: number): void {
       if (this.isSpectating) {
          // this.position.x = this.lastTickPosition.x + this.velocity.x * Settings.DT_S * frameProgress;
          // this.position.y = this.lastTickPosition.y + this.velocity.y * Settings.DT_S * frameProgress;
@@ -180,16 +145,50 @@ abstract class Camera {
          return;
       }
       
-      if (entityExists(this.trackedEntity)) {
-         assert(this.trackedHitbox !== null);
-
-         const pos = calculateHitboxRenderPosition(this.trackedHitbox, tickInterp);
-         this.position.x = pos.x;
-         this.position.y = pos.y;
-      } else {
+      if (!entityExists(this.trackedEntity)) {
          this.trackedEntity = 0;
          this.trackedHitbox = null;
+         return;
       }
+
+      assert(this.trackedHitbox !== null);
+
+      const pos = calculateHitboxRenderPosition(this.trackedHitbox, tickInterp);
+      this.position.x = pos.x;
+      this.position.y = pos.y;
+
+      // Update visible chunk bounds
+
+      // const previousChunks = getChunksFromRange(layer, this.minVisibleChunkX, this.maxVisibleChunkX, this.minVisibleChunkY, this.maxVisibleChunkY);
+      
+      this.minVisibleX = this.position.x - halfWindowWidth / this.zoom;
+      this.maxVisibleX = this.position.x + halfWindowWidth / this.zoom;
+      this.minVisibleY = this.position.y - halfWindowHeight / this.zoom;
+      this.maxVisibleY = this.position.y + halfWindowHeight / this.zoom;
+      
+      this.minVisibleChunkX = Math.max(Math.floor(this.minVisibleX / Settings.CHUNK_UNITS), 0);
+      this.maxVisibleChunkX = Math.min(Math.floor(this.maxVisibleX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+      this.minVisibleChunkY = Math.max(Math.floor(this.minVisibleY / Settings.CHUNK_UNITS), 0);
+      this.maxVisibleChunkY = Math.min(Math.floor(this.maxVisibleY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+
+      // const newChunks = getChunksFromRange(layer, this.minVisibleChunkX, this.maxVisibleChunkX, this.minVisibleChunkY, this.maxVisibleChunkY);
+
+      // const removedChunks = getMissingChunks(newChunks, previousChunks);
+      // for (const chunk of removedChunks) {
+      //    deregisterVisibleChunk(chunk);
+      // }
+
+      // const addedChunks = getMissingChunks(previousChunks, newChunks);
+      // for (const chunk of addedChunks) {
+      //    registerVisibleChunk(chunk);
+      // }
+
+      // Update visible render chunk bounds
+      const unitsInChunk = Settings.TILE_SIZE * RENDER_CHUNK_SIZE;
+      this.minVisibleRenderChunkX = Math.max(Math.floor((this.position.x - halfWindowWidth / this.zoom) / unitsInChunk), -RENDER_CHUNK_EDGE_GENERATION);
+      this.maxVisibleRenderChunkX = Math.min(Math.floor((this.position.x + halfWindowWidth / this.zoom) / unitsInChunk), WORLD_RENDER_CHUNK_SIZE + RENDER_CHUNK_EDGE_GENERATION - 1);
+      this.minVisibleRenderChunkY = Math.max(Math.floor((this.position.y - halfWindowHeight / this.zoom) / unitsInChunk), -RENDER_CHUNK_EDGE_GENERATION);
+      this.maxVisibleRenderChunkY = Math.min(Math.floor((this.position.y + halfWindowHeight / this.zoom) / unitsInChunk), WORLD_RENDER_CHUNK_SIZE + RENDER_CHUNK_EDGE_GENERATION - 1);
    }
 
    /** X position in the screen (0 = left, windowWidth = right) */

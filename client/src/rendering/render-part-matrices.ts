@@ -173,8 +173,8 @@ const calculateHitboxMatrix = (hitbox: Hitbox, tickInterp: number): Matrix3x2 =>
 
    // Rotation
    // we don't want the relative angular velocity here, we want to interpolate the ACTUAL angle not the local thing.
-   const angularVelocity_t = getAngleDiff(hitbox.previousAngle, hitbox.box.angle);
-   const angle = hitbox.box.angle + (angularVelocity_t + hitbox.angularAcceleration * Settings.DT_S * Settings.DT_S) * tickInterp;
+   const angularVelocityTick = getAngleDiff(hitbox.previousAngle, hitbox.box.angle);
+   const angle = hitbox.box.angle + (angularVelocityTick + hitbox.angularAcceleration * Settings.DT_S * Settings.DT_S) * tickInterp;
    rotateMatrix(matrix, angle);
    // overrideWithRotationMatrix(matrix, hitbox.box.angle);
    
@@ -281,20 +281,6 @@ export function updateRenderPartMatrices(serverTickInterp: number, clientTickInt
 
       const tickInterp = getEntityTickInterp(renderInfo.entity, serverTickInterp, clientTickInterp);
       cleanEntityRenderInfo(renderInfo, tickInterp);
-   }
-
-   // Then update previous angles
-   // @SPEEDD!!!!
-   // (this is just for getting the angular velocity right...)
-   for (const renderInfo of dirtyEntityRenderInfos) {
-      // @HACK this shouldn't be needed...
-      if (TransformComponentArray.hasComponent(renderInfo.entity)) {
-         const transformComponent = TransformComponentArray.getComponent(renderInfo.entity);
-         
-         for (const hitbox of transformComponent.hitboxes) {
-            hitbox.previousAngle = hitbox.box.angle;
-         }
-      }
    }
 
    // Reset dirty entities

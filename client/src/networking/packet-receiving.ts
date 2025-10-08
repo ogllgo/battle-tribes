@@ -11,7 +11,7 @@ import { EntityTickEventType } from "battletribes-shared/entity-events";
 import Game from "../Game";
 import Board from "../Board";
 import Camera from "../Camera";
-import { updateDebugScreenIsPaused, updateDebugScreenTicks, updateDebugScreenCurrentTime, registerServerTick } from "../components/game/dev/GameInfoDisplay";
+import { updateDebugScreenIsPaused, updateDebugScreenTicks, updateDebugScreenCurrentTime } from "../components/game/dev/GameInfoDisplay";
 import { Tile } from "../Tile";
 import { getComponentArrays, getServerComponentArray } from "../entity-components/ComponentArray";
 import { createEntity, addLayer, changeEntityLayer, entityExists, EntityServerComponentParams, getCurrentLayer, getEntityLayer, getEntityRenderInfo, layers, removeEntity, setCurrentLayer, EntityParams, surfaceLayer, addEntityToWorld, getEntityType } from "../world";
@@ -480,8 +480,6 @@ const processEntityUpdateData = (entity: Entity, reader: PacketReader): void => 
 }
 
 export function processGameDataPacket(reader: PacketReader): void {
-   registerServerTick();
-   
    const simulationIsPaused = reader.readBoolean();
    reader.padOffset(3);
    updateDebugScreenIsPaused(simulationIsPaused);

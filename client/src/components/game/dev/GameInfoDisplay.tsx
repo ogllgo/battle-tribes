@@ -1,5 +1,5 @@
 import { roundNum } from "battletribes-shared/utils";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import OPTIONS from "../../../options";
 import Board from "../../../Board";
 import Camera from "../../../Camera";
@@ -11,6 +11,7 @@ import { playerInstance } from "../../../player";
 import { EntityType, NUM_ENTITY_TYPES } from "../../../../../shared/src/entities";
 import CLIENT_ENTITY_INFO_RECORD from "../../../client-entity-info";
 import { getNumLights } from "../../../lights";
+import { getNumBufferedPackets, getMeasuredServerTPS } from "../../../Game";
 
 interface GameInfoDisplayProps {
    setGameInteractState(state: GameInteractState): void;
@@ -18,24 +19,11 @@ interface GameInfoDisplayProps {
 
 // @Cleanup: shouldn't be able to interact with the info display, all the interactable stuff should be in tabs
 
-let serverTicks = 0;
-
-let tps = -1;
-
 export let updateDebugScreenCurrentTime: (time: number) => void = () => {};
 export let updateDebugScreenTicks: (time: number) => void = () => {};
-export let updateDebugScreenFPS: () => void = () => {};
+export let updateDebugScreen: () => void = () => {};
 export let updateDebugScreenRenderTime: (renderTime: number) => void = () => {};
 export let updateDebugScreenIsPaused: (isPaused: boolean) => void = () => {};
-
-export function registerServerTick(): void {
-   serverTicks++;
-}
-
-export function clearServerTicks(): void {
-   tps = serverTicks;
-   serverTicks = 0;
-}
 
 const GameInfoDisplay = (props: GameInfoDisplayProps) => {
    const rangeInputRef = useRef<HTMLInputElement | null>(null);
@@ -45,6 +33,8 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
    const [ticks, setTicks] = useState(Board.serverTicks);
    const [zoom, setZoom] = useState(Camera.zoom);
    const [isPaused, setIsPaused] = useState(false);
+
+   const [_, forceUpdate] = useReducer(x => x + 1, 0);
 
    const [nightVisionIsEnabled, setNightvisionIsEnabled] = useState(OPTIONS.nightVisionIsEnabled);
    const [showHitboxes, setShowEntityHitboxes] = useState(OPTIONS.showHitboxes);
@@ -74,6 +64,8 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
       updateDebugScreenTicks = (ticks: number): void => {
          setTicks(ticks);
       }
+
+      updateDebugScreen = forceUpdate;
 
       updateDebugScreenIsPaused = setIsPaused;
    }, []);
@@ -206,7 +198,8 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
    return <div id="game-info-display" className="devmode-container">
       <p>Time: {currentTime.toFixed(2)}</p>
       <p>Ticks: {roundNum(ticks, 2)}</p>
-      <p>Server TPS: {tps}</p>
+      <p>Server TPS: {getMeasuredServerTPS().toFixed(2)}</p>
+      <p>Buffered packets: {getNumBufferedPackets()}</p>
 
       <button onClick={toggleSimulation}>{isPaused ? "Resume" : "Pause"} Simulation</button>
 
