@@ -6,6 +6,8 @@ import Tribe from "./Tribe";
 
 // @Incomplete: different names for workers and warriors
 
+// @Incomplete: frostling tribe name: "Iceberk"
+
 const SCRAPPY_NAMES = [
    "Scrap",
    "Klik",
