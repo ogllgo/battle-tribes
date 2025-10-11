@@ -1,13 +1,12 @@
-import { Point, randFloat } from "battletribes-shared/utils";
 import Board from "../../Board";
 import { Light, removeLight } from "../../lights";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityComponentData } from "../../world";
 
-export interface CookingComponentParams {
+export interface CookingComponentData {
    readonly heatingProgress: number;
    readonly isCooking: boolean;
 }
@@ -20,41 +19,35 @@ export interface CookingComponent {
    light: Light | null;
 }
 
-export const CookingComponentArray = new ServerComponentArray<CookingComponent, CookingComponentParams, never>(ServerComponentType.cooking, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onLoad: onLoad,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const CookingComponentArray = new ServerComponentArray<CookingComponent, CookingComponentData, never>(ServerComponentType.cooking, true, createComponent, getMaxRenderParts, decodeData);
+CookingComponentArray.onLoad = onLoad;
+CookingComponentArray.onTick = onTick;
+CookingComponentArray.updateFromData = updateFromData;
 
-const fillParams = (heatingProgress: number, isCooking: boolean): CookingComponentParams => {
+export function createCookingComponentData(): CookingComponentData {
+   return {
+      heatingProgress: 0,
+      isCooking: false
+   };
+}
+
+function decodeData(reader: PacketReader): CookingComponentData {
+   const heatingProgress = reader.readNumber();
+   const isCooking = reader.readBoolean();
+   reader.padOffset(3);
+
    return {
       heatingProgress: heatingProgress,
       isCooking: isCooking
    };
 }
 
-export function createCookingComponentParams(): CookingComponentParams {
-   return fillParams(0, false);
-}
-
-function createParamsFromData(reader: PacketReader): CookingComponentParams {
-   const heatingProgress = reader.readNumber();
-   const isCooking = reader.readBoolean();
-   reader.padOffset(3);
-
-   return fillParams(heatingProgress, isCooking);
-}
-
-function createComponent(entityParams: EntityParams): CookingComponent {
-   const cookingComponentParams = entityParams.serverComponentParams[ServerComponentType.cooking]!;
+function createComponent(entityComponentData: EntityComponentData): CookingComponent {
+   const cookingComponentData = entityComponentData.serverComponentData[ServerComponentType.cooking]!;
    
    return {
-      heatingProgress: cookingComponentParams.heatingProgress,
-      isCooking: cookingComponentParams.isCooking,
+      heatingProgress: cookingComponentData.heatingProgress,
+      isCooking: cookingComponentData.isCooking,
       light: null
    };
 }
@@ -102,14 +95,8 @@ function onTick(entity: Entity): void {
    updateLight(cookingComponent, entity);
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: CookingComponentData, entity: Entity): void {
    const cookingComponent = CookingComponentArray.getComponent(entity);
-   
-   cookingComponent.heatingProgress = reader.readNumber();
-   cookingComponent.isCooking = reader.readBoolean();
-   reader.padOffset(3);
+   cookingComponent.heatingProgress = data.heatingProgress;
+   cookingComponent.isCooking = data.isCooking;
 }

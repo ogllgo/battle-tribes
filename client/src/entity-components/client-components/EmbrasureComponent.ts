@@ -7,13 +7,13 @@ import { createLightWoodSpeckParticle, createWoodShardParticle } from "../../par
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 import { EMBRASURE_TEXTURE_SOURCES } from "../server-components/BuildingMaterialComponent";
 import { TransformComponentArray } from "../server-components/TransformComponent";
 
-export interface EmbrasureComponentParams {}
+export interface EmbrasureComponentData {}
 
 interface IntermediateInfo {}
 
@@ -27,21 +27,21 @@ export const EmbrasureComponentArray = new ClientComponentArray<EmbrasureCompone
    onDie: onDie
 });
 
-export function createEmbrasureComponentParams(): EmbrasureComponentParams {
+export function createEmbrasureComponentData(): EmbrasureComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
-   const buildingMaterialComponentParams = entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!;
+   const buildingMaterialComponentData = entityComponentData.serverComponentData[ServerComponentType.buildingMaterial]!;
 
    const renderPart = new TexturedRenderPart(
       hitbox,
       0,
       0,
-      getTextureArrayIndex(EMBRASURE_TEXTURE_SOURCES[buildingMaterialComponentParams.material])
+      getTextureArrayIndex(EMBRASURE_TEXTURE_SOURCES[buildingMaterialComponentData.material])
    );
    renderPart.addTag("buildingMaterialComponent:material");
 

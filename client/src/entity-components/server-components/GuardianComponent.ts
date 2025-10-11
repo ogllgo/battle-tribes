@@ -10,11 +10,11 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityComponentData, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
-export interface GuardianComponentParams {
+export interface GuardianComponentData {
    readonly rubyGemActivation: number;
    readonly emeraldGemActivation: number;
 
@@ -69,16 +69,11 @@ const enum Vars {
    SPIKY_BALL_SUMMON_SHAKE_AMOUNT = 2
 }
 
-export const GuardianComponentArray = new ServerComponentArray<GuardianComponent, GuardianComponentParams, IntermediateInfo>(ServerComponentType.guardian, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const GuardianComponentArray = new ServerComponentArray<GuardianComponent, GuardianComponentData, IntermediateInfo>(ServerComponentType.guardian, true, createComponent, getMaxRenderParts, decodeData);
+GuardianComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+GuardianComponentArray.updateFromData = updateFromData;
 
-function createParamsFromData(reader: PacketReader): GuardianComponentParams {
+function decodeData(reader: PacketReader): GuardianComponentData {
    const rubyGemActivation = reader.readNumber();
    const emeraldGemActivation = reader.readNumber();
    const amethystGemActivation = reader.readNumber();
@@ -104,8 +99,8 @@ function createParamsFromData(reader: PacketReader): GuardianComponentParams {
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponent = entityComponentData.serverComponentData[ServerComponentType.transform]!;
    const hitbox = transformComponent.hitboxes[0];
    
    const rubyRenderParts = new Array<VisualRenderPart>();
@@ -169,9 +164,9 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    const limbCrackLights = new Array<Light>();
    
    // Attach limb render parts
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
-      const hitbox = transformComponentParams.hitboxes[i];
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   for (let i = 0; i < transformComponentData.hitboxes.length; i++) {
+      const hitbox = transformComponentData.hitboxes[i];
       
       if (hitbox.flags.includes(HitboxFlag.GUARDIAN_LIMB_HITBOX)) {
          const limbRenderPart = new TexturedRenderPart(
@@ -223,8 +218,8 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    };
 }
 
-function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): GuardianComponent {
-   const guardianComponentParams = entityParams.serverComponentParams[ServerComponentType.guardian]!;
+function createComponent(entityComponentData: EntityComponentData, intermediateInfo: IntermediateInfo): GuardianComponent {
+   const guardianComponentData = entityComponentData.serverComponentData[ServerComponentType.guardian]!;
 
    return {
       rubyRenderParts: intermediateInfo.rubyRenderParts,
@@ -233,33 +228,29 @@ function createComponent(entityParams: EntityParams, intermediateInfo: Intermedi
       rubyLights: intermediateInfo.rubyLights,
       emeraldLights: intermediateInfo.emeraldLights,
       amethystLights: intermediateInfo.amethystLights,
-      rubyGemActivation: guardianComponentParams.rubyGemActivation,
-      emeraldGemActivation: guardianComponentParams.emeraldGemActivation,
-      amethystGemActivation: guardianComponentParams.amethystGemActivation,
+      rubyGemActivation: guardianComponentData.rubyGemActivation,
+      emeraldGemActivation: guardianComponentData.emeraldGemActivation,
+      amethystGemActivation: guardianComponentData.amethystGemActivation,
       limbRenderParts: intermediateInfo.limbRenderParts,
       limbCrackRenderParts: intermediateInfo.limbCrackRenderParts,
       limbCrackLights: intermediateInfo.limbCrackLights,
-      limbRubyGemActivation: guardianComponentParams.limbRubyGemActivation,
-      limbEmeraldGemActivation: guardianComponentParams.limbEmeraldGemActivation,
-      limbAmethystGemActivation: guardianComponentParams.limbAmethystGemActivation,
-      attackType: guardianComponentParams.attackType,
-      attackStage: guardianComponentParams.attackStage
+      limbRubyGemActivation: guardianComponentData.limbRubyGemActivation,
+      limbEmeraldGemActivation: guardianComponentData.limbEmeraldGemActivation,
+      limbAmethystGemActivation: guardianComponentData.limbAmethystGemActivation,
+      attackType: guardianComponentData.attackType,
+      attackStage: guardianComponentData.attackStage
    };
 }
 
-function getMaxRenderParts(entityParams: EntityParams): number {
+function getMaxRenderParts(entityComponentData: EntityComponentData): number {
    let maxRenderParts = 5;
    
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   maxRenderParts += 2 * transformComponentParams.hitboxes.length;
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   maxRenderParts += 2 * transformComponentData.hitboxes.length;
 
    return maxRenderParts;
 }
    
-function padData(reader: PacketReader): void {
-   reader.padOffset(9 * Float32Array.BYTES_PER_ELEMENT);
-}
-
 const setColours = (renderParts: ReadonlyArray<VisualRenderPart>, lights: ReadonlyArray<[number, Light]>, activation: number, tintR: number, tintG: number, tintB: number): void => {
    for (let i = 0; i < renderParts.length; i++) {
       const renderPart = renderParts[i];
@@ -277,20 +268,20 @@ const setColours = (renderParts: ReadonlyArray<VisualRenderPart>, lights: Readon
    }
 }
 
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: GuardianComponentData, entity: Entity): void {
    const guardianComponent = GuardianComponentArray.getComponent(entity);
    
-   const rubyGemActivation = reader.readNumber();
-   const emeraldGemActivation = reader.readNumber();
-   const amethystGemActivation = reader.readNumber();
+   const rubyGemActivation = data.rubyGemActivation;
+   const emeraldGemActivation = data.emeraldGemActivation;
+   const amethystGemActivation = data.amethystGemActivation;
 
-   const limbRubyGemActivation = reader.readNumber();
-   const limbEmeraldGemActivation = reader.readNumber();
-   const limbAmethystGemActivation = reader.readNumber();
+   const limbRubyGemActivation = data.rubyGemActivation;
+   const limbEmeraldGemActivation = data.emeraldGemActivation;
+   const limbAmethystGemActivation = data.amethystGemActivation;
 
-   const attackType = reader.readNumber();
-   const attackStage = reader.readNumber();
-   const stageProgress = reader.readNumber();
+   const attackType = data.attackType;
+   const attackStage = data.attackStage;
+   const stageProgress = data.stageProgress;
 
    const actualRubyGemActivation = lerp(rubyGemActivation, 1, limbRubyGemActivation);
    if (actualRubyGemActivation !== guardianComponent.rubyGemActivation) {

@@ -4,7 +4,7 @@ import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TribesmanTitle } from "battletribes-shared/titles";
 import Board from "./Board";
-import Game, { getCursorWorldPos } from "./Game";
+import Game, { getCursorWorldPos } from "./game";
 import { getSelectedEntityID } from "./entity-selection";
 import { playSound } from "./sound";
 import { createMagicParticle, createStarParticle } from "./particles";

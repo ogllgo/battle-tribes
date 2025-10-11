@@ -4,18 +4,18 @@ import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../shared/src/collis
 import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType } from "../../../shared/src/entities";
 import { Point } from "../../../shared/src/utils";
-import { createHealthComponentParams } from "../entity-components/server-components/HealthComponent";
-import { createPunjiSticksComponentParams } from "../entity-components/server-components/PunjiSticksComponent";
-import { createSpikesComponentParams } from "../entity-components/server-components/SpikesComponent";
-import { createStatusEffectComponentParams } from "../entity-components/server-components/StatusEffectComponent";
-import { createStructureComponentParams } from "../entity-components/server-components/StructureComponent";
-import { createTransformComponentParams } from "../entity-components/server-components/TransformComponent";
-import { createTribeComponentParams } from "../entity-components/server-components/TribeComponent";
+import { createHealthComponentData } from "../entity-components/server-components/HealthComponent";
+import { createPunjiSticksComponentData } from "../entity-components/server-components/PunjiSticksComponent";
+import { createSpikesComponentData } from "../entity-components/server-components/SpikesComponent";
+import { createStatusEffectComponentData } from "../entity-components/server-components/StatusEffectComponent";
+import { createStructureComponentData } from "../entity-components/server-components/StructureComponent";
+import { createTransformComponentData } from "../entity-components/server-components/TransformComponent";
+import { createTribeComponentData } from "../entity-components/server-components/TribeComponent";
 import { createHitboxQuick, Hitbox } from "../hitboxes";
 import { Tribe } from "../tribes";
-import { EntityParams } from "../world";
+import { EntityComponentData } from "../world";
 
-export function createFloorPunjiSticksConfig(position: Point, rotation: number, tribe: Tribe): EntityParams {
+export function createFloorPunjiSticksConfig(position: Point, rotation: number, tribe: Tribe): EntityComponentData {
    const hitboxes = new Array<Hitbox>();
    let hitboxLocalID = 0;
 
@@ -25,20 +25,20 @@ export function createFloorPunjiSticksConfig(position: Point, rotation: number, 
 
    return {
       entityType: EntityType.floorPunjiSticks,
-      serverComponentParams: {
-         [ServerComponentType.transform]: createTransformComponentParams(hitboxes),
-         [ServerComponentType.health]: createHealthComponentParams(),
-         [ServerComponentType.statusEffect]: createStatusEffectComponentParams(),
-         [ServerComponentType.structure]: createStructureComponentParams(),
-         [ServerComponentType.tribe]: createTribeComponentParams(tribe),
-         [ServerComponentType.spikes]: createSpikesComponentParams(),
-         [ServerComponentType.punjiSticks]: createPunjiSticksComponentParams()
+      serverComponentData: {
+         [ServerComponentType.transform]: createTransformComponentData(hitboxes),
+         [ServerComponentType.health]: createHealthComponentData(),
+         [ServerComponentType.statusEffect]: createStatusEffectComponentData(),
+         [ServerComponentType.structure]: createStructureComponentData(),
+         [ServerComponentType.tribe]: createTribeComponentData(tribe),
+         [ServerComponentType.spikes]: createSpikesComponentData(),
+         [ServerComponentType.punjiSticks]: createPunjiSticksComponentData()
       },
-      clientComponentParams: {}
+      clientComponentData: {}
    };
 }
 
-export function createWallPunjiSticksConfig(position: Point, rotation: number, tribe: Tribe): EntityParams {
+export function createWallPunjiSticksConfig(position: Point, rotation: number, tribe: Tribe): EntityComponentData {
    const hitboxes = new Array<Hitbox>();
    let hitboxLocalID = 0;
 
@@ -48,15 +48,15 @@ export function createWallPunjiSticksConfig(position: Point, rotation: number, t
 
    return {
       entityType: EntityType.wallPunjiSticks,
-      serverComponentParams: {
-         [ServerComponentType.transform]: createTransformComponentParams(hitboxes),
-         [ServerComponentType.health]: createHealthComponentParams(),
-         [ServerComponentType.statusEffect]: createStatusEffectComponentParams(),
-         [ServerComponentType.structure]: createStructureComponentParams(),
-         [ServerComponentType.tribe]: createTribeComponentParams(tribe),
-         [ServerComponentType.spikes]: createSpikesComponentParams(),
-         [ServerComponentType.punjiSticks]: createPunjiSticksComponentParams()
+      serverComponentData: {
+         [ServerComponentType.transform]: createTransformComponentData(hitboxes),
+         [ServerComponentType.health]: createHealthComponentData(),
+         [ServerComponentType.statusEffect]: createStatusEffectComponentData(),
+         [ServerComponentType.structure]: createStructureComponentData(),
+         [ServerComponentType.tribe]: createTribeComponentData(tribe),
+         [ServerComponentType.spikes]: createSpikesComponentData(),
+         [ServerComponentType.punjiSticks]: createPunjiSticksComponentData()
       },
-      clientComponentParams: {}
+      clientComponentData: {}
    };
 }

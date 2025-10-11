@@ -3,16 +3,16 @@ import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { randFloat, randInt } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { Hitbox } from "../../hitboxes";
+import { getRandomPositionInBox, Hitbox } from "../../hitboxes";
 import { createColouredParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { getRandomPositionInBox, getRandomPositionInEntity, TransformComponentArray } from "./TransformComponent";
+import { getRandomPositionInEntity, TransformComponentArray } from "./TransformComponent";
 
-export interface MithrilOreNodeComponentParams {
+export interface MithrilOreNodeComponentData {
    readonly size: number;
    readonly variant: number;
    readonly renderHeight: number;
@@ -22,18 +22,12 @@ interface IntermediateInfo {}
 
 export interface MithrilOreNodeComponent {}
 
-export const MithrilOreNodeComponentArray = new ServerComponentArray<MithrilOreNodeComponent, MithrilOreNodeComponentParams, IntermediateInfo>(ServerComponentType.mithrilOreNode, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const MithrilOreNodeComponentArray = new ServerComponentArray<MithrilOreNodeComponent, MithrilOreNodeComponentData, IntermediateInfo>(ServerComponentType.mithrilOreNode, true, createComponent, getMaxRenderParts, decodeData);
+MithrilOreNodeComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+MithrilOreNodeComponentArray.onHit = onHit;
+MithrilOreNodeComponentArray.onDie = onDie;
 
-function createParamsFromData(reader: PacketReader): MithrilOreNodeComponentParams {
+function decodeData(reader: PacketReader): MithrilOreNodeComponentData {
    const size = reader.readNumber();
    const variant = reader.readNumber();
    const renderHeight = reader.readNumber();
@@ -44,13 +38,13 @@ function createParamsFromData(reader: PacketReader): MithrilOreNodeComponentPara
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
-   const mithrilOreNodeComponentParams = entityParams.serverComponentParams[ServerComponentType.mithrilOreNode]!;
-   const size = mithrilOreNodeComponentParams.size;
-   const variant = mithrilOreNodeComponentParams.variant;
+   const mithrilOreNodeComponentData = entityComponentData.serverComponentData[ServerComponentType.mithrilOreNode]!;
+   const size = mithrilOreNodeComponentData.size;
+   const variant = mithrilOreNodeComponentData.variant;
 
    let textureSource: string;
    switch (size) {
@@ -88,14 +82,6 @@ function createComponent(): MithrilOreNodeComponent {
 
 function getMaxRenderParts(): number {
    return 1;
-}
-
-function padData(reader: PacketReader): void {
-   reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader): void {
-   padData(reader);
 }
 
 function onHit(entity: Entity, hitbox: Hitbox): void {

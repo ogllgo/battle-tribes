@@ -9,11 +9,11 @@ import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { getEntityRenderInfo, getEntityAgeTicks, EntityParams } from "../../world";
+import { getEntityRenderInfo, getEntityAgeTicks, EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponent, TransformComponentArray, getRandomPositionInEntity } from "./TransformComponent";
 
-export interface PlanterBoxComponentParams {
+export interface PlanterBoxComponentData {
    readonly plantedEntityType: PlantedEntityType | -1;
    readonly isFertilised: boolean;
 }
@@ -39,38 +39,32 @@ const createMoundRenderPart = (plantedEntityType: PlantedEntityType, parentHitbo
    );
 }
 
-export const PlanterBoxComponentArray = new ServerComponentArray<PlanterBoxComponent, PlanterBoxComponentParams, IntermediateInfo>(ServerComponentType.planterBox, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const PlanterBoxComponentArray = new ServerComponentArray<PlanterBoxComponent, PlanterBoxComponentData, IntermediateInfo>(ServerComponentType.planterBox, true, createComponent, getMaxRenderParts, decodeData);
+PlanterBoxComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+PlanterBoxComponentArray.onTick = onTick;
+PlanterBoxComponentArray.updateFromData = updateFromData;
 
-const fillParams = (plantedEntityType: PlantedEntityType | -1, isFertilised: boolean): PlanterBoxComponentParams => {
+export function createPlanterBoxComponentData(): PlanterBoxComponentData {
+   return {
+      plantedEntityType: -1,
+      isFertilised: false
+   };
+}
+
+function decodeData(reader: PacketReader): PlanterBoxComponentData {
+   const plantedEntityType = reader.readNumber();
+   const isFertilised = reader.readBoolean();
+   reader.padOffset(3);
+
    return {
       plantedEntityType: plantedEntityType,
       isFertilised: isFertilised
    };
 }
 
-export function createPlanterBoxComponentParams(): PlanterBoxComponentParams {
-   return fillParams(-1, false);
-}
-
-function createParamsFromData(reader: PacketReader): PlanterBoxComponentParams {
-   const plantedEntityType = reader.readNumber();
-   const isFertilised = reader.readBoolean();
-   reader.padOffset(3);
-
-   return fillParams(plantedEntityType, isFertilised);
-}
-
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -81,11 +75,11 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
       )
    );
    
-   const planterBoxComponentParams = entityParams.serverComponentParams[ServerComponentType.planterBox]!;
+   const planterBoxComponentData = entityComponentData.serverComponentData[ServerComponentType.planterBox]!;
 
    let renderPart: TexturedRenderPart | null;
-   if (planterBoxComponentParams.plantedEntityType !== -1) {
-      renderPart = createMoundRenderPart(planterBoxComponentParams.plantedEntityType, hitbox);
+   if (planterBoxComponentData.plantedEntityType !== -1) {
+      renderPart = createMoundRenderPart(planterBoxComponentData.plantedEntityType, hitbox);
       renderInfo.attachRenderPart(renderPart);
    } else {
       renderPart = null;
@@ -96,12 +90,12 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    };
 }
 
-function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): PlanterBoxComponent {
-   const planterBoxComponentParams = entityParams.serverComponentParams[ServerComponentType.planterBox]!;
+function createComponent(entityComponentData: EntityComponentData, intermediateInfo: IntermediateInfo): PlanterBoxComponent {
+   const planterBoxComponentData = entityComponentData.serverComponentData[ServerComponentType.planterBox]!;
    
    return {
-      hasPlant: planterBoxComponentParams.plantedEntityType !== -1,
-      isFertilised: planterBoxComponentParams.isFertilised,
+      hasPlant: planterBoxComponentData.plantedEntityType !== -1,
+      isFertilised: planterBoxComponentData.isFertilised,
       moundRenderPart: intermediateInfo.moundRenderPart
    };
 }
@@ -124,16 +118,11 @@ function onTick(entity: Entity): void {
    }
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: PlanterBoxComponentData, entity: Entity): void {
    const planterBoxComponent = PlanterBoxComponentArray.getComponent(entity);
    
-   const plantType = reader.readNumber();
-   const isFertilised = reader.readBoolean();
-   reader.padOffset(3);
+   const plantType = data.plantedEntityType;
+   const isFertilised = data.isFertilised;
    
    if (isFertilised && !planterBoxComponent.isFertilised) {
       const transformComponent = TransformComponentArray.getComponent(entity);

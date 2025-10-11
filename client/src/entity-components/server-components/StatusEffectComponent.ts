@@ -1,23 +1,23 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { StatusEffectData } from "battletribes-shared/client-server-types";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { Point, customTickIntervalHasPassed, lerp, randAngle, randFloat, randItem } from "battletribes-shared/utils";
+import { customTickIntervalHasPassed, lerp, randAngle, randFloat, randItem } from "battletribes-shared/utils";
 import { playSoundOnHitbox } from "../../sound";
 import Board from "../../Board";
 import Particle from "../../Particle";
 import { createPoisonBubble, createBloodParticle, BloodParticleSize, createHeatParticle } from "../../particles";
 import { addTexturedParticleToBufferContainer, ParticleRenderLayer, addMonocolourParticleToBufferContainer, ParticleColour } from "../../rendering/webgl/particle-rendering";
-import { Light, createLight, removeLight } from "../../lights";
+import { Light, removeLight } from "../../lights";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityComponentData, getEntityRenderInfo } from "../../world";
 import { ComponentTint, createComponentTint } from "../../EntityRenderInfo";
 import { playerInstance } from "../../player";
-import { getHitboxVelocity, Hitbox } from "../../hitboxes";
+import { getHitboxVelocity } from "../../hitboxes";
 
-export interface StatusEffectComponentParams {
+export interface StatusEffectComponentData {
    readonly statusEffects: Array<StatusEffectData>;
 }
 
@@ -53,28 +53,19 @@ const getStatusEffect = (statusEffectComponent: StatusEffectComponent, type: Sta
    return null;
 }
 
-export const StatusEffectComponentArray = new ServerComponentArray<StatusEffectComponent, StatusEffectComponentParams, never>(ServerComponentType.statusEffect, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData,
-   updatePlayerFromData: updatePlayerFromData,
-   calculateTint: calculateTint
-});
+export const StatusEffectComponentArray = new ServerComponentArray<StatusEffectComponent, StatusEffectComponentData, never>(ServerComponentType.statusEffect, true, createComponent, getMaxRenderParts, decodeData);
+StatusEffectComponentArray.onTick = onTick;
+StatusEffectComponentArray.updateFromData = updateFromData;
+StatusEffectComponentArray.updatePlayerFromData = updatePlayerFromData;
+StatusEffectComponentArray.calculateTint = calculateTint;
 
-const fillStatusEffectComponentParams = (statusEffects: Array<StatusEffectData>): StatusEffectComponentParams => {
+export function createStatusEffectComponentData(): StatusEffectComponentData {
    return {
-      statusEffects: statusEffects
+      statusEffects: []
    };
 }
 
-export function createStatusEffectComponentParams(): StatusEffectComponentParams {
-   return fillStatusEffectComponentParams([]);
-}
-
-function createParamsFromData(reader: PacketReader): StatusEffectComponentParams {
+function decodeData(reader: PacketReader): StatusEffectComponentData {
    const statusEffects = new Array<StatusEffectData>();
    const numStatusEffects = reader.readNumber();
    for (let i = 0; i < numStatusEffects; i++) {
@@ -88,12 +79,14 @@ function createParamsFromData(reader: PacketReader): StatusEffectComponentParams
       statusEffects.push(statusEffectData);
    }
 
-   return fillStatusEffectComponentParams(statusEffects);
+   return {
+      statusEffects: statusEffects
+   };
 }
 
-function createComponent(entityParams: EntityParams): StatusEffectComponent {
+function createComponent(entityComponentData: EntityComponentData): StatusEffectComponent {
    return {
-      statusEffects: entityParams.serverComponentParams[ServerComponentType.statusEffect]!.statusEffects,
+      statusEffects: entityComponentData.serverComponentData[ServerComponentType.statusEffect]!.statusEffects,
       burningLight: null
    };
 }
@@ -290,31 +283,12 @@ function onTick(entity: Entity): void {
    }
 }
 
-function padData(reader: PacketReader): void {
-   const numStatusEffects = reader.readNumber();
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT * numStatusEffects);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: StatusEffectComponentData, entity: Entity): void {
    const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
 
    const previousHasFreezing = hasStatusEffect(statusEffectComponent, StatusEffect.freezing);
    
-   // @Speed @Garbage
-   const statusEffects = new Array<StatusEffectData>();
-   const numStatusEffects = reader.readNumber();
-   for (let i = 0; i < numStatusEffects; i++) {
-      const type = reader.readNumber() as StatusEffect;
-      const ticksElapsed = reader.readNumber();
-
-      const statusEffectData: StatusEffectData = {
-         type: type,
-         ticksElapsed: ticksElapsed
-      }
-      statusEffects.push(statusEffectData);
-   }
-   
-   for (const statusEffectData of statusEffects) {
+   for (const statusEffectData of data.statusEffects) {
       if (!hasStatusEffect(statusEffectComponent, statusEffectData.type)) {
          switch (statusEffectData.type) {
             case StatusEffect.freezing: {
@@ -327,7 +301,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       }
    }
    
-   statusEffectComponent.statusEffects = statusEffects;
+   // @Speed @Garbage
+   statusEffectComponent.statusEffects = data.statusEffects;
 
    const newHasFreezing = hasStatusEffect(statusEffectComponent, StatusEffect.freezing);
    if (newHasFreezing !== previousHasFreezing) {
@@ -336,8 +311,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    }
 }
 
-function updatePlayerFromData(reader: PacketReader): void {
-   updateFromData(reader, playerInstance!);
+function updatePlayerFromData(data: StatusEffectComponentData): void {
+   updateFromData(data, playerInstance!);
 }
 
 function calculateTint(entity: Entity): ComponentTint {

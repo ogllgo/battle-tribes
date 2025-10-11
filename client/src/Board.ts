@@ -20,7 +20,6 @@ interface TickCallback {
 // @CLEANUP: "Board" is weird...
 abstract class Board {
    public static serverTicks: number;
-   public static time: number;
 
    public static renderPartRecord: Record<number, RenderPart> = {};
 
@@ -149,7 +148,6 @@ export function getElapsedTimeInSeconds(elapsedTicks: number): number {
 if (module.hot) {
    module.hot.dispose(data => {
       data.serverTicks = Board.serverTicks;
-      data.time = Board.time;
       data.renderPartRecord = Board.renderPartRecord;
       data.lowMonocolourParticles = Board.lowMonocolourParticles;
       data.lowTexturedParticles = Board.lowTexturedParticles;
@@ -160,7 +158,6 @@ if (module.hot) {
 
    if (module.hot.data) {
       Board.serverTicks = module.hot.data.serverTicks;
-      Board.time = module.hot.data.time;
       Board.renderPartRecord = module.hot.data.renderPartRecord;
       Board.lowMonocolourParticles = module.hot.data.lowMonocolourParticles;
       Board.lowTexturedParticles = module.hot.data.lowTexturedParticles;

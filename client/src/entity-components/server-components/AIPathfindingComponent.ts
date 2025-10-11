@@ -1,19 +1,13 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import ServerComponentArray from "../ServerComponentArray";
 
-export interface AIPathfindingComponentParams {}
+export interface AIPathfindingComponentData {}
 
 export class AIPathfindingComponent {}
 
-export const AIPathfindingComponentArray = new ServerComponentArray<AIPathfindingComponent>(ServerComponentType.aiPathfinding, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-})
+export const AIPathfindingComponentArray = new ServerComponentArray<AIPathfindingComponent, AIPathfindingComponentData, never>(ServerComponentType.aiPathfinding, true, createComponent, getMaxRenderParts, decodeData);
 
-function createParamsFromData(): AIPathfindingComponentParams {
+function decodeData(): AIPathfindingComponentData {
    return {};
 }
 
@@ -24,7 +18,3 @@ function createComponent(): AIPathfindingComponent {
 function getMaxRenderParts(): number {
    return 0;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}

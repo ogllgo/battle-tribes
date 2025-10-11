@@ -9,11 +9,11 @@ import { randFloat, randItem, randInt, Point, randAngle } from "../../../../shar
 import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle, createWoodSpeckParticle, LEAF_SPECK_COLOUR_HIGH, LEAF_SPECK_COLOUR_LOW } from "../../particles";
 import { playSoundOnHitbox } from "../../sound";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface SpruceTreeComponentParams {
+export interface SpruceTreeComponentData {
    readonly treeSize: TreeSize;
    readonly snowVariant: number;
 }
@@ -36,18 +36,12 @@ const getRadius = (treeSize: TreeSize): number => {
    return 40 + treeSize * 10;
 }
 
-export const SpruceTreeComponentArray = new ServerComponentArray<SpruceTreeComponent, SpruceTreeComponentParams, IntermediateInfo>(ServerComponentType.spruceTree, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const SpruceTreeComponentArray = new ServerComponentArray<SpruceTreeComponent, SpruceTreeComponentData, IntermediateInfo>(ServerComponentType.spruceTree, true, createComponent, getMaxRenderParts, decodeData);
+SpruceTreeComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+SpruceTreeComponentArray.onHit = onHit;
+SpruceTreeComponentArray.onDie = onDie;
 
-function createParamsFromData(reader: PacketReader): SpruceTreeComponentParams {
+function decodeData(reader: PacketReader): SpruceTreeComponentData {
    const treeSize = reader.readNumber();
    const snowVariant = reader.readNumber();
    return {
@@ -56,17 +50,17 @@ function createParamsFromData(reader: PacketReader): SpruceTreeComponentParams {
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
-   const spruceTreeComponentParams = entityParams.serverComponentParams[ServerComponentType.spruceTree]!;
+   const spruceTreeComponentData = entityComponentData.serverComponentData[ServerComponentType.spruceTree]!;
    
    const renderPart = new TexturedRenderPart(
       hitbox,
       0,
       0,
-      getTextureArrayIndex(treeTextures[spruceTreeComponentParams.treeSize])
+      getTextureArrayIndex(treeTextures[spruceTreeComponentData.treeSize])
    )
    renderPart.tintR = randFloat(-0.05, 0.05);
    renderPart.tintG = randFloat(-0.05, 0.05);
@@ -74,9 +68,9 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    renderInfo.attachRenderPart(renderPart);
 
    // Snow overlay
-   const snowVariant = spruceTreeComponentParams.snowVariant;
+   const snowVariant = spruceTreeComponentData.snowVariant;
    if (snowVariant !== 0) {
-      const sizeStr = spruceTreeComponentParams.treeSize === TreeSize.large ? "large" : "small";
+      const sizeStr = spruceTreeComponentData.treeSize === TreeSize.large ? "large" : "small";
       renderInfo.attachRenderPart(
          new TexturedRenderPart(
             hitbox,
@@ -90,9 +84,9 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    return {};
 }
 
-function createComponent(entityParams: EntityParams): SpruceTreeComponent {
+function createComponent(entityComponentData: EntityComponentData): SpruceTreeComponent {
    return {
-      treeSize: entityParams.serverComponentParams[ServerComponentType.spruceTree]!.treeSize
+      treeSize: entityComponentData.serverComponentData[ServerComponentType.spruceTree]!.treeSize
    };
 }
 
@@ -100,14 +94,6 @@ function getMaxRenderParts(): number {
    return 2;
 }
    
-function padData(reader: PacketReader): void {
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader): void {
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-}
-
 function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point, hitFlags: number): void {
    const spruceTreeComponent = SpruceTreeComponentArray.getComponent(entity);
 

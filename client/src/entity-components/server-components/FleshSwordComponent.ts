@@ -1,19 +1,13 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import ServerComponentArray from "../ServerComponentArray";
 
-export interface FleshSwordComponentParams {}
+export interface FleshSwordComponentData {}
 
 export interface FleshSwordComponent {}
 
-export const FleshSwordComponentArray = new ServerComponentArray<FleshSwordComponent, FleshSwordComponentParams>(ServerComponentType.fleshSwordItem, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const FleshSwordComponentArray = new ServerComponentArray<FleshSwordComponent, FleshSwordComponentData>(ServerComponentType.fleshSwordItem, true, createComponent, getMaxRenderParts, decodeData);
 
-function createParamsFromData(): FleshSwordComponentParams {
+function decodeData(): FleshSwordComponentData {
    return {};
 }
 
@@ -24,7 +18,3 @@ function createComponent(): FleshSwordComponent {
 function getMaxRenderParts(): number {
    return 0;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}

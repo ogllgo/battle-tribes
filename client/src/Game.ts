@@ -81,12 +81,13 @@ import { resolveEntityCollisions, resolvePlayerCollisions } from "./collision";
 import { Point } from "../../shared/src/utils";
 import { CowStaminaBar_forceUpdate } from "./components/game/CowStaminaBar";
 import { updateBox } from "../../shared/src/boxes/boxes";
-import { processGameDataPacket } from "./networking/packet-receiving";
 import { PacketReader } from "../../shared/src/packets";
 
 let listenersHaveBeenCreated = false;
 
 let entityDebugData: EntityDebugData | null = null;
+
+let gameTime: number;
 
 export let gameFramebuffer: WebGLFramebuffer;
 export let gameFramebufferTexture: WebGLTexture;
@@ -101,7 +102,8 @@ let lastFrameTime = performance.now();
 let clientTickInterp = 0;
 let serverTickInterp = 0;
 
-const bufferedPackets = new Array<PacketReader>();
+const snapshotBuffer = new Array<GameSnapshot>();
+// const bufferedPackets = new Array<PacketReader>();
 
 const TPS_ADJUST_REACTIVENESS = 10;
 let lastPacketTime = 0;
@@ -121,6 +123,11 @@ export function receivePacket(reader: PacketReader): void {
    lastPacketTime = timeNow;
 }
 
+// @Cleanup it's weird for these to be exported. they're literally used in 1 specific place and nowhere else for the rest of time
+export function setGameTime(time: number): void {
+   gameTime = time;
+}
+
 export function getNumBufferedPackets(): number {
    return bufferedPackets.length;
 }
@@ -134,6 +141,8 @@ export function getCursorWorldPos(): Readonly<Point> {
 }
 
 const createEventListeners = (): void => {
+   // @CLEANUP try just moving this to index.tsx and not having a whole function to do this
+   
    if (listenersHaveBeenCreated) return;
    listenersHaveBeenCreated = true;
 

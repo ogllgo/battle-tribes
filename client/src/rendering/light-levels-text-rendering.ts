@@ -1,6 +1,6 @@
 import { getLightLevelNodeX, getLightLevelNodeY, LightLevelVars } from "../../../shared/src/light-levels";
 import { distance, roundNum } from "../../../shared/src/utils";
-import { getCursorWorldPos } from "../Game";
+import { getCursorWorldPos } from "../game";
 import { getLightLevelNodeInfos } from "../light-levels";
 import { getTextContext, getXPosInTextCanvas, getYPosInTextCanvas } from "../text-canvas";
 

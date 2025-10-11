@@ -9,11 +9,11 @@ import { randFloat, randItem, randInt, Point, randAngle } from "../../../../shar
 import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle, createWoodSpeckParticle, LEAF_SPECK_COLOUR_HIGH, LEAF_SPECK_COLOUR_LOW } from "../../particles";
 import { playSoundOnHitbox } from "../../sound";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface TreeComponentParams {
+export interface TreeComponentData {
    readonly treeSize: TreeSize;
 }
 
@@ -35,45 +35,39 @@ const getRadius = (treeSize: TreeSize): number => {
    return 40 + treeSize * 10;
 }
 
-export const TreeComponentArray = new ServerComponentArray<TreeComponent, TreeComponentParams, IntermediateInfo>(ServerComponentType.tree, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const TreeComponentArray = new ServerComponentArray<TreeComponent, TreeComponentData, IntermediateInfo>(ServerComponentType.tree, true, createComponent, getMaxRenderParts, decodeData);
+TreeComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+TreeComponentArray.onHit = onHit;
+TreeComponentArray.onDie = onDie;
 
-function createParamsFromData(reader: PacketReader): TreeComponentParams {
+function decodeData(reader: PacketReader): TreeComponentData {
    const treeSize = reader.readNumber();
    return {
       treeSize: treeSize
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
-   const treeComponentParams = entityParams.serverComponentParams[ServerComponentType.tree]!;
+   const treeComponentData = entityComponentData.serverComponentData[ServerComponentType.tree]!;
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,
          0,
-         getTextureArrayIndex(treeTextures[treeComponentParams.treeSize])
+         getTextureArrayIndex(treeTextures[treeComponentData.treeSize])
       )
    );
 
    return {};
 }
 
-function createComponent(entityParams: EntityParams): TreeComponent {
+function createComponent(entityComponentData: EntityComponentData): TreeComponent {
    return {
-      treeSize: entityParams.serverComponentParams[ServerComponentType.tree]!.treeSize
+      treeSize: entityComponentData.serverComponentData[ServerComponentType.tree]!.treeSize
    };
 }
 
@@ -81,14 +75,6 @@ function getMaxRenderParts(): number {
    return 1;
 }
    
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
 function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point, hitFlags: number): void {
    const treeComponent = TreeComponentArray.getComponent(entity);
 

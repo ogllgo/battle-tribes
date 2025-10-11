@@ -7,32 +7,26 @@ import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 
-export interface TukmokSpurComponentParams {}
+export interface TukmokSpurComponentData {}
 
 interface IntermediateInfo {}
 
 export interface TukmokSpurComponent {}
 
-export const TukmokSpurComponentArray = new ServerComponentArray<TukmokSpurComponent, TukmokSpurComponentParams, IntermediateInfo>(ServerComponentType.tukmokSpur, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit
-});
+export const TukmokSpurComponentArray = new ServerComponentArray<TukmokSpurComponent, TukmokSpurComponentData, IntermediateInfo>(ServerComponentType.tukmokSpur, true, createComponent, getMaxRenderParts, decodeData);
+TukmokSpurComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+TukmokSpurComponentArray.onHit = onHit;
 
-function createParamsFromData(): TukmokSpurComponentParams {
+function decodeData(): TukmokSpurComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
    let textureSource: string;
    if (hitbox.flags.includes(HitboxFlag.TUKMOK_SPUR_HEAD)) {
@@ -66,10 +60,6 @@ function createComponent(): TukmokSpurComponent {
 function getMaxRenderParts(): number {
    return 1;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}
 
 function onHit(entity: Entity, hitbox: Hitbox): void {
    playSoundOnHitbox("tukmok-bone-hit.mp3", 0.4, randFloat(0.92, 1.08), entity, hitbox, false);

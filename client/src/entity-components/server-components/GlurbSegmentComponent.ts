@@ -4,17 +4,17 @@ import { PacketReader } from "../../../../shared/src/packets";
 import { Settings } from "../../../../shared/src/settings";
 import { randFloat, Point, randAngle } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { Hitbox } from "../../hitboxes";
+import { getRandomPositionInBox, Hitbox } from "../../hitboxes";
 import { createSlurbParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { coatSlimeTrails } from "../../rendering/webgl/slime-trail-rendering";
 import { playSound, playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams, getEntityLayer, getEntityRenderInfo } from "../../world";
+import { EntityComponentData, getEntityLayer, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
-import { entityIsVisibleToCamera, TransformComponentArray, getRandomPositionInBox } from "./TransformComponent";
+import { entityIsVisibleToCamera, TransformComponentArray } from "./TransformComponent";
 
-export interface GlurbSegmentComponentParams {
+export interface GlurbSegmentComponentData {
    readonly mossBallCompleteness: number;
 }
 
@@ -26,21 +26,15 @@ export interface GlurbSegmentComponent {
    mossBallRenderPart: TexturedRenderPart | null;
 }
 
-export const GlurbSegmentComponentArray = new ServerComponentArray<GlurbSegmentComponent, GlurbSegmentComponentParams, IntermediateInfo>(ServerComponentType.glurbSegment, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onTick: onTick,
-   onHit: onHit,
-   onDie: onDie
-});
+export const GlurbSegmentComponentArray = new ServerComponentArray<GlurbSegmentComponent, GlurbSegmentComponentData, IntermediateInfo>(ServerComponentType.glurbSegment, true, createComponent, getMaxRenderParts, decodeData);
+GlurbSegmentComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+GlurbSegmentComponentArray.updateFromData = updateFromData;
+GlurbSegmentComponentArray.onTick = onTick;
+GlurbSegmentComponentArray.onHit = onHit;
+GlurbSegmentComponentArray.onDie = onDie;
 
-function createParamsFromData(reader: PacketReader): GlurbSegmentComponentParams {
+function decodeData(reader: PacketReader): GlurbSegmentComponentData {
    const mossBallCompleteness = reader.readNumber();
-   
    return {
       mossBallCompleteness: mossBallCompleteness
    };
@@ -68,15 +62,15 @@ const createMossBallRenderPart = (mossBallCompleteness: number, parentHitbox: Hi
    return renderPart;
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const glurbSegmentComponentParams = entityParams.serverComponentParams[ServerComponentType.glurbSegment]!;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const glurbSegmentComponentData = entityComponentData.serverComponentData[ServerComponentType.glurbSegment]!;
 
    let renderPart: TexturedRenderPart | null;
-   if (glurbSegmentComponentParams.mossBallCompleteness > 0) {
-      const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-      const hitbox = transformComponentParams.hitboxes[0];
+   if (glurbSegmentComponentData.mossBallCompleteness > 0) {
+      const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+      const hitbox = transformComponentData.hitboxes[0];
    
-      renderPart = createMossBallRenderPart(glurbSegmentComponentParams.mossBallCompleteness, hitbox);
+      renderPart = createMossBallRenderPart(glurbSegmentComponentData.mossBallCompleteness, hitbox);
       renderInfo.attachRenderPart(renderPart);
    } else {
       renderPart = null;
@@ -87,7 +81,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    };
 }
 
-function createComponent(_entityParams: EntityParams, intermediateInfo: IntermediateInfo): GlurbSegmentComponent {
+function createComponent(_entityComponentData: EntityComponentData, intermediateInfo: IntermediateInfo): GlurbSegmentComponent {
    return {
       mossBallRenderPart: intermediateInfo.mossBallRenderPart
    };
@@ -97,14 +91,10 @@ function getMaxRenderParts(): number {
    return 1;
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, glurbSegment: Entity): void {
+function updateFromData(data: GlurbSegmentComponentData, glurbSegment: Entity): void {
    const glurbSegmentComponent = GlurbSegmentComponentArray.getComponent(glurbSegment);
 
-   const mossBallCompleteness = reader.readNumber();
+   const mossBallCompleteness = data.mossBallCompleteness;
 
    if (mossBallCompleteness === 0) {
       if (glurbSegmentComponent.mossBallRenderPart !== null) {

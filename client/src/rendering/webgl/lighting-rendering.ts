@@ -8,7 +8,7 @@ import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import Layer from "../../Layer";
 import { surfaceLayer } from "../../world";
 import Camera from "../../Camera";
-import { gameFramebufferTexture } from "../../Game";
+import { gameFramebufferTexture } from "../../game";
 
 const enum Vars {
    MAX_LIGHTS = 64,

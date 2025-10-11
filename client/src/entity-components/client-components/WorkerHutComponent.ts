@@ -5,12 +5,12 @@ import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playBuildingHitSound, playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 import { TransformComponentArray } from "../server-components/TransformComponent";
 
-export interface WorkerHutComponentParams {}
+export interface WorkerHutComponentData {}
 
 interface IntermediateInfo {}
 
@@ -24,13 +24,13 @@ export const WorkerHutComponentArray = new ClientComponentArray<WorkerHutCompone
    onDie: onDie
 });
 
-export function createWorkerHutComponentParams(): WorkerHutComponentParams {
+export function createWorkerHutComponentData(): WorkerHutComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    // Hut
    const hutRenderPart = new TexturedRenderPart(

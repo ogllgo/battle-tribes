@@ -2,15 +2,12 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { createLight, Light } from "../../lights";
-import { ItemType } from "../../../../shared/src/items/items";
-import { Point, randAngle, randFloat } from "../../../../shared/src/utils";
+import { randAngle, randFloat } from "../../../../shared/src/utils";
 import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { createSlurbParticle } from "../../particles";
 import { Settings } from "../../../../shared/src/settings";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 const enum Vars {
@@ -18,7 +15,7 @@ const enum Vars {
    MAX_PARTICLE_CREATION_INTERVAL_SECONDS = 1.55
 }
 
-export interface SlurbTorchComponentParams {}
+export interface SlurbTorchComponentData {}
 
 interface IntermediateInfo {}
 
@@ -26,31 +23,21 @@ export interface SlurbTorchComponent {
    particleCreationTimer: number;
 }
 
-export const SlurbTorchComponentArray = new ServerComponentArray<SlurbTorchComponent, SlurbTorchComponentParams, IntermediateInfo>(ServerComponentType.slurbTorch, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onTick: onTick
-});
+export const SlurbTorchComponentArray = new ServerComponentArray<SlurbTorchComponent, SlurbTorchComponentData, IntermediateInfo>(ServerComponentType.slurbTorch, true, createComponent, getMaxRenderParts, decodeData);
+SlurbTorchComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+SlurbTorchComponentArray.onTick = onTick;
 
-const fillParams = (): SlurbTorchComponentParams => {
+export function createSlurbTorchComponentData(): SlurbTorchComponentData {
    return {};
 }
 
-export function createSlurbTorchComponentParams(): SlurbTorchComponentParams {
-   return fillParams();
+function decodeData(): SlurbTorchComponentData {
+   return {};
 }
 
-function createParamsFromData(): SlurbTorchComponentParams {
-   return fillParams();
-}
-
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -72,10 +59,6 @@ function createComponent(): SlurbTorchComponent {
 function getMaxRenderParts(): number {
    return 1;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}
 
 function onTick(entity: Entity): void {
    // @Copynpaste: all of these effects from InventoryUseComponent

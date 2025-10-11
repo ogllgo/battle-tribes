@@ -3,39 +3,32 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import { playSoundOnHitbox } from "../../sound";
-import { Point, randAngle, randFloat } from "../../../../shared/src/utils";
+import { randAngle, randFloat } from "../../../../shared/src/utils";
 import { createPricklyPearParticle } from "../../particles";
 import { HealthComponentArray } from "./HealthComponent";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface PricklyPearComponentParams {}
+export interface PricklyPearComponentData {}
 
 interface IntermediateInfo {}
 
 export interface PricklyPearComponent {}
 
-export const PricklyPearComponentArray = new ServerComponentArray<PricklyPearComponent, PricklyPearComponentParams, IntermediateInfo>(ServerComponentType.pricklyPear, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onDie: onDie
-});
+export const PricklyPearComponentArray = new ServerComponentArray<PricklyPearComponent, PricklyPearComponentData, IntermediateInfo>(ServerComponentType.pricklyPear, true, createComponent, getMaxRenderParts, decodeData);
+PricklyPearComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+PricklyPearComponentArray.onDie = onDie;
 
-function createParamsFromData(): PricklyPearComponentParams {
+function decodeData(): PricklyPearComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -57,10 +50,6 @@ function getMaxRenderParts(): number {
    return 1;
 }
    
-function padData(reader: PacketReader): void {}
-
-function updateFromData(reader: PacketReader): void {}
-
 function onDie(pricklyPear: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(pricklyPear);
    const hitbox = transformComponent.hitboxes[0];

@@ -14,7 +14,7 @@ import { addGhostRenderInfo, removeGhostRenderInfo } from "./rendering/webgl/ent
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { calculateHitboxRenderPosition } from "./rendering/render-part-matrices";
 import { FloorSignComponentArray } from "./entity-components/server-components/FloorSignComponent";
-import { getCursorWorldPos } from "./Game";
+import { getCursorWorldPos } from "./game";
 import { TamingComponentArray } from "./entity-components/server-components/TamingComponent";
 
 // @Cleanup: The logic for damage, research and heal numbers is extremely similar, can probably be combined

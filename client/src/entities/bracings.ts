@@ -1,14 +1,14 @@
 import { BuildingMaterial, ServerComponentType } from "../../../shared/src/components";
 import { EntityType } from "../../../shared/src/entities";
-import { createBracingsComponentParams } from "../entity-components/server-components/BracingsComponent";
-import { createBuildingMaterialComponentParams } from "../entity-components/server-components/BuildingMaterialComponent";
-import { createHealthComponentParams } from "../entity-components/server-components/HealthComponent";
-import { createStatusEffectComponentParams } from "../entity-components/server-components/StatusEffectComponent";
-import { createStructureComponentParams } from "../entity-components/server-components/StructureComponent";
-import { createTransformComponentParams } from "../entity-components/server-components/TransformComponent";
-import { createTribeComponentParams } from "../entity-components/server-components/TribeComponent";
+import { createBracingsComponentData } from "../entity-components/server-components/BracingsComponent";
+import { createBuildingMaterialComponentData } from "../entity-components/server-components/BuildingMaterialComponent";
+import { createHealthComponentData } from "../entity-components/server-components/HealthComponent";
+import { createStatusEffectComponentData } from "../entity-components/server-components/StatusEffectComponent";
+import { createStructureComponentData } from "../entity-components/server-components/StructureComponent";
+import { createTransformComponentData } from "../entity-components/server-components/TransformComponent";
+import { createTribeComponentData } from "../entity-components/server-components/TribeComponent";
 import { Tribe } from "../tribes";
-import { EntityParams } from "../world";
+import { EntityComponentData } from "../world";
 import { Point } from "../../../shared/src/utils";
 import RectangularBox from "../../../shared/src/boxes/RectangularBox";
 import { HitboxCollisionType } from "../../../shared/src/boxes/boxes";
@@ -16,7 +16,7 @@ import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../shared/src/collis
 import { Settings } from "../../../shared/src/settings";
 import { createHitboxQuick, Hitbox } from "../hitboxes";
 
-export function createBracingsConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial): EntityParams {
+export function createBracingsConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial): EntityComponentData {
    const hitboxes = new Array<Hitbox>();
    let hitboxLocalID = 0;
    
@@ -28,15 +28,15 @@ export function createBracingsConfig(position: Point, rotation: number, tribe: T
    
    return {
       entityType: EntityType.bracings,
-      serverComponentParams: {
-         [ServerComponentType.transform]: createTransformComponentParams(hitboxes),
-         [ServerComponentType.health]: createHealthComponentParams(),
-         [ServerComponentType.statusEffect]: createStatusEffectComponentParams(),
-         [ServerComponentType.structure]: createStructureComponentParams(),
-         [ServerComponentType.tribe]: createTribeComponentParams(tribe),
-         [ServerComponentType.buildingMaterial]: createBuildingMaterialComponentParams(material),
-         [ServerComponentType.bracings]: createBracingsComponentParams()
+      serverComponentData: {
+         [ServerComponentType.transform]: createTransformComponentData(hitboxes),
+         [ServerComponentType.health]: createHealthComponentData(),
+         [ServerComponentType.statusEffect]: createStatusEffectComponentData(),
+         [ServerComponentType.structure]: createStructureComponentData(),
+         [ServerComponentType.tribe]: createTribeComponentData(tribe),
+         [ServerComponentType.buildingMaterial]: createBuildingMaterialComponentData(material),
+         [ServerComponentType.bracings]: createBracingsComponentData()
       },
-      clientComponentParams: {}
+      clientComponentData: {}
    };
 }

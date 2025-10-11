@@ -175,8 +175,9 @@ export class Point {
       return (this.x * pointB.x + this.y * pointB.y) / pointB.magnitude();
    }
 
-   public static unpackage(packagedPoint: [number, number]): Point {
-      return new Point(packagedPoint[0], packagedPoint[1]);
+   public set(other: Point): void {
+      this.x = other.x;
+      this.y = other.y;
    }
 }
 

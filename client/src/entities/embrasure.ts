@@ -4,17 +4,17 @@ import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../shared/src/collis
 import { BuildingMaterial, ServerComponentType } from "../../../shared/src/components";
 import { EntityType } from "../../../shared/src/entities";
 import { Point } from "../../../shared/src/utils";
-import { createBuildingMaterialComponentParams } from "../entity-components/server-components/BuildingMaterialComponent";
-import { createHealthComponentParams } from "../entity-components/server-components/HealthComponent";
-import { createStatusEffectComponentParams } from "../entity-components/server-components/StatusEffectComponent";
-import { createStructureComponentParams } from "../entity-components/server-components/StructureComponent";
-import { createTransformComponentParams } from "../entity-components/server-components/TransformComponent";
-import { createTribeComponentParams } from "../entity-components/server-components/TribeComponent";
+import { createBuildingMaterialComponentData } from "../entity-components/server-components/BuildingMaterialComponent";
+import { createHealthComponentData } from "../entity-components/server-components/HealthComponent";
+import { createStatusEffectComponentData } from "../entity-components/server-components/StatusEffectComponent";
+import { createStructureComponentData } from "../entity-components/server-components/StructureComponent";
+import { createTransformComponentData } from "../entity-components/server-components/TransformComponent";
+import { createTribeComponentData } from "../entity-components/server-components/TribeComponent";
 import { createHitboxQuick, Hitbox } from "../hitboxes";
 import { Tribe } from "../tribes";
-import { EntityParams } from "../world";
+import { EntityComponentData } from "../world";
 
-export function createEmbrasureConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial): EntityParams {
+export function createEmbrasureConfig(position: Point, rotation: number, tribe: Tribe, material: BuildingMaterial): EntityComponentData {
    const hitboxes = new Array<Hitbox>();
    let hitboxLocalID = 0;
    
@@ -38,14 +38,14 @@ export function createEmbrasureConfig(position: Point, rotation: number, tribe: 
 
    return {
       entityType: EntityType.embrasure,
-      serverComponentParams: {
-         [ServerComponentType.transform]: createTransformComponentParams(hitboxes),
-         [ServerComponentType.health]: createHealthComponentParams(),
-         [ServerComponentType.statusEffect]: createStatusEffectComponentParams(),
-         [ServerComponentType.structure]: createStructureComponentParams(),
-         [ServerComponentType.tribe]: createTribeComponentParams(tribe),
-         [ServerComponentType.buildingMaterial]: createBuildingMaterialComponentParams(material)
+      serverComponentData: {
+         [ServerComponentType.transform]: createTransformComponentData(hitboxes),
+         [ServerComponentType.health]: createHealthComponentData(),
+         [ServerComponentType.statusEffect]: createStatusEffectComponentData(),
+         [ServerComponentType.structure]: createStructureComponentData(),
+         [ServerComponentType.tribe]: createTribeComponentData(tribe),
+         [ServerComponentType.buildingMaterial]: createBuildingMaterialComponentData(material)
       },
-      clientComponentParams: {}
+      clientComponentData: {}
    };
 }

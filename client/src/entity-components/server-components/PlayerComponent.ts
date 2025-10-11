@@ -1,9 +1,9 @@
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 
-export interface PlayerComponentParams {
+export interface PlayerComponentData {
    readonly username: string;
 }
 
@@ -11,35 +11,21 @@ export interface PlayerComponent {
    readonly username: string;
 }
 
-export const PlayerComponentArray = new ServerComponentArray<PlayerComponent, PlayerComponentParams, never>(ServerComponentType.player, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const PlayerComponentArray = new ServerComponentArray<PlayerComponent, PlayerComponentData, never>(ServerComponentType.player, true, createComponent, getMaxRenderParts, decodeData);
 
-function createParamsFromData(reader: PacketReader): PlayerComponentParams {
+function decodeData(reader: PacketReader): PlayerComponentData {
    const username = reader.readString();
    return {
       username: username
    };
 }
 
-function createComponent(entityParams: EntityParams): PlayerComponent {
+function createComponent(entityComponentData: EntityComponentData): PlayerComponent {
    return {
-      username: entityParams.serverComponentParams[ServerComponentType.player]!.username
+      username: entityComponentData.serverComponentData[ServerComponentType.player]!.username
    };
 }
 
 function getMaxRenderParts(): number {
    return 0;
-}
-
-function padData(reader: PacketReader): void {
-   reader.padString();
-}
-
-function updateFromData(reader: PacketReader): void {
-   reader.padString();
 }

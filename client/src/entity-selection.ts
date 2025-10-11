@@ -2,7 +2,7 @@ import { Entity, EntityType, PlantedEntityType } from "battletribes-shared/entit
 import { assert, distance, Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { TunnelDoorSide } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
-import Game, { getCursorWorldPos } from "./Game";
+import Game, { getCursorWorldPos } from "./game";
 import Board from "./Board";
 import Client from "./networking/Client";
 import { latencyGameState } from "./game-state/game-states";

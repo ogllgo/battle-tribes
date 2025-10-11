@@ -4,14 +4,14 @@ import Board from "../../Board";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityComponentData, getEntityRenderInfo } from "../../world";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface AmmoBoxComponentParams {
+export interface AmmoBoxComponentData {
    readonly ammoType: TurretAmmoType | null;
    readonly ammoRemaining: number;
 }
@@ -43,37 +43,31 @@ const createAmmoWarningRenderPart = (parentHitbox: Hitbox): VisualRenderPart => 
    return renderPart;
 }
 
-export const AmmoBoxComponentArray = new ServerComponentArray<AmmoBoxComponent, AmmoBoxComponentParams, IntermediateInfo>(ServerComponentType.ammoBox, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: createIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const AmmoBoxComponentArray = new ServerComponentArray<AmmoBoxComponent, AmmoBoxComponentData, IntermediateInfo>(ServerComponentType.ammoBox, true, createComponent, getMaxRenderParts, decodeData);
+AmmoBoxComponentArray.populateIntermediateInfo = createIntermediateInfo;
+AmmoBoxComponentArray.updateFromData = updateFromData;
 
-const fillParams = (ammoType: TurretAmmoType | null, ammoRemaining: number): AmmoBoxComponentParams => {
+export function createAmmoBoxComponentData(): AmmoBoxComponentData {
+   return {
+      ammoType: null,
+      ammoRemaining: 0
+   };
+}
+
+function decodeData(reader: PacketReader): AmmoBoxComponentData {
+   const ammoType = reader.readNumber();
+   const ammoRemaining = reader.readNumber();
    return {
       ammoType: ammoType,
       ammoRemaining: ammoRemaining
    };
 }
 
-export function createAmmoBoxComponentParams(): AmmoBoxComponentParams {
-   return fillParams(null, 0);
-}
-
-function createParamsFromData(reader: PacketReader): AmmoBoxComponentParams {
-   const ammoType = reader.readNumber();
-   const ammoRemaining = reader.readNumber();
-   return fillParams(ammoType, ammoRemaining);
-}
-
-function createIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
+function createIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
    let ammoWarningRenderPart: VisualRenderPart | null;
-   if (entityParams.serverComponentParams[ServerComponentType.ammoBox]!.ammoType === null) {
-      const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-      const hitbox = transformComponentParams.hitboxes[0];
+   if (entityComponentData.serverComponentData[ServerComponentType.ammoBox]!.ammoType === null) {
+      const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+      const hitbox = transformComponentData.hitboxes[0];
       
       ammoWarningRenderPart = createAmmoWarningRenderPart(hitbox);
       renderInfo.attachRenderPart(ammoWarningRenderPart);
@@ -86,12 +80,12 @@ function createIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: Enti
    };
 }
 
-function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): AmmoBoxComponent {
-   const ammoBoxComponentParams = entityParams.serverComponentParams[ServerComponentType.ammoBox]!;
+function createComponent(entityComponentData: EntityComponentData, intermediateInfo: IntermediateInfo): AmmoBoxComponent {
+   const ammoBoxComponentData = entityComponentData.serverComponentData[ServerComponentType.ammoBox]!;
    
    return {
-      ammoType: ammoBoxComponentParams.ammoType,
-      ammoRemaining: ammoBoxComponentParams.ammoRemaining,
+      ammoType: ammoBoxComponentData.ammoType,
+      ammoRemaining: ammoBoxComponentData.ammoRemaining,
       ammoWarningRenderPart: intermediateInfo.ammoWarningRenderPart
    };
 }
@@ -137,21 +131,8 @@ const updateAmmoType = (ammoBoxComponent: AmmoBoxComponent, entity: Entity, ammo
    ammoBoxComponent.ammoType = ammoType;
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: AmmoBoxComponentData, entity: Entity): void {
    const ammoBoxComponent = AmmoBoxComponentArray.getComponent(entity);
-   
-   const ammoType = reader.readNumber();
-   const ammoRemaining = reader.readNumber();
-
-   if (ammoBoxComponent.ammoRemaining === 0) {
-      updateAmmoType(ammoBoxComponent, entity, null);
-   } else {
-      updateAmmoType(ammoBoxComponent, entity, ammoType);
-   }
-
-   ammoBoxComponent.ammoRemaining = ammoRemaining;
+   updateAmmoType(ammoBoxComponent, entity, ammoBoxComponent.ammoRemaining > 0 ? data.ammoType : null);
+   ammoBoxComponent.ammoRemaining = data.ammoRemaining;
 }

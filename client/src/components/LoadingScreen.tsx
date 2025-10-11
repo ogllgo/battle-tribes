@@ -1,7 +1,7 @@
 import { TribeType } from "battletribes-shared/tribes";
 import { useEffect, useRef, useState } from "react";
 import Client from "../networking/Client";
-import Game from "../Game";
+import Game from "../game";
 import { AppState } from "./App";
 import { definiteGameState } from "../game-state/game-states";
 import { processGameDataPacket } from "../networking/packet-receiving";

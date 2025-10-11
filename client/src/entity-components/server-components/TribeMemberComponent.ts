@@ -1,54 +1,45 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 
-export interface TribeMemberComponentParams {
-   name: string;
+export interface TribeMemberComponentData {
+   readonly name: string;
 }
 
 export interface TribeMemberComponent {
    name: string;
 }
 
-export const TribeMemberComponentArray = new ServerComponentArray<TribeMemberComponent, TribeMemberComponentParams, never>(ServerComponentType.tribeMember, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const TribeMemberComponentArray = new ServerComponentArray<TribeMemberComponent, TribeMemberComponentData, never>(ServerComponentType.tribeMember, true, createComponent, getMaxRenderParts, decodeData);
+TribeMemberComponentArray.updateFromData = updateFromData;
 
-const fillParams = (name: string): TribeMemberComponentParams => {
+export function createTribeMemberComponentData(): TribeMemberComponentData {
+   return {
+      name: ""
+   };
+}
+
+function decodeData(reader: PacketReader): TribeMemberComponentData {
+   const name = reader.readString();
    return {
       name: name
    };
 }
 
-export function createTribeMemberComponentParams(): TribeMemberComponentParams {
-   return fillParams("");
-}
-
-function createParamsFromData(reader: PacketReader): TribeMemberComponentParams {
-   const name = reader.readString();
-   return fillParams(name);
-}
-
-function createComponent(entityParams: EntityParams): TribeMemberComponent {
-   const tribeMemberComponentParams = entityParams.serverComponentParams[ServerComponentType.tribeMember]!;
-   return fillParams(tribeMemberComponentParams.name);
+function createComponent(entityComponentData: EntityComponentData): TribeMemberComponent {
+   const tribeMemberComponentData = entityComponentData.serverComponentData[ServerComponentType.tribeMember]!;
+   return {
+      name: tribeMemberComponentData.name
+   };
 }
 
 function getMaxRenderParts(): number {
    return 0;
 }
 
-function padData(reader: PacketReader): void {
-   reader.padString();
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: TribeMemberComponentData, entity: Entity): void {
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(entity);
-   tribeMemberComponent.name = reader.readString();
+   tribeMemberComponent.name = data.name;
 }

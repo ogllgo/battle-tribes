@@ -1,10 +1,10 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 
-export interface BlockAttackComponentParams {
+export interface BlockAttackComponentData {
    readonly hasBlocked: boolean;
 }
 
@@ -12,15 +12,10 @@ export interface BlockAttackComponent {
    hasBlocked: boolean;
 }
 
-export const BlockAttackComponentArray = new ServerComponentArray<BlockAttackComponent, BlockAttackComponentParams, never>(ServerComponentType.blockAttack, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const BlockAttackComponentArray = new ServerComponentArray<BlockAttackComponent, BlockAttackComponentData, never>(ServerComponentType.blockAttack, true, createComponent, getMaxRenderParts, decodeData);
+BlockAttackComponentArray.updateFromData = updateFromData;
 
-function createParamsFromData(reader: PacketReader): BlockAttackComponentParams {
+function decodeData(reader: PacketReader): BlockAttackComponentData {
    const hasBlocked = reader.readBoolean();
    reader.padOffset(3);
    
@@ -29,11 +24,11 @@ function createParamsFromData(reader: PacketReader): BlockAttackComponentParams 
    };
 }
 
-function createComponent(entityParams: EntityParams): BlockAttackComponent {
-   const blockAttackComponentParams = entityParams.serverComponentParams[ServerComponentType.blockAttack]!;
+function createComponent(entityComponentData: EntityComponentData): BlockAttackComponent {
+   const blockAttackComponentData = entityComponentData.serverComponentData[ServerComponentType.blockAttack]!;
    
    return {
-      hasBlocked: blockAttackComponentParams.hasBlocked
+      hasBlocked: blockAttackComponentData.hasBlocked
    };
 }
 
@@ -41,12 +36,7 @@ function getMaxRenderParts(): number {
    return 0;
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: BlockAttackComponentData, entity: Entity): void {
    const blockAttackComponent = BlockAttackComponentArray.getComponent(entity);
-   blockAttackComponent.hasBlocked = reader.readBoolean();
-   reader.padOffset(3);
+   blockAttackComponent.hasBlocked = data.hasBlocked;
 }

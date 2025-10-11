@@ -7,11 +7,11 @@ import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
-export interface DesertBushSandyComponentParams {
+export interface DesertBushSandyComponentData {
    readonly size: number;
 }
 
@@ -19,33 +19,26 @@ interface IntermediateInfo {}
 
 export interface DesertBushSandyComponent {}
 
-export const DesertBushSandyComponentArray = new ServerComponentArray<DesertBushSandyComponent, DesertBushSandyComponentParams, IntermediateInfo>(ServerComponentType.desertBushSandy, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const DesertBushSandyComponentArray = new ServerComponentArray<DesertBushSandyComponent, DesertBushSandyComponentData, IntermediateInfo>(ServerComponentType.desertBushSandy, true, createComponent, getMaxRenderParts, decodeData);
+DesertBushSandyComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+DesertBushSandyComponentArray.onHit = onHit;
+DesertBushSandyComponentArray.onDie = onDie;
 
-function createParamsFromData(reader: PacketReader): DesertBushSandyComponentParams {
+function decodeData(reader: PacketReader): DesertBushSandyComponentData {
    const size = reader.readNumber();
-   
    return {
       size: size
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
-   const desertBushSandyComponentParams = entityParams.serverComponentParams[ServerComponentType.desertBushSandy]!;
+   const desertBushSandyComponentData = entityComponentData.serverComponentData[ServerComponentType.desertBushSandy]!;
    
    let textureSource: string;
-   if (desertBushSandyComponentParams.size === 0) {
+   if (desertBushSandyComponentData.size === 0) {
       textureSource = "entities/desert-bush-sandy/desert-bush-sandy.png";
    } else {
       textureSource = "entities/desert-bush-sandy/desert-bush-sandy-large.png";
@@ -73,14 +66,6 @@ function createComponent(): DesertBushSandyComponent {
 
 function getMaxRenderParts(): number {
    return 1;
-}
-
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader): void {
-   padData(reader);
 }
 
 function onHit(entity: Entity, hitbox: Hitbox): void {

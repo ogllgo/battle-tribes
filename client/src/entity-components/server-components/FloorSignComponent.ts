@@ -2,13 +2,12 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 
-export interface FloorSignComponentParams {
+export interface FloorSignComponentData {
    readonly message: string;
 }
 
@@ -18,26 +17,20 @@ export interface FloorSignComponent {
    message: string;
 }
 
-export const FloorSignComponentArray = new ServerComponentArray<FloorSignComponent, FloorSignComponentParams, IntermediateInfo>(ServerComponentType.floorSign, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const FloorSignComponentArray = new ServerComponentArray<FloorSignComponent, FloorSignComponentData, IntermediateInfo>(ServerComponentType.floorSign, true, createComponent, getMaxRenderParts, decodeData);
+FloorSignComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+FloorSignComponentArray.updateFromData = updateFromData;
 
-function createParamsFromData(reader: PacketReader): FloorSignComponentParams {
+function decodeData(reader: PacketReader): FloorSignComponentData {
    const message = reader.readString();
-   
    return {
       message: message
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -50,8 +43,8 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    return {};
 }
 
-function createComponent(entityParams: EntityParams): FloorSignComponentParams {
-   const floorSignComponent = entityParams.serverComponentParams[ServerComponentType.floorSign]!;
+function createComponent(entityComponentData: EntityComponentData): FloorSignComponentData {
+   const floorSignComponent = entityComponentData.serverComponentData[ServerComponentType.floorSign]!;
    
    return {
       message: floorSignComponent.message
@@ -62,11 +55,7 @@ function getMaxRenderParts(): number {
    return 1;
 }
 
-function padData(reader: PacketReader): void {
-   reader.padString()
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: FloorSignComponent, entity: Entity): void {
    const floorSignComponent = FloorSignComponentArray.getComponent(entity);
-   floorSignComponent.message = reader.readString();
+   floorSignComponent.message = data.message;
 }

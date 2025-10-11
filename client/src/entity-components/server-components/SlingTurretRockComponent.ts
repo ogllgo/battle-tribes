@@ -7,37 +7,31 @@ import { createArrowDestroyParticle, createRockParticle, createRockSpeckParticle
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
-export interface SlingTurretRockComponentParams {}
+export interface SlingTurretRockComponentData {}
 
 interface IntermediateInfo {}
 
 export interface SlingTurretRockComponent {}
 
-export const SlingTurretRockComponentArray = new ServerComponentArray<SlingTurretRockComponent, SlingTurretRockComponentParams, IntermediateInfo>(ServerComponentType.slingTurretRock, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onDie: onDie,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const SlingTurretRockComponentArray = new ServerComponentArray<SlingTurretRockComponent, SlingTurretRockComponentData, IntermediateInfo>(ServerComponentType.slingTurretRock, true, createComponent, getMaxRenderParts, decodeData);
+SlingTurretRockComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+SlingTurretRockComponentArray.onDie = onDie;
 
-export function createSlingTurretRockComponentParams(): SlingTurretRockComponentParams {
+export function createSlingTurretRockComponentData(): SlingTurretRockComponentData {
    return {};
 }
 
-function createParamsFromData(): SlingTurretRockComponentParams {
-   return createSlingTurretRockComponentParams();
+function decodeData(): SlingTurretRockComponentData {
+   return createSlingTurretRockComponentData();
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -82,7 +76,3 @@ function onDie(entity: Entity): void {
       createRockSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, 16, 0, 0, ParticleRenderLayer.low);
    }
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}

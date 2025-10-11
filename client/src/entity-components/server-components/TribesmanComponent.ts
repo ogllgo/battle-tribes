@@ -12,9 +12,9 @@ import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { TitlesTab_setTitles } from "../../components/game/dev/tabs/TitlesTab";
-import { EntityParams, getEntityLayer, getEntityRenderInfo, getEntityType } from "../../world";
+import { EntityComponentData, getEntityRenderInfo, getEntityType } from "../../world";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
-import { getHitboxTile, resetIgnoredTileSpeedMultipliers, TransformComponentArray } from "./TransformComponent";
+import { resetIgnoredTileSpeedMultipliers, TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { TribeType } from "../../../../shared/src/tribes";
@@ -25,10 +25,10 @@ import { TribeComponentArray } from "./TribeComponent";
 import { TileType } from "../../../../shared/src/tiles";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { playerInstance } from "../../player";
-import { getHitboxVelocity, Hitbox } from "../../hitboxes";
+import { getHitboxTile, getHitboxVelocity, Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface TribesmanComponentParams {
+export interface TribesmanComponentData {
    readonly warpaintType: number | null;
    readonly titles: ReadonlyArray<TitleGenerationInfo>;
 }
@@ -141,7 +141,7 @@ const FISH_SUIT_IGNORED_TILE_MOVE_SPEEDS = [TileType.water];
 // }
 
 // @Cleanup: remove. just do in components
-// public updateFromData(data: EntityData): void {
+// public updateFromData(data: EntiaaatyData): void {
 //    const tribeComponent = this.getServerComponentA(ServerComponentType.tribe);
 //    const tribeTypeBeforeUpdate = tribeComponent.tribeType;
 
@@ -227,20 +227,15 @@ export function tribesmanHasTitle(tribesmanComponent: TribesmanComponent, title:
    return false;
 }
 
-export const TribesmanComponentArray = new ServerComponentArray<TribesmanComponent, TribesmanComponentParams, IntermediateInfo>(ServerComponentType.tribesman, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData,
-   updatePlayerFromData: updatePlayerFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const TribesmanComponentArray = new ServerComponentArray<TribesmanComponent, TribesmanComponentData, IntermediateInfo>(ServerComponentType.tribesman, true, createComponent, getMaxRenderParts, decodeData);
+TribesmanComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+TribesmanComponentArray.onTick = onTick;
+TribesmanComponentArray.updateFromData = updateFromData;
+TribesmanComponentArray.updatePlayerFromData = updatePlayerFromData;
+TribesmanComponentArray.onHit = onHit;
+TribesmanComponentArray.onDie = onDie;
 
-function createParamsFromData(reader: PacketReader): TribesmanComponentParams {
+function decodeData(reader: PacketReader): TribesmanComponentData {
    const warpaintType = readWarpaint(reader);
    
    const titles = new Array<TitleGenerationInfo>();
@@ -348,9 +343,9 @@ const getBodyTextureSource = (entityType: EntityType, tribeType: TribeType): str
    }
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const tribeComponentParams = entityParams.serverComponentParams[ServerComponentType.tribe]!;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const tribeComponentData = entityComponentData.serverComponentData[ServerComponentType.tribe]!;
    
    // @Temporary @Hack
    // const radius = tribesman.type === EntityType.player || tribesman.type === EntityType.tribeWarrior ? 32 : 28;
@@ -361,20 +356,20 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    // 
    
    const bodyRenderPart = new TexturedRenderPart(
-      transformComponentParams.hitboxes[0],
+      transformComponentData.hitboxes[0],
       2,
       0,
-      getTextureArrayIndex(getBodyTextureSource(entityParams.entityType, tribeComponentParams.tribeType))
+      getTextureArrayIndex(getBodyTextureSource(entityComponentData.entityType, tribeComponentData.tribeType))
    );
    renderInfo.attachRenderPart(bodyRenderPart);
 
-   if (tribeComponentParams.tribeType === TribeType.goblins) {
-      const tribesmanComponentParams = entityParams.serverComponentParams[ServerComponentType.tribesman]!;
-      const warPaintType = tribesmanComponentParams.warpaintType;
+   if (tribeComponentData.tribeType === TribeType.goblins) {
+      const tribesmanComponentData = entityComponentData.serverComponentData[ServerComponentType.tribesman]!;
+      const warPaintType = tribesmanComponentData.warpaintType;
       assert(warPaintType !== null);
       
       let textureSource: string;
-      if (entityParams.entityType === EntityType.tribeWarrior) {
+      if (entityComponentData.entityType === EntityType.tribeWarrior) {
          textureSource = `entities/goblins/warrior-warpaint-${warPaintType}.png`;
       } else {
          textureSource = `entities/goblins/goblin-warpaint-${warPaintType}.png`;
@@ -434,7 +429,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
          attachPoint,
          1.2,
          0,
-         getTextureArrayIndex(getFistTextureSource(entityParams.entityType, tribeComponentParams.tribeType))
+         getTextureArrayIndex(getFistTextureSource(entityComponentData.entityType, tribeComponentData.tribeType))
       );
       limbRenderParts.push(handRenderPart);
       handRenderPart.addTag("inventoryUseComponent:hand");
@@ -447,27 +442,27 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    };
 }
 
-function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): TribesmanComponent {
-   const tribesmanComponentParams = entityParams.serverComponentParams[ServerComponentType.tribesman]!;
+function createComponent(entityComponentData: EntityComponentData, intermediateInfo: IntermediateInfo): TribesmanComponent {
+   const tribesmanComponentData = entityComponentData.serverComponentData[ServerComponentType.tribesman]!;
    
    return {
       bodyRenderPart: intermediateInfo.bodyRenderPart,
       handRenderParts: intermediateInfo.limbRenderParts,
-      warpaintType: tribesmanComponentParams.warpaintType,
-      titles: tribesmanComponentParams.titles,
+      warpaintType: tribesmanComponentData.warpaintType,
+      titles: tribesmanComponentData.titles,
       deathbringerEyeLights: []
    };
 }
 
-function getMaxRenderParts(entityParams: EntityParams): number {
-   const tribeComponentParams = entityParams.serverComponentParams[ServerComponentType.tribe]!;
+function getMaxRenderParts(entityComponentData: EntityComponentData): number {
+   const tribeComponentData = entityComponentData.serverComponentData[ServerComponentType.tribe]!;
 
    let maxRenderParts = 0;
 
    // Body
    maxRenderParts++;
 
-   if (tribeComponentParams.tribeType === TribeType.goblins) {
+   if (tribeComponentData.tribeType === TribeType.goblins) {
       maxRenderParts += 3;
    }
 
@@ -718,8 +713,7 @@ function onTick(entity: Entity): void {
    const armour = armourSlotInventory.itemSlots[1];
    resetIgnoredTileSpeedMultipliers(transformComponent);
    if (typeof armour !== "undefined") {
-      const layer = getEntityLayer(entity);
-      const tile = getHitboxTile(layer, entityHitbox);
+      const tile = getHitboxTile(entityHitbox);
 
       // If frost armour is equipped, move at normal speed on snow tiles
       if ((armour.type === ItemType.frostArmour || armour.type === ItemType.winterskinArmour) && tile.type === TileType.snow) {
@@ -764,36 +758,22 @@ function onTick(entity: Entity): void {
    }
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-
-   const numTitles = reader.readNumber();
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT * numTitles);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: TribesmanComponentData, entity: Entity): void {
    const tribesmanComponent = TribesmanComponentArray.getComponent(entity);
 
-   tribesmanComponent.warpaintType = readWarpaint(reader);
+   tribesmanComponent.warpaintType = data.warpaintType;
 
    // @Temporary @Garbage
    const titles = new Array<TitleGenerationInfo>();
-   const numTitles = reader.readNumber();
-   for (let i = 0; i < numTitles; i++) {
-      const title = reader.readNumber() as TribesmanTitle;
-      const displayOption = reader.readNumber();
-      
-      titles.push({
-         title: title,
-         displayOption: displayOption
-      });
+   for (const title of data.titles) {
+      titles.push(title);
    }
    
    updateTitles(tribesmanComponent, entity, titles);
 }
 
-function updatePlayerFromData(reader: PacketReader): void {
-   updateFromData(reader, playerInstance!);
+function updatePlayerFromData(data: TribesmanComponentData): void {
+   updateFromData(data, playerInstance!);
 
    const tribesmanComponent = TribesmanComponentArray.getComponent(playerInstance!);
 

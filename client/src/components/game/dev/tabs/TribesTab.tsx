@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
-import Game from "../../../../Game";
+import Game from "../../../../game";
 import DevmodeScrollableOptions from "../DevmodeScrollableOptions";
 import Client from "../../../../networking/Client";
 import { TribeType, NUM_TRIBE_TYPES } from "battletribes-shared/tribes";

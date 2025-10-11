@@ -1,6 +1,6 @@
 import { EntityType } from "battletribes-shared/entities";
 import { BlueprintType, DecorationType, ServerComponentType } from "battletribes-shared/components";
-import { EntityParams } from "./world";
+import { EntityComponentData } from "./world";
 import { assert } from "../../shared/src/utils";
 
 export enum RenderLayer {
@@ -77,9 +77,9 @@ const decorationIsHigh = (decorationType: DecorationType): boolean => {
        || decorationType === DecorationType.sandstoneRockDarkBig2;
 }
 
-export function getEntityRenderLayer(entityType: EntityType, entityParams: EntityParams): RenderLayer {
+export function getEntityRenderLayer(entityType: EntityType, entityComponentData: EntityComponentData): RenderLayer {
    // Crafting stations render below tribesmen so they can see the limbs
-   if (typeof entityParams.serverComponentParams[ServerComponentType.craftingStation] !== "undefined") {
+   if (typeof entityComponentData.serverComponentData[ServerComponentType.craftingStation] !== "undefined") {
       return RenderLayer.lowEntities;
    }
    
@@ -96,9 +96,9 @@ export function getEntityRenderLayer(entityType: EntityType, entityParams: Entit
       }
       // Decorations
       case EntityType.decoration: {
-         const decorationComponentParams = entityParams.serverComponentParams[ServerComponentType.decoration];
-         assert(typeof decorationComponentParams !== "undefined");
-         return decorationIsHigh(decorationComponentParams.decorationType) ? RenderLayer.highDecorations : RenderLayer.lowDecorations;
+         const decorationComponentData = entityComponentData.serverComponentData[ServerComponentType.decoration];
+         assert(typeof decorationComponentData !== "undefined");
+         return decorationIsHigh(decorationComponentData.decorationType) ? RenderLayer.highDecorations : RenderLayer.lowDecorations;
       }
       case EntityType.moss: {
          return RenderLayer.lowDecorations;
@@ -122,8 +122,8 @@ export function getEntityRenderLayer(entityType: EntityType, entityParams: Entit
       // @Incomplete: Only blueprints which go on existing buildings should be here, all others should be low entities
       // Blueprints
       case EntityType.blueprintEntity: {
-         const blueprintComponentParams = entityParams.serverComponentParams[ServerComponentType.blueprint]!;
-         switch (blueprintComponentParams.blueprintType) {
+         const blueprintComponentData = entityComponentData.serverComponentData[ServerComponentType.blueprint]!;
+         switch (blueprintComponentData.blueprintType) {
             case BlueprintType.stoneWall:
             case BlueprintType.stoneDoorUpgrade: {
                return RenderLayer.highBlueprints;
@@ -197,8 +197,7 @@ export function getEntityRenderLayer(entityType: EntityType, entityParams: Entit
       case EntityType.snobeMound: {
          return RenderLayer.snobeMound;
       }
-      case EntityType.okrenTongueSegment:
-      case EntityType.okrenTongueTip: {
+      case EntityType.okrenTongue: {
          return RenderLayer.okrenTongue;
       }
       case EntityType.okrenClaw: {
@@ -220,12 +219,12 @@ export function getEntityRenderLayer(entityType: EntityType, entityParams: Entit
    }
 }
 
-export function calculateRenderDepthFromLayer(renderLayer: RenderLayer, entityParams: EntityParams): number {
+export function calculateRenderDepthFromLayer(renderLayer: RenderLayer, entityComponentData: EntityComponentData): number {
    /** Variation between 0 and 1 */
    let variation: number;
    if (renderLayer === RenderLayer.mithril) {
-      const mithrilOreNodeComponentParams = entityParams.serverComponentParams[ServerComponentType.mithrilOreNode]!;
-      variation = mithrilOreNodeComponentParams.renderHeight;
+      const mithrilOreNodeComponentData = entityComponentData.serverComponentData[ServerComponentType.mithrilOreNode]!;
+      variation = mithrilOreNodeComponentData.renderHeight;
    } else {
       variation = Math.random();
    }

@@ -8,13 +8,17 @@ import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { playSoundOnHitbox } from "../../sound";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityComponentData, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { createSlimePoolParticle, createSlimeSpeckParticle } from "../../particles";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface SlimeComponentParams {
+export interface SlimeComponentData {
    readonly size: SlimeSize;
+   readonly eyeRotation: number;
+   readonly anger: number;
+   readonly spitChargeProgress: number;
+   readonly orbSizes: Array<SlimeSize>;
 }
 
 interface IntermediateInfo {
@@ -66,36 +70,40 @@ const getBodyShakeAmount = (spitProgress: number): number => {
    return lerp(0, 5, spitProgress);
 }
 
-export const SlimeComponentArray = new ServerComponentArray<SlimeComponent, SlimeComponentParams, IntermediateInfo>(ServerComponentType.slime, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const SlimeComponentArray = new ServerComponentArray<SlimeComponent, SlimeComponentData, IntermediateInfo>(ServerComponentType.slime, true, createComponent, getMaxRenderParts, decodeData);
+SlimeComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+SlimeComponentArray.onTick = onTick;
+SlimeComponentArray.updateFromData = updateFromData;
+SlimeComponentArray.onHit = onHit;
+SlimeComponentArray.onDie = onDie;
 
-function createParamsFromData(reader: PacketReader): SlimeComponentParams {
+function decodeData(reader: PacketReader): SlimeComponentData {
    const size = reader.readNumber() as SlimeSize;
+   const eyeRotation = reader.readNumber();
+   const anger = reader.readNumber();
+   const spitChargeProgress = reader.readNumber();
 
-   reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
-   
+   const orbSizes = new Array<SlimeSize>();
    const numOrbs = reader.readNumber();
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT * numOrbs);
+   for (let i = 0; i < numOrbs; i++) {
+      const orbSize = reader.readNumber() as SlimeSize;
+      orbSizes.push(orbSize);
+   }
 
    return {
-      size: size
+      size: size,
+      eyeRotation: eyeRotation,
+      anger: anger,
+      spitChargeProgress: spitChargeProgress,
+      orbSizes: orbSizes
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
-   const size = entityParams.serverComponentParams[ServerComponentType.slime]!.size;
+   const size = entityComponentData.serverComponentData[ServerComponentType.slime]!.size;
    const sizeString = SIZE_STRINGS[size];
 
    // Body
@@ -131,12 +139,12 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    };
 }
 
-function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): SlimeComponent {
+function createComponent(entityComponentData: EntityComponentData, intermediateInfo: IntermediateInfo): SlimeComponent {
    return {
       bodyRenderPart: intermediateInfo.bodyRenderPart,
       eyeRenderPart: intermediateInfo.eyeRenderPart,
       orbRenderParts: [],
-      size: entityParams.serverComponentParams[ServerComponentType.slime]!.size,
+      size: entityComponentData.serverComponentData[ServerComponentType.slime]!.size,
       orbs: new Array<SlimeOrbInfo>,
       internalTickCounter: 0
    };
@@ -214,21 +222,14 @@ const createOrb = (slimeComponent: SlimeComponent, entity: Entity, size: SlimeSi
    renderInfo.attachRenderPart(renderPart);
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT);
-   
-   const numOrbs = reader.readNumber();
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT * numOrbs);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: SlimeComponentData, entity: Entity): void {
    const slimeComponent = SlimeComponentArray.getComponent(entity);
    
    // @Incomplete: change render parts when this happens?
-   slimeComponent.size = reader.readNumber();
-   const eyeRotation = reader.readNumber();
-   const anger = reader.readNumber();
-   const spitChargeProgress = reader.readNumber();
+   slimeComponent.size = data.size;
+   const eyeRotation = data.eyeRotation;
+   const anger = data.anger;
+   const spitChargeProgress = data.spitChargeProgress;
 
    // 
    // Update the eye's rotation
@@ -255,17 +256,9 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       slimeComponent.bodyRenderPart.shakeAmount = getBodyShakeAmount(spitChargeProgress);
    }
 
-   // @Temporary @Speed
-   const orbSizes = new Array<SlimeSize>();
-   const numOrbs = reader.readNumber();
-   for (let i = 0; i < numOrbs; i++) {
-      const orbSize = reader.readNumber() as SlimeSize;
-      orbSizes.push(orbSize);
-   }
-
    // Add any new orbs
-   for (let i = slimeComponent.orbs.length; i < orbSizes.length; i++) {
-      const size = orbSizes[i];
+   for (let i = slimeComponent.orbs.length; i < data.orbSizes.length; i++) {
+      const size = data.orbSizes[i];
       createOrb(slimeComponent, entity, size);
    }
 }

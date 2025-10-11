@@ -4,7 +4,7 @@ import ServerComponentArray from "./ServerComponentArray";
 import ClientComponentArray from "./ClientComponentArray";
 import { ClientComponentType } from "./client-component-types";
 import { assert, Point } from "../../../shared/src/utils";
-import { EntityParams, getEntityType } from "../world";
+import { EntityComponentData } from "../world";
 import { Hitbox } from "../hitboxes";
 import { EntityRenderInfo } from "../EntityRenderInfo";
 
@@ -17,11 +17,11 @@ let componentArrayIDCounter = 0;
 
 export interface ComponentArrayFunctions<T extends object, ComponentIntermediateInfo extends object | never> {
    /** SHOULD NOT MUTATE THE GLOBAL STATE */
-   populateIntermediateInfo?(renderInfo: EntityRenderInfo, entityParams: EntityParams): ComponentIntermediateInfo;
+   populateIntermediateInfo?(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): ComponentIntermediateInfo;
    /** SHOULD NOT MUTATE THE GLOBAL STATE */
-   createComponent(entityParams: Readonly<EntityParams>, intermediateInfo: Readonly<ComponentIntermediateInfo>, renderInfo: EntityRenderInfo): T;
-   getMaxRenderParts(entityParams: EntityParams): number;
-   /** Called once when the entity is being created, just after all the components are created from their params */
+   createComponent(entityComponentData: Readonly<EntityComponentData>, intermediateInfo: Readonly<ComponentIntermediateInfo>, renderInfo: EntityRenderInfo): T;
+   getMaxRenderParts(entityComponentData: EntityComponentData): number;
+   /** Called once when the entity is being created, just after all the components are created from their data */
    onLoad?(entity: Entity): void;
    onJoin?(entity: Entity): void;
    /** Called when the entity is spawned in, not when the client first becomes aware of the entity's existence. After the load function */
@@ -79,9 +79,9 @@ export abstract class ComponentArray<
 
    // In reality this is just all information beyond its config which the component wishes to expose to other components
    // This is a separate layer so that, for example, components can immediately get render parts without having to wait for onLoad (introducing polymorphism)
-   public populateIntermediateInfo?(renderInfo: EntityRenderInfo, entityParams: Readonly<EntityParams>): ComponentIntermediateInfo;
-   public readonly createComponent: (entityParams: Readonly<EntityParams>, intermediateInfo: Readonly<ComponentIntermediateInfo>, renderInfo: EntityRenderInfo) => T;
-   public readonly getMaxRenderParts: (entityParams: EntityParams) => number;
+   public populateIntermediateInfo?(renderInfo: EntityRenderInfo, entityComponentData: Readonly<EntityComponentData>): ComponentIntermediateInfo;
+   public readonly createComponent: (entityComponentData: Readonly<EntityComponentData>, intermediateInfo: Readonly<ComponentIntermediateInfo>, renderInfo: EntityRenderInfo) => T;
+   public readonly getMaxRenderParts: (entityComponentData: EntityComponentData) => number;
    public onLoad?(entity: Entity): void;
    public onJoin?(entity: Entity): void;
    public onSpawn?(entity: Entity): void;
@@ -92,22 +92,13 @@ export abstract class ComponentArray<
    public onDie?(entity: Entity): void;
    public onRemove?(entity: Entity): void;
 
-   constructor(arrayType: ArrayType, componentType: ComponentType, isActiveByDefault: boolean, functions: ComponentArrayFunctions<T, ComponentIntermediateInfo>) {
+   constructor(arrayType: ArrayType, componentType: ComponentType, isActiveByDefault: boolean, createComponent: (entityComponentData: Readonly<EntityComponentData>, intermediateInfo: Readonly<ComponentIntermediateInfo>, renderInfo: EntityRenderInfo) => T, getMaxRenderParts: (entityComponentData: EntityComponentData) => number) {
       this.isActiveByDefault = isActiveByDefault;
 
       this.componentType = componentType;
       
-      this.populateIntermediateInfo = functions.populateIntermediateInfo;
-      this.createComponent = functions.createComponent;
-      this.getMaxRenderParts = functions.getMaxRenderParts;
-      this.onLoad = functions.onLoad;
-      this.onSpawn = functions.onSpawn;
-      this.onTick = functions.onTick;
-      this.onUpdate = functions.onUpdate;
-      this.onCollision = functions.onCollision;
-      this.onHit = functions.onHit;
-      this.onRemove = functions.onRemove;
-      this.onDie = functions.onDie;
+      this.createComponent = createComponent;
+      this.getMaxRenderParts = getMaxRenderParts;
 
       componentArrays.push(this as unknown as ComponentArray);
       if (arrayType === ComponentArrayType.server) {

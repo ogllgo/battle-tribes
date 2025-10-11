@@ -3,33 +3,27 @@ import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 
-export interface TukmokTrunkComponentParams {}
+export interface TukmokTrunkComponentData {}
 
 interface IntermediateInfo {}
 
 export interface TukmokTrunkComponent {}
 
-export const TukmokTrunkComponentArray = new ServerComponentArray<TukmokTrunkComponent, TukmokTrunkComponentParams, IntermediateInfo>(ServerComponentType.tukmokTrunk, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const TukmokTrunkComponentArray = new ServerComponentArray<TukmokTrunkComponent, TukmokTrunkComponentData, IntermediateInfo>(ServerComponentType.tukmokTrunk, true, createComponent, getMaxRenderParts, decodeData);
+TukmokTrunkComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
-function createParamsFromData(): TukmokTrunkComponentParams {
+function decodeData(): TukmokTrunkComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
 
-   for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
-      const hitbox = transformComponentParams.hitboxes[i];
+   for (let i = 0; i < transformComponentData.hitboxes.length; i++) {
+      const hitbox = transformComponentData.hitboxes[i];
 
       const textureSource = hitbox.flags.includes(HitboxFlag.TUKMOK_TRUNK_HEAD) ? "entities/tukmok-trunk/head-segment.png" : "entities/tukmok-trunk/middle-segment.png";
       
@@ -54,7 +48,3 @@ function getMaxRenderParts(): number {
    // @HACK cuz we can't access the num segments constant defined in the server
    return 8;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}

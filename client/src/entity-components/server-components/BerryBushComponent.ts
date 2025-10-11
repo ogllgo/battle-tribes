@@ -2,7 +2,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityComponentData, getEntityRenderInfo } from "../../world";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
@@ -12,7 +12,7 @@ import { playSoundOnHitbox } from "../../sound";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface BerryBushComponentParams {
+export interface BerryBushComponentData {
    readonly numBerries: number;
 }
 
@@ -39,33 +39,28 @@ const RADIUS = 40;
 const LEAF_SPECK_COLOUR_LOW = [63/255, 204/255, 91/255] as const;
 const LEAF_SPECK_COLOUR_HIGH = [35/255, 158/255, 88/255] as const;
 
-export const BerryBushComponentArray = new ServerComponentArray<BerryBushComponent, BerryBushComponentParams, IntermediateInfo>(ServerComponentType.berryBush, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const BerryBushComponentArray = new ServerComponentArray<BerryBushComponent, BerryBushComponentData, IntermediateInfo>(ServerComponentType.berryBush, true, createComponent, getMaxRenderParts, decodeData);
+BerryBushComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+BerryBushComponentArray.updateFromData = updateFromData;
+BerryBushComponentArray.onHit = onHit;
+BerryBushComponentArray.onDie = onDie;
 
-function createParamsFromData(reader: PacketReader): BerryBushComponentParams {
+function decodeData(reader: PacketReader): BerryBushComponentData {
    const numBerries = reader.readNumber();
    return {
       numBerries: numBerries
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
       hitbox,
       0,
       0,
-      getTextureArrayIndex(BERRY_BUSH_TEXTURE_SOURCES[entityParams.serverComponentParams[ServerComponentType.berryBush]!.numBerries])
+      getTextureArrayIndex(BERRY_BUSH_TEXTURE_SOURCES[entityComponentData.serverComponentData[ServerComponentType.berryBush]!.numBerries])
    );
    renderPart.addTag("berryBushComponent:renderPart");
    renderInfo.attachRenderPart(renderPart)
@@ -75,9 +70,9 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    };
 }
 
-function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): BerryBushComponent {
+function createComponent(entityComponentData: EntityComponentData, intermediateInfo: IntermediateInfo): BerryBushComponent {
    return {
-      numBerries: entityParams.serverComponentParams[ServerComponentType.berryBush]!.numBerries,
+      numBerries: entityComponentData.serverComponentData[ServerComponentType.berryBush]!.numBerries,
       renderPart: intermediateInfo.renderPart
    };
 }
@@ -86,14 +81,9 @@ function getMaxRenderParts(): number {
    return 1;
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: BerryBushComponentData, entity: Entity): void {
    const berryBushComponent = BerryBushComponentArray.getComponent(entity);
-   
-   berryBushComponent.numBerries = reader.readNumber();
+   berryBushComponent.numBerries = data.numBerries;
 
    berryBushComponent.renderPart.switchTextureSource(BERRY_BUSH_TEXTURE_SOURCES[berryBushComponent.numBerries]);
 

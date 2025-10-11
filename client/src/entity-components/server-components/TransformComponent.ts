@@ -1,5 +1,4 @@
 import { assert, customTickIntervalHasPassed, distance, getAngleDiff, lerp, Point, randAngle, randInt, randSign, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
-import { Tile } from "../../Tile";
 import { Settings } from "battletribes-shared/settings";
 import { TILE_PHYSICS_INFO_RECORD, TileType } from "battletribes-shared/tiles";
 import { RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
@@ -8,16 +7,14 @@ import { randFloat } from "battletribes-shared/utils";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { boxIsCircular, updateBox, Box } from "battletribes-shared/boxes/boxes";
-import Layer, { getTileIndexIncludingEdges } from "../../Layer";
-import { EntityParams, getCurrentLayer, getEntityAgeTicks, getEntityLayer, getEntityRenderInfo, getEntityType, surfaceLayer } from "../../world";
+import { EntityComponentData, getCurrentLayer, getEntityAgeTicks, getEntityLayer, getEntityRenderInfo, getEntityType, surfaceLayer } from "../../world";
 import Board from "../../Board";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../../shared/src/collision";
 import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
 import { playerInstance } from "../../player";
-import { applyAccelerationFromGround, getHitboxVelocity, getRootHitbox, Hitbox, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox } from "../../hitboxes";
-import { padHitboxDataExceptLocalID, readHitboxFromData, updateHitboxExceptLocalIDFromData, updatePlayerHitboxFromData } from "../../networking/packet-hitboxes";
+import { applyAccelerationFromGround, getHitboxTile, getHitboxVelocity, getRandomPositionInBox, getRootHitbox, Hitbox, readHitboxFromData, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox, updateHitboxFromData, updatePlayerHitboxFromData } from "../../hitboxes";
 import Particle from "../../Particle";
 import { createWaterSplashParticle } from "../../particles";
 import { addTexturedParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
@@ -25,11 +22,11 @@ import { playSoundOnHitbox } from "../../sound";
 import { resolveWallCollisions } from "../../collision";
 import { keyIsPressed } from "../../keyboard-input";
 
-export interface TransformComponentParams {
-   readonly hitboxes: Array<Hitbox>;
+export interface TransformComponentData {
    readonly collisionBit: CollisionBit;
    readonly collisionMask: number;
    readonly traction: number;
+   readonly hitboxes: Array<Hitbox>;
 }
 
 export interface TransformComponent {
@@ -57,62 +54,41 @@ export interface TransformComponent {
 // array, instead of a different empty array which would cause garbage collection
 const EMPTY_IGNORED_TILE_SPEED_MULTIPLIERS = new Array<TileType>();
 
-const fillTransformComponentParams = (hitboxes: Array<Hitbox>, collisionBit: CollisionBit, collisionMask: number, traction: number): TransformComponentParams => {
+export function createTransformComponentData(hitboxes: Array<Hitbox>): TransformComponentData {
    return {
-      hitboxes: hitboxes,
-      collisionBit: collisionBit,
-      collisionMask: collisionMask,
-      traction: traction
-   };
-}
-
-export function createTransformComponentParams(hitboxes: Array<Hitbox>): TransformComponentParams {
-   return {
-      hitboxes: hitboxes,
       collisionBit: CollisionBit.default,
       collisionMask: DEFAULT_COLLISION_MASK,
-      traction: 1
+      traction: 1,
+      hitboxes: hitboxes
    };
 }
 
-function createParamsFromData(reader: PacketReader): TransformComponentParams {
+function decodeData(reader: PacketReader): TransformComponentData {
    const collisionBit = reader.readNumber();
    const collisionMask = reader.readNumber();
 
-   const hitboxes = new Array<Hitbox>();
-   
-   const numChildren = reader.readNumber();
-   for (let i = 0; i < numChildren; i++) {
-      const localID = reader.readNumber();
-      const hitbox = readHitboxFromData(reader, localID, hitboxes);
-      hitboxes.push(hitbox);
-   }
-
    const traction = reader.readNumber();
 
-   return fillTransformComponentParams(hitboxes, collisionBit, collisionMask, traction);
+   const hitboxes = new Array<Hitbox>();
+   
+   const numHitboxes = reader.readNumber();
+   for (let i = 0; i < numHitboxes; i++) {
+      const localID = reader.readNumber();
+      const hitboxData = readHitboxFromData(reader, localID, hitboxes);
+      hitboxes.push(hitboxData);
+   }
+
+   return {
+      collisionBit: collisionBit,
+      collisionMask: collisionMask,
+      traction: traction,
+      hitboxes: hitboxes
+   };
 }
 
+// @HACKK
 export function resetIgnoredTileSpeedMultipliers(transformComponent: TransformComponent): void {
    transformComponent.ignoredTileSpeedMultipliers = EMPTY_IGNORED_TILE_SPEED_MULTIPLIERS;
-}
-
-// @Location
-export function getHitboxTile(layer: Layer, hitbox: Hitbox): Tile {
-   const tileX = Math.floor(hitbox.box.position.x / Settings.TILE_SIZE);
-   const tileY = Math.floor(hitbox.box.position.y / Settings.TILE_SIZE);
-   
-   const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
-   return layer.getTile(tileIndex);
-}
-
-export function getHitboxByLocalID(hitboxes: ReadonlyArray<Hitbox>, localID: number): Hitbox | null {
-   for (const hitbox of hitboxes) {
-      if (hitbox.localID === localID) {
-         return hitbox;
-      }
-   }
-   return null;
 }
 
 const addHitbox = (transformComponent: TransformComponent, hitbox: Hitbox): void => {
@@ -145,7 +121,7 @@ export function entityIsInRiver(transformComponent: TransformComponent, entity: 
    // @Hack
    const hitbox = transformComponent.hitboxes[0];
    
-   const tile = getHitboxTile(layer, hitbox);
+   const tile = getHitboxTile(hitbox);
    if (tile.type !== TileType.water) {
       return false;
    }
@@ -287,7 +263,7 @@ const applyHitboxKinematics = (transformComponent: TransformComponent, entity: E
    }
 
    const layer = getEntityLayer(entity);
-   const tile = getHitboxTile(layer, hitbox);
+   const tile = getHitboxTile(hitbox);
 
    if (isNaN(hitbox.box.position.x)) {
       throw new Error("Position was NaN.");
@@ -458,26 +434,21 @@ const tickHitboxPhysics = (hitbox: Hitbox): void => {
    }
 }
 
-export const TransformComponentArray = new ServerComponentArray<TransformComponent, TransformComponentParams, never>(ServerComponentType.transform, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onLoad: onLoad,
-   onTick: onTick,
-   onUpdate: onUpdate,
-   onRemove: onRemove,
-   padData: padData,
-   updateFromData: updateFromData,
-   updatePlayerFromData: updatePlayerFromData
-});
+export const TransformComponentArray = new ServerComponentArray<TransformComponent, TransformComponentData, never>(ServerComponentType.transform, true, createComponent, getMaxRenderParts, decodeData);
+TransformComponentArray.onLoad = onLoad;
+TransformComponentArray.updateFromData = updateFromData;
+TransformComponentArray.onTick = onTick;
+TransformComponentArray.onUpdate = onUpdate;
+TransformComponentArray.onRemove = onRemove;
+TransformComponentArray.updatePlayerFromData = updatePlayerFromData;
 
-function createComponent(entityParams: EntityParams): TransformComponent {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+function createComponent(entityComponentData: EntityComponentData): TransformComponent {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
    
    // @INCOMPLETE
    const rootHitboxes = new Array<Hitbox>();
    const hitboxMap = new Map<number, Hitbox>();
-   for (const hitbox of transformComponentParams.hitboxes) {
+   for (const hitbox of transformComponentData.hitboxes) {
       hitboxMap.set(hitbox.localID, hitbox);
       if (hitbox.parent === null) {
          rootHitboxes.push(hitbox);
@@ -486,16 +457,16 @@ function createComponent(entityParams: EntityParams): TransformComponent {
 
    return {
       chunks: new Set(),
-      hitboxes: transformComponentParams.hitboxes,
+      hitboxes: transformComponentData.hitboxes,
       hitboxMap: hitboxMap,
       rootHitboxes: rootHitboxes,
-      collisionBit: transformComponentParams.collisionBit,
-      collisionMask: transformComponentParams.collisionMask,
+      collisionBit: transformComponentData.collisionBit,
+      collisionMask: transformComponentData.collisionMask,
       boundingAreaMinX: Number.MAX_SAFE_INTEGER,
       boundingAreaMaxX: Number.MIN_SAFE_INTEGER,
       boundingAreaMinY: Number.MAX_SAFE_INTEGER,
       boundingAreaMaxY: Number.MIN_SAFE_INTEGER,
-      traction: transformComponentParams.traction,
+      traction: transformComponentData.traction,
       ignoredTileSpeedMultipliers: EMPTY_IGNORED_TILE_SPEED_MULTIPLIERS.slice()
    };
 }
@@ -596,32 +567,7 @@ function onRemove(entity: Entity): void {
    }
 }
 
-// @Cleanup: pointless... never gets called, ever
-function padData(reader: PacketReader): void {
-   // @Bug: I think this is off.... Length of entity data is wrong then?
-   reader.padOffset(5 * Float32Array.BYTES_PER_ELEMENT);
-
-   const numHitboxes = reader.readNumber();
-   for (let i = 0; i < numHitboxes; i++) {
-      padHitboxDataExceptLocalID(reader);
-
-      const isTethered = reader.readBoolean();
-      reader.padOffset(3);
-      if (isTethered) {
-         padHitboxDataExceptLocalID(reader);
-         reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
-      }
-   }
-
-   // @Cleanup @Investigate wtf is this... this isn't added in the server...
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-   const numCarriedEntities = reader.readNumber();
-   reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT * numCarriedEntities);
-
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-   
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: TransformComponentData, entity: Entity): void {
    // @SPEED: What we could do is explicitly send which hitboxes have been created, and removed, from the server. (When using carmack networking)
    
    const transformComponent = TransformComponentArray.getComponent(entity);
@@ -630,8 +576,8 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    const renderInfo = getEntityRenderInfo(entity);
    registerDirtyRenderInfo(renderInfo);
    
-   transformComponent.collisionBit = reader.readNumber();
-   transformComponent.collisionMask = reader.readNumber();
+   transformComponent.collisionBit = data.collisionBit;
+   transformComponent.collisionMask = data.collisionMask;
 
    // @Speed: would be faster if we split the hitboxes array
    let existingNumCircular = 0;
@@ -645,20 +591,17 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       }
    }
 
-   const numHitboxes = reader.readNumber();
-   for (let i = 0; i < numHitboxes; i++) {
-      const localID = reader.readNumber();
-
-      const hitbox = transformComponent.hitboxMap.get(localID);
-      if (typeof hitbox === "undefined") {
-         const hitbox = readHitboxFromData(reader, localID, transformComponent.hitboxes);
-         addHitbox(transformComponent, hitbox);
+   // Update hitboxes
+   for (const hitboxData of data.hitboxes) {
+      const existingHitbox = transformComponent.hitboxMap.get(hitboxData.localID);
+      if (typeof existingHitbox === "undefined") {
+         addHitbox(transformComponent, hitboxData);
       } else {
-         updateHitboxExceptLocalIDFromData(hitbox, reader);
+         updateHitboxFromData(existingHitbox, hitboxData);
       }
    }
 
-   transformComponent.traction = reader.readNumber();
+   transformComponent.traction = data.traction;
 
    // Remove hitboxes which no longer exist
    for (let i = 0; i < transformComponent.hitboxes.length; i++) {
@@ -673,43 +616,17 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    cleanEntityTransform(entity);
 }
 
-function updatePlayerFromData(reader: PacketReader, isInitialData: boolean): void {
+function updatePlayerFromData(data: TransformComponentData, isInitialData: boolean): void {
    if (isInitialData) {
-      updateFromData(reader, playerInstance!);
+      updateFromData(data, playerInstance!);
       return;
    }
 
    const transformComponent = TransformComponentArray.getComponent(playerInstance!);
-   
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-
-   const numChildren = reader.readNumber();
-   for (let i = 0; i < numChildren; i++) {
-      const localID = reader.readNumber();
-      const hitbox = transformComponent.hitboxMap.get(localID);
+   for (const hitboxData of data.hitboxes) {
+      const hitbox = transformComponent.hitboxMap.get(hitboxData.localID);
       assert(typeof hitbox !== "undefined");
-
-      updatePlayerHitboxFromData(hitbox, reader);
-   }
-
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-export function getRandomPositionInBox(box: Box): Point {
-   if (boxIsCircular(box)) {
-      const offsetMagnitude = box.radius * Math.random();
-      const offsetDirection = randAngle();
-      return new Point(box.position.x + offsetMagnitude * Math.sin(offsetDirection), box.position.y + offsetMagnitude * Math.cos(offsetDirection));
-   } else {
-      const halfWidth = box.width / 2;
-      const halfHeight = box.height / 2;
-      
-      const xOffset = randFloat(-halfWidth, halfWidth);
-      const yOffset = randFloat(-halfHeight, halfHeight);
-
-      const x = box.position.x + rotateXAroundOrigin(xOffset, yOffset, box.angle);
-      const y = box.position.y + rotateYAroundOrigin(xOffset, yOffset, box.angle);
-      return new Point(x, y);
+      updatePlayerHitboxFromData(hitbox, hitboxData);
    }
 }
 

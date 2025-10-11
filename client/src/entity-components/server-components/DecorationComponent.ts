@@ -2,21 +2,19 @@ import { PacketReader } from "battletribes-shared/packets";
 import { DecorationType } from "battletribes-shared/components";
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
-import { Entity } from "../../../../shared/src/entities";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface DecorationComponentParams {
+export interface DecorationComponentData {
    readonly decorationType: DecorationType;
 }
 
 interface IntermediateInfo {}
 
 export interface DecorationComponent {
-   decorationType: DecorationType;
+   readonly decorationType: DecorationType;
 }
 
 const DECORATION_RENDER_INFO: Record<DecorationType, string> = {
@@ -34,16 +32,10 @@ const DECORATION_RENDER_INFO: Record<DecorationType, string> = {
    [DecorationType.flower4]: "decorations/flower4.png"
 };
 
-export const DecorationComponentArray = new ServerComponentArray<DecorationComponent, DecorationComponentParams, IntermediateInfo>(ServerComponentType.decoration, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const DecorationComponentArray = new ServerComponentArray<DecorationComponent, DecorationComponentData, IntermediateInfo>(ServerComponentType.decoration, true, createComponent, getMaxRenderParts, decodeData);
+DecorationComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
-function createParamsFromData(reader: PacketReader): DecorationComponentParams {
+function decodeData(reader: PacketReader): DecorationComponentData {
    const decorationType = reader.readNumber();
 
    return {
@@ -51,39 +43,30 @@ function createParamsFromData(reader: PacketReader): DecorationComponentParams {
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
-   const decorationComponentParams = entityParams.serverComponentParams[ServerComponentType.decoration]!;
+   const decorationComponentData = entityComponentData.serverComponentData[ServerComponentType.decoration]!;
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,
          0,
-         getTextureArrayIndex(DECORATION_RENDER_INFO[decorationComponentParams.decorationType])
+         getTextureArrayIndex(DECORATION_RENDER_INFO[decorationComponentData.decorationType])
       )
    );
 
    return {};
 }
 
-function createComponent(entityParams: EntityParams): DecorationComponent {
+function createComponent(entityComponentData: EntityComponentData): DecorationComponent {
    return {
-      decorationType: entityParams.serverComponentParams[ServerComponentType.decoration]!.decorationType
+      decorationType: entityComponentData.serverComponentData[ServerComponentType.decoration]!.decorationType
    };
 }
 
 function getMaxRenderParts(): number {
    return 1;
-}
-   
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
-   const decorationComponent = DecorationComponentArray.getComponent(entity);
-   decorationComponent.decorationType = reader.readNumber();
 }

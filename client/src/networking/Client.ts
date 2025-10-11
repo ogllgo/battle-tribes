@@ -4,7 +4,7 @@ import { Settings } from "battletribes-shared/settings";
 import { TechID } from "battletribes-shared/techs";
 import { TribeType } from "battletribes-shared/tribes";
 import { TribesmanTitle } from "battletribes-shared/titles";
-import Game, { getCursorWorldPos, receivePacket } from "../Game";
+import Game, { getCursorWorldPos, receivePacket } from "../game";
 import { Tile } from "../Tile";
 import { windowHeight, windowWidth } from "../webgl";
 import { getStringLengthBytes, Packet, PacketReader, PacketType } from "battletribes-shared/packets";

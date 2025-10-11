@@ -9,11 +9,11 @@ import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { Entity } from "../../../../shared/src/entities";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface SpikesComponentParams {
+export interface SpikesComponentData {
    readonly isCovered: boolean;
 }
 
@@ -34,31 +34,23 @@ export const NUM_LARGE_COVER_LEAVES = 3;
 const LEAF_SPECK_COLOUR_LOW = [63/255, 204/255, 91/255] as const;
 const LEAF_SPECK_COLOUR_HIGH = [35/255, 158/255, 88/255] as const;
 
-export const SpikesComponentArray = new ServerComponentArray<SpikesComponent, SpikesComponentParams, IntermediateInfo>(ServerComponentType.spikes, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onLoad: onLoad,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const SpikesComponentArray = new ServerComponentArray<SpikesComponent, SpikesComponentData, IntermediateInfo>(ServerComponentType.spikes, true, createComponent, getMaxRenderParts, decodeData);
+SpikesComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+SpikesComponentArray.onLoad = onLoad;
+SpikesComponentArray.updateFromData = updateFromData;
 
-const fillParams = (isCovered: boolean): SpikesComponentParams => {
+export function createSpikesComponentData(): SpikesComponentData {
    return {
-      isCovered: isCovered
+      isCovered: false
    };
 }
 
-export function createSpikesComponentParams(): SpikesComponentParams {
-   return fillParams(false);
-}
-
-function createParamsFromData(reader: PacketReader): SpikesComponentParams {
+function decodeData(reader: PacketReader): SpikesComponentData {
    const isCovered = reader.readBoolean();
    reader.padOffset(3);
-
-   return fillParams(isCovered);
+   return {
+      isCovered: isCovered
+   };
 }
 
 const createLeafRenderPart = (isSmall: boolean, parentHitbox: Hitbox): VisualRenderPart => {
@@ -84,9 +76,9 @@ const createLeafRenderPart = (isSmall: boolean, parentHitbox: Hitbox): VisualRen
    return renderPart;
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    const leafRenderParts = new Array<VisualRenderPart>();
    for (let i = 0; i < NUM_SMALL_COVER_LEAVES; i++) {
@@ -109,9 +101,9 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    };
 }
 
-function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): SpikesComponent {
+function createComponent(entityComponentData: EntityComponentData, intermediateInfo: IntermediateInfo): SpikesComponent {
    return {
-      isCovered: entityParams.serverComponentParams[ServerComponentType.spikes]!.isCovered,
+      isCovered: entityComponentData.serverComponentData[ServerComponentType.spikes]!.isCovered,
       leafRenderParts: intermediateInfo.leafRenderParts
    };
 }
@@ -133,17 +125,11 @@ function updateLeafRenderParts(spikesComponent: SpikesComponent): void {
    }
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: SpikesComponentData, entity: Entity): void {
    const spikesComponent = SpikesComponentArray.getComponent(entity);
    
    const isCoveredBefore = spikesComponent.isCovered;
-   
-   spikesComponent.isCovered = reader.readBoolean();
-   reader.padOffset(3);
+   spikesComponent.isCovered = data.isCovered;
    
    if (isCoveredBefore !== spikesComponent.isCovered) {
       const transformComponent = TransformComponentArray.getComponent(entity);

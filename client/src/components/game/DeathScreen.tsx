@@ -1,7 +1,7 @@
 import { randItem } from "battletribes-shared/utils";
 import { useEffect, useState } from "react";
 import Client from "../../networking/Client";
-import Game from "../../Game";
+import Game from "../../game";
 import { AppState } from "../App";
 import { sendRespawnPacket } from "../../networking/packet-sending";
 

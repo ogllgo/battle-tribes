@@ -1,41 +1,30 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 
-export interface MithrilAnvilComponentParams {}
+export interface MithrilAnvilComponentData {}
 
 interface IntermediateInfo {}
 
 export interface MithrilAnvilComponent {}
 
-export const MithrilAnvilComponentArray = new ServerComponentArray<MithrilAnvilComponent, MithrilAnvilComponentParams, IntermediateInfo>(ServerComponentType.mithrilAnvil, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-});
+export const MithrilAnvilComponentArray = new ServerComponentArray<MithrilAnvilComponent, MithrilAnvilComponentData, IntermediateInfo>(ServerComponentType.mithrilAnvil, true, createComponent, getMaxRenderParts, decodeData);
+MithrilAnvilComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
-const fillParams = (): MithrilAnvilComponentParams => {
+export function createMithrilAnvilComponentData(): MithrilAnvilComponentData {
    return {};
 }
 
-export function createMithrilAnvilComponentParams(): MithrilAnvilComponentParams {
-   return fillParams();
+function decodeData(): MithrilAnvilComponentData {
+   return {};
 }
 
-function createParamsFromData(): MithrilAnvilComponentParams {
-   return fillParams();
-}
-
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -55,7 +44,3 @@ function createComponent(): MithrilAnvilComponent {
 function getMaxRenderParts(): number {
    return 1;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}

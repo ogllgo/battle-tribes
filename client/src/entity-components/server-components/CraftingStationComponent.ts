@@ -2,9 +2,9 @@ import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 
-export interface CraftingStationComponentParams {
+export interface CraftingStationComponentData {
    readonly craftingStation: CraftingStation;
 }
 
@@ -12,45 +12,27 @@ export interface CraftingStationComponent {
    readonly craftingStation: CraftingStation;
 }
 
-export const CraftingStationComponentArray = new ServerComponentArray<CraftingStationComponent>(ServerComponentType.craftingStation, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const CraftingStationComponentArray = new ServerComponentArray<CraftingStationComponent>(ServerComponentType.craftingStation, true, createComponent, getMaxRenderParts, decodeData);
 
-const fillParams = (craftingStation: CraftingStation): CraftingStationComponentParams => {
+export function createCraftingStationComponentData(craftingStation: CraftingStation): CraftingStationComponentData {
    return {
       craftingStation: craftingStation
    };
 }
 
-export function createCraftingStationComponentParams(craftingStation: CraftingStation): CraftingStationComponentParams {
-   return fillParams(craftingStation);
-}
-
-function createParamsFromData(reader: PacketReader): CraftingStationComponentParams {
+function decodeData(reader: PacketReader): CraftingStationComponentData {
    const craftingStation = reader.readNumber() as CraftingStation;
    return {
       craftingStation: craftingStation
    };
 }
 
-function createComponent(entityParams: EntityParams): CraftingStationComponent {
+function createComponent(entityComponentData: EntityComponentData): CraftingStationComponent {
    return {
-      craftingStation: entityParams.serverComponentParams[ServerComponentType.craftingStation]!.craftingStation
+      craftingStation: entityComponentData.serverComponentData[ServerComponentType.craftingStation]!.craftingStation
    };
 }
 
 function getMaxRenderParts(): number {
    return 0;
-}
-
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }

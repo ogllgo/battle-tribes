@@ -5,7 +5,7 @@ import { assert, Point, rotatePoint, rotateXAroundOrigin, rotateYAroundOrigin } 
 import { getHitboxVelocity, translateHitbox } from "../../hitboxes";
 import { playerInstance } from "../../player";
 import { playSound } from "../../sound";
-import { entityExists, EntityParams, getEntityLayer, getEntityType } from "../../world";
+import { entityExists, EntityComponentData, getEntityLayer, getEntityType } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
@@ -18,7 +18,7 @@ interface CarrySlot {
    readonly dismountOffsetY: number;
 }
 
-export interface RideableComponentParams {
+export interface RideableComponentData {
    readonly carrySlots: ReadonlyArray<CarrySlot>;
 }
 
@@ -26,21 +26,16 @@ export interface RideableComponent {
    readonly carrySlots: ReadonlyArray<CarrySlot>;
 }
 
-export const RideableComponentArray = new ServerComponentArray<RideableComponent, RideableComponentParams, never>(ServerComponentType.rideable, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const RideableComponentArray = new ServerComponentArray<RideableComponent, RideableComponentData, never>(ServerComponentType.rideable, true, createComponent, getMaxRenderParts, decodeData);
+RideableComponentArray.updateFromData = updateFromData;
 
-export function createRideableComponentParams(carrySlots: ReadonlyArray<CarrySlot>): RideableComponentParams {
+export function createRideableComponentData(carrySlots: ReadonlyArray<CarrySlot>): RideableComponentData {
    return {
       carrySlots: carrySlots
    };
 }
 
-function createParamsFromData(reader: PacketReader): RideableComponentParams {
+function decodeData(reader: PacketReader): RideableComponentData {
    const carrySlots = new Array<CarrySlot>();
    
    const numCarrySlots = reader.readNumber();
@@ -66,13 +61,13 @@ function createParamsFromData(reader: PacketReader): RideableComponentParams {
       carrySlots.push(carrySlot);
    }
    
-   return createRideableComponentParams(carrySlots);
+   return createRideableComponentData(carrySlots);
 }
 
-function createComponent(entityParams: EntityParams): RideableComponent {
-   const rideableComponentParams = entityParams.serverComponentParams[ServerComponentType.rideable]!;
+function createComponent(entityComponentData: EntityComponentData): RideableComponent {
+   const rideableComponentData = entityComponentData.serverComponentData[ServerComponentType.rideable]!;
    return {
-      carrySlots: rideableComponentParams.carrySlots
+      carrySlots: rideableComponentData.carrySlots
    };
 }
 
@@ -80,24 +75,14 @@ function getMaxRenderParts(): number {
    return 0;
 }
 
-function padData(reader: PacketReader): void {
-   const numCarrySlots = reader.readNumber();
-   for (let i = 0; i < numCarrySlots; i++) {
-      // (so that i find this when i remove the need to pad by 3 for bools)
-      // reader.padOffset(3);
-      reader.padOffset(6 * Float32Array.BYTES_PER_ELEMENT);
-   }
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: RideableComponentData, entity: Entity): void {
    const rideableComponent = RideableComponentArray.getComponent(entity);
-
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 
    for (let i = 0; i < rideableComponent.carrySlots.length; i++) {
       const carrySlot = rideableComponent.carrySlots[i];
+      const carrySlotData = data.carrySlots[i];
       
-      const occupiedEntity = reader.readNumber();
+      const occupiedEntity = carrySlotData.occupiedEntity;
 
       if (occupiedEntity !== carrySlot.occupiedEntity) {
          const transformComponent = TransformComponentArray.getComponent(entity);
@@ -139,7 +124,5 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
       }
       
       carrySlot.occupiedEntity = occupiedEntity;
-
-      reader.padOffset(5 * Float32Array.BYTES_PER_ELEMENT);
    }
 }

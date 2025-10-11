@@ -4,14 +4,14 @@ import { TileType } from "battletribes-shared/tiles";
 import { playSound } from "../../sound";
 import Board from "../../Board";
 import { createFootprintParticle } from "../../particles";
-import { EntityParams, getEntityLayer } from "../../world";
-import { entityIsInRiver, getHitboxTile, TransformComponentArray } from "../server-components/TransformComponent";
+import { EntityComponentData, getEntityLayer } from "../../world";
+import { entityIsInRiver, TransformComponentArray } from "../server-components/TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
 import ClientComponentArray from "../ClientComponentArray";
 import { ClientComponentType } from "../client-component-types";
-import { getHitboxVelocity, Hitbox } from "../../hitboxes";
+import { getHitboxTile, getHitboxVelocity } from "../../hitboxes";
 
-export interface FootprintComponentParams {
+export interface FootprintComponentData {
    readonly footstepParticleIntervalSeconds: number;
    readonly footstepOffset: number;
    readonly footstepSize: number;
@@ -38,7 +38,7 @@ export const FootprintComponentArray = new ClientComponentArray<FootprintCompone
    onTick: onTick
 });
 
-export function createFootprintComponentParams(footstepParticleIntervalSeconds: number, footstepOffset: number, footstepSize: number, footstepLifetime: number, footstepSoundIntervalDist: number, doDoubleFootprints: boolean): FootprintComponentParams {
+export function createFootprintComponentData(footstepParticleIntervalSeconds: number, footstepOffset: number, footstepSize: number, footstepLifetime: number, footstepSoundIntervalDist: number, doDoubleFootprints: boolean): FootprintComponentData {
    return {
       footstepParticleIntervalSeconds: footstepParticleIntervalSeconds,
       footstepOffset: footstepOffset,
@@ -49,16 +49,16 @@ export function createFootprintComponentParams(footstepParticleIntervalSeconds: 
    };
 }
 
-function createComponent(entityParams: EntityParams): FootprintComponent {
-   const footprintComponentParams = entityParams.clientComponentParams[ClientComponentType.footprint]!;
+function createComponent(entityComponentData: EntityComponentData): FootprintComponent {
+   const footprintComponentData = entityComponentData.clientComponentData[ClientComponentType.footprint]!;
    
    return {
-      footstepParticleIntervalSeconds: footprintComponentParams.footstepParticleIntervalSeconds,
-      footstepOffset: footprintComponentParams.footstepOffset,
-      footstepSize: footprintComponentParams.footstepSize,
-      footstepLifetime: footprintComponentParams.footstepLifetime,
-      footstepSoundIntervalDist: footprintComponentParams.footstepSoundIntervalDist,
-      doDoubleFootprints: footprintComponentParams.doDoubleFootprints,
+      footstepParticleIntervalSeconds: footprintComponentData.footstepParticleIntervalSeconds,
+      footstepOffset: footprintComponentData.footstepOffset,
+      footstepSize: footprintComponentData.footstepSize,
+      footstepLifetime: footprintComponentData.footstepLifetime,
+      footstepSoundIntervalDist: footprintComponentData.footstepSoundIntervalDist,
+      doDoubleFootprints: footprintComponentData.doDoubleFootprints,
       numFootstepsTaken: 0,
       distanceTracker: 0
    }
@@ -73,7 +73,7 @@ const createFootstepSound = (entity: Entity): void => {
    const hitbox = transformComponent.hitboxes[0];
    const layer = getEntityLayer(entity);
    
-   const tile = getHitboxTile(layer, hitbox);
+   const tile = getHitboxTile(hitbox);
    switch (tile.type) {
       case TileType.grass:
       case TileType.sandyDirt: {

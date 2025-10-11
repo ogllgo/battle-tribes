@@ -1,19 +1,13 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import ServerComponentArray from "../ServerComponentArray";
 
-export interface SwingAttackComponentParams {}
+export interface SwingAttackComponentData {}
 
 export interface SwingAttackComponent {}
 
-export const SwingAttackComponentArray = new ServerComponentArray<SwingAttackComponent, SwingAttackComponentParams, never>(ServerComponentType.swingAttack, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const SwingAttackComponentArray = new ServerComponentArray<SwingAttackComponent, SwingAttackComponentData, never>(ServerComponentType.swingAttack, true, createComponent, getMaxRenderParts, decodeData);
 
-function createParamsFromData(): SwingAttackComponentParams {
+function decodeData(): SwingAttackComponentData {
    return {};
 }
 
@@ -24,7 +18,3 @@ function createComponent(): SwingAttackComponent {
 function getMaxRenderParts(): number {
    return 0;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}

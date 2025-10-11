@@ -4,16 +4,16 @@ import { CollisionBit, DEFAULT_COLLISION_MASK } from "../../../shared/src/collis
 import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType } from "../../../shared/src/entities";
 import { Point } from "../../../shared/src/utils";
-import { createHealthComponentParams } from "../entity-components/server-components/HealthComponent";
-import { createStatusEffectComponentParams } from "../entity-components/server-components/StatusEffectComponent";
-import { createStructureComponentParams } from "../entity-components/server-components/StructureComponent";
-import { createTransformComponentParams } from "../entity-components/server-components/TransformComponent";
-import { createTribeComponentParams } from "../entity-components/server-components/TribeComponent";
+import { createHealthComponentData } from "../entity-components/server-components/HealthComponent";
+import { createStatusEffectComponentData } from "../entity-components/server-components/StatusEffectComponent";
+import { createStructureComponentData } from "../entity-components/server-components/StructureComponent";
+import { createTransformComponentData } from "../entity-components/server-components/TransformComponent";
+import { createTribeComponentData } from "../entity-components/server-components/TribeComponent";
 import { createHitboxQuick, Hitbox } from "../hitboxes";
 import { Tribe } from "../tribes";
-import { EntityParams } from "../world";
+import { EntityComponentData } from "../world";
 
-export function createFloorSignConfig(position: Point, angle: number, tribe: Tribe): EntityParams {
+export function createFloorSignConfig(position: Point, angle: number, tribe: Tribe): EntityComponentData {
    const hitboxes = new Array<Hitbox>();
    let hitboxLocalID = 0;
 
@@ -23,14 +23,14 @@ export function createFloorSignConfig(position: Point, angle: number, tribe: Tri
    
    return {
       entityType: EntityType.floorSign,
-      serverComponentParams: {
-         [ServerComponentType.transform]: createTransformComponentParams(hitboxes),
-         [ServerComponentType.statusEffect]: createStatusEffectComponentParams(),
-         [ServerComponentType.health]: createHealthComponentParams(),
-         [ServerComponentType.tribe]: createTribeComponentParams(tribe),
-         [ServerComponentType.structure]: createStructureComponentParams(),
+      serverComponentData: {
+         [ServerComponentType.transform]: createTransformComponentData(hitboxes),
+         [ServerComponentType.statusEffect]: createStatusEffectComponentData(),
+         [ServerComponentType.health]: createHealthComponentData(),
+         [ServerComponentType.tribe]: createTribeComponentData(tribe),
+         [ServerComponentType.structure]: createStructureComponentData(),
          [ServerComponentType.floorSign]: { message: "" },
       },
-      clientComponentParams: {}
+      clientComponentData: {}
    };
 }

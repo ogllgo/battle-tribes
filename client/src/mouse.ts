@@ -1,7 +1,7 @@
 import { Settings } from "battletribes-shared/settings";
 import { halfWindowHeight, halfWindowWidth } from "./webgl";
 import CLIENT_SETTINGS from "./client-settings";
-import Game, { getCursorWorldPos } from "./Game";
+import Game, { getCursorWorldPos } from "./game";
 import Camera from "./Camera";
 import { updateDebugInfoEntity, updateDebugInfoTile } from "./components/game/dev/DebugInfo";
 import { isDev } from "./utils";

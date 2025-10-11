@@ -4,23 +4,16 @@ import { createIceSpeckProjectile, createSnowflakeParticle } from "../../particl
 import { TransformComponentArray } from "./TransformComponent";
 import { Entity } from "battletribes-shared/entities";
 import ServerComponentArray from "../ServerComponentArray";
-import { Hitbox } from "../../hitboxes";
 
-export interface IceArrowComponentParams {}
+export interface IceArrowComponentData {}
 
 export interface IceArrowComponent {}
 
-export const IceArrowComponentArray = new ServerComponentArray<IceArrowComponent, IceArrowComponentParams, never>(ServerComponentType.iceArrow, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   onRemove: onRemove,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const IceArrowComponentArray = new ServerComponentArray<IceArrowComponent, IceArrowComponentData, never>(ServerComponentType.iceArrow, true, createComponent, getMaxRenderParts, decodeData);
+IceArrowComponentArray.onTick = onTick;
+IceArrowComponentArray.onRemove = onRemove;
 
-function createParamsFromData(): IceArrowComponentParams {
+function decodeData(): IceArrowComponentData {
    return {};
 }
 
@@ -54,7 +47,3 @@ function onRemove(entity: Entity): void {
       createIceSpeckProjectile(transformComponent);
    }
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}

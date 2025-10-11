@@ -3,8 +3,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { PacketReader } from "../../../../shared/src/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
@@ -14,7 +13,7 @@ import { createCocoonAmbientParticle, createCocoonFragmentParticle } from "../..
 import { playSoundOnHitbox } from "../../sound";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface KrumblidMorphCocoonComponentParams {
+export interface KrumblidMorphCocoonComponentData {
    readonly stage: number;
 }
 
@@ -27,33 +26,40 @@ export interface KrumblidMorphCocoonComponent {
    readonly renderPart: TexturedRenderPart;
 }
 
-export const KrumblidMorphCocoonComponentArray = new ServerComponentArray<KrumblidMorphCocoonComponent, KrumblidMorphCocoonComponentParams, IntermediateInfo>(ServerComponentType.krumblidMorphCocoon, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie,
-   onTick: onTick
-});
+export const KrumblidMorphCocoonComponentArray = new ServerComponentArray<KrumblidMorphCocoonComponent, KrumblidMorphCocoonComponentData, IntermediateInfo>(ServerComponentType.krumblidMorphCocoon, true, createComponent, getMaxRenderParts, decodeData);
+KrumblidMorphCocoonComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+KrumblidMorphCocoonComponentArray.updateFromData = updateFromData;
+KrumblidMorphCocoonComponentArray.onHit = onHit;
+KrumblidMorphCocoonComponentArray.onDie = onDie;
+KrumblidMorphCocoonComponentArray.onTick = onTick;
 
 const getTextureSource = (stage: number): string => {
    return "entities/krumblid-morph-cocoon/stage-" + stage + ".png";
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+export function createKrumblidMorphCocoonComponentData(stage: number): KrumblidMorphCocoonComponentData {
+   return {
+      stage: stage
+   };
+}
 
-   const krumblidMorphCocoonComponentParams = entityParams.serverComponentParams[ServerComponentType.krumblidMorphCocoon]!;
+function decodeData(reader: PacketReader): KrumblidMorphCocoonComponentData {
+   const stage = reader.readNumber();
+   
+   return createKrumblidMorphCocoonComponentData(stage);
+}
+
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
+
+   const krumblidMorphCocoonComponentData = entityComponentData.serverComponentData[ServerComponentType.krumblidMorphCocoon]!;
    
    const renderPart = new TexturedRenderPart(
       hitbox,
       0,
       0,
-      getTextureArrayIndex(getTextureSource(krumblidMorphCocoonComponentParams.stage))
+      getTextureArrayIndex(getTextureSource(krumblidMorphCocoonComponentData.stage))
    );
    renderInfo.attachRenderPart(renderPart);
 
@@ -62,23 +68,11 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    };
 }
 
-export function createKrumblidMorphCocoonComponentParams(stage: number): KrumblidMorphCocoonComponentParams {
-   return {
-      stage: stage
-   };
-}
-
-function createParamsFromData(reader: PacketReader): KrumblidMorphCocoonComponentParams {
-   const stage = reader.readNumber();
-   
-   return createKrumblidMorphCocoonComponentParams(stage);
-}
-
-function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): KrumblidMorphCocoonComponent {
-   const krumblidMorphCocoonComponentParams = entityParams.serverComponentParams[ServerComponentType.krumblidMorphCocoon]!;
+function createComponent(entityComponentData: EntityComponentData, intermediateInfo: IntermediateInfo): KrumblidMorphCocoonComponent {
+   const krumblidMorphCocoonComponentData = entityComponentData.serverComponentData[ServerComponentType.krumblidMorphCocoon]!;
 
    return {
-      stage: krumblidMorphCocoonComponentParams.stage,
+      stage: krumblidMorphCocoonComponentData.stage,
       renderPart: intermediateInfo.renderPart,
    };
 }
@@ -101,15 +95,10 @@ function onTick(cocoon: Entity): void {
    }
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: KrumblidMorphCocoonComponentData, entity: Entity): void {
    const krumblidMorphComponent = KrumblidMorphCocoonComponentArray.getComponent(entity);
 
-   const stage = reader.readNumber();
-
+   const stage = data.stage;
    if (stage !== krumblidMorphComponent.stage) {
       krumblidMorphComponent.renderPart.switchTextureSource(getTextureSource(stage));
       krumblidMorphComponent.stage = stage;

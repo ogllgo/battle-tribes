@@ -7,41 +7,30 @@ import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
 import Board from "../../Board";
 import { createEmberParticle, createSmokeParticle } from "../../particles";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface FireTorchComponentParams {}
+export interface FireTorchComponentData {}
 
 interface IntermediateInfo {}
 
 export interface FireTorchComponent {}
 
-export const FireTorchComponentArray = new ServerComponentArray<FireTorchComponent, FireTorchComponentParams, IntermediateInfo>(ServerComponentType.fireTorch, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onTick: onTick
-});
+export const FireTorchComponentArray = new ServerComponentArray<FireTorchComponent, FireTorchComponentData, IntermediateInfo>(ServerComponentType.fireTorch, true, createComponent, getMaxRenderParts, decodeData);
+FireTorchComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+FireTorchComponentArray.onTick = onTick;
 
-const fillParams = (): FireTorchComponentParams => {
+export function createFireTorchComponentData(): FireTorchComponentData {
    return {};
 }
 
-export function createFireTorchComponentParams(): FireTorchComponentParams {
-   return fillParams();
+function decodeData(): FireTorchComponentData {
+   return {};
 }
 
-function createParamsFromData(): FireTorchComponentParams {
-   return fillParams();
-}
-
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -61,10 +50,6 @@ function createComponent(): FireTorchComponent {
 function getMaxRenderParts(): number {
    return 1;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}
 
 function onTick(entity: Entity): void {
    // @Copynpaste: all of these effects from InventoryUseComponent

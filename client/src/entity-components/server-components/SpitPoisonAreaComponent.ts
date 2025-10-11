@@ -13,23 +13,17 @@ const enum Vars {
    MAX_RANGE = 55
 }
 
-export interface SpitPoisonAreaComponentParams {}
+export interface SpitPoisonAreaComponentData {}
 
 export interface SpitPoisonAreaComponent {
    soundInfo: SoundInfo | null;
 }
 
-export const SpitPoisonAreaComponentArray = new ServerComponentArray<SpitPoisonAreaComponent, SpitPoisonAreaComponentParams, never>(ServerComponentType.spitPoisonArea, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onJoin: onJoin,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const SpitPoisonAreaComponentArray = new ServerComponentArray<SpitPoisonAreaComponent, SpitPoisonAreaComponentData, never>(ServerComponentType.spitPoisonArea, true, createComponent, getMaxRenderParts, decodeData);
+SpitPoisonAreaComponentArray.onJoin = onJoin;
+SpitPoisonAreaComponentArray.onTick = onTick;
 
-function createParamsFromData(): SpitPoisonAreaComponentParams {
+function decodeData(): SpitPoisonAreaComponentData {
    return {};
 }
 
@@ -92,7 +86,3 @@ function onTick(entity: Entity): void {
 
    createAcidParticle(x, y);
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}

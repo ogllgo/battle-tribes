@@ -11,11 +11,11 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { createBloodPoolParticle, createBloodParticle, BloodParticleSize, createBloodParticleFountain } from "../../particles";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface ZombieComponentParams {
+export interface ZombieComponentData {
    readonly zombieType: number;
 }
 
@@ -30,46 +30,40 @@ const RADIUS = 32;
 const ZOMBIE_TEXTURE_SOURCES: ReadonlyArray<string> = ["entities/zombie/zombie1.png", "entities/zombie/zombie2.png", "entities/zombie/zombie3.png", "entities/zombie/zombie-golden.png"];
 const ZOMBIE_HAND_TEXTURE_SOURCES: ReadonlyArray<string> = ["entities/zombie/fist-1.png", "entities/zombie/fist-2.png", "entities/zombie/fist-3.png", "entities/zombie/fist-4.png"];
 
-export const ZombieComponentArray = new ServerComponentArray<ZombieComponent, ZombieComponentParams, IntermediateInfo>(ServerComponentType.zombie, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const ZombieComponentArray = new ServerComponentArray<ZombieComponent, ZombieComponentData, IntermediateInfo>(ServerComponentType.zombie, true, createComponent, getMaxRenderParts, decodeData);
+ZombieComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+ZombieComponentArray.onTick = onTick;
+ZombieComponentArray.onHit = onHit;
+ZombieComponentArray.onDie = onDie;
 
-function createParamsFromData(reader: PacketReader): ZombieComponentParams {
+function decodeData(reader: PacketReader): ZombieComponentData {
    const zombieType = reader.readNumber();
    return {
       zombieType: zombieType
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
-   const zombieComponentParams = entityParams.serverComponentParams[ServerComponentType.zombie]!;
-   const inventoryUseComponentParams = entityParams.serverComponentParams[ServerComponentType.inventoryUse]!;
+   const zombieComponentData = entityComponentData.serverComponentData[ServerComponentType.zombie]!;
+   const inventoryUseComponentData = entityComponentData.serverComponentData[ServerComponentType.inventoryUse]!;
 
    const bodyRenderPart = new TexturedRenderPart(
       hitbox,
       2,
       0,
-      getTextureArrayIndex(ZOMBIE_TEXTURE_SOURCES[zombieComponentParams.zombieType])
+      getTextureArrayIndex(ZOMBIE_TEXTURE_SOURCES[zombieComponentData.zombieType])
    );
    renderInfo.attachRenderPart(bodyRenderPart);
 
    // @Hack @Copynpaste
 
    // Hand render parts
-   const handTextureSource = ZOMBIE_HAND_TEXTURE_SOURCES[zombieComponentParams.zombieType];
+   const handTextureSource = ZOMBIE_HAND_TEXTURE_SOURCES[zombieComponentData.zombieType];
    const handRenderParts = new Array<VisualRenderPart>();
-   for (let i = 0; i < inventoryUseComponentParams.limbInfos.length; i++) {
+   for (let i = 0; i < inventoryUseComponentData.limbInfos.length; i++) {
       const attachPoint = new RenderAttachPoint(
          bodyRenderPart,
          1,
@@ -95,9 +89,9 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    return {};
 }
 
-function createComponent(entityParams: EntityParams): ZombieComponent {
+function createComponent(entityComponentData: EntityComponentData): ZombieComponent {
    return {
-      zombieType: entityParams.serverComponentParams[ServerComponentType.zombie]!.zombieType
+      zombieType: entityComponentData.serverComponentData[ServerComponentType.zombie]!.zombieType
    };
 }
 
@@ -114,14 +108,6 @@ function onTick(entity: Entity): void {
    if (Math.random() < 0.1 * Settings.DT_S) {
       playSoundOnHitbox("zombie-ambient-" + randInt(1, 3) + ".mp3", 0.4, 1, entity, hitbox, true);
    }
-}
-
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
 function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {

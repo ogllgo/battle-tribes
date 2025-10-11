@@ -2,7 +2,7 @@ import { createTexture, createWebGLProgram, getCirclePoint, gl, windowHeight, wi
 import {  rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { getTexture } from "../../textures";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
-import { gameFramebuffer } from "../../Game";
+import { gameFramebuffer } from "../../game";
 import { getGrassBlockers, GrassBlocker } from "../../grass-blockers";
 import { boxIsCircular } from "../../../../shared/src/boxes/boxes";
 

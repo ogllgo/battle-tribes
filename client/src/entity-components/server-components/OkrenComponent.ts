@@ -3,7 +3,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityComponentData, getEntityRenderInfo } from "../../world";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { Entity } from "../../../../shared/src/entities";
 import { Hitbox } from "../../hitboxes";
@@ -21,7 +21,7 @@ export const enum OkrenAgeStage {
    ancient
 }
 
-export interface OkrenComponentParams {
+export interface OkrenComponentData {
    readonly size: OkrenAgeStage;
    readonly rightEyeHardenTimer: number;
    readonly leftEyeHardenTimer: number;
@@ -33,17 +33,12 @@ export interface OkrenComponent {
    size: OkrenAgeStage;
 }
 
-export const OkrenComponentArray = new ServerComponentArray<OkrenComponent, OkrenComponentParams, IntermediateInfo>(ServerComponentType.okren, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit
-});
+export const OkrenComponentArray = new ServerComponentArray<OkrenComponent, OkrenComponentData, IntermediateInfo>(ServerComponentType.okren, true, createComponent, getMaxRenderParts, decodeData);
+OkrenComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+OkrenComponentArray.updateFromData = updateFromData;
+OkrenComponentArray.onHit = onHit;
 
-function createParamsFromData(reader: PacketReader): OkrenComponentParams {
+function decodeData(reader: PacketReader): OkrenComponentData {
    const size = reader.readNumber();
    const rightEyeHardenTimer = reader.readNumber();
    const leftEyeHardenTimer = reader.readNumber();
@@ -74,11 +69,11 @@ const getEyeTextureSource = (okrenSize: number, eyeHardenTimer: number): string 
    }
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const okrenComponentParams = entityParams.serverComponentParams[ServerComponentType.okren]!;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const okrenComponentData = entityComponentData.serverComponentData[ServerComponentType.okren]!;
    
    let sizeString: string;
-   switch (okrenComponentParams.size) {
+   switch (okrenComponentData.size) {
       case 0: sizeString = "juvenile"; break;
       case 1: sizeString = "youth"; break;
       case 2: sizeString = "adult"; break;
@@ -87,8 +82,8 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
       default: throw new Error();
    }
    
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   for (const hitbox of transformComponentParams.hitboxes) {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   for (const hitbox of transformComponentData.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.OKREN_BODY)) {
          const bodyRenderPart = new TexturedRenderPart(
             hitbox,
@@ -99,13 +94,13 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
          bodyRenderPart.addTag("tamingComponent:head");
          renderInfo.attachRenderPart(bodyRenderPart);
       } else if (hitbox.flags.includes(HitboxFlag.OKREN_EYE)) {
-         const hardenTimer = hitbox.box.flipX ? okrenComponentParams.leftEyeHardenTimer : okrenComponentParams.rightEyeHardenTimer;
+         const hardenTimer = hitbox.box.flipX ? okrenComponentData.leftEyeHardenTimer : okrenComponentData.rightEyeHardenTimer;
          renderInfo.attachRenderPart(
             new TexturedRenderPart(
                hitbox,
                5,
                0,
-               getTextureArrayIndex(getEyeTextureSource(okrenComponentParams.size, hardenTimer))
+               getTextureArrayIndex(getEyeTextureSource(okrenComponentData.size, hardenTimer))
             )
          );
       } else if (hitbox.flags.includes(HitboxFlag.OKREN_MANDIBLE)) {
@@ -123,11 +118,11 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    return {};
 }
 
-function createComponent(entityParams: EntityParams): OkrenComponent {
-   const okrenComponentParams = entityParams.serverComponentParams[ServerComponentType.okren]!;
+function createComponent(entityComponentData: EntityComponentData): OkrenComponent {
+   const okrenComponentData = entityComponentData.serverComponentData[ServerComponentType.okren]!;
    
    return {
-      size: okrenComponentParams.size
+      size: okrenComponentData.size
    };
 }
 
@@ -135,10 +130,6 @@ function getMaxRenderParts(): number {
    return 5;
 }
    
-function padData(reader: PacketReader): void {
-   reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
-}
-
 const getEyeRenderPart = (okren: Entity, flipX: boolean): TexturedRenderPart => {
    const renderInfo = getEntityRenderInfo(okren);
    for (const renderPart of renderInfo.renderPartsByZIndex) {
@@ -149,16 +140,16 @@ const getEyeRenderPart = (okren: Entity, flipX: boolean): TexturedRenderPart => 
    throw new Error();
 }
 
-function updateFromData(reader: PacketReader, okren: Entity): void {
-   const size = reader.readNumber();
+function updateFromData(data: OkrenComponentData, okren: Entity): void {
+   const size = data.size;
 
    const okrenComponent = OkrenComponentArray.getComponent(okren);
    if (okrenComponent.size !== size) {
       okrenComponent.size = size;
    }
 
-   const rightEyeHardenTimer = reader.readNumber();
-   const leftEyeHardenTimer = reader.readNumber();
+   const rightEyeHardenTimer = data.rightEyeHardenTimer;
+   const leftEyeHardenTimer = data.leftEyeHardenTimer;
 
    const leftEye = getEyeRenderPart(okren, true);
    leftEye.switchTextureSource(getEyeTextureSource(size, leftEyeHardenTimer));

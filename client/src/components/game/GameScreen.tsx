@@ -24,7 +24,7 @@ import { getCurrentLayer, surfaceLayer, undergroundLayer } from "../../world";
 import { getInventory, InventoryComponentArray } from "../../entity-components/server-components/InventoryComponent";
 import { inventoriesAreDifferent } from "../../inventory-manipulation";
 import LayerChangeMessage from "./LayerChangeMessage";
-import { getHitboxTile, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
+import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { TileType } from "../../../../shared/src/tiles";
 import TribePlanVisualiser from "./tribe-plan-visualiser/TribePlanVisualiser";
 import { ItemTooltip } from "./inventories/ItemTooltip";
@@ -34,6 +34,7 @@ import TamingMenu from "./taming-menu/TamingMenu";
 import SignInscribeMenu from "./SignInscribeMenu";
 import TamingRenamePrompt from "./taming-menu/TamingRenamePrompt";
 import CowStaminaBar from "./CowStaminaBar";
+import { getHitboxTile } from "../../hitboxes";
 
 export const enum GameInteractState {
    none,
@@ -185,7 +186,7 @@ const GameScreen = (props: GameScreenProps) => {
             if (getCurrentLayer() === undergroundLayer) {
                const transformComponent = TransformComponentArray.getComponent(playerInstance);
                const hitbox = transformComponent.hitboxes[0];
-               const tileAbove = getHitboxTile(surfaceLayer, hitbox);
+               const tileAbove = getHitboxTile(hitbox);
                if (tileAbove.type === TileType.dropdown) {
                   canAscendLayer = true;
                }

@@ -4,21 +4,21 @@ import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../shared/src/collis
 import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType } from "../../../shared/src/entities";
 import { Point } from "../../../shared/src/utils";
-import { createAIHelperComponentParams } from "../entity-components/server-components/AIHelperComponent";
-import { createAmmoBoxComponentParams } from "../entity-components/server-components/AmmoBoxComponent";
-import { createBallistaComponentParams } from "../entity-components/server-components/BallistaComponent";
-import { createHealthComponentParams } from "../entity-components/server-components/HealthComponent";
-import { createInventoryComponentParams } from "../entity-components/server-components/InventoryComponent";
-import { createStatusEffectComponentParams } from "../entity-components/server-components/StatusEffectComponent";
-import { createStructureComponentParams } from "../entity-components/server-components/StructureComponent";
-import { createTransformComponentParams } from "../entity-components/server-components/TransformComponent";
-import { createTribeComponentParams } from "../entity-components/server-components/TribeComponent";
-import { createTurretComponentParams } from "../entity-components/server-components/TurretComponent";
+import { createAIHelperComponentData } from "../entity-components/server-components/AIHelperComponent";
+import { createAmmoBoxComponentData } from "../entity-components/server-components/AmmoBoxComponent";
+import { createBallistaComponentData } from "../entity-components/server-components/BallistaComponent";
+import { createHealthComponentData } from "../entity-components/server-components/HealthComponent";
+import { createInventoryComponentData } from "../entity-components/server-components/InventoryComponent";
+import { createStatusEffectComponentData } from "../entity-components/server-components/StatusEffectComponent";
+import { createStructureComponentData } from "../entity-components/server-components/StructureComponent";
+import { createTransformComponentData } from "../entity-components/server-components/TransformComponent";
+import { createTribeComponentData } from "../entity-components/server-components/TribeComponent";
+import { createTurretComponentData } from "../entity-components/server-components/TurretComponent";
 import { Hitbox, createHitboxQuick } from "../hitboxes";
 import { Tribe } from "../tribes";
-import { EntityParams } from "../world";
+import { EntityComponentData } from "../world";
 
-export function createBallistaConfig(position: Point, rotation: number, tribe: Tribe): EntityParams {
+export function createBallistaConfig(position: Point, rotation: number, tribe: Tribe): EntityComponentData {
    const hitboxes = new Array<Hitbox>();
    let hitboxLocalID = 0;
 
@@ -28,18 +28,18 @@ export function createBallistaConfig(position: Point, rotation: number, tribe: T
 
    return {
       entityType: EntityType.ballista,
-      serverComponentParams: {
-         [ServerComponentType.transform]: createTransformComponentParams(hitboxes),
-         [ServerComponentType.health]: createHealthComponentParams(),
-         [ServerComponentType.statusEffect]: createStatusEffectComponentParams(),
-         [ServerComponentType.structure]: createStructureComponentParams(),
-         [ServerComponentType.tribe]: createTribeComponentParams(tribe),
-         [ServerComponentType.turret]: createTurretComponentParams(),
-         [ServerComponentType.aiHelper]: createAIHelperComponentParams(),
-         [ServerComponentType.ammoBox]: createAmmoBoxComponentParams(),
-         [ServerComponentType.inventory]: createInventoryComponentParams(),
-         [ServerComponentType.ballista]: createBallistaComponentParams()
+      serverComponentData: {
+         [ServerComponentType.transform]: createTransformComponentData(hitboxes),
+         [ServerComponentType.health]: createHealthComponentData(),
+         [ServerComponentType.statusEffect]: createStatusEffectComponentData(),
+         [ServerComponentType.structure]: createStructureComponentData(),
+         [ServerComponentType.tribe]: createTribeComponentData(tribe),
+         [ServerComponentType.turret]: createTurretComponentData(),
+         [ServerComponentType.aiHelper]: createAIHelperComponentData(),
+         [ServerComponentType.ammoBox]: createAmmoBoxComponentData(),
+         [ServerComponentType.inventory]: createInventoryComponentData(),
+         [ServerComponentType.ballista]: createBallistaComponentData()
       },
-      clientComponentParams: {}
+      clientComponentData: {}
    };
 }

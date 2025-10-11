@@ -1,30 +1,20 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import ServerComponentArray from "../ServerComponentArray";
 
-export interface EnergyStoreComponentParams {}
+export interface EnergyStoreComponentData {}
 
 export interface EnergyStoreComponent {}
 
-export const EnergyStoreComponentArray = new ServerComponentArray<EnergyStoreComponent, EnergyStoreComponentParams, never>(ServerComponentType.energyStore, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const EnergyStoreComponentArray = new ServerComponentArray<EnergyStoreComponent, EnergyStoreComponentData, never>(ServerComponentType.energyStore, true, createComponent, getMaxRenderParts, decodeData);
 
-function createParamsFromData(): EnergyStoreComponentParams {
+function decodeData(): EnergyStoreComponentData {
    return {};
 }
 
-function createComponent(): EnergyStoreComponentParams {
+function createComponent(): EnergyStoreComponentData {
    return {};
 }
 
 function getMaxRenderParts(): number {
    return 0;
 }
-   
-function padData(): void {}
-
-function updateFromData(): void {}

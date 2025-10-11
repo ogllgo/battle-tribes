@@ -6,34 +6,28 @@ import { createGenericGemParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
-export interface GuardianSpikyBallComponentParams {}
+export interface GuardianSpikyBallComponentData {}
 
 interface IntermediateInfo {}
 
 export interface GuardianSpikyBallComponent {}
 
-export const GuardianSpikyBallComponentArray = new ServerComponentArray<GuardianSpikyBallComponent, GuardianSpikyBallComponentParams, IntermediateInfo>(ServerComponentType.guardianSpikyBall, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onLoad: onLoad,
-   padData: padData,
-   updateFromData: updateFromData,
-   onDie: onDie
-});
+export const GuardianSpikyBallComponentArray = new ServerComponentArray<GuardianSpikyBallComponent, GuardianSpikyBallComponentData, IntermediateInfo>(ServerComponentType.guardianSpikyBall, true, createComponent, getMaxRenderParts, decodeData);
+GuardianSpikyBallComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+GuardianSpikyBallComponentArray.onLoad = onLoad;
+GuardianSpikyBallComponentArray.onDie = onDie;
 
-function createParamsFromData(): GuardianSpikyBallComponentParams {
+function decodeData(): GuardianSpikyBallComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -59,10 +53,6 @@ function onLoad(entity: Entity): void {
    const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox("guardian-spiky-ball-spawn.mp3", 0.4, 1, entity, hitbox, false);
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);

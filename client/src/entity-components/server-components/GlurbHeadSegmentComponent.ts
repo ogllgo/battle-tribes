@@ -2,36 +2,29 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface GlurbHeadSegmentComponentParams {}
+export interface GlurbHeadSegmentComponentData {}
 
 interface IntermediateInfo {}
 
 export interface GlurbHeadSegmentComponent {}
 
-export const GlurbHeadSegmentComponentArray = new ServerComponentArray<GlurbHeadSegmentComponent, GlurbHeadSegmentComponentParams, IntermediateInfo>(ServerComponentType.glurbHeadSegment, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const GlurbHeadSegmentComponentArray = new ServerComponentArray<GlurbHeadSegmentComponent, GlurbHeadSegmentComponentData, IntermediateInfo>(ServerComponentType.glurbHeadSegment, true, createComponent, getMaxRenderParts, decodeData);
+GlurbHeadSegmentComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
-export function createGlurbHeadSegmentComponentParams(): GlurbHeadSegmentComponentParams {
+export function createGlurbHeadSegmentComponentData(): GlurbHeadSegmentComponentData {
    return {};
 }
 
-function createParamsFromData(): GlurbHeadSegmentComponentParams {
-   return createGlurbHeadSegmentComponentParams();
+function decodeData(): GlurbHeadSegmentComponentData {
+   return createGlurbHeadSegmentComponentData();
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -69,7 +62,3 @@ function createComponent(): GlurbHeadSegmentComponent {
 function getMaxRenderParts(): number {
    return 3;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}

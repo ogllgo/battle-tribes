@@ -3,11 +3,10 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface SandstoneRockComponentParams {
+export interface SandstoneRockComponentData {
    readonly size: number;
 }
 
@@ -15,30 +14,24 @@ interface IntermediateInfo {}
 
 export interface SandstoneRockComponent {}
 
-export const SandstoneRockComponentArray = new ServerComponentArray<SandstoneRockComponent, SandstoneRockComponentParams, IntermediateInfo>(ServerComponentType.sandstoneRock, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-});
+export const SandstoneRockComponentArray = new ServerComponentArray<SandstoneRockComponent, SandstoneRockComponentData, IntermediateInfo>(ServerComponentType.sandstoneRock, true, createComponent, getMaxRenderParts, decodeData);
+SandstoneRockComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
-function createParamsFromData(reader: PacketReader): SandstoneRockComponentParams {
+function decodeData(reader: PacketReader): SandstoneRockComponentData {
    const size = reader.readNumber();
    return {
       size: size
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
-   const sandstoneRockComponentParams = entityParams.serverComponentParams[ServerComponentType.sandstoneRock]!;
+   const sandstoneRockComponentData = entityComponentData.serverComponentData[ServerComponentType.sandstoneRock]!;
 
    let typeString: string;
-   switch (sandstoneRockComponentParams.size) {
+   switch (sandstoneRockComponentData.size) {
       case 0: typeString = "small"; break;
       case 1: typeString = "medium"; break;
       case 2: typeString = "large"; break;
@@ -63,12 +56,4 @@ function createComponent(): SandstoneRockComponent {
 
 function getMaxRenderParts(): number {
    return 1;
-}
-   
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader): void {
-   padData(reader);
 }

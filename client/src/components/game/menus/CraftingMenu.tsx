@@ -4,7 +4,7 @@ import CLIENT_ITEM_INFO_RECORD, { getItemTypeImage } from "../../../client-item-
 import { windowHeight } from "../../../webgl";
 import ItemSlot, { ItemSlotCallbackInfo } from "../inventories/ItemSlot";
 import { countItemTypesInInventory } from "../../../inventory-manipulation";
-import Game from "../../../Game";
+import Game from "../../../game";
 import { playSound } from "../../../sound";
 import { CraftingRecipe, CraftingStation, CRAFTING_RECIPES, forceGetItemRecipe } from "battletribes-shared/items/crafting-recipes";
 import { ItemType, Item, Inventory, InventoryName } from "battletribes-shared/items/items";

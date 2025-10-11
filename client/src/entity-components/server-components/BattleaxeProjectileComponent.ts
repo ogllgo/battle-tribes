@@ -4,23 +4,16 @@ import { playSoundOnHitbox } from "../../sound";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
-import { Hitbox } from "../../hitboxes";
 
-export interface BattleaxeProjectileComponentParams {}
+export interface BattleaxeProjectileComponentData {}
 
 export interface BattleaxeProjectileComponent {}
 
-export const BattleaxeProjectileComponentArray = new ServerComponentArray<BattleaxeProjectileComponent, BattleaxeProjectileComponentParams, never>(ServerComponentType.battleaxeProjectile, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onLoad: onLoad,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const BattleaxeProjectileComponentArray = new ServerComponentArray<BattleaxeProjectileComponent, BattleaxeProjectileComponentData, never>(ServerComponentType.battleaxeProjectile, true, createComponent, getMaxRenderParts, decodeData);
+BattleaxeProjectileComponentArray.onLoad = onLoad;
+BattleaxeProjectileComponentArray.onTick = onTick;
 
-function createParamsFromData(): BattleaxeProjectileComponentParams {
+function decodeData(): BattleaxeProjectileComponentData {
    return {};
 }
 
@@ -47,7 +40,3 @@ function onTick(entity: Entity): void {
       playWhoosh(entity);
    }
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}

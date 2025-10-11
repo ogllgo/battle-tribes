@@ -7,17 +7,17 @@ import { playSoundOnHitbox } from "../../sound";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { CowSpecies, Entity } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
-import { EntityParams, getEntityLayer } from "../../world";
-import { getHitboxTile, TransformComponentArray } from "./TransformComponent";
+import { EntityComponentData } from "../../world";
+import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { RenderPart } from "../../render-parts/render-parts";
-import { Hitbox } from "../../hitboxes";
+import { getHitboxTile, Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface CowComponentParams {
+export interface CowComponentData {
    readonly species: CowSpecies;
    readonly grazeProgress: number;
    readonly isRamming: boolean;
@@ -39,19 +39,14 @@ export interface CowComponent {
    stamina: number;
 }
 
-export const CowComponentArray = new ServerComponentArray<CowComponent, CowComponentParams, IntermediateInfo>(ServerComponentType.cow, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const CowComponentArray = new ServerComponentArray<CowComponent, CowComponentData, IntermediateInfo>(ServerComponentType.cow, true, createComponent, getMaxRenderParts, decodeData);
+CowComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+CowComponentArray.onTick = onTick;
+CowComponentArray.updateFromData = updateFromData;
+CowComponentArray.onHit = onHit;
+CowComponentArray.onDie = onDie;
 
-function createParamsFromData(reader: PacketReader): CowComponentParams {
+function decodeData(reader: PacketReader): CowComponentData {
    const species = reader.readNumber();
    const grazeProgress = reader.readNumber();
    const isRamming = reader.readBoolean();
@@ -66,14 +61,14 @@ function createParamsFromData(reader: PacketReader): CowComponentParams {
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
    
-   const cowComponentParams = entityParams.serverComponentParams[ServerComponentType.cow]!;
-   const cowNum = cowComponentParams.species === CowSpecies.brown ? 1 : 2;
+   const cowComponentData = entityComponentData.serverComponentData[ServerComponentType.cow]!;
+   const cowNum = cowComponentData.species === CowSpecies.brown ? 1 : 2;
 
    let headRenderPart!: RenderPart;
-   for (const hitbox of transformComponentParams.hitboxes) {
+   for (const hitbox of transformComponentData.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.COW_BODY)) {
          const bodyRenderPart = new TexturedRenderPart(
             hitbox,
@@ -100,15 +95,15 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    };
 }
 
-function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): CowComponent {
-   const cowComponentParams = entityParams.serverComponentParams[ServerComponentType.cow]!;
+function createComponent(entityComponentData: EntityComponentData, intermediateInfo: IntermediateInfo): CowComponent {
+   const cowComponentData = entityComponentData.serverComponentData[ServerComponentType.cow]!;
    
    return {
-      species: cowComponentParams.species,
-      grazeProgress: cowComponentParams.grazeProgress,
-      isRamming: cowComponentParams.isRamming,
+      species: cowComponentData.species,
+      grazeProgress: cowComponentData.grazeProgress,
+      isRamming: cowComponentData.isRamming,
       headRenderPart: intermediateInfo.headRenderPart,
-      stamina: cowComponentParams.stamina
+      stamina: cowComponentData.stamina
    };
 }
 
@@ -137,23 +132,17 @@ function onTick(entity: Entity): void {
    }
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: CowComponentData, entity: Entity): void {
    const cowComponent = CowComponentArray.getComponent(entity);
    
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-   const grazeProgress = reader.readNumber();
+   const grazeProgress = data.grazeProgress;
    
    // When the cow has finished grazing, create a bunch of dirt particles
    if (grazeProgress < cowComponent.grazeProgress) {
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.hitboxes[0];
-      const layer = getEntityLayer(entity);
       
-      const tile = getHitboxTile(layer, hitbox);
+      const tile = getHitboxTile(hitbox);
       for (let i = 0; i < 15; i++) {
          const x = (tile.x + Math.random()) * Settings.TILE_SIZE;
          const y = (tile.y + Math.random()) * Settings.TILE_SIZE;
@@ -162,8 +151,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    }
    cowComponent.grazeProgress = grazeProgress;
 
-   const isRamming = reader.readBoolean();
-   reader.padOffset(3);
+   const isRamming = data.isRamming;
    if (isRamming && !cowComponent.isRamming) {
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.hitboxes[0];
@@ -171,7 +159,7 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    }
    cowComponent.isRamming = isRamming;
 
-   cowComponent.stamina = reader.readNumber();
+   cowComponent.stamina = data.stamina;
 }
 
 function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {

@@ -1,30 +1,20 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import ServerComponentArray from "../ServerComponentArray";
 
-export interface EnergyStomachComponentParams {}
+export interface EnergyStomachComponentData {}
 
 export interface EnergyStomachComponent {}
 
-export const EnergyStomachComponentArray = new ServerComponentArray<EnergyStomachComponent, EnergyStomachComponentParams, never>(ServerComponentType.energyStomach, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const EnergyStomachComponentArray = new ServerComponentArray<EnergyStomachComponent, EnergyStomachComponentData, never>(ServerComponentType.energyStomach, true, createComponent, getMaxRenderParts, decodeData);
 
-function createParamsFromData(): EnergyStomachComponentParams {
+function decodeData(): EnergyStomachComponentData {
    return {};
 }
 
-function createComponent(): EnergyStomachComponentParams {
+function createComponent(): EnergyStomachComponentData {
    return {};
 }
 
 function getMaxRenderParts(): number {
    return 0;
 }
-   
-function padData(): void {}
-
-function updateFromData(): void {}

@@ -3,17 +3,16 @@ import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { angle, lerp } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { Hitbox } from "../../hitboxes";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityComponentData, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TUNNEL_TEXTURE_SOURCES } from "./BuildingMaterialComponent";
 import { TransformComponentArray } from "./TransformComponent";
 
-export interface TunnelComponentParams {
+export interface TunnelComponentData {
    readonly doorBitset: number;
    readonly topDoorOpenProgress: number;
    readonly bottomDoorOpenProgress: number;
@@ -56,16 +55,22 @@ const getTunnelDoorInfo = (doorBit: number, openProgress: number): TunnelDoorInf
    };
 }
 
-export const TunnelComponentArray = new ServerComponentArray<TunnelComponent, TunnelComponentParams, IntermediateInfo>(ServerComponentType.tunnel, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const TunnelComponentArray = new ServerComponentArray<TunnelComponent, TunnelComponentData, IntermediateInfo>(ServerComponentType.tunnel, true, createComponent, getMaxRenderParts, decodeData);
+TunnelComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+TunnelComponentArray.updateFromData = updateFromData;
 
-const fillParams = (doorBitset: number, topDoorOpenProgress: number, bottomDoorOpenProgress: number): TunnelComponentParams => {
+export function createTunnelComponentData(): TunnelComponentData {
+   return {
+      doorBitset: 0,
+      topDoorOpenProgress: 0,
+      bottomDoorOpenProgress: 0
+   };
+}
+
+function decodeData(reader: PacketReader): TunnelComponentData {
+   const doorBitset = reader.readNumber();
+   const topDoorOpenProgress = reader.readNumber();
+   const bottomDoorOpenProgress = reader.readNumber();
    return {
       doorBitset: doorBitset,
       topDoorOpenProgress: topDoorOpenProgress,
@@ -73,29 +78,17 @@ const fillParams = (doorBitset: number, topDoorOpenProgress: number, bottomDoorO
    };
 }
 
-export function createTunnelComponentParams(): TunnelComponentParams {
-   return fillParams(0, 0, 0);
-}
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
-function createParamsFromData(reader: PacketReader): TunnelComponentParams {
-   const doorBitset = reader.readNumber();
-   const topDoorOpenProgress = reader.readNumber();
-   const bottomDoorOpenProgress = reader.readNumber();
-
-   return fillParams(doorBitset, topDoorOpenProgress, bottomDoorOpenProgress);
-}
-
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
-
-   const buildingMaterialComponentParams = entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!;
+   const buildingMaterialComponentData = entityComponentData.serverComponentData[ServerComponentType.buildingMaterial]!;
 
    const renderPart = new TexturedRenderPart(
       hitbox,
       1,
       0,
-      getTextureArrayIndex(TUNNEL_TEXTURE_SOURCES[buildingMaterialComponentParams.material])
+      getTextureArrayIndex(TUNNEL_TEXTURE_SOURCES[buildingMaterialComponentData.material])
    );
 
    renderInfo.attachRenderPart(renderPart);
@@ -103,13 +96,13 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    return {};
 }
 
-function createComponent(entityParams: EntityParams): TunnelComponent {
-   const tunnelComponentParams = entityParams.serverComponentParams[ServerComponentType.tunnel]!;
+function createComponent(entityComponentData: EntityComponentData): TunnelComponent {
+   const tunnelComponentData = entityComponentData.serverComponentData[ServerComponentType.tunnel]!;
    
    return {
-      doorBitset: tunnelComponentParams.doorBitset,
-      topDoorOpenProgress: tunnelComponentParams.topDoorOpenProgress,
-      bottomDoorOpenProgress: tunnelComponentParams.bottomDoorOpenProgress,
+      doorBitset: tunnelComponentData.doorBitset,
+      topDoorOpenProgress: tunnelComponentData.topDoorOpenProgress,
+      bottomDoorOpenProgress: tunnelComponentData.bottomDoorOpenProgress,
       doorRenderParts: {}
    };
 }
@@ -148,16 +141,12 @@ const updateDoor = (tunnelComponent: TunnelComponent, doorBit: number, openProgr
    doorRenderPart.angle = doorInfo.rotation;
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: TunnelComponentData, entity: Entity): void {
    const tunnelComponent = TunnelComponentArray.getComponent(entity);
    
-   const doorBitset = reader.readNumber();
-   const topDoorOpenProgress = reader.readNumber();
-   const bottomDoorOpenProgress = reader.readNumber();
+   const doorBitset = data.doorBitset;
+   const topDoorOpenProgress = data.topDoorOpenProgress;
+   const bottomDoorOpenProgress = data.bottomDoorOpenProgress;
 
    if ((doorBitset & 0b01) !== (tunnelComponent.doorBitset & 0b01)) {
       addDoor(tunnelComponent, entity, 0b01);

@@ -7,7 +7,7 @@ import { createLightWoodSpeckParticle, createWoodShardParticle } from "../../par
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams, getEntityRenderInfo, getEntityType } from "../../world";
+import { EntityComponentData, getEntityRenderInfo, getEntityType } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 import { WALL_TEXTURE_SOURCES } from "../server-components/BuildingMaterialComponent";
@@ -16,7 +16,7 @@ import { TransformComponentArray } from "../server-components/TransformComponent
 
 // @Speed: Could make damage render part an overlay instead of a whole render part
 
-export interface WallComponentParams {}
+export interface WallComponentData {}
 
 interface IntermediateInfo {}
 
@@ -35,21 +35,21 @@ export const WallComponentArray = new ClientComponentArray<WallComponent, Interm
    onDie: onDie
 });
 
-export function createWallComponentParams(): WallComponentParams {
+export function createWallComponentData(): WallComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
-   const buildingMaterialComponentParams = entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!;
+   const buildingMaterialComponentData = entityComponentData.serverComponentData[ServerComponentType.buildingMaterial]!;
    
    const renderPart = new TexturedRenderPart(
       hitbox,
       0,
       0,
-      getTextureArrayIndex(WALL_TEXTURE_SOURCES[buildingMaterialComponentParams.material])
+      getTextureArrayIndex(WALL_TEXTURE_SOURCES[buildingMaterialComponentData.material])
    );
    renderPart.addTag("buildingMaterialComponent:material");
 

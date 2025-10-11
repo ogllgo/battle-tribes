@@ -18,7 +18,7 @@ import { StructureComponentArray } from "../../../entity-components/server-compo
 import { getTileLocalBiome } from "../../../local-biomes";
 import { getHitboxVelocity } from "../../../hitboxes";
 import { SnobeComponentArray } from "../../../entity-components/server-components/SnobeComponent";
-import { getCursorWorldPos } from "../../../Game";
+import { getCursorWorldPos } from "../../../game";
 
 export let updateDebugInfoTile: (tile: Tile | null) => void = () => {};
 

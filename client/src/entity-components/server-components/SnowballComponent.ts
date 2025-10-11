@@ -10,12 +10,12 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import Particle from "../../Particle";
 import { addMonocolourParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { getHitboxVelocity, Hitbox } from "../../hitboxes";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface SnowballComponentParams {
+export interface SnowballComponentData {
    readonly size: number;
 }
 
@@ -23,38 +23,31 @@ interface IntermediateInfo {}
 
 export interface SnowballComponent {}
 
-export const SnowballComponentArray = new ServerComponentArray<SnowballComponent, SnowballComponentParams, IntermediateInfo>(ServerComponentType.snowball, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const SnowballComponentArray = new ServerComponentArray<SnowballComponent, SnowballComponentData, IntermediateInfo>(ServerComponentType.snowball, true, createComponent, getMaxRenderParts, decodeData);
+SnowballComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+SnowballComponentArray.onTick = onTick;
+SnowballComponentArray.onHit = onHit;
+SnowballComponentArray.onDie = onDie;
 
-function createParamsFromData(reader: PacketReader): SnowballComponentParams {
+function decodeData(reader: PacketReader): SnowballComponentData {
    const size = reader.readNumber();
-
    return {
       size: size
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
-   const snowballComponentParams = entityParams.serverComponentParams[ServerComponentType.snowball]!;
+   const snowballComponentData = entityComponentData.serverComponentData[ServerComponentType.snowball]!;
 
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,
          0,
-         getTextureArrayIndex("entities/snowball/size-" + (snowballComponentParams.size + 1) + ".png")
+         getTextureArrayIndex("entities/snowball/size-" + (snowballComponentData.size + 1) + ".png")
       )
    );
 
@@ -80,14 +73,6 @@ function onTick(entity: Entity): void {
    }
 }
    
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
 const createSnowSpeckParticle = (spawnPositionX: number, spawnPositionY: number): void => {
    const lifetime = randFloat(0.3, 0.4);
 

@@ -21,7 +21,7 @@ const enum ArmourPixelSize {
    __LENGTH
 }
 
-export interface EquipmentComponentParams {}
+export interface EquipmentComponentData {}
 
 export interface EquipmentComponent {
    armourRenderPart: TexturedRenderPart | null;
@@ -111,7 +111,7 @@ export const EquipmentComponentArray = new ClientComponentArray<EquipmentCompone
    onTick: onTick
 });
 
-export function createEquipmentComponentParams(): EquipmentComponentParams {
+export function createEquipmentComponentData(): EquipmentComponentData {
    return {};
 }
 

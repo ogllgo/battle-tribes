@@ -8,40 +8,32 @@ import { playSoundOnHitbox } from "../../sound";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityComponentData, getEntityRenderInfo } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
-import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface SlimeSpitComponentParams {}
+export interface SlimeSpitComponentData {}
 
 interface IntermediateInfo {}
 
 export interface SlimeSpitComponent {}
 
-export const SlimeSpitComponentArray = new ServerComponentArray<SlimeSpitComponent, SlimeSpitComponentParams, IntermediateInfo>(ServerComponentType.slimeSpit, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onLoad: onLoad,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData,
-   onDie: onDie
-});
+export const SlimeSpitComponentArray = new ServerComponentArray<SlimeSpitComponent, SlimeSpitComponentData, IntermediateInfo>(ServerComponentType.slimeSpit, true, createComponent, getMaxRenderParts, decodeData);
+SlimeSpitComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+SlimeSpitComponentArray.onLoad = onLoad;
+SlimeSpitComponentArray.onTick = onTick;
+SlimeSpitComponentArray.onDie = onDie;
 
-function createParamsFromData(reader: PacketReader): SlimeSpitComponentParams {
+function decodeData(reader: PacketReader): SlimeSpitComponentData {
    reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
    // @Incomplete: SIZE DOESN'T ACTUALLY AFFECT ANYTHING
 
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
    const renderPart1 = new TexturedRenderPart(
       hitbox,
@@ -90,14 +82,6 @@ function onTick(entity: Entity): void {
          createPoisonParticle(entity);
       }
    }
-}
-
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }
 
 function onDie(entity: Entity): void {

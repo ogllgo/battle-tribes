@@ -2,31 +2,24 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface IceShardComponentParams {}
+export interface IceShardComponentData {}
 
 interface IntermediateInfo {}
 
 export interface IceShardComponent {}
 
-export const IceShardComponentArray = new ServerComponentArray<IceShardComponent, IceShardComponentParams, IntermediateInfo>(ServerComponentType.iceShard, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const IceShardComponentArray = new ServerComponentArray<IceShardComponent, IceShardComponentData, IntermediateInfo>(ServerComponentType.iceShard, true, createComponent, getMaxRenderParts, decodeData);
+IceShardComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
-function createParamsFromData(): IceShardComponentParams {
+function decodeData(): IceShardComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IceShardComponent {
-   const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IceShardComponent {
+   const transformComponent = entityComponentData.serverComponentData[ServerComponentType.transform]!;
    const hitbox = transformComponent.hitboxes[0];
    
    renderInfo.attachRenderPart(
@@ -48,7 +41,3 @@ function createComponent() {
 function getMaxRenderParts(): number {
    return 1;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}

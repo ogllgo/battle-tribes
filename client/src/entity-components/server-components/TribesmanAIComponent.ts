@@ -8,11 +8,10 @@ import { Entity } from "../../../../shared/src/entities";
 import { playSoundOnHitbox } from "../../sound";
 import ServerComponentArray from "../ServerComponentArray";
 import { ItemType } from "../../../../shared/src/items/items";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
-import { Hitbox } from "../../hitboxes";
 
-export interface TribesmanAIComponentParams {
+export interface TribesmanAIComponentData {
    readonly aiType: TribesmanAIType;
    readonly relationsWithPlayer: number;
    readonly craftingItemType: ItemType;
@@ -31,16 +30,25 @@ const GOBLIN_ANGRY_SOUNDS: ReadonlyArray<string> = ["goblin-angry-1.mp3", "gobli
 const GOBLIN_ESCAPE_SOUNDS: ReadonlyArray<string> = ["goblin-escape-1.mp3", "goblin-escape-2.mp3", "goblin-escape-3.mp3"];
 const GOBLIN_AMBIENT_SOUNDS: ReadonlyArray<string> = ["goblin-ambient-1.mp3", "goblin-ambient-2.mp3", "goblin-ambient-3.mp3", "goblin-ambient-4.mp3", "goblin-ambient-5.mp3"];
 
-export const TribesmanAIComponentArray = new ServerComponentArray<TribesmanAIComponent, TribesmanAIComponentParams, never>(ServerComponentType.tribesmanAI, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const TribesmanAIComponentArray = new ServerComponentArray<TribesmanAIComponent, TribesmanAIComponentData, never>(ServerComponentType.tribesmanAI, true, createComponent, getMaxRenderParts, decodeData);
+TribesmanAIComponentArray.onTick = onTick;
+TribesmanAIComponentArray.updateFromData = updateFromData;
 
-const fillParams = (aiType: TribesmanAIType, relationsWithPlayer: number, craftingItemType: ItemType, craftingProgress: number): TribesmanAIComponentParams => {
+export function createTribesmanAIComponentData(): TribesmanAIComponentData {
+   return {
+      aiType: TribesmanAIType.idle,
+      relationsWithPlayer: 0,
+      craftingItemType: 0,
+      craftingProgress: 0
+   };
+}
+
+function decodeData(reader: PacketReader): TribesmanAIComponentData {
+   const aiType = reader.readNumber();
+   const relationsWithPlayer = reader.readNumber();
+   const craftingItemType = reader.readNumber();
+   const craftingProgress = reader.readNumber();
+
    return {
       aiType: aiType,
       relationsWithPlayer: relationsWithPlayer,
@@ -49,27 +57,14 @@ const fillParams = (aiType: TribesmanAIType, relationsWithPlayer: number, crafti
    };
 }
 
-export function createTribesmanAIComponentParams(): TribesmanAIComponentParams {
-   return fillParams(TribesmanAIType.idle, 0, 0, 0);
-}
-
-function createParamsFromData(reader: PacketReader): TribesmanAIComponentParams {
-   const aiType = reader.readNumber();
-   const relationsWithPlayer = reader.readNumber();
-   const craftingItemType = reader.readNumber();
-   const craftingProgress = reader.readNumber();
-
-   return fillParams(aiType, relationsWithPlayer, craftingItemType, craftingProgress);
-}
-
-function createComponent(entityParams: EntityParams): TribesmanAIComponent {
-   const tribesmanAIComponentParams = entityParams.serverComponentParams[ServerComponentType.tribesmanAI]!;
+function createComponent(entityComponentData: EntityComponentData): TribesmanAIComponent {
+   const tribesmanAIComponentData = entityComponentData.serverComponentData[ServerComponentType.tribesmanAI]!;
 
    return {
-      aiType: tribesmanAIComponentParams.aiType,
-      relationsWithPlayer: tribesmanAIComponentParams.relationsWithPlayer,
-      craftingItemType: tribesmanAIComponentParams.craftingItemType,
-      craftingProgress: tribesmanAIComponentParams.craftingProgress
+      aiType: tribesmanAIComponentData.aiType,
+      relationsWithPlayer: tribesmanAIComponentData.relationsWithPlayer,
+      craftingItemType: tribesmanAIComponentData.craftingItemType,
+      craftingProgress: tribesmanAIComponentData.craftingProgress
    };
 }
 
@@ -130,15 +125,11 @@ function onTick(entity: Entity): void {
    }
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: TribesmanAIComponentData, entity: Entity): void {
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(entity);
 
-   tribesmanAIComponent.aiType = reader.readNumber();
-   tribesmanAIComponent.relationsWithPlayer = reader.readNumber();
-   tribesmanAIComponent.craftingItemType = reader.readNumber();
-   tribesmanAIComponent.craftingProgress = reader.readNumber();
+   tribesmanAIComponent.aiType = data.aiType;
+   tribesmanAIComponent.relationsWithPlayer = data.relationsWithPlayer;
+   tribesmanAIComponent.craftingItemType = data.craftingItemType;
+   tribesmanAIComponent.craftingProgress = data.craftingProgress;
 }

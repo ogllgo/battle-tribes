@@ -11,7 +11,7 @@ import { playerInstance } from "../../../player";
 import { EntityType, NUM_ENTITY_TYPES } from "../../../../../shared/src/entities";
 import CLIENT_ENTITY_INFO_RECORD from "../../../client-entity-info";
 import { getNumLights } from "../../../lights";
-import { getNumBufferedPackets, getMeasuredServerTPS } from "../../../Game";
+import { getNumBufferedPackets, getMeasuredServerTPS } from "../../../game";
 
 interface GameInfoDisplayProps {
    setGameInteractState(state: GameInteractState): void;

@@ -5,11 +5,10 @@ import ServerComponentArray from "../ServerComponentArray";
 import { Entity } from "../../../../shared/src/entities";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface TribeWarriorComponentParams {
+export interface TribeWarriorComponentData {
    readonly scars: Array<ScarInfo>;
 }
 
@@ -19,16 +18,11 @@ export interface TribeWarriorComponent {
    readonly scars: Array<ScarInfo>;
 }
 
-export const TribeWarriorComponentArray = new ServerComponentArray<TribeWarriorComponent, TribeWarriorComponentParams, IntermediateInfo>(ServerComponentType.tribeWarrior, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const TribeWarriorComponentArray = new ServerComponentArray<TribeWarriorComponent, TribeWarriorComponentData, IntermediateInfo>(ServerComponentType.tribeWarrior, true, createComponent, getMaxRenderParts, decodeData);
+TribeWarriorComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+TribeWarriorComponentArray.updateFromData = updateFromData;
 
-function createParamsFromData(reader: PacketReader): TribeWarriorComponentParams {
+function decodeData(reader: PacketReader): TribeWarriorComponentData {
    const scars = new Array<ScarInfo>();
    const numScars = reader.readNumber();
    for (let i = 0; i < numScars; i++) {
@@ -50,13 +44,13 @@ function createParamsFromData(reader: PacketReader): TribeWarriorComponentParams
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
-   const tribeWarriorComponentParams = entityParams.serverComponentParams[ServerComponentType.tribeWarrior]!;
-   for (let i = 0; i < tribeWarriorComponentParams.scars.length; i++) {
-      const scarInfo = tribeWarriorComponentParams.scars[i];
+   const tribeWarriorComponentData = entityComponentData.serverComponentData[ServerComponentType.tribeWarrior]!;
+   for (let i = 0; i < tribeWarriorComponentData.scars.length; i++) {
+      const scarInfo = tribeWarriorComponentData.scars[i];
 
       const renderPart = new TexturedRenderPart(
          hitbox,
@@ -73,37 +67,20 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    return {};
 }
 
-function createComponent(entityParams: EntityParams): TribeWarriorComponent {
+function createComponent(entityComponentData: EntityComponentData): TribeWarriorComponent {
    return {
-      scars: entityParams.serverComponentParams[ServerComponentType.tribeWarrior]!.scars
+      scars: entityComponentData.serverComponentData[ServerComponentType.tribeWarrior]!.scars
    };
 }
 
-function getMaxRenderParts(entityParams: EntityParams): number {
-   const tribeWarriorComponentParams = entityParams.serverComponentParams[ServerComponentType.tribeWarrior]!;
-   return tribeWarriorComponentParams.scars.length;
+function getMaxRenderParts(entityComponentData: EntityComponentData): number {
+   const tribeWarriorComponentData = entityComponentData.serverComponentData[ServerComponentType.tribeWarrior]!;
+   return tribeWarriorComponentData.scars.length;
 }
 
-function padData(reader: PacketReader): void {
-   const numScars = reader.readNumber();
-   reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT * numScars);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: TribeWarriorComponentData, entity: Entity): void {
    const tribeWarriorComponent = TribeWarriorComponentArray.getComponent(entity);
-   
-   const numScars = reader.readNumber();
-   for (let i = tribeWarriorComponent.scars.length; i < numScars; i++) {
-      const offsetX = reader.readNumber();
-      const offsetY = reader.readNumber();
-      const rotation = reader.readNumber();
-      const type = reader.readNumber();
-
-      tribeWarriorComponent.scars.push({
-         offsetX: offsetX,
-         offsetY: offsetY,
-         rotation: rotation,
-         type: type
-      });
+   for (let i = tribeWarriorComponent.scars.length; i < data.scars.length; i++) {
+      tribeWarriorComponent.scars.push(data.scars[i]);
    }
 }

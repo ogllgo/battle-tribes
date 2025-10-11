@@ -1,4 +1,4 @@
-import Game from "./Game";
+import Game from "./game";
 import { focusChatbox } from "./components/game/ChatBox";
 import { toggleCinematicMode } from "./components/game/GameScreen";
 

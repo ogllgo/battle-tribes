@@ -1,26 +1,19 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { randAngle, randFloat } from "../../../../shared/src/utils";
-import { Hitbox } from "../../hitboxes";
 import { createDirtParticle } from "../../particles";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
-export interface PlantedComponentParams {}
+export interface PlantedComponentData {}
 
 export interface PlantedComponent {}
 
-export const PlantedComponentArray = new ServerComponentArray<PlantedComponent, PlantedComponentParams, never>(ServerComponentType.planted, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onSpawn: onSpawn
-});
+export const PlantedComponentArray = new ServerComponentArray<PlantedComponent, PlantedComponentData, never>(ServerComponentType.planted, true, createComponent, getMaxRenderParts, decodeData);
+PlantedComponentArray.onSpawn = onSpawn;
 
-function createParamsFromData(): PlantedComponentParams {
+function decodeData(): PlantedComponentData {
    return {};
 }
 
@@ -31,10 +24,6 @@ function createComponent(): PlantedComponent {
 function getMaxRenderParts(): number {
    return 0;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}
 
 function onSpawn(entity: Entity): void {
    // Create dirt particles

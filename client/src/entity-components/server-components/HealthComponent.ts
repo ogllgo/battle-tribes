@@ -6,13 +6,13 @@ import { discombobulate } from "../../components/game/GameInteractableLayer";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { ComponentTint, createComponentTint } from "../../EntityRenderInfo";
-import { EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityComponentData, getEntityRenderInfo } from "../../world";
 import { HitFlags } from "../../../../shared/src/client-server-types";
 import { playerInstance } from "../../player";
 import { Hitbox } from "../../hitboxes";
 import { Point } from "../../../../shared/src/utils";
 
-export interface HealthComponentParams {
+export interface HealthComponentData {
    readonly health: number;
    readonly maxHealth: number;
 }
@@ -28,42 +28,36 @@ export interface HealthComponent {
 const ATTACK_HIT_FLASH_DURATION = 0.4;
 const MAX_REDNESS = 0.85;
 
-export const HealthComponentArray = new ServerComponentArray<HealthComponent, HealthComponentParams, never>(ServerComponentType.health, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   onHit: onHit,
-   padData: padData,
-   updateFromData: updateFromData,
-   updatePlayerFromData: updatePlayerFromData,
-   calculateTint: calculateTint
-});
+export const HealthComponentArray = new ServerComponentArray<HealthComponent, HealthComponentData, never>(ServerComponentType.health, true, createComponent, getMaxRenderParts, decodeData);
+HealthComponentArray.onTick = onTick;
+HealthComponentArray.onHit = onHit;
+HealthComponentArray.updateFromData = updateFromData;
+HealthComponentArray.updatePlayerFromData = updatePlayerFromData;
+HealthComponentArray.calculateTint = calculateTint;
 
-const fillHealthComponentParams = (health: number, maxHealth: number): HealthComponentParams => {
+export function createHealthComponentData(): HealthComponentData {
+   return {
+      health: 0,
+      maxHealth: 0
+   };
+}
+
+function decodeData(reader: PacketReader): HealthComponentData {
+   const health = reader.readNumber();
+   const maxHealth = reader.readNumber();
+
    return {
       health: health,
       maxHealth: maxHealth
    };
 }
 
-export function createHealthComponentParams(): HealthComponentParams {
-   return fillHealthComponentParams(0, 0);
-}
-
-function createParamsFromData(reader: PacketReader): HealthComponentParams {
-   const health = reader.readNumber();
-   const maxHealth = reader.readNumber();
-
-   return fillHealthComponentParams(health, maxHealth);
-}
-
-function createComponent(entityParams: EntityParams): HealthComponent {
-   const healthComponentParams = entityParams.serverComponentParams[ServerComponentType.health]!;
+function createComponent(entityComponentData: EntityComponentData): HealthComponent {
+   const healthComponentData = entityComponentData.serverComponentData[ServerComponentType.health]!;
    
    return {
-      health: healthComponentParams.health,
-      maxHealth: healthComponentParams.maxHealth,
+      health: healthComponentData.health,
+      maxHealth: healthComponentData.maxHealth,
       // @Hack: ideally should be sent from server
       secondsSinceLastHit: 99999
    };
@@ -111,19 +105,14 @@ function onHit(entity: Entity, _hitbox: Hitbox, _hitPosition: Point, hitFlags: n
    }
 }
    
-function padData(reader: PacketReader): void {
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: HealthComponentData, entity: Entity): void {
    const healthComponent = HealthComponentArray.getComponent(entity);
-   
-   healthComponent.health = reader.readNumber();
-   healthComponent.maxHealth = reader.readNumber();
+   healthComponent.health = data.health;
+   healthComponent.maxHealth = data.maxHealth;
 }
 
-function updatePlayerFromData(reader: PacketReader): void {
-   updateFromData(reader, playerInstance!);
+function updatePlayerFromData(data: HealthComponentData): void {
+   updateFromData(data, playerInstance!);
 
    const healthComponent = HealthComponentArray.getComponent(playerInstance!);
    updateHealthBar(healthComponent.health);

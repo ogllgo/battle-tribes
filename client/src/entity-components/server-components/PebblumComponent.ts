@@ -2,33 +2,26 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { randAngle } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface PebblumComponentParams {}
+export interface PebblumComponentData {}
 
 interface IntermediateInfo {}
 
 export interface PebblumComponent {}
 
-export const PebblumComponentArray = new ServerComponentArray<PebblumComponent, PebblumComponentParams, IntermediateInfo>(ServerComponentType.pebblum, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const PebblumComponentArray = new ServerComponentArray<PebblumComponent, PebblumComponentData, IntermediateInfo>(ServerComponentType.pebblum, true, createComponent, getMaxRenderParts, decodeData);
+PebblumComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
-function createParamsFromData(): PebblumComponentParams {
+function decodeData(): PebblumComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
    // Nose
    const nose = new TexturedRenderPart(
@@ -60,7 +53,3 @@ function createComponent(): PebblumComponent {
 function getMaxRenderParts(): number {
    return 2;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}

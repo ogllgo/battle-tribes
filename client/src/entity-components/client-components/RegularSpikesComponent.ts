@@ -5,13 +5,13 @@ import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 import { WALL_SPIKE_TEXTURE_SOURCES, FLOOR_SPIKE_TEXTURE_SOURCES } from "../server-components/BuildingMaterialComponent";
 import { TransformComponentArray } from "../server-components/TransformComponent";
 
-export interface RegularSpikesComponentParams {}
+export interface RegularSpikesComponentData {}
 
 interface IntermediateInfo {}
 
@@ -25,22 +25,22 @@ export const RegularSpikesComponentArray = new ClientComponentArray<RegularSpike
    onDie: onDie
 });
 
-export function createRegularSpikesComponentParams(): RegularSpikesComponentParams {
+export function createRegularSpikesComponentData(): RegularSpikesComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
-   const materialComponentParams = entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!;
+   const materialComponentData = entityComponentData.serverComponentData[ServerComponentType.buildingMaterial]!;
 
-   const isAttachedToWall = entityParams.entityType === EntityType.wallSpikes;
+   const isAttachedToWall = entityComponentData.entityType === EntityType.wallSpikes;
    let textureArrayIndex: number;
    if (isAttachedToWall) {
-      textureArrayIndex = getTextureArrayIndex(WALL_SPIKE_TEXTURE_SOURCES[materialComponentParams.material]);
+      textureArrayIndex = getTextureArrayIndex(WALL_SPIKE_TEXTURE_SOURCES[materialComponentData.material]);
    } else {
-      textureArrayIndex = getTextureArrayIndex(FLOOR_SPIKE_TEXTURE_SOURCES[materialComponentParams.material]);
+      textureArrayIndex = getTextureArrayIndex(FLOOR_SPIKE_TEXTURE_SOURCES[materialComponentData.material]);
    }
 
    const mainRenderPart = new TexturedRenderPart(

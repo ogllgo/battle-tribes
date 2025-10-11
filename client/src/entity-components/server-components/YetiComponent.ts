@@ -12,7 +12,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import ServerComponentArray from "../ServerComponentArray";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
@@ -20,7 +20,8 @@ const enum Vars {
    SNOW_THROW_OFFSET = 64
 }
 
-export interface YetiComponentParams {
+export interface YetiComponentData {
+   readonly isAttacking: boolean;
    readonly attackProgress: number;
 }
 
@@ -47,32 +48,28 @@ const ANGRY_SOUNDS: ReadonlyArray<string> = ["yeti-angry-1.mp3", "yeti-angry-2.m
 const HURT_SOUNDS: ReadonlyArray<string> = ["yeti-hurt-1.mp3", "yeti-hurt-2.mp3", "yeti-hurt-3.mp3", "yeti-hurt-4.mp3", "yeti-hurt-5.mp3"];
 const DEATH_SOUNDS: ReadonlyArray<string> = ["yeti-death-1.mp3", "yeti-death-2.mp3"];
 
-export const YetiComponentArray = new ServerComponentArray<YetiComponent, YetiComponentParams, IntermediateInfo>(ServerComponentType.yeti, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   onHit: onHit,
-   onDie: onDie,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const YetiComponentArray = new ServerComponentArray<YetiComponent, YetiComponentData, IntermediateInfo>(ServerComponentType.yeti, true, createComponent, getMaxRenderParts, decodeData);
+YetiComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+YetiComponentArray.onTick = onTick;
+YetiComponentArray.onHit = onHit;
+YetiComponentArray.onDie = onDie;
+YetiComponentArray.updateFromData = updateFromData;
 
-function createParamsFromData(reader: PacketReader): YetiComponentParams {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
+function decodeData(reader: PacketReader): YetiComponentData {
+   const isAttacking = reader.readBoolean();
+   reader.padOffset(3);
    const attackProgress = reader.readNumber();
-
    return {
+      isAttacking: isAttacking,
       attackProgress: attackProgress
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
 
    const pawRenderParts = new Array<VisualRenderPart>();
-   for (const hitbox of transformComponentParams.hitboxes) {
+   for (const hitbox of transformComponentData.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.YETI_BODY)) {
          const bodyRenderPart = new TexturedRenderPart(
             hitbox,
@@ -109,12 +106,12 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    };
 }
 
-function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): YetiComponent {
-   const yetiComponentParams = entityParams.serverComponentParams[ServerComponentType.yeti]!;
+function createComponent(entityComponentData: EntityComponentData, intermediateInfo: IntermediateInfo): YetiComponent {
+   const yetiComponentData = entityComponentData.serverComponentData[ServerComponentType.yeti]!;
    
    return {
-      lastAttackProgress: yetiComponentParams.attackProgress,
-      attackProgress: yetiComponentParams.attackProgress,
+      lastAttackProgress: yetiComponentData.attackProgress,
+      attackProgress: yetiComponentData.attackProgress,
       pawRenderParts: intermediateInfo.pawRenderParts
    };
 }
@@ -182,10 +179,6 @@ function onDie(entity: Entity): void {
    createBloodParticleFountain(entity, 0.15, 1.6);
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-}
-
 const updatePaws = (yetiComponent: YetiComponent): void => {
    let attackProgress = yetiComponent.attackProgress;
    attackProgress = Math.pow(attackProgress, 0.75);
@@ -199,12 +192,11 @@ const updatePaws = (yetiComponent: YetiComponent): void => {
    }
 }
 
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: YetiComponentData, entity: Entity): void {
    const yetiComponent = YetiComponentArray.getComponent(entity);
    
-   const isAttacking = reader.readBoolean();
-   reader.padOffset(3);
-   yetiComponent.attackProgress = reader.readNumber();
+   const isAttacking = data.isAttacking;
+   yetiComponent.attackProgress = data.attackProgress;
    updatePaws(yetiComponent);
 
    const randomSoundComponent = RandomSoundComponentArray.getComponent(entity);

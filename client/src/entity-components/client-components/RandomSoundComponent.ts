@@ -1,12 +1,11 @@
 import { Entity } from "../../../../shared/src/entities";
 import { randFloat, randItem } from "../../../../shared/src/utils";
-import { Hitbox } from "../../hitboxes";
 import { playSoundOnHitbox } from "../../sound";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 import { TransformComponentArray } from "../server-components/TransformComponent";
 
-export interface RandomSoundComponentParams {}
+export interface RandomSoundComponentData {}
 
 /** Plays sounds coming from the entity randomly */
 export interface RandomSoundComponent {
@@ -44,7 +43,7 @@ export const RandomSoundComponentArray = new ClientComponentArray<RandomSoundCom
    onTick: onTick
 });
 
-export function createRandomSoundComponentParams(): RandomSoundComponentParams {
+export function createRandomSoundComponentData(): RandomSoundComponentData {
    return {};
 }
 

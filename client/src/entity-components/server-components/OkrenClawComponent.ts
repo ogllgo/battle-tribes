@@ -5,11 +5,11 @@ import { PacketReader } from "../../../../shared/src/packets";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { OkrenAgeStage } from "./OkrenComponent";
 
-export interface OkrenClawComponentParams {
+export interface OkrenClawComponentData {
    readonly size: OkrenAgeStage;
    readonly growthStage: number;
 }
@@ -29,26 +29,17 @@ export interface OkrenClawComponent {
    readonly slashingArmSegment: TexturedRenderPart;
 }
 
-export const OkrenClawComponentArray = new ServerComponentArray<OkrenClawComponent, OkrenClawComponentParams, IntermediateInfo>(ServerComponentType.okrenClaw, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const OkrenClawComponentArray = new ServerComponentArray<OkrenClawComponent, OkrenClawComponentData, IntermediateInfo>(ServerComponentType.okrenClaw, true, createComponent, getMaxRenderParts, decodeData);
+OkrenClawComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+OkrenClawComponentArray.updateFromData = updateFromData;
 
-const fillParams = (size: OkrenAgeStage, growthStage: number): OkrenClawComponentParams => {
+function decodeData(reader: PacketReader): OkrenClawComponentData {
+   const size = reader.readNumber();
+   const growthStage = reader.readNumber();
    return {
       size: size,
       growthStage: growthStage
    };
-}
-
-function createParamsFromData(reader: PacketReader): OkrenClawComponentParams {
-   const size = reader.readNumber();
-   const growthStage = reader.readNumber();
-   return fillParams(size, growthStage);
 }
 
 const getSizeString = (size: OkrenAgeStage): string => {
@@ -77,18 +68,18 @@ const getSlashingArmSegmentTextureSource = (sizeString: string, growthStageStrin
    return "entities/okren/" + sizeString + "/arm-segment-of-slashing-and-destruction-" + growthStageString + ".png";
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const okrenClawComponentParams = entityParams.serverComponentParams[ServerComponentType.okrenClaw]!;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const okrenClawComponentData = entityComponentData.serverComponentData[ServerComponentType.okrenClaw]!;
 
-   const sizeString = getSizeString(okrenClawComponentParams.size);
-   const growthStageString = getGrowthStageString(okrenClawComponentParams.growthStage);
+   const sizeString = getSizeString(okrenClawComponentData.size);
+   const growthStageString = getGrowthStageString(okrenClawComponentData.growthStage);
    
    let bigArmSegment!: TexturedRenderPart;
    let mediumArmSegment!: TexturedRenderPart;
    let slashingArmSegment!: TexturedRenderPart;
    
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   for (const hitbox of transformComponentParams.hitboxes) {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   for (const hitbox of transformComponentData.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.OKREN_BIG_ARM_SEGMENT)) {
          bigArmSegment = new TexturedRenderPart(
             hitbox,
@@ -123,11 +114,11 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    };
 }
 
-function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): OkrenClawComponent {
-   const okrenClawComponentParams = entityParams.serverComponentParams[ServerComponentType.okrenClaw]!;
+function createComponent(entityComponentData: EntityComponentData, intermediateInfo: IntermediateInfo): OkrenClawComponent {
+   const okrenClawComponentData = entityComponentData.serverComponentData[ServerComponentType.okrenClaw]!;
 
    return {
-      growthStage: okrenClawComponentParams.growthStage,
+      growthStage: okrenClawComponentData.growthStage,
       bigArmSegment: intermediateInfo.bigArmSegment,
       mediumArmSegment: intermediateInfo.mediumArmSegment,
       slashingArmSegment: intermediateInfo.slashingArmSegment
@@ -138,13 +129,9 @@ function getMaxRenderParts(): number {
    return 3;
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
-   const size = reader.readNumber();
-   const growthStage = reader.readNumber();
+function updateFromData(data: OkrenClawComponentData, entity: Entity): void {
+   const size = data.size;
+   const growthStage = data.growthStage;
 
    const okrenClawComponent = OkrenClawComponentArray.getComponent(entity);
    if (growthStage !== okrenClawComponent.growthStage) {

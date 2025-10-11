@@ -5,16 +5,16 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType } from "../../../shared/src/entities";
 import { Point } from "../../../shared/src/utils";
 import { createHitboxQuick, Hitbox } from "../hitboxes";
-import { createHealthComponentParams } from "../entity-components/server-components/HealthComponent";
-import { createPlanterBoxComponentParams } from "../entity-components/server-components/PlanterBoxComponent";
-import { createStatusEffectComponentParams } from "../entity-components/server-components/StatusEffectComponent";
-import { createStructureComponentParams } from "../entity-components/server-components/StructureComponent";
-import { createTransformComponentParams } from "../entity-components/server-components/TransformComponent";
-import { createTribeComponentParams } from "../entity-components/server-components/TribeComponent";
+import { createHealthComponentData } from "../entity-components/server-components/HealthComponent";
+import { createPlanterBoxComponentData } from "../entity-components/server-components/PlanterBoxComponent";
+import { createStatusEffectComponentData } from "../entity-components/server-components/StatusEffectComponent";
+import { createStructureComponentData } from "../entity-components/server-components/StructureComponent";
+import { createTransformComponentData } from "../entity-components/server-components/TransformComponent";
+import { createTribeComponentData } from "../entity-components/server-components/TribeComponent";
 import { Tribe } from "../tribes";
-import { EntityParams } from "../world";
+import { EntityComponentData } from "../world";
 
-export function createPlanterBoxConfig(position: Point, rotation: number, tribe: Tribe): EntityParams {
+export function createPlanterBoxConfig(position: Point, rotation: number, tribe: Tribe): EntityComponentData {
    const hitboxes = new Array<Hitbox>();
    let hitboxLocalID = 0;
 
@@ -24,14 +24,14 @@ export function createPlanterBoxConfig(position: Point, rotation: number, tribe:
 
    return {
       entityType: EntityType.planterBox,
-      serverComponentParams: {
-         [ServerComponentType.transform]: createTransformComponentParams(hitboxes),
-         [ServerComponentType.health]: createHealthComponentParams(),
-         [ServerComponentType.statusEffect]: createStatusEffectComponentParams(),
-         [ServerComponentType.structure]: createStructureComponentParams(),
-         [ServerComponentType.tribe]: createTribeComponentParams(tribe),
-         [ServerComponentType.planterBox]: createPlanterBoxComponentParams()
+      serverComponentData: {
+         [ServerComponentType.transform]: createTransformComponentData(hitboxes),
+         [ServerComponentType.health]: createHealthComponentData(),
+         [ServerComponentType.statusEffect]: createStatusEffectComponentData(),
+         [ServerComponentType.structure]: createStructureComponentData(),
+         [ServerComponentType.tribe]: createTribeComponentData(tribe),
+         [ServerComponentType.planterBox]: createPlanterBoxComponentData()
       },
-      clientComponentParams: {}
+      clientComponentData: {}
    };
 }

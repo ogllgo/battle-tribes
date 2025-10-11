@@ -1,37 +1,30 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
-export interface SpearProjectileComponentParams {}
+export interface SpearProjectileComponentData {}
 
 interface IntermediateInfo {}
 
 export interface SpearProjectileComponent {}
 
-export const SpearProjectileComponentArray = new ServerComponentArray<SpearProjectileComponent, SpearProjectileComponentParams, IntermediateInfo>(ServerComponentType.spearProjectile, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onSpawn: onSpawn,
-   padData: padData,
-   updateFromData: updateFromData,
-   onDie: onDie
-});
+export const SpearProjectileComponentArray = new ServerComponentArray<SpearProjectileComponent, SpearProjectileComponentData, IntermediateInfo>(ServerComponentType.spearProjectile, true, createComponent, getMaxRenderParts, decodeData);
+SpearProjectileComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+SpearProjectileComponentArray.onSpawn = onSpawn;
+SpearProjectileComponentArray.onDie = onDie;
 
-function createParamsFromData(): SpearProjectileComponentParams {
+function decodeData(): SpearProjectileComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponent = entityComponentData.serverComponentData[ServerComponentType.transform]!;
    const hitbox = transformComponent.hitboxes[0];
    
    renderInfo.attachRenderPart(
@@ -60,10 +53,6 @@ function onSpawn(entity: Entity): void {
    const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox("spear-throw.mp3", 0.4, 1, entity, hitbox, false);
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);

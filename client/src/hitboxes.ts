@@ -1,13 +1,19 @@
-import { Box, HitboxCollisionType, HitboxFlag } from "battletribes-shared/boxes/boxes";
+import { assertBoxIsCircular, assertBoxIsRectangular, Box, boxIsCircular, HitboxCollisionType, HitboxFlag, updateVertexPositionsAndSideAxes } from "battletribes-shared/boxes/boxes";
 import { CollisionBit } from "../../shared/src/collision";
 import Board from "./Board";
 import { Entity } from "../../shared/src/entities";
-import { Point } from "../../shared/src/utils";
+import { Point, randAngle, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "../../shared/src/utils";
 import { Settings } from "../../shared/src/settings";
 import { TILE_PHYSICS_INFO_RECORD, TileType } from "../../shared/src/tiles";
-import { entityIsInRiver, getHitboxTile, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { entityIsInRiver, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { getEntityLayer, getEntityRenderInfo } from "./world";
 import { registerDirtyRenderInfo } from "./rendering/render-part-matrices";
+import { getTileIndexIncludingEdges } from "./Layer";
+import { Tile } from "./Tile";
+import { PacketReader } from "../../shared/src/packets";
+import { readBoxFromData } from "./networking/packet-hitboxes";
+import CircularBox from "../../shared/src/boxes/CircularBox";
+import RectangularBox from "../../shared/src/boxes/RectangularBox";
 
 export interface HitboxTether {
    readonly originBox: Box;
@@ -25,14 +31,14 @@ export const enum HitboxParentType {
 export interface Hitbox {
    readonly localID: number;
 
+   readonly box: Box;
+   
    readonly entity: Entity;
    rootEntity: Entity;
 
    parent: Hitbox | null;
    
    readonly children: Array<Hitbox>;
-
-   readonly box: Box;
    
    readonly previousPosition: Point;
    readonly acceleration: Point;
@@ -53,6 +59,49 @@ export interface Hitbox {
    isStatic: boolean;
 
    lastUpdateTicks: number;
+}
+
+const updateCircularBoxFromData = (box: CircularBox, data: CircularBox): void => {
+   box.position.x = data.position.x;
+   box.position.y = data.position.y;
+   box.relativeAngle = data.relativeAngle;
+   box.angle = data.angle;
+   box.offset.x = data.offset.x;
+   box.offset.y = data.offset.y;
+   box.pivot.type = data.pivot.type;
+   box.pivot.pos.x = data.pivot.pos.x;
+   box.pivot.pos.y = data.pivot.pos.y;
+   box.scale = data.scale;
+   box.flipX = data.flipX;
+   box.radius = data.radius;
+}
+
+const updateRectangularBoxFromData = (box: RectangularBox, data: RectangularBox): void => {
+   box.position.x = data.position.x;
+   box.position.y = data.position.y;
+   box.relativeAngle = data.relativeAngle;
+   box.angle = data.angle;
+   box.offset.x = data.offset.x;
+   box.offset.y = data.offset.y;
+   box.pivot.type = data.pivot.type;
+   box.pivot.pos.x = data.pivot.pos.x;
+   box.pivot.pos.y = data.pivot.pos.y;
+   box.scale = data.scale;
+   box.flipX = data.flipX;
+   box.width = data.width;
+   box.height = data.height;
+   
+   updateVertexPositionsAndSideAxes(box);
+}
+
+export function updateBoxFromData(box: Box, data: Box): void {
+   if (boxIsCircular(box)) {
+      assertBoxIsCircular(data);
+      updateCircularBoxFromData(box, data);
+   } else {
+      assertBoxIsRectangular(data);
+      updateRectangularBoxFromData(box, data);
+   }
 }
 
 export function createHitbox(localID: number, entity: Entity, rootEntity: Entity, parent: Hitbox | null, children: Array<Hitbox>, isPartOfParent: boolean, isStatic: boolean, box: Box, previousPosition: Point, acceleration: Point, tethers: Array<HitboxTether>, previousRelativeAngle: number, angularAcceleration: number, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
@@ -104,6 +153,170 @@ export function createHitboxQuick(localID: number, parent: Hitbox | null, box: B
       flags: flags,
       lastUpdateTicks: Board.serverTicks
    };
+}
+export function readHitboxFromData(reader: PacketReader, localID: number, entityHitboxes: ReadonlyArray<Hitbox>): Hitbox {
+   const box = readBoxFromData(reader);
+
+   const previousPosition = new Point(reader.readNumber(), reader.readNumber());
+   const acceleration = new Point(reader.readNumber(), reader.readNumber());
+
+   const tethers = new Array<HitboxTether>();
+   const numTethers = reader.readNumber();
+   for (let i = 0; i < numTethers; i++) {
+      const originBox = readBoxFromData(reader);
+      const idealDistance = reader.readNumber();
+      const springConstant = reader.readNumber();
+      const damping = reader.readNumber();
+      const tether: HitboxTether = {
+         originBox: originBox,
+         idealDistance: idealDistance,
+         springConstant: springConstant,
+         damping: damping
+      };
+      tethers.push(tether);
+   }
+   
+   const previousRelativeAngle = reader.readNumber();
+   const angularAcceleration = reader.readNumber();
+   
+   const mass = reader.readNumber();
+   const collisionType = reader.readNumber() as HitboxCollisionType;
+   const collisionBit = reader.readNumber();
+   const collisionMask = reader.readNumber();
+   
+   const numFlags = reader.readNumber();
+   const flags = new Array<HitboxFlag>();
+   for (let i = 0; i < numFlags; i++) {
+      flags.push(reader.readNumber());
+   }
+
+   const entity = reader.readNumber();
+   const rootEntity = reader.readNumber();
+
+   const parentEntity = reader.readNumber();
+   const parentHitboxLocalID = reader.readNumber();
+
+   let parentHitbox: Hitbox | null;
+   if (parentEntity === entity) {
+      parentHitbox = getHitboxByLocalID(entityHitboxes, parentHitboxLocalID);
+   } else {
+      parentHitbox = findEntityHitbox(parentEntity, parentHitboxLocalID);
+   }
+
+   const children = new Array<Hitbox>();
+   const numChildren = reader.readNumber();
+   for (let i = 0; i < numChildren; i++) {
+      const childEntity = reader.readNumber();
+      const childLocalID = reader.readNumber();
+
+      // @BUG: This will often find nothing for the first
+      const child = findEntityHitbox(childEntity, childLocalID);
+      if (child !== null) {
+         children.push(child);
+      }
+   }
+
+   const isPartOfParent = reader.readBoolean();
+   reader.padOffset(3);
+   const isStatic = reader.readBoolean();
+   reader.padOffset(3);
+
+   return createHitbox(localID, entity, rootEntity, parentHitbox, children, isPartOfParent, isStatic, box, previousPosition, acceleration, tethers, previousRelativeAngle, angularAcceleration, mass, collisionType, collisionBit, collisionMask, flags);
+}
+
+// @Hack this is a lil bit of a hack
+const findEntityHitbox = (entity: Entity, localID: number): Hitbox | null => {
+   if (!TransformComponentArray.hasComponent(entity)) {
+      return null;
+   }
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   return getHitboxByLocalID(transformComponent.hitboxes, localID);
+}
+
+export function updateHitboxFromData(hitbox: Hitbox, data: Hitbox): void {
+   hitbox.previousAngle = hitbox.box.angle;
+   
+   updateBoxFromData(hitbox.box, data.box);
+
+   hitbox.previousPosition.set(data.previousPosition);
+   hitbox.acceleration.set(data.acceleration);
+
+   // Remove all previous tethers and add new ones
+   hitbox.tethers.splice(0, hitbox.tethers.length);
+   for (const tether of data.tethers) {
+      hitbox.tethers.push(tether);
+   }
+
+   hitbox.previousRelativeAngle = data.previousRelativeAngle;
+   hitbox.angularAcceleration = data.angularAcceleration;
+   
+   hitbox.mass = data.mass;
+   hitbox.collisionType = data.collisionType;
+
+   hitbox.rootEntity = data.rootEntity;
+   
+   let parentEntity: Entity;
+   let parentHitboxLocalID: number;
+   if (data.parent !== null) {
+      parentEntity = data.parent.entity;
+      parentHitboxLocalID = data.localID;
+   } else {
+      parentEntity = 0;
+      parentHitboxLocalID = 0;
+   }
+   hitbox.parent = findEntityHitbox(parentEntity, parentHitboxLocalID);
+
+   // @Garbage
+   hitbox.children.splice(0, hitbox.children.length);
+   for (const childData of data.children) {
+      // @BUG: This will often find nothing for the first
+      const child = findEntityHitbox(childData.entity, childData.localID);
+      if (child !== null) {
+         hitbox.children.push(child);
+      }
+   }
+
+   hitbox.isPartOfParent = data.isPartOfParent;
+   hitbox.isStatic = data.isStatic;
+
+   hitbox.lastUpdateTicks = Board.serverTicks;
+}
+
+export function updatePlayerHitboxFromData(hitbox: Hitbox, data: Hitbox): void {
+   hitbox.previousAngle = hitbox.box.angle;
+   
+   // Remove all previous tethers and add new ones
+   hitbox.tethers.splice(0, hitbox.tethers.length);
+   for (const tether of data.tethers) {
+      hitbox.tethers.push(tether);
+   }
+
+   hitbox.rootEntity = data.rootEntity;
+
+   // @Copynpaste
+   let parentEntity: Entity;
+   let parentHitboxLocalID: number;
+   if (data.parent !== null) {
+      parentEntity = data.parent.entity;
+      parentHitboxLocalID = data.localID;
+   } else {
+      parentEntity = 0;
+      parentHitboxLocalID = 0;
+   }
+   hitbox.parent = findEntityHitbox(parentEntity, parentHitboxLocalID);
+
+   // @Garbage
+   // @Copynpaste
+   hitbox.children.splice(0, hitbox.children.length);
+   for (const childData of data.children) {
+      // @BUG: This will often find nothing for the first
+      const child = findEntityHitbox(childData.entity, childData.localID);
+      if (child !== null) {
+         hitbox.children.push(child);
+      }
+   }
+
+   hitbox.lastUpdateTicks = Board.serverTicks;
 }
 
 export function getHitboxVelocity(hitbox: Hitbox): Point {
@@ -161,7 +374,7 @@ export function translateHitbox(hitbox: Hitbox, translationX: number, translatio
 export function applyAccelerationFromGround(entity: Entity, hitbox: Hitbox, accelerationX: number, accelerationY: number): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   const tile = getHitboxTile(getEntityLayer(entity), hitbox);
+   const tile = getHitboxTile(hitbox);
    const tilePhysicsInfo = TILE_PHYSICS_INFO_RECORD[tile.type];
       
    let tileMoveSpeedMultiplier = tilePhysicsInfo.moveSpeedMultiplier;
@@ -226,3 +439,44 @@ export function setHitboxAngularVelocity(hitbox: Hitbox, angularVelocity: number
 //    // @INCOMPLETE @INVESTIGATE but the above comment is wrong??? we do just use getAngleDiff??
 //    return getAngleDiff(hitbox.previousRelativeAngle, hitbox.box.relativeAngle) * Settings.TICK_RATE;
 // }
+
+// 
+// BEWARE (!!!) Past here goes all the random misc hitbox functions
+// 
+
+export function getRandomPositionInBox(box: Box): Point {
+   if (boxIsCircular(box)) {
+      const offsetMagnitude = box.radius * Math.random();
+      const offsetDirection = randAngle();
+      return new Point(box.position.x + offsetMagnitude * Math.sin(offsetDirection), box.position.y + offsetMagnitude * Math.cos(offsetDirection));
+   } else {
+      const halfWidth = box.width / 2;
+      const halfHeight = box.height / 2;
+      
+      const xOffset = randFloat(-halfWidth, halfWidth);
+      const yOffset = randFloat(-halfHeight, halfHeight);
+
+      const x = box.position.x + rotateXAroundOrigin(xOffset, yOffset, box.angle);
+      const y = box.position.y + rotateYAroundOrigin(xOffset, yOffset, box.angle);
+      return new Point(x, y);
+   }
+}
+
+export function getHitboxTile(hitbox: Hitbox): Tile {
+   const tileX = Math.floor(hitbox.box.position.x / Settings.TILE_SIZE);
+   const tileY = Math.floor(hitbox.box.position.y / Settings.TILE_SIZE);
+   
+   const layer = getEntityLayer(hitbox.entity);
+   
+   const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
+   return layer.getTile(tileIndex);
+}
+
+export function getHitboxByLocalID(hitboxes: ReadonlyArray<Hitbox>, localID: number): Hitbox | null {
+   for (const hitbox of hitboxes) {
+      if (hitbox.localID === localID) {
+         return hitbox;
+      }
+   }
+   return null;
+}

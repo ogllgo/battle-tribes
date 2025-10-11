@@ -3,37 +3,31 @@ import ServerComponentArray from "../ServerComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 
-export interface InguYetuksnoglurblidokowfleaSeekerHeadComponentParams {}
+export interface InguYetuksnoglurblidokowfleaSeekerHeadComponentData {}
 
 interface IntermediateInfo {}
 
 export interface InguYetuksnoglurblidokowfleaSeekerHeadComponent {}
 
-export const InguYetuksnoglurblidokowfleaSeekerHeadComponentArray = new ServerComponentArray<InguYetuksnoglurblidokowfleaSeekerHeadComponent, InguYetuksnoglurblidokowfleaSeekerHeadComponentParams, IntermediateInfo>(ServerComponentType.inguYetuksnoglurblidokowfleaSeekerHead, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const InguYetuksnoglurblidokowfleaSeekerHeadComponentArray = new ServerComponentArray<InguYetuksnoglurblidokowfleaSeekerHeadComponent, InguYetuksnoglurblidokowfleaSeekerHeadComponentData, IntermediateInfo>(ServerComponentType.inguYetuksnoglurblidokowfleaSeekerHead, true, createComponent, getMaxRenderParts, decodeData);
+InguYetuksnoglurblidokowfleaSeekerHeadComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
-export function createInguYetuksnoglurblidokowfleaSeekerHeadComponentParams(): InguYetuksnoglurblidokowfleaSeekerHeadComponentParams {
+export function createInguYetuksnoglurblidokowfleaSeekerHeadComponentData(): InguYetuksnoglurblidokowfleaSeekerHeadComponentData {
    return {};
 }
 
-function createParamsFromData(): InguYetuksnoglurblidokowfleaSeekerHeadComponentParams {
-   return createInguYetuksnoglurblidokowfleaSeekerHeadComponentParams();
+function decodeData(): InguYetuksnoglurblidokowfleaSeekerHeadComponentData {
+   return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
 
-   for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
-      const hitbox = transformComponentParams.hitboxes[i];
+   for (let i = 0; i < transformComponentData.hitboxes.length; i++) {
+      const hitbox = transformComponentData.hitboxes[i];
       if (hitbox.flags.includes(HitboxFlag.YETUK_TRUNK_MIDDLE)) {
          const renderPart = new TexturedRenderPart(
             hitbox,
@@ -95,7 +89,3 @@ function createComponent(): InguYetuksnoglurblidokowfleaSeekerHeadComponent {
 function getMaxRenderParts(): number {
    return 50;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}

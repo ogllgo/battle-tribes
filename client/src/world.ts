@@ -4,13 +4,13 @@ import { Settings } from "../../shared/src/settings";
 import Board from "./Board";
 import { EntityRenderInfo } from "./EntityRenderInfo";
 import { ComponentArray, getClientComponentArray, getComponentArrays, getServerComponentArray } from "./entity-components/ComponentArray";
-import { ServerComponentParams } from "./entity-components/components";
+import { ServerComponentData } from "./entity-components/components";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import Layer from "./Layer";
 import { registerDirtyRenderInfo, undirtyRenderInfo } from "./rendering/render-part-matrices";
 import { calculateRenderDepthFromLayer, getEntityRenderLayer } from "./render-layers";
 import { ClientComponentType } from "./entity-components/client-component-types";
-import { ClientComponentParams } from "./entity-components/client-components";
+import { ClientComponentData } from "./entity-components/client-components";
 import { removeEntitySounds } from "./sound";
 
 export const layers = new Array<Layer>();
@@ -34,8 +34,8 @@ export function addLayer(layer: Layer): void {
    layers.push(layer);
 }
 
-export function setCurrentLayer(layerIdx: number): void {
-   currentLayer = layers[layerIdx];
+export function setCurrentLayer(layer: Layer): void {
+   currentLayer = layer;
 }
 
 export function getCurrentLayer(): Layer {
@@ -81,44 +81,44 @@ export function registerBasicEntityInfo(entity: Entity, entityType: EntityType, 
 }
 
 // @Cleanup: location
-export type EntityServerComponentParams = {
-   [T in ServerComponentType]: ServerComponentParams<T>;
+export type EntityServerComponentData = {
+   [T in ServerComponentType]: ServerComponentData<T>;
 };
-export type ClientServerComponentParams = Partial<{
-   [T in ClientComponentType]: ClientComponentParams<T>;
+export type ClientServerComponentData = Partial<{
+   [T in ClientComponentType]: ClientComponentData<T>;
 }>;
 
 // @Cleanup: location
-/** Basically just the paramaters of the components used to create an entity. */
-export interface EntityParams {
+/** Basically just all the component data used to create an entity. */
+export interface EntityComponentData {
    readonly entityType: EntityType;
-   readonly serverComponentParams: Partial<{
-      [T in ServerComponentType]: ServerComponentParams<T>;
+   readonly serverComponentData: Partial<{
+      [T in ServerComponentType]: ServerComponentData<T>;
    }>;
-   readonly clientComponentParams: Partial<{
-      [T in ClientComponentType]: ClientComponentParams<T>;
+   readonly clientComponentData: Partial<{
+      [T in ClientComponentType]: ClientComponentData<T>;
    }>;
 }
 
 // @Location
 /** Entity creation info, populated with all the data which comprises a full entity. */
 export interface EntityCreationInfo {
-   readonly entityParams: EntityParams;
+   readonly entityComponentData: EntityComponentData;
    componentIntermediateInfoRecord: Partial<Record<number, object>>;
    readonly renderInfo: EntityRenderInfo;
 }
 
-const getEntityServerComponentTypes = (entityParams: EntityParams): ReadonlyArray<ServerComponentType> => {
-   return Object.keys(entityParams.serverComponentParams).map(Number);
+const getEntityServerComponentTypes = (entityComponentData: EntityComponentData): ReadonlyArray<ServerComponentType> => {
+   return Object.keys(entityComponentData.serverComponentData).map(Number);
 }
-const getEntityClientComponentTypes = (entityParams: EntityParams): ReadonlyArray<ClientComponentType> => {
-   return Object.keys(entityParams.clientComponentParams).map(Number);
+const getEntityClientComponentTypes = (entityComponentData: EntityComponentData): ReadonlyArray<ClientComponentType> => {
+   return Object.keys(entityComponentData.clientComponentData).map(Number);
 }
 
-const getEntityComponentArrays = (entityParams: EntityParams): ReadonlyArray<ComponentArray> => {
+const getEntityComponentArrays = (entityComponentData: EntityComponentData): ReadonlyArray<ComponentArray> => {
    // @Garbage
-   const serverComponentTypes = getEntityServerComponentTypes(entityParams);
-   const clientComponentTypes = getEntityClientComponentTypes(entityParams);
+   const serverComponentTypes = getEntityServerComponentTypes(entityComponentData);
+   const clientComponentTypes = getEntityClientComponentTypes(entityComponentData);
 
    const componentArrays = new Array<ComponentArray>();
    for (const serverComponentType of serverComponentTypes) {
@@ -130,21 +130,21 @@ const getEntityComponentArrays = (entityParams: EntityParams): ReadonlyArray<Com
    return componentArrays;
 }
 
-const getMaxNumRenderParts = (entityParams: EntityParams): number => {
+const getMaxNumRenderParts = (entityComponentData: EntityComponentData): number => {
    let maxNumRenderParts = 0;
 
    // @Garbage
-   const serverComponentTypes = getEntityServerComponentTypes(entityParams);
+   const serverComponentTypes = getEntityServerComponentTypes(entityComponentData);
    for (const componentType of serverComponentTypes) {
       const componentArray = getServerComponentArray(componentType);
-      maxNumRenderParts += componentArray.getMaxRenderParts(entityParams);
+      maxNumRenderParts += componentArray.getMaxRenderParts(entityComponentData);
    }
 
    // @Garbage
-   const clientComponentTypes = getEntityClientComponentTypes(entityParams);
+   const clientComponentTypes = getEntityClientComponentTypes(entityComponentData);
    for (const componentType of clientComponentTypes) {
       const componentArray = getClientComponentArray(componentType);
-      maxNumRenderParts += componentArray.getMaxRenderParts(entityParams);
+      maxNumRenderParts += componentArray.getMaxRenderParts(entityComponentData);
    }
 
    return maxNumRenderParts;
@@ -152,20 +152,20 @@ const getMaxNumRenderParts = (entityParams: EntityParams): number => {
 
 // @Cleanup: remove the need to pass in Entity
 /** Creates and populates all the things which make up an entity and returns them. It is then up to the caller as for what to do with these things */
-export function createEntity(entity: Entity, entityParams: EntityParams): EntityCreationInfo {
-   const maxNumRenderParts = getMaxNumRenderParts(entityParams);
-   const renderLayer = getEntityRenderLayer(entityParams.entityType, entityParams);
-   const renderHeight = calculateRenderDepthFromLayer(renderLayer, entityParams);
+export function createEntity(entity: Entity, entityComponentData: EntityComponentData): EntityCreationInfo {
+   const maxNumRenderParts = getMaxNumRenderParts(entityComponentData);
+   const renderLayer = getEntityRenderLayer(entityComponentData.entityType, entityComponentData);
+   const renderHeight = calculateRenderDepthFromLayer(renderLayer, entityComponentData);
 
    const renderInfo = new EntityRenderInfo(entity, renderLayer, renderHeight, maxNumRenderParts);
 
-   const componentArrays = getEntityComponentArrays(entityParams);
+   const componentArrays = getEntityComponentArrays(entityComponentData);
    
    // Populate render info
    const componentIntermediateInfoRecord: Partial<Record<number, object>> = {};
    for (const componentArray of componentArrays) {
       if (typeof componentArray.populateIntermediateInfo !== "undefined") {
-         const componentIntermediateInfo = componentArray.populateIntermediateInfo(renderInfo, entityParams);
+         const componentIntermediateInfo = componentArray.populateIntermediateInfo(renderInfo, entityComponentData);
          componentIntermediateInfoRecord[componentArray.id] = componentIntermediateInfo;
       }
    }
@@ -173,23 +173,23 @@ export function createEntity(entity: Entity, entityParams: EntityParams): Entity
    registerDirtyRenderInfo(renderInfo);
 
    return {
-      entityParams: entityParams,
+      entityComponentData: entityComponentData,
       componentIntermediateInfoRecord: componentIntermediateInfoRecord,
       renderInfo: renderInfo
    };
 }
 
 export function addEntityToWorld(entity: Entity, spawnTicks: number, layer: Layer, creationInfo: EntityCreationInfo): void {
-   const componentArrays = getEntityComponentArrays(creationInfo.entityParams);
+   const componentArrays = getEntityComponentArrays(creationInfo.entityComponentData);
 
    for (const componentArray of componentArrays) {
       const componentIntermediateInfo = creationInfo.componentIntermediateInfoRecord[componentArray.id]!;
-      const component = componentArray.createComponent(creationInfo.entityParams, componentIntermediateInfo, creationInfo.renderInfo);
+      const component = componentArray.createComponent(creationInfo.entityComponentData, componentIntermediateInfo, creationInfo.renderInfo);
       
-      componentArray.addComponent(entity, component, creationInfo.entityParams.entityType);
+      componentArray.addComponent(entity, component, creationInfo.entityComponentData.entityType);
    }
 
-   registerBasicEntityInfo(entity, creationInfo.entityParams.entityType, spawnTicks, layer, creationInfo.renderInfo);
+   registerBasicEntityInfo(entity, creationInfo.entityComponentData.entityType, spawnTicks, layer, creationInfo.renderInfo);
       
    // @Incomplete: is this really the right place to do this? is onLoad even what i want?
    // Call onLoad functions
