@@ -44,22 +44,22 @@ export function getTamingSpecDataLength(tamingSpec: EntityTamingSpec): number {
 }
 
 export function addTamingSpecToData(packet: Packet, tamingSpec: EntityTamingSpec): void {
-   packet.addNumber(tamingSpec.maxTamingTier);
+   packet.writeNumber(tamingSpec.maxTamingTier);
    
-   packet.addNumber(tamingSpec.skillNodes.length);
+   packet.writeNumber(tamingSpec.skillNodes.length);
    for (const skillNode of tamingSpec.skillNodes) {
-      packet.addNumber(skillNode.skill.id);
-      packet.addNumber(skillNode.x);
-      packet.addNumber(skillNode.y);
-      packet.addNumber(skillNode.parent !== null ? skillNode.parent : -1);
-      packet.addNumber(skillNode.requiredTamingTier);
+      packet.writeNumber(skillNode.skill.id);
+      packet.writeNumber(skillNode.x);
+      packet.writeNumber(skillNode.y);
+      packet.writeNumber(skillNode.parent !== null ? skillNode.parent : -1);
+      packet.writeNumber(skillNode.requiredTamingTier);
    }
 
-   packet.addNumber(tamingSpec.foodItemType);
+   packet.writeNumber(tamingSpec.foodItemType);
 
    for (let tamingTier = 0; tamingTier <= tamingSpec.maxTamingTier; tamingTier++) {
       const foodRequirements = tamingSpec.tierFoodRequirements[tamingTier as TamingTier];
       assert(typeof foodRequirements !== "undefined");
-      packet.addNumber(foodRequirements);
+      packet.writeNumber(foodRequirements);
    }
 }

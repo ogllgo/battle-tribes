@@ -84,11 +84,11 @@ export function limbHeldItemCanBeSwitched(limb: LimbInfo): boolean {
 }
 
 const addLimbStateToPacket = (packet: Packet, limbState: LimbState): void => {
-   packet.addNumber(limbState.direction);
-   packet.addNumber(limbState.extraOffset);
-   packet.addNumber(limbState.angle);
-   packet.addNumber(limbState.extraOffsetX);
-   packet.addNumber(limbState.extraOffsetY);
+   packet.writeNumber(limbState.direction);
+   packet.writeNumber(limbState.extraOffset);
+   packet.writeNumber(limbState.angle);
+   packet.writeNumber(limbState.extraOffsetX);
+   packet.writeNumber(limbState.extraOffsetY);
 }
 
 export class InventoryUseComponent {
@@ -219,9 +219,9 @@ const getBoxCollidingWallSubtiles = (layer: Layer, box: Box): ReadonlyArray<numb
    const boundsMaxY = box.calculateBoundsMaxY();
 
    const minSubtileX = Math.max(Math.floor(boundsMinX / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
-   const maxSubtileX = Math.min(Math.floor(boundsMaxX / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+   const maxSubtileX = Math.min(Math.floor(boundsMaxX / Settings.SUBTILE_SIZE), (Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
    const minSubtileY = Math.max(Math.floor(boundsMinY / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
-   const maxSubtileY = Math.min(Math.floor(boundsMaxY / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+   const maxSubtileY = Math.min(Math.floor(boundsMaxY / Settings.SUBTILE_SIZE), (Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
 
    const collidingWallSubtiles = new Array<number>();
    for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
@@ -511,11 +511,11 @@ export function getCrossbowLoadProgressRecordLength(useInfo: LimbInfo): number {
 export function addCrossbowLoadProgressRecordToPacket(packet: Packet, useInfo: LimbInfo): void {
    // @Copynpaste
    const crossbowLoadProgressEntries = Object.entries(useInfo.crossbowLoadProgressRecord).map(([a, b]) => [Number(a), b]) as Array<[number, number]>;
-   packet.addNumber(crossbowLoadProgressEntries.length);
+   packet.writeNumber(crossbowLoadProgressEntries.length);
    for (let i = 0; i < crossbowLoadProgressEntries.length; i++) {
       const [itemSlot, cooldown] = crossbowLoadProgressEntries[i];
-      packet.addNumber(itemSlot);
-      packet.addNumber(cooldown);
+      packet.writeNumber(itemSlot);
+      packet.writeNumber(cooldown);
    }
 }
 
@@ -539,47 +539,47 @@ function getDataLength(entity: Entity): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
 
-   packet.addNumber(inventoryUseComponent.limbInfos.length);
+   packet.writeNumber(inventoryUseComponent.limbInfos.length);
    for (let i = 0; i < inventoryUseComponent.limbInfos.length; i++) {
       const limb = inventoryUseComponent.limbInfos[i];
 
-      packet.addNumber(limb.associatedInventory.name);
-      packet.addNumber(limb.selectedItemSlot);
+      packet.writeNumber(limb.associatedInventory.name);
+      packet.writeNumber(limb.selectedItemSlot);
       const heldItem = getHeldItem(limb);
-      packet.addNumber(heldItem !== null ? heldItem.type : -1);
+      packet.writeNumber(heldItem !== null ? heldItem.type : -1);
 
       // @Cleanup: Copy and paste
       const spearWindupCooldownEntries = Object.entries(limb.spearWindupCooldowns).map(([a, b]) => [Number(a), b]) as Array<[number, number]>;
-      packet.addNumber(spearWindupCooldownEntries.length);
+      packet.writeNumber(spearWindupCooldownEntries.length);
       for (let i = 0; i < spearWindupCooldownEntries.length; i++) {
          const [itemSlot, cooldown] = spearWindupCooldownEntries[i];
-         packet.addNumber(itemSlot);
-         packet.addNumber(cooldown);
+         packet.writeNumber(itemSlot);
+         packet.writeNumber(cooldown);
       }
 
       addCrossbowLoadProgressRecordToPacket(packet, limb);
 
-      packet.addNumber(limb.foodEatingTimer);
-      packet.addNumber(limb.action);
-      packet.addNumber(limb.lastAttackTicks);
-      packet.addNumber(limb.lastEatTicks);
-      packet.addNumber(limb.lastBowChargeTicks);
-      packet.addNumber(limb.lastSpearChargeTicks);
-      packet.addNumber(limb.lastBattleaxeChargeTicks);
-      packet.addNumber(limb.lastCrossbowLoadTicks);
-      packet.addNumber(limb.lastCraftTicks);
-      packet.addNumber(limb.thrownBattleaxeItemID);
-      packet.addNumber(limb.lastAttackCooldown);
-      packet.addNumber(limb.currentActionElapsedTicks);
-      packet.addNumber(limb.currentActionDurationTicks);
-      packet.addNumber(limb.currentActionPauseTicksRemaining);
-      packet.addNumber(limb.currentActionRate);
-      packet.addNumber(limb.swingAttack);
-      packet.addNumber(limb.blockAttack);
-      packet.addNumber(limb.lastBlockTick);
-      packet.addNumber(limb.blockPositionX);
-      packet.addNumber(limb.blockPositionY);
-      packet.addNumber(limb.blockType);
+      packet.writeNumber(limb.foodEatingTimer);
+      packet.writeNumber(limb.action);
+      packet.writeNumber(limb.lastAttackTicks);
+      packet.writeNumber(limb.lastEatTicks);
+      packet.writeNumber(limb.lastBowChargeTicks);
+      packet.writeNumber(limb.lastSpearChargeTicks);
+      packet.writeNumber(limb.lastBattleaxeChargeTicks);
+      packet.writeNumber(limb.lastCrossbowLoadTicks);
+      packet.writeNumber(limb.lastCraftTicks);
+      packet.writeNumber(limb.thrownBattleaxeItemID);
+      packet.writeNumber(limb.lastAttackCooldown);
+      packet.writeNumber(limb.currentActionElapsedTicks);
+      packet.writeNumber(limb.currentActionDurationTicks);
+      packet.writeNumber(limb.currentActionPauseTicksRemaining);
+      packet.writeNumber(limb.currentActionRate);
+      packet.writeNumber(limb.swingAttack);
+      packet.writeNumber(limb.blockAttack);
+      packet.writeNumber(limb.lastBlockTick);
+      packet.writeNumber(limb.blockPositionX);
+      packet.writeNumber(limb.blockPositionY);
+      packet.writeNumber(limb.blockType);
 
       addLimbStateToPacket(packet, limb.currentActionStartLimbState);
       addLimbStateToPacket(packet, limb.currentActionEndLimbState);

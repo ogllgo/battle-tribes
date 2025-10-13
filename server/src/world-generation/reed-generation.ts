@@ -32,11 +32,11 @@ const getClosestRiverMainTile = (x: number, y: number, riverMainTiles: ReadonlyA
 }
 
 export function generateReeds(surfaceLayer: Layer, riverMainTiles: ReadonlyArray<WaterTileGenerationInfo>): void {
-   const probabilityWeightMap1 = generateOctavePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 5, 3, 1.5, 0.75);
+   const probabilityWeightMap1 = generateOctavePerlinNoise(Settings.FULL_WORLD_SIZE_TILES, Settings.FULL_WORLD_SIZE_TILES, 5, 3, 1.5, 0.75);
    
    // @Incomplete: generate in edges
-   for (let tileY = 0; tileY < Settings.BOARD_DIMENSIONS; tileY++) {
-      for (let tileX = 0; tileX < Settings.BOARD_DIMENSIONS; tileX++) {
+   for (let tileY = 0; tileY < Settings.WORLD_SIZE_TILES; tileY++) {
+      for (let tileX = 0; tileX < Settings.WORLD_SIZE_TILES; tileX++) {
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
          if (surfaceLayer.getTileType(tileIndex) !== TileType.water || surfaceLayer.getTileBiome(tileIndex) !== Biome.river) {
             continue;

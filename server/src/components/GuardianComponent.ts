@@ -338,37 +338,37 @@ function getDataLength(): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const guardianComponent = GuardianComponentArray.getComponent(entity);
 
-   packet.addNumber(guardianComponent.rubyGemActivation);
-   packet.addNumber(guardianComponent.emeraldGemActivation);
-   packet.addNumber(guardianComponent.amethystGemActivation);
+   packet.writeNumber(guardianComponent.rubyGemActivation);
+   packet.writeNumber(guardianComponent.emeraldGemActivation);
+   packet.writeNumber(guardianComponent.amethystGemActivation);
 
-   packet.addNumber(guardianComponent.limbRubyGemActivation);
-   packet.addNumber(guardianComponent.limbEmeraldGemActivation);
-   packet.addNumber(guardianComponent.limbAmethystGemActivation);
+   packet.writeNumber(guardianComponent.limbRubyGemActivation);
+   packet.writeNumber(guardianComponent.limbEmeraldGemActivation);
+   packet.writeNumber(guardianComponent.limbAmethystGemActivation);
 
    const aiHelperComponent = AIHelperComponentArray.getComponent(entity);
    
    // Attack type and stage
    const attackType = aiHelperComponent.currentAIType !== null ? guardianComponent.queuedAttackType : GuardianAttackType.none;
-   packet.addNumber(attackType);
+   packet.writeNumber(attackType);
 
    let stageProgress: number;
    switch (guardianComponent.queuedAttackType) {
       case GuardianAttackType.crystalSlam: {
          const crystalSlamAI = aiHelperComponent.getGuardianCrystalSlamAI();
-         packet.addNumber(crystalSlamAI.stage);
+         packet.writeNumber(crystalSlamAI.stage);
          stageProgress = crystalSlamAI.stageProgress;
          break;
       }
       case GuardianAttackType.crystalBurst: {
          const crystalBurstAI = aiHelperComponent.getGuardianCrystalBurstAI();
-         packet.addNumber(crystalBurstAI.stage);
+         packet.writeNumber(crystalBurstAI.stage);
          stageProgress = crystalBurstAI.stageProgress;
          break;
       }
       case GuardianAttackType.summonSpikyBalls: {
          const spikyBallSummonAI = aiHelperComponent.getSpikyBallSummonAI();
-         packet.addNumber(spikyBallSummonAI.stage);
+         packet.writeNumber(spikyBallSummonAI.stage);
          stageProgress = spikyBallSummonAI.stageProgress;
          break;
       }
@@ -379,7 +379,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
       }
    }
 
-   packet.addNumber(stageProgress);
+   packet.writeNumber(stageProgress);
 }
 
 function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {

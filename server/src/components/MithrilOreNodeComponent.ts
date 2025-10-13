@@ -28,9 +28,9 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const mithrilOreNodeComponent = MithrilOreNodeComponentArray.getComponent(entity);
-   packet.addNumber(mithrilOreNodeComponent.size);
-   packet.addNumber(mithrilOreNodeComponent.variant);
-   packet.addNumber(mithrilOreNodeComponent.renderHeight);
+   packet.writeNumber(mithrilOreNodeComponent.size);
+   packet.writeNumber(mithrilOreNodeComponent.variant);
+   packet.writeNumber(mithrilOreNodeComponent.renderHeight);
 }
 
 function preRemove(entity: Entity): void {

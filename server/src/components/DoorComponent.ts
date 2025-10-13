@@ -110,8 +110,8 @@ function getDataLength(): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const doorComponent = DoorComponentArray.getComponent(entity);
 
-   packet.addNumber(doorComponent.toggleType);
-   packet.addNumber(doorComponent.openProgress);
+   packet.writeNumber(doorComponent.toggleType);
+   packet.writeNumber(doorComponent.openProgress);
 }
 
 export function doorIsClosed(door: Entity): boolean {

@@ -44,7 +44,7 @@ function onTick(projectile: Entity): void {
    // Destroy the arrow if it reaches the border
    // @Cleanup: This should instead use the hitbox bounds of each of the hitboxes... and perhaps use an onWorldBorderCollision event??
    // const transformComponent = TransformComponentArray.getComponent(projectile);
-   // if (transformComponent.position.x <= ARROW_DESTROY_DISTANCE || transformComponent.position.x >= Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - ARROW_DESTROY_DISTANCE || transformComponent.position.y <= ARROW_DESTROY_DISTANCE || transformComponent.position.y >= Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - ARROW_DESTROY_DISTANCE) {
+   // if (transformComponent.position.x <= ARROW_DESTROY_DISTANCE || transformComponent.position.x >= Settings.WORLD_SIZE_TILES * Settings.TILE_SIZE - ARROW_DESTROY_DISTANCE || transformComponent.position.y <= ARROW_DESTROY_DISTANCE || transformComponent.position.y >= Settings.WORLD_SIZE_TILES * Settings.TILE_SIZE - ARROW_DESTROY_DISTANCE) {
    //    destroyEntity(projectile);
    //    return;
    // }

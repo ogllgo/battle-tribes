@@ -4,8 +4,7 @@ import { Settings } from "battletribes-shared/settings";
 import { TechID } from "battletribes-shared/techs";
 import { TribeType } from "battletribes-shared/tribes";
 import { TribesmanTitle } from "battletribes-shared/titles";
-import Game, { getCursorWorldPos, receivePacket } from "../game";
-import { Tile } from "../Tile";
+import Game, { receivePacket } from "../game";
 import { windowHeight, windowWidth } from "../webgl";
 import { getStringLengthBytes, Packet, PacketReader, PacketType } from "battletribes-shared/packets";
 import { processForcePositionUpdatePacket, processInitialGameDataPacket, processSyncDataPacket, receiveChatMessagePacket } from "./packet-receiving";
@@ -13,12 +12,7 @@ import { createActivatePacket, createPlayerDataPacket, createSyncRequestPacket, 
 import { AppState } from "../components/App";
 import { LoadingScreenStatus } from "../components/LoadingScreen";
 import { setPlayerInstance, playerInstance } from "../player";
-
-export type GameData = {
-   readonly gameTicks: number;
-   readonly tiles: Array<Array<Tile>>;
-   readonly playerID: number;
-}
+import { cursorWorldPos } from "../mouse";
 
 let visibleWalls: ReadonlyArray<TribeWallData> = [];
 let buildingPlans: ReadonlyArray<BuildingPlanData> = [];
@@ -32,8 +26,6 @@ export function getVisibleBuildingPlans(): ReadonlyArray<BuildingPlanData> {
 }
 
 export function getHoveredBuildingPlan(): BuildingPlanData | null {
-   const cursorWorldPos = getCursorWorldPos();
-   
    let minDist = 64;
    let closestPlanToCursor: BuildingPlanData | null = null;
    for (let i = 0; i < buildingPlans.length; i++) {
@@ -170,12 +162,11 @@ abstract class Client {
       // Send player data to the server
       if (this.socket !== null) {
          const packet = new Packet(PacketType.initialPlayerData, Float32Array.BYTES_PER_ELEMENT * 5 + getStringLengthBytes(username));
-         packet.addString(username);
-         packet.addNumber(tribeType);
-         packet.addNumber(windowWidth);
-         packet.addNumber(windowHeight);
-         packet.addBoolean(isSpectating);
-         packet.padOffset(3);
+         packet.writeString(username);
+         packet.writeNumber(tribeType);
+         packet.writeNumber(windowWidth);
+         packet.writeNumber(windowHeight);
+         packet.writeBool(isSpectating);
 
          this.socket.send(packet.buffer);
       }

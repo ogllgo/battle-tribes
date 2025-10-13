@@ -81,7 +81,7 @@ const createNodeGroupIDs = (): Array<Array<number>> => {
 
 const createInitialChunksArray = (): Array<Chunk> => {
    const chunks = new Array<Chunk>();
-   for (let i = 0; i < Settings.BOARD_SIZE * Settings.BOARD_SIZE; i++) {
+   for (let i = 0; i < Settings.WORLD_SIZE_CHUNKS * Settings.WORLD_SIZE_CHUNKS; i++) {
       const chunk = new Chunk();
       chunks.push(chunk);
    }
@@ -93,7 +93,7 @@ const createCollisionGroupChunks = (): Record<CollisionGroup, ReadonlyArray<Coll
 
    for (let collisionGroup: CollisionGroup = 0; collisionGroup < CollisionGroup._LENGTH_; collisionGroup++) {
       const chunks = new Array<CollisionChunk>();
-      for (let i = 0; i < Settings.BOARD_SIZE * Settings.BOARD_SIZE; i++) {
+      for (let i = 0; i < Settings.WORLD_SIZE_CHUNKS * Settings.WORLD_SIZE_CHUNKS; i++) {
          const chunk = new CollisionChunk();
          chunks.push(chunk);
       }
@@ -107,17 +107,17 @@ export default class Layer {
    /** The depth of the layer, also the layer's index in the layers array. Surface layer has depth 0, and each subsequently lower layer has 1 higher depth. */
    public readonly depth: number;
    
-   public readonly tileTypes = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
-   public readonly tileBiomes = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
-   public readonly riverFlowDirections = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
-   public readonly tileTemperatures = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
-   public readonly tileHumidities = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
-   public readonly tileMithrilRichnesses = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
+   public readonly tileTypes = new Float32Array(Settings.FULL_WORLD_SIZE_TILES * Settings.FULL_WORLD_SIZE_TILES);
+   public readonly tileBiomes = new Float32Array(Settings.FULL_WORLD_SIZE_TILES * Settings.FULL_WORLD_SIZE_TILES);
+   public readonly riverFlowDirections = new Float32Array(Settings.FULL_WORLD_SIZE_TILES * Settings.FULL_WORLD_SIZE_TILES);
+   public readonly tileTemperatures = new Float32Array(Settings.FULL_WORLD_SIZE_TILES * Settings.FULL_WORLD_SIZE_TILES);
+   public readonly tileHumidities = new Float32Array(Settings.FULL_WORLD_SIZE_TILES * Settings.FULL_WORLD_SIZE_TILES);
+   public readonly tileMithrilRichnesses = new Float32Array(Settings.FULL_WORLD_SIZE_TILES * Settings.FULL_WORLD_SIZE_TILES);
 
    public readonly tileCensus = createTileCensus();
    public readonly buildingBlockingTiles = new Set<TileIndex>();
 
-   public readonly wallSubtileTypes = new Float32Array(16 * Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
+   public readonly wallSubtileTypes = new Float32Array(16 * Settings.FULL_WORLD_SIZE_TILES * Settings.FULL_WORLD_SIZE_TILES);
 
    public readonly wallSubtileDamageTakenMap = new Map<number, number>();
 
@@ -144,7 +144,7 @@ export default class Layer {
    /** For each light level node, stores how much each light contributes to the light level */
    public readonly entityLightLevels: Partial<Record<LightLevelNode, Map<LightID, number>>> = {};
    /** For each light level node, stores the amount that ambient light affects that node's brightness */
-   public readonly ambientLightFactors = new Float32Array(16 * Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
+   public readonly ambientLightFactors = new Float32Array(16 * Settings.FULL_WORLD_SIZE_TILES * Settings.FULL_WORLD_SIZE_TILES);
 
    public readonly unspawnableTiles = new Set<TileIndex>();
 
@@ -155,10 +155,10 @@ export default class Layer {
       // Add river stepping stones to chunks
       // for (const steppingStoneData of generationInfo.riverSteppingStones) {
       //    const size = RIVER_STEPPING_STONE_SIZES[steppingStoneData.size];
-      //    const minChunkX = Math.max(Math.min(Math.floor((steppingStoneData.positionX - size/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      //    const maxChunkX = Math.max(Math.min(Math.floor((steppingStoneData.positionX + size/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      //    const minChunkY = Math.max(Math.min(Math.floor((steppingStoneData.positionY - size/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      //    const maxChunkY = Math.max(Math.min(Math.floor((steppingStoneData.positionY + size/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+      //    const minChunkX = Math.max(Math.min(Math.floor((steppingStoneData.positionX - size/2) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+      //    const maxChunkX = Math.max(Math.min(Math.floor((steppingStoneData.positionX + size/2) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+      //    const minChunkY = Math.max(Math.min(Math.floor((steppingStoneData.positionY - size/2) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+      //    const maxChunkY = Math.max(Math.min(Math.floor((steppingStoneData.positionY + size/2) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
          
       //    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
       //       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
@@ -283,7 +283,7 @@ export default class Layer {
    }
 
    public getChunk(chunkX: number, chunkY: number): Chunk {
-      const chunkIndex = chunkY * Settings.BOARD_SIZE + chunkX;
+      const chunkIndex = chunkY * Settings.WORLD_SIZE_CHUNKS + chunkX;
       return this.chunks[chunkIndex];
    }
 
@@ -310,7 +310,7 @@ export default class Layer {
 
    /** Registers a tile update to be sent to the clients */
    public registerNewTileUpdate(x: number, y: number): void {
-      const tileIndex = y * Settings.BOARD_DIMENSIONS + x;
+      const tileIndex = y * Settings.WORLD_SIZE_TILES + x;
       this.tileUpdateCoordinates.add(tileIndex);
    }
 
@@ -319,8 +319,8 @@ export default class Layer {
       // Generate the tile updates array
       const tileUpdates = new Array<ServerTileUpdateData>();
       for (const tileIndex of this.tileUpdateCoordinates) {
-         const tileX = tileIndex % Settings.BOARD_DIMENSIONS;
-         const tileY = Math.floor(tileIndex / Settings.BOARD_DIMENSIONS);
+         const tileX = tileIndex % Settings.WORLD_SIZE_TILES;
+         const tileY = Math.floor(tileIndex / Settings.WORLD_SIZE_TILES);
          
          tileUpdates.push({
             layerIdx: this.depth,

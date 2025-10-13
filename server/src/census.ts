@@ -50,7 +50,7 @@ export function addTileToCensus(layer: Layer, tileIndex: TileIndex): void {
 
 export function runTileCensuses(): void {
    for (const layer of layers) {
-      for (let tileIndex = 0; tileIndex < Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS; tileIndex++) {
+      for (let tileIndex = 0; tileIndex < Settings.FULL_WORLD_SIZE_TILES * Settings.FULL_WORLD_SIZE_TILES; tileIndex++) {
          const tileX = getTileX(tileIndex);
          const tileY = getTileY(tileIndex);
          if (tileIsInWorldIncludingEdges(tileX, tileY)) {

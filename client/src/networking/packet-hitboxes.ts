@@ -1,10 +1,9 @@
 import { PivotPointType } from "../../../shared/src/boxes/BaseBox";
-import { Box, HitboxCollisionType, HitboxFlag, updateVertexPositionsAndSideAxes } from "../../../shared/src/boxes/boxes";
+import { Box } from "../../../shared/src/boxes/boxes";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import RectangularBox from "../../../shared/src/boxes/RectangularBox";
-import { Entity } from "../../../shared/src/entities";
 import { PacketReader } from "../../../shared/src/packets";
-import { distBetweenPointAndRectangle, Point } from "../../../shared/src/utils";
+import { Point } from "../../../shared/src/utils";
 
 const readCircularBoxFromData = (reader: PacketReader): CircularBox => {
    const x = reader.readNumber();
@@ -18,8 +17,7 @@ const readCircularBoxFromData = (reader: PacketReader): CircularBox => {
    const pivotPosX = reader.readNumber();
    const pivotPosY = reader.readNumber();
    const scale = reader.readNumber();
-   const flipX = reader.readBoolean();
-   reader.padOffset(3);
+   const flipX = reader.readBool();
 
    const radius = reader.readNumber();
 
@@ -49,8 +47,7 @@ const readRectangularBoxFromData = (reader: PacketReader): RectangularBox => {
    const pivotPosX = reader.readNumber();
    const pivotPosY = reader.readNumber();
    const scale = reader.readNumber();
-   const flipX = reader.readBoolean();
-   reader.padOffset(3);
+   const flipX = reader.readBool();
 
    const width = reader.readNumber();
    const height = reader.readNumber();
@@ -70,9 +67,7 @@ const padRectangularBoxData = (reader: PacketReader): void => {
 }
 
 export function readBoxFromData(reader: PacketReader): Box {
-   const isCircular = reader.readBoolean();
-   reader.padOffset(3);
-
+   const isCircular = reader.readBool();
    if (isCircular) {
       return readCircularBoxFromData(reader);
    } else {
@@ -80,9 +75,7 @@ export function readBoxFromData(reader: PacketReader): Box {
    }
 }
 export function padBoxData(reader: PacketReader): void {
-   const isCircular = reader.readBoolean();
-   reader.padOffset(3);
-
+   const isCircular = reader.readBool();
    if (isCircular) {
       padCircularBoxData(reader);
    } else {

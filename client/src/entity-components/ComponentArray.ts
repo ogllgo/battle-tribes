@@ -15,27 +15,6 @@ export const enum ComponentArrayType {
 
 let componentArrayIDCounter = 0;
 
-export interface ComponentArrayFunctions<T extends object, ComponentIntermediateInfo extends object | never> {
-   /** SHOULD NOT MUTATE THE GLOBAL STATE */
-   populateIntermediateInfo?(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): ComponentIntermediateInfo;
-   /** SHOULD NOT MUTATE THE GLOBAL STATE */
-   createComponent(entityComponentData: Readonly<EntityComponentData>, intermediateInfo: Readonly<ComponentIntermediateInfo>, renderInfo: EntityRenderInfo): T;
-   getMaxRenderParts(entityComponentData: EntityComponentData): number;
-   /** Called once when the entity is being created, just after all the components are created from their data */
-   onLoad?(entity: Entity): void;
-   onJoin?(entity: Entity): void;
-   /** Called when the entity is spawned in, not when the client first becomes aware of the entity's existence. After the load function */
-   onSpawn?(entity: Entity): void;
-   onTick?(entity: Entity): void;
-   /** Called when a packet is skipped and there is no data to update from, so we must extrapolate all the game logic */
-   onUpdate?(entity: Entity): void;
-   onCollision?(entity: Entity, collidingEntity: Entity, pushedHitbox: Hitbox, pushingHitbox: Hitbox): void;
-   onHit?(entity: Entity, hitHitbox: Hitbox, hitPosition: Point, hitFlags: number): void;
-   onRemove?(entity: Entity): void;
-   /** Called when the entity dies, not when the entity leaves the player's vision. */
-   onDie?(entity: Entity): void;
-}
-
 type ComponentTypeForArray = {
    [ComponentArrayType.server]: ServerComponentType,
    [ComponentArrayType.client]: ClientComponentType
@@ -52,7 +31,7 @@ export abstract class ComponentArray<
    ComponentIntermediateInfo extends object | never = object | never,
    ArrayType extends ComponentArrayType = ComponentArrayType,
    ComponentType extends ComponentTypeForArray[ArrayType] = ComponentTypeForArray[ArrayType]
-> implements ComponentArrayFunctions<T, ComponentIntermediateInfo> {
+> {
    public readonly id = componentArrayIDCounter++;
    private readonly isActiveByDefault: boolean;
 
@@ -82,13 +61,17 @@ export abstract class ComponentArray<
    public populateIntermediateInfo?(renderInfo: EntityRenderInfo, entityComponentData: Readonly<EntityComponentData>): ComponentIntermediateInfo;
    public readonly createComponent: (entityComponentData: Readonly<EntityComponentData>, intermediateInfo: Readonly<ComponentIntermediateInfo>, renderInfo: EntityRenderInfo) => T;
    public readonly getMaxRenderParts: (entityComponentData: EntityComponentData) => number;
+   /** Called once when the entity is being created, just after all the components are created from their data */
    public onLoad?(entity: Entity): void;
    public onJoin?(entity: Entity): void;
+   /** Called when the entity is spawned in, not when the client first becomes aware of the entity's existence. After the load function */
    public onSpawn?(entity: Entity): void;
    public onTick?: (entity: Entity) => void;
+   /** Called when a packet is skipped and there is no data to update from, so we must extrapolate all the game logic */
    public onUpdate?: (entity: Entity) => void;
    public onCollision?(entity: Entity, collidingEntity: Entity, pushedHitbox: Hitbox, pushingHitbox: Hitbox): void;
    public onHit?(entity: Entity, hitHitbox: Hitbox, hitPosition: Point, hitFlags: number): void;
+   /** Called when the entity dies, not when the entity leaves the player's vision. */
    public onDie?(entity: Entity): void;
    public onRemove?(entity: Entity): void;
 

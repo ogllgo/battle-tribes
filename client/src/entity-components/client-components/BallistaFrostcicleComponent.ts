@@ -17,12 +17,9 @@ interface IntermediateInfo {}
 
 export interface BallistaFrostcicleComponent {}
 
-export const BallistaFrostcicleComponentArray = new ClientComponentArray<BallistaFrostcicleComponent, IntermediateInfo>(ClientComponentType.ballistaFrostcicle, true, {
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onDie: onDie
-});
+export const BallistaFrostcicleComponentArray = new ClientComponentArray<BallistaFrostcicleComponent, IntermediateInfo>(ClientComponentType.ballistaFrostcicle, true, createComponent, getMaxRenderParts);
+BallistaFrostcicleComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+BallistaFrostcicleComponentArray.onDie = onDie;
 
 export function createBallistaFrostcicleComponentData(): BallistaFrostcicleComponentData {
    return {};

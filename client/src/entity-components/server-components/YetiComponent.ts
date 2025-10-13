@@ -56,8 +56,7 @@ YetiComponentArray.onDie = onDie;
 YetiComponentArray.updateFromData = updateFromData;
 
 function decodeData(reader: PacketReader): YetiComponentData {
-   const isAttacking = reader.readBoolean();
-   reader.padOffset(3);
+   const isAttacking = reader.readBool();
    const attackProgress = reader.readNumber();
    return {
       isAttacking: isAttacking,

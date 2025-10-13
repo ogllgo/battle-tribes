@@ -53,9 +53,7 @@ export function createPlanterBoxComponentData(): PlanterBoxComponentData {
 
 function decodeData(reader: PacketReader): PlanterBoxComponentData {
    const plantedEntityType = reader.readNumber();
-   const isFertilised = reader.readBoolean();
-   reader.padOffset(3);
-
+   const isFertilised = reader.readBool();
    return {
       plantedEntityType: plantedEntityType,
       isFertilised: isFertilised

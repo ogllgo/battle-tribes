@@ -1,5 +1,5 @@
 import { EntityType } from "../../../shared/src/entities";
-import { ClientServerComponentData } from "../world";
+import { EntityClientComponentData } from "../networking/packet-snapshots";
 import { ClientComponentType } from "./client-component-types";
 import { BallistaFrostcicleComponentData, createBallistaFrostcicleComponentData } from "./client-components/BallistaFrostcicleComponent";
 import { BallistaRockComponentData, createBallistaRockComponentData } from "./client-components/BallistaRockComponent";
@@ -46,7 +46,7 @@ const ClientComponentDataRecord = {
 export type ClientComponentData<T extends ClientComponentType> = ReturnType<typeof ClientComponentDataRecord[T]>;
 
 // @Cleanup: if this gets too large/unwieldy i should rework this
-export function getEntityClientComponentConfigs(entityType: EntityType): ClientServerComponentData {
+export function getEntityClientComponentConfigs(entityType: EntityType): EntityClientComponentData {
    switch (entityType) {
       case EntityType.cow: {
          return {

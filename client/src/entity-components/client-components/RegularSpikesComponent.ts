@@ -17,13 +17,10 @@ interface IntermediateInfo {}
 
 export interface RegularSpikesComponent {}
 
-export const RegularSpikesComponentArray = new ClientComponentArray<RegularSpikesComponent, IntermediateInfo>(ClientComponentType.regularSpikes, true, {
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onHit: onHit,
-   onDie: onDie
-});
+export const RegularSpikesComponentArray = new ClientComponentArray<RegularSpikesComponent, IntermediateInfo>(ClientComponentType.regularSpikes, true, createComponent, getMaxRenderParts);
+RegularSpikesComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+RegularSpikesComponentArray.onHit = onHit;
+RegularSpikesComponentArray.onDie = onDie;
 
 export function createRegularSpikesComponentData(): RegularSpikesComponentData {
    return {};

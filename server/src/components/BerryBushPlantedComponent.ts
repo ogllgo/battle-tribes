@@ -56,6 +56,6 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    const berryBushPlantedComponent = BerryBushPlantedComponentArray.getComponent(entity);
 
    const growthProgress = berryBushPlantedComponent.plantGrowthTicks / Vars.GROWTH_TIME_TICKS;
-   packet.addNumber(growthProgress);
-   packet.addNumber(berryBushPlantedComponent.numFruit);
+   packet.writeNumber(growthProgress);
+   packet.writeNumber(berryBushPlantedComponent.numFruit);
 }

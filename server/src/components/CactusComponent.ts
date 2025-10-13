@@ -97,15 +97,15 @@ function getDataLength(entity: Entity): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const cactusComponent = CactusComponentArray.getComponent(entity);
 
-   packet.addNumber(cactusComponent.flowers.length);
+   packet.writeNumber(cactusComponent.flowers.length);
    for (let i = 0; i < cactusComponent.flowers.length; i++) {
       const flower = cactusComponent.flowers[i];
-      packet.addNumber(flower.parentHitboxLocalID);
-      packet.addNumber(flower.offsetX);
-      packet.addNumber(flower.offsetY);
-      packet.addNumber(flower.angle);
-      packet.addNumber(flower.flowerType);
-      packet.addNumber(flower.size);
+      packet.writeNumber(flower.parentHitboxLocalID);
+      packet.writeNumber(flower.offsetX);
+      packet.writeNumber(flower.offsetY);
+      packet.writeNumber(flower.angle);
+      packet.writeNumber(flower.flowerType);
+      packet.writeNumber(flower.size);
    }
 }
 

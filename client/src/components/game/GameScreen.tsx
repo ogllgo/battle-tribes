@@ -14,13 +14,12 @@ import Infocards from "./infocards/Infocards";
 import SummonCrosshair from "./SummonCrosshair";
 import { AppState } from "../App";
 import { EntitySummonPacket } from "../../../../shared/src/dev-packets";
-import { Mutable, randAngle } from "../../../../shared/src/utils";
-import { calculateCursorWorldPositionX, calculateCursorWorldPositionY } from "../../mouse";
+import { Mutable, Point, randAngle } from "../../../../shared/src/utils";
 import GameInteractableLayer from "./GameInteractableLayer";
 import { sendEntitySummonPacket } from "../../networking/packet-sending";
 import { copyInventory, Inventory, InventoryName } from "../../../../shared/src/items/items";
 import { Settings } from "../../../../shared/src/settings";
-import { getCurrentLayer, surfaceLayer, undergroundLayer } from "../../world";
+import { getCurrentLayer, undergroundLayer } from "../../world";
 import { getInventory, InventoryComponentArray } from "../../entity-components/server-components/InventoryComponent";
 import { inventoriesAreDifferent } from "../../inventory-manipulation";
 import LayerChangeMessage from "./LayerChangeMessage";
@@ -35,6 +34,7 @@ import SignInscribeMenu from "./SignInscribeMenu";
 import TamingRenamePrompt from "./taming-menu/TamingRenamePrompt";
 import CowStaminaBar from "./CowStaminaBar";
 import { getHitboxTile } from "../../hitboxes";
+import { screenToWorldPos } from "../../camera";
 
 export const enum GameInteractState {
    none,
@@ -99,11 +99,10 @@ const GameScreen = (props: GameScreenProps) => {
       }
       
       if (e.button === 0) {
-         const x = calculateCursorWorldPositionX(e.clientX)!;
-         const y = calculateCursorWorldPositionY(e.clientY)!;
+         const cursorWorldPos = screenToWorldPos(new Point(e.clientX, e.clientY));
          
          // @Hack
-         sendEntitySummonPacket(summonPacket.entityType, x, y, randAngle());
+         sendEntitySummonPacket(summonPacket.entityType, cursorWorldPos.x, cursorWorldPos.y, randAngle());
       } else if (e.button === 2) {
          // Get out of summon entity mode
          setInteractState(GameInteractState.none);

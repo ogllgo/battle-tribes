@@ -37,14 +37,14 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    
    const attackingEntitiesComponent = AttackingEntitiesComponentArray.getComponent(entity);
 
-   packet.addNumber(attackingEntitiesComponent.attackingEntities.size);
+   packet.writeNumber(attackingEntitiesComponent.attackingEntities.size);
    for (const pair of attackingEntitiesComponent.attackingEntities) {
       const entity = pair[0];
       const attackerInfo = pair[1];
       
-      packet.addNumber(entity);
-      packet.addNumber(attackerInfo.totalDamageFromEntity);
-      packet.addNumber(attackerInfo.ticksSinceLastHit);
+      packet.writeNumber(entity);
+      packet.writeNumber(attackerInfo.totalDamageFromEntity);
+      packet.writeNumber(attackerInfo.ticksSinceLastHit);
    }
 }
 

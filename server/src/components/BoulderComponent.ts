@@ -17,5 +17,5 @@ function getDataLength(): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const boulderComponent = BoulderComponentArray.getComponent(entity);
 
-   packet.addNumber(boulderComponent.boulderType);
+   packet.writeNumber(boulderComponent.boulderType);
 }

@@ -94,7 +94,7 @@ const getLocalBiomeDataLength = (playerClient: PlayerClient, localBiome: LocalBi
 const addLocalBiomeDataToPacket = (packet: Packet, playerClient: PlayerClient, localBiome: LocalBiome): void => {
    const tileToLocalBiomeMap = createTileToLocalBiomeMap(playerClient, localBiome);
 
-   packet.addNumber(localBiome.id);
+   packet.writeNumber(localBiome.id);
 
    let numTiles = 0;
    for (const pair of tileToLocalBiomeMap) {
@@ -102,20 +102,20 @@ const addLocalBiomeDataToPacket = (packet: Packet, playerClient: PlayerClient, l
          numTiles++;
       }
    }
-   packet.addNumber(numTiles);
+   packet.writeNumber(numTiles);
    for (const pair of tileToLocalBiomeMap) {
       if (pair[1] === localBiome) {
-         packet.addNumber(pair[0]);
+         packet.writeNumber(pair[0]);
       }
    }
 
-   packet.addNumber(localBiome.entityCensus.size);
+   packet.writeNumber(localBiome.entityCensus.size);
    for (const pair of localBiome.entityCensus) {
       const entityType = pair[0];
       const count = pair[1];
 
-      packet.addNumber(entityType);
-      packet.addNumber(count);
+      packet.writeNumber(entityType);
+      packet.writeNumber(count);
 
       const spawnInfo = getSpawnInfoForEntityType(entityType);
       if (spawnInfo !== null) {
@@ -125,14 +125,14 @@ const addLocalBiomeDataToPacket = (packet: Packet, playerClient: PlayerClient, l
          }
    
          const density = count / numEligibleTiles;
-         packet.addNumber(density);
+         packet.writeNumber(density);
    
          // @Hack!
-         // packet.addNumber(spawnInfo.maxDensity);
-         packet.addNumber(0);
+         // packet.writeNumber(spawnInfo.maxDensity);
+         packet.writeNumber(0);
       } else {
-         packet.addNumber(0);
-         packet.addNumber(0);
+         packet.writeNumber(0);
+         packet.writeNumber(0);
       }
    }
 }
@@ -160,17 +160,16 @@ const getVirtualBuildingGhostEntitiesLength = (assignment: AIPlanAssignment): nu
 
 const addVirtualBuildingGhostEntities = (packet: Packet, assignment: AIPlanAssignment): void => {
    if (assignment.plan.type === AIPlanType.placeBuilding) {
-      packet.addBoolean(true);
-      packet.padOffset(3);
+      packet.writeBool(true);
       
       const plan = assignment.plan;
       addVirtualBuildingData(packet, plan.virtualBuilding);
 
       // Add any potential plans
-      packet.addNumber(plan.potentialPlans.length);
+      packet.writeNumber(plan.potentialPlans.length);
       for (const potentialPlan of plan.potentialPlans) {
          addVirtualBuildingData(packet, potentialPlan.virtualBuilding);
-         packet.addNumber(potentialPlan.safety);
+         packet.writeNumber(potentialPlan.safety);
       }
    }
 
@@ -253,7 +252,7 @@ export function getDevPacketDataLength(playerClient: PlayerClient): number {
 
 const getViewedSpawnDistributionDataLength = (playerClient: PlayerClient, distribution: SpawnDistribution): number => {
    // @Copynpaste
-   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / distribution.blockSize;
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.WORLD_SIZE_TILES / distribution.blockSize;
    
    const minBlockX = clamp(Math.floor(playerClient.minVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
    const maxBlockX = clamp(Math.floor(playerClient.maxVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
@@ -266,14 +265,14 @@ const getViewedSpawnDistributionDataLength = (playerClient: PlayerClient, distri
 
 const addViewedSpawnDistributionData = (packet: Packet, playerClient: PlayerClient, distribution: SpawnDistribution): void => {
    // @Copynpaste
-   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / distribution.blockSize;
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.WORLD_SIZE_TILES / distribution.blockSize;
    
    const minBlockX = clamp(Math.floor(playerClient.minVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
    const maxBlockX = clamp(Math.floor(playerClient.maxVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
    const minBlockY = clamp(Math.floor(playerClient.minVisibleY / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
    const maxBlockY = clamp(Math.floor(playerClient.maxVisibleY / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
    
-   packet.addNumber((maxBlockX + 1 - minBlockX) * (maxBlockY + 1 - minBlockY));
+   packet.writeNumber((maxBlockX + 1 - minBlockX) * (maxBlockY + 1 - minBlockY));
    for (let blockY = minBlockY; blockY <= maxBlockY; blockY++) {
       for (let blockX = minBlockX; blockX <= maxBlockX; blockX++) {
          const blockIdx = blockY * BLOCKS_IN_BOARD_DIMENSIONS + blockX;
@@ -281,10 +280,10 @@ const addViewedSpawnDistributionData = (packet: Packet, playerClient: PlayerClie
          const x = (blockX + 0.5) * distribution.blockSize * Settings.TILE_SIZE;
          const y = (blockY + 0.5) * distribution.blockSize * Settings.TILE_SIZE;
 
-         packet.addNumber(x);
-         packet.addNumber(y);
-         packet.addNumber(distribution.currentDensities[blockIdx]);
-         packet.addNumber(distribution.targetDensities[blockIdx]);
+         packet.writeNumber(x);
+         packet.writeNumber(y);
+         packet.writeNumber(distribution.currentDensities[blockIdx]);
+         packet.writeNumber(distribution.targetDensities[blockIdx]);
       }
    }
 }
@@ -297,15 +296,15 @@ export function addDevPacketData(packet: Packet, playerClient: PlayerClient): vo
       // @Speed: called twice
       const visibleSubtileSupports = getVisibleSubtileSupports(playerClient);
 
-      packet.addNumber(visibleSubtileSupports.length);
+      packet.writeNumber(visibleSubtileSupports.length);
       for (const subtileIndex of visibleSubtileSupports) {
          const support = getSubtileSupport(playerClient.lastLayer, subtileIndex);
          
-         packet.addNumber(subtileIndex);
-         packet.addNumber(support);
+         packet.writeNumber(subtileIndex);
+         packet.writeNumber(support);
       }
    } else {
-      packet.addNumber(0);
+      packet.writeNumber(0);
    }
 
    // Pathfinding node occupances
@@ -313,12 +312,12 @@ export function addDevPacketData(packet: Packet, playerClient: PlayerClient): vo
       // @Speed: called twice
       const visiblePathfindingNodeOccupances = getVisiblePathfindingNodeOccupances(playerClient);
       
-      packet.addNumber(visiblePathfindingNodeOccupances.length);
+      packet.writeNumber(visiblePathfindingNodeOccupances.length);
       for (const node of visiblePathfindingNodeOccupances) {
-         packet.addNumber(node);
+         packet.writeNumber(node);
       }
    } else {
-      packet.addNumber(0);
+      packet.writeNumber(0);
    }
 
    // AI building safety nodes
@@ -326,37 +325,34 @@ export function addDevPacketData(packet: Packet, playerClient: PlayerClient): vo
       // @Speed: called twice
       const visibleSafetyNodes = getVisibleSafetyNodesData(playerClient);
 
-      packet.addNumber(visibleSafetyNodes.length);
+      packet.writeNumber(visibleSafetyNodes.length);
       for (const safetyNodeData of visibleSafetyNodes) {
-         packet.addNumber(safetyNodeData.index);
-         packet.addNumber(safetyNodeData.safety);
-         packet.addBoolean(safetyNodeData.isOccupied);
-         packet.padOffset(3);
-         packet.addBoolean(safetyNodeData.isContained);
-         packet.padOffset(3);
+         packet.writeNumber(safetyNodeData.index);
+         packet.writeNumber(safetyNodeData.safety);
+         packet.writeBool(safetyNodeData.isOccupied);
+         packet.writeBool(safetyNodeData.isContained);
       }
    } else {
-      packet.addNumber(0);
+      packet.writeNumber(0);
    }
 
    // Light levels
    if (playerClient.hasPacketOption(GameDataPacketOptions.sendLightLevels)) {
       addPlayerLightLevelsData(packet, playerClient)
    } else {
-      packet.addNumber(0);
+      packet.writeNumber(0);
    }
    
-   packet.addNumber(tribes.length);
+   packet.writeNumber(tribes.length);
    for (const tribe of tribes) {
-      packet.addNumber(tribe.id);
+      packet.writeNumber(tribe.id);
 
       // Tribe assignments
       addTribeAssignmentData(packet, tribe);
 
       // Virtual buildings
       addVirtualBuildingGhostEntities(packet, tribe.rootAssignment);
-      packet.addBoolean(false);
-      packet.padOffset(3)
+      packet.writeBool(false);
 
       // Building safetys
       addTribeBuildingSafetyData(packet, playerClient);
@@ -364,15 +360,14 @@ export function addDevPacketData(packet: Packet, playerClient: PlayerClient): vo
 
    // Local biomes
    const info = getVisibleLocalBiomeInfo(playerClient);
-   packet.addNumber(info.visibleLocalBiomes.length);
+   packet.writeNumber(info.visibleLocalBiomes.length);
    for (const localBiome of info.visibleLocalBiomes) {
       addLocalBiomeDataToPacket(packet, playerClient, localBiome);
    }
 
    const spawnInfo = getSpawnInfoForEntityType(playerClient.viewedSpawnDistribution);
    const distribution = spawnInfo?.spawnDistribution;
-   packet.addBoolean(typeof distribution !== "undefined");
-   packet.padOffset(3);
+   packet.writeBool(typeof distribution !== "undefined");
    if (typeof distribution !== "undefined") {
       addViewedSpawnDistributionData(packet, playerClient, distribution);
    }

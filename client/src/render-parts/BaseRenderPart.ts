@@ -1,7 +1,7 @@
 import { Point } from "battletribes-shared/utils";
 import { createIdentityMatrix } from "../rendering/matrices";
 import { RenderPartParent, RenderPart } from "./render-parts";
-import Board from "../Board";
+import { currentSnapshot } from "../game";
 
 let idCounter = 0;
 
@@ -10,7 +10,7 @@ export default abstract class BaseRenderPart {
    public readonly id = idCounter++;
 
    /** The point in time when the render part was created */
-   private creationTicks = Board.serverTicks;
+   private creationTicks = currentSnapshot.tick;
    
    /** Estimated position of the object during the current frame */
    public renderPosition = new Point(-1, -1);
@@ -64,6 +64,6 @@ export default abstract class BaseRenderPart {
    }
 
    public getAge(): number {
-      return Board.serverTicks - this.creationTicks;
+      return currentSnapshot.tick - this.creationTicks;
    }
 }

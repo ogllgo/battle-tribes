@@ -30,8 +30,7 @@ export function createStructureComponentData(): StructureComponentData {
 }
 
 function decodeData(reader: PacketReader): StructureComponentData {
-   const hasActiveBlueprint = reader.readBoolean();
-   reader.padOffset(3);
+   const hasActiveBlueprint = reader.readBool();
 
    const connections = new Array<StructureConnection>();
    const numConnections = reader.readNumber();

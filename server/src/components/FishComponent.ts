@@ -221,5 +221,5 @@ function getDataLength(): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const fishComponent = FishComponentArray.getComponent(entity);
 
-   packet.addNumber(fishComponent.colour);
+   packet.writeNumber(fishComponent.colour);
 }

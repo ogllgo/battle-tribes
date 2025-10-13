@@ -62,12 +62,12 @@ export function generateRiverTiles(): RiverGenerationInfo {
    const rootTiles = new Array<WaterTileGenerationInfo>();
 
    for (let i = 0; i < NUM_RIVERS; i++) {
-      const riverNoise = generateOctavePerlinNoise(Settings.BOARD_DIMENSIONS + BORDER_PADDING * 2, Settings.BOARD_DIMENSIONS + BORDER_PADDING * 2, 200, 5, 2, 0.5);
+      const riverNoise = generateOctavePerlinNoise(Settings.WORLD_SIZE_TILES + BORDER_PADDING * 2, Settings.WORLD_SIZE_TILES + BORDER_PADDING * 2, 200, 5, 2, 0.5);
 
       let maxWeight = -1;
       let currentTileCoordinates: TileCoordinates | undefined;
-      for (let x = 0; x < Settings.BOARD_DIMENSIONS; x++) {
-         for (let y = 0; y < Settings.BOARD_DIMENSIONS; y++) {
+      for (let x = 0; x < Settings.WORLD_SIZE_TILES; x++) {
+         for (let y = 0; y < Settings.WORLD_SIZE_TILES; y++) {
             const weight = riverNoise[x + BORDER_PADDING][y + BORDER_PADDING];
             if (weight > maxWeight) {
                maxWeight = weight;
@@ -91,7 +91,7 @@ export function generateRiverTiles(): RiverGenerationInfo {
          for (const offset of NEIGHBOUR_TILE_OFFSETS) {
             const tileX = currentTileCoordinates.x + offset[0];
             const tileY = currentTileCoordinates.y + offset[1];
-            if (tileX < -BORDER_PADDING || tileX >= Settings.BOARD_DIMENSIONS + BORDER_PADDING || tileY < -BORDER_PADDING || tileY >= Settings.BOARD_DIMENSIONS + BORDER_PADDING) {
+            if (tileX < -BORDER_PADDING || tileX >= Settings.WORLD_SIZE_TILES + BORDER_PADDING || tileY < -BORDER_PADDING || tileY >= Settings.WORLD_SIZE_TILES + BORDER_PADDING) {
                continue;
             }
             const weight = riverNoise[tileX + BORDER_PADDING][tileY + BORDER_PADDING];
@@ -142,20 +142,20 @@ export function generateRiverTiles(): RiverGenerationInfo {
          minTileX = -BORDER_PADDING;
       }
       let maxTileX = rootTile.tileX + 1;
-      if (maxTileX >= Settings.BOARD_DIMENSIONS + BORDER_PADDING) {
-         maxTileX = Settings.BOARD_DIMENSIONS + BORDER_PADDING - 1;
+      if (maxTileX >= Settings.WORLD_SIZE_TILES + BORDER_PADDING) {
+         maxTileX = Settings.WORLD_SIZE_TILES + BORDER_PADDING - 1;
       }
       let minTileY = rootTile.tileY - 1;
       if (minTileY < -BORDER_PADDING) {
          minTileY = -BORDER_PADDING;
       }
       let maxTileY = rootTile.tileY + 1;
-      if (maxTileY >= Settings.BOARD_DIMENSIONS + BORDER_PADDING) {
-         maxTileY = Settings.BOARD_DIMENSIONS + BORDER_PADDING - 1;
+      if (maxTileY >= Settings.WORLD_SIZE_TILES + BORDER_PADDING) {
+         maxTileY = Settings.WORLD_SIZE_TILES + BORDER_PADDING - 1;
       }
       for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
          outerLoop: for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
-            if (tileX < -Settings.EDGE_GENERATION_DISTANCE || tileX >= Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE || tileY < -Settings.EDGE_GENERATION_DISTANCE || tileY >= Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) {
+            if (tileX < -Settings.EDGE_GENERATION_DISTANCE || tileX >= Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE || tileY < -Settings.EDGE_GENERATION_DISTANCE || tileY >= Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE) {
                continue;
             }
             
@@ -350,7 +350,7 @@ export function generateRiverFeatures(riverTiles: ReadonlyArray<WaterTileGenerat
          y += RIVER_CROSSING_WIDTH/2 * Math.cos(crossing.direction + Math.PI/2) * offsetMultiplier;
 
          // Don't create stepping stones which would be outside the world
-         if (x < -Settings.EDGE_GENERATION_DISTANCE * Settings.TILE_SIZE || x >= Settings.BOARD_UNITS + Settings.EDGE_GENERATION_DISTANCE * Settings.TILE_SIZE || y < -Settings.EDGE_GENERATION_DISTANCE * Settings.TILE_SIZE || y >= Settings.BOARD_UNITS + Settings.EDGE_GENERATION_DISTANCE * Settings.TILE_SIZE) {
+         if (x < -Settings.EDGE_GENERATION_DISTANCE * Settings.TILE_SIZE || x >= Settings.WORLD_UNITS + Settings.EDGE_GENERATION_DISTANCE * Settings.TILE_SIZE || y < -Settings.EDGE_GENERATION_DISTANCE * Settings.TILE_SIZE || y >= Settings.WORLD_UNITS + Settings.EDGE_GENERATION_DISTANCE * Settings.TILE_SIZE) {
             continue;
          }
 
@@ -398,7 +398,7 @@ export function generateRiverFeatures(riverTiles: ReadonlyArray<WaterTileGenerat
          y += RIVER_CROSSING_WATER_ROCK_WIDTH/2 * Math.cos(crossing.direction + Math.PI/2) * offsetMultiplier;
 
          // Don't create water rocks outside the world
-         if (x < -Settings.EDGE_GENERATION_DISTANCE * Settings.TILE_SIZE || x >= Settings.BOARD_UNITS + Settings.EDGE_GENERATION_DISTANCE * Settings.TILE_SIZE || y < -Settings.EDGE_GENERATION_DISTANCE * Settings.TILE_SIZE || y >= Settings.BOARD_UNITS + Settings.EDGE_GENERATION_DISTANCE * Settings.TILE_SIZE) {
+         if (x < -Settings.EDGE_GENERATION_DISTANCE * Settings.TILE_SIZE || x >= Settings.WORLD_UNITS + Settings.EDGE_GENERATION_DISTANCE * Settings.TILE_SIZE || y < -Settings.EDGE_GENERATION_DISTANCE * Settings.TILE_SIZE || y >= Settings.WORLD_UNITS + Settings.EDGE_GENERATION_DISTANCE * Settings.TILE_SIZE) {
             continue;
          }
 

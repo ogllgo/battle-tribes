@@ -16,5 +16,5 @@ function getDataLength(entity: Entity): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const floorSignComponent = FloorSignComponentArray.getComponent(entity);
-   packet.addString(floorSignComponent.message);
+   packet.writeString(floorSignComponent.message);
 }

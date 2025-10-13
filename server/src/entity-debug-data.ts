@@ -174,64 +174,62 @@ export function getEntityDebugDataLength(debugData: EntityDebugData): number {
 }
 
 export function addEntityDebugDataToPacket(packet: Packet, entity: Entity, debugData: EntityDebugData): void {
-   packet.addNumber(entity);
+   packet.writeNumber(entity);
 
-   packet.addNumber(debugData.lines.length);
+   packet.writeNumber(debugData.lines.length);
    for (const line of debugData.lines) {
-      packet.addNumber(line.colour[0]);
-      packet.addNumber(line.colour[1]);
-      packet.addNumber(line.colour[2]);
-      packet.addNumber(line.targetPosition[0]);
-      packet.addNumber(line.targetPosition[1]);
-      packet.addNumber(line.thickness);
+      packet.writeNumber(line.colour[0]);
+      packet.writeNumber(line.colour[1]);
+      packet.writeNumber(line.colour[2]);
+      packet.writeNumber(line.targetPosition[0]);
+      packet.writeNumber(line.targetPosition[1]);
+      packet.writeNumber(line.thickness);
    }
 
-   packet.addNumber(debugData.circles.length);
+   packet.writeNumber(debugData.circles.length);
    for (const circle of debugData.circles) {
-      packet.addNumber(circle.colour[0]);
-      packet.addNumber(circle.colour[1]);
-      packet.addNumber(circle.colour[2]);
-      packet.addNumber(circle.radius);
-      packet.addNumber(circle.thickness);
+      packet.writeNumber(circle.colour[0]);
+      packet.writeNumber(circle.colour[1]);
+      packet.writeNumber(circle.colour[2]);
+      packet.writeNumber(circle.radius);
+      packet.writeNumber(circle.thickness);
    }
 
-   packet.addNumber(debugData.tileHighlights.length);
+   packet.writeNumber(debugData.tileHighlights.length);
    for (const tileHighlight of debugData.tileHighlights) {
-      packet.addNumber(tileHighlight.colour[0]);
-      packet.addNumber(tileHighlight.colour[1]);
-      packet.addNumber(tileHighlight.colour[2]);
-      packet.addNumber(tileHighlight.tilePosition[0]);
-      packet.addNumber(tileHighlight.tilePosition[1]);
+      packet.writeNumber(tileHighlight.colour[0]);
+      packet.writeNumber(tileHighlight.colour[1]);
+      packet.writeNumber(tileHighlight.colour[2]);
+      packet.writeNumber(tileHighlight.tilePosition[0]);
+      packet.writeNumber(tileHighlight.tilePosition[1]);
    }
 
-   packet.addNumber(debugData.debugEntries.length);
+   packet.writeNumber(debugData.debugEntries.length);
    for (const string of debugData.debugEntries) {
-      packet.addString(string);
+      packet.writeString(string);
    }
 
    if (typeof debugData.pathData !== "undefined") {
-      packet.addBoolean(true);
-      packet.padOffset(3);
+      packet.writeBool(true);
 
-      packet.addNumber(debugData.pathData.goalX);
-      packet.addNumber(debugData.pathData.goalY);
+      packet.writeNumber(debugData.pathData.goalX);
+      packet.writeNumber(debugData.pathData.goalY);
 
-      packet.addNumber(debugData.pathData.pathNodes.length);
+      packet.writeNumber(debugData.pathData.pathNodes.length);
       for (const nodeIndex of debugData.pathData.pathNodes) {
-         packet.addNumber(nodeIndex);
+         packet.writeNumber(nodeIndex);
       }
 
-      packet.addNumber(debugData.pathData.rawPathNodes.length);
+      packet.writeNumber(debugData.pathData.rawPathNodes.length);
       for (const nodeIndex of debugData.pathData.rawPathNodes) {
-         packet.addNumber(nodeIndex);
+         packet.writeNumber(nodeIndex);
       }
 
-      packet.addNumber(debugData.pathData.visitedNodes.length);
+      packet.writeNumber(debugData.pathData.visitedNodes.length);
       for (const nodeIndex of debugData.pathData.visitedNodes) {
-         packet.addNumber(nodeIndex);
+         packet.writeNumber(nodeIndex);
       }
    } else {
-      packet.addBoolean(false);
-      packet.padOffset(3);
+      packet.writeBool(false);
    }
 }

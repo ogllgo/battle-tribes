@@ -1,7 +1,6 @@
 import { ServerComponentType } from "../../shared/src/components";
 import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
-import Board from "./Board";
 import { EntityRenderInfo } from "./EntityRenderInfo";
 import { ComponentArray, getClientComponentArray, getComponentArrays, getServerComponentArray } from "./entity-components/ComponentArray";
 import { ServerComponentData } from "./entity-components/components";
@@ -12,6 +11,7 @@ import { calculateRenderDepthFromLayer, getEntityRenderLayer } from "./render-la
 import { ClientComponentType } from "./entity-components/client-component-types";
 import { ClientComponentData } from "./entity-components/client-components";
 import { removeEntitySounds } from "./sound";
+import { currentSnapshot } from "./game";
 
 export const layers = new Array<Layer>();
 
@@ -23,6 +23,7 @@ const entityTypes: Partial<Record<Entity, EntityType>> = {};
 const entitySpawnTicks: Partial<Record<Entity, number>> = {};
 const entityLayers: Partial<Record<Entity, Layer>> = {};
 const entityRenderInfos: Partial<Record<Entity, EntityRenderInfo>> = {};
+const entityComponentTypes: Partial<Record<Entity, ReadonlyArray<ServerComponentType>>> = {};
 
 export function addLayer(layer: Layer): void {
    if (layers.length === 0) {
@@ -46,7 +47,7 @@ export function getEntityAgeTicks(entity: Entity): number {
    if (typeof entitySpawnTicks[entity] === "undefined") {
       throw new Error();
    }
-   return Board.serverTicks - entitySpawnTicks[entity]!;
+   return currentSnapshot.tick - entitySpawnTicks[entity]!;
 }
 
 export function getEntityLayer(entity: Entity): Layer {
@@ -69,24 +70,21 @@ export function getEntityRenderInfo(entity: Entity): EntityRenderInfo {
    return entityRenderInfos[entity]!;
 }
 
+export function getEntityComponentTypes(entity: Entity): ReadonlyArray<ServerComponentType> {
+   return entityComponentTypes[entity]!;
+}
+
 export function entityExists(entity: Entity): boolean {
    return typeof entityLayers[entity] !== "undefined";
 }
 
-export function registerBasicEntityInfo(entity: Entity, entityType: EntityType, spawnTicks: number, layer: Layer, renderInfo: EntityRenderInfo): void {
+export function registerBasicEntityInfo(entity: Entity, entityType: EntityType, spawnTicks: number, layer: Layer, renderInfo: EntityRenderInfo, componentTypes: ReadonlyArray<ServerComponentType>): void {
    entityTypes[entity] = entityType;
    entitySpawnTicks[entity] = spawnTicks;
    entityLayers[entity] = layer;
    entityRenderInfos[entity] = renderInfo;
+   entityComponentTypes[entity] = componentTypes;
 }
-
-// @Cleanup: location
-export type EntityServerComponentData = {
-   [T in ServerComponentType]: ServerComponentData<T>;
-};
-export type ClientServerComponentData = Partial<{
-   [T in ClientComponentType]: ClientComponentData<T>;
-}>;
 
 // @Cleanup: location
 /** Basically just all the component data used to create an entity. */
@@ -189,7 +187,10 @@ export function addEntityToWorld(entity: Entity, spawnTicks: number, layer: Laye
       componentArray.addComponent(entity, component, creationInfo.entityComponentData.entityType);
    }
 
-   registerBasicEntityInfo(entity, creationInfo.entityComponentData.entityType, spawnTicks, layer, creationInfo.renderInfo);
+   // @Speed @Garbage
+   const serverComponentTypes = getEntityServerComponentTypes(creationInfo.entityComponentData);
+
+   registerBasicEntityInfo(entity, creationInfo.entityComponentData.entityType, spawnTicks, layer, creationInfo.renderInfo, serverComponentTypes);
       
    // @Incomplete: is this really the right place to do this? is onLoad even what i want?
    // Call onLoad functions
@@ -286,9 +287,9 @@ export function changeEntityLayer(entity: Entity, newLayer: Layer): void {
    // Add to new ones
    // @Cleanup: this logic should be in transformcomponent, perhaps there is a function which already does this...
    const minChunkX = Math.max(Math.floor(transformComponent.boundingAreaMinX / Settings.CHUNK_UNITS), 0);
-   const maxChunkX = Math.min(Math.floor(transformComponent.boundingAreaMaxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const maxChunkX = Math.min(Math.floor(transformComponent.boundingAreaMaxX / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
    const minChunkY = Math.max(Math.floor(transformComponent.boundingAreaMinY / Settings.CHUNK_UNITS), 0);
-   const maxChunkY = Math.min(Math.floor(transformComponent.boundingAreaMaxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const maxChunkY = Math.min(Math.floor(transformComponent.boundingAreaMaxY / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
          const newChunk = newLayer.getChunk(chunkX, chunkY);

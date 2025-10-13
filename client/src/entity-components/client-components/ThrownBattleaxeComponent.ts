@@ -12,11 +12,8 @@ interface IntermediateInfo {}
 
 export interface ThrownBattleaxeComponent {}
 
-export const ThrownBattleaxeComponentArray = new ClientComponentArray<ThrownBattleaxeComponent, IntermediateInfo>(ClientComponentType.thrownBattleaxe, true, {
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts
-});
+export const ThrownBattleaxeComponentArray = new ClientComponentArray<ThrownBattleaxeComponent, IntermediateInfo>(ClientComponentType.thrownBattleaxe, true, createComponent, getMaxRenderParts);
+ThrownBattleaxeComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
 export function createThrownBattleaxeComponentData(): ThrownBattleaxeComponentData {
    return {};

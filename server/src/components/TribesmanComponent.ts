@@ -84,13 +84,13 @@ function getDataLength(entity: Entity): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const tribesmanComponent = TribesmanComponentArray.getComponent(entity);
 
-   packet.addNumber(tribesmanComponent.warPaintType !== null ? tribesmanComponent.warPaintType : -1);
+   packet.writeNumber(tribesmanComponent.warPaintType !== null ? tribesmanComponent.warPaintType : -1);
 
-   packet.addNumber(tribesmanComponent.titles.length);
+   packet.writeNumber(tribesmanComponent.titles.length);
    for (let i = 0; i < tribesmanComponent.titles.length; i++) {
       const title = tribesmanComponent.titles[i];
-      packet.addNumber(title.title);
-      packet.addNumber(title.displayOption);
+      packet.writeNumber(title.title);
+      packet.writeNumber(title.displayOption);
    }
 }
 

@@ -434,9 +434,8 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const yetiComponent = YetiComponentArray.getComponent(entity);
-   packet.addBoolean(entityExists(yetiComponent.attackTarget));
-   packet.padOffset(3);
-   packet.addNumber(yetiComponent.snowThrowAttackProgress);
+   packet.writeBool(entityExists(yetiComponent.attackTarget));
+   packet.writeNumber(yetiComponent.snowThrowAttackProgress);
 }
 
 function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {

@@ -46,8 +46,7 @@ export function createSpikesComponentData(): SpikesComponentData {
 }
 
 function decodeData(reader: PacketReader): SpikesComponentData {
-   const isCovered = reader.readBoolean();
-   reader.padOffset(3);
+   const isCovered = reader.readBool();
    return {
       isCovered: isCovered
    };

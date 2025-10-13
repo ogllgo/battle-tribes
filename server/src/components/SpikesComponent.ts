@@ -22,8 +22,7 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const spikesComponent = SpikesComponentArray.getComponent(entity);
-   packet.addBoolean(spikesComponent.isCovered);
-   packet.padOffset(3);
+   packet.writeBool(spikesComponent.isCovered);
 }
 
 // @Cleanup: Copy and paste

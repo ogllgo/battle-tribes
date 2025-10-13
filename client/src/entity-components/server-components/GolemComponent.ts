@@ -113,8 +113,7 @@ function decodeData(reader: PacketReader): GolemComponentData {
    const ticksAwake = reader.readNumber();
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 
-   const isAwake = reader.readBoolean();
-   reader.padOffset(3);
+   const isAwake = reader.readBool();
 
    return {
       wakeProgress: wakeProgress,

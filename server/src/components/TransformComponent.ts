@@ -126,7 +126,7 @@ export function addHitboxToEntity(entity: Entity, hitbox: Hitbox): void {
    }
 
    // If the hitbox is clipping into a border, clean the entities' position so that it doesn't clip
-   if (boundsMinX < 0 || boundsMaxX >= Settings.BOARD_UNITS || boundsMinY < 0 || boundsMaxY >= Settings.BOARD_UNITS) {
+   if (boundsMinX < 0 || boundsMaxX >= Settings.WORLD_UNITS || boundsMinY < 0 || boundsMaxY >= Settings.WORLD_UNITS) {
       cleanEntityTransform(entity);
    }
 }
@@ -232,10 +232,10 @@ const updateContainingChunks = (transformComponent: TransformComponent, entity: 
       const boundsMinY = box.calculateBoundsMinY();
       const boundsMaxY = box.calculateBoundsMaxY();
 
-      const minChunkX = Math.max(Math.min(Math.floor(boundsMinX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const maxChunkX = Math.max(Math.min(Math.floor(boundsMaxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const minChunkY = Math.max(Math.min(Math.floor(boundsMinY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const maxChunkY = Math.max(Math.min(Math.floor(boundsMaxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+      const minChunkX = Math.max(Math.min(Math.floor(boundsMinX / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+      const maxChunkX = Math.max(Math.min(Math.floor(boundsMaxX / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+      const minChunkY = Math.max(Math.min(Math.floor(boundsMinY / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+      const maxChunkY = Math.max(Math.min(Math.floor(boundsMaxY / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
 
       for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
          for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
@@ -387,8 +387,8 @@ export function resolveEntityBorderCollisions(transformComponent: TransformCompo
 
       // Right border
       const maxX = hitbox.box.calculateBoundsMaxX();
-      if (maxX > Settings.BOARD_UNITS) {
-         collideWithVerticalWorldBorder(hitbox, Settings.BOARD_UNITS - maxX - EPSILON);
+      if (maxX > Settings.WORLD_UNITS) {
+         collideWithVerticalWorldBorder(hitbox, Settings.WORLD_UNITS - maxX - EPSILON);
          hasCorrected = true;
       }
 
@@ -401,9 +401,9 @@ export function resolveEntityBorderCollisions(transformComponent: TransformCompo
 
       // Top border
       const maxY = hitbox.box.calculateBoundsMaxY();
-      if (maxY > Settings.BOARD_UNITS) {
+      if (maxY > Settings.WORLD_UNITS) {
          hasCorrected = true;
-         collideWithHorizontalWorldBorder(hitbox, Settings.BOARD_UNITS - maxY - EPSILON);
+         collideWithHorizontalWorldBorder(hitbox, Settings.WORLD_UNITS - maxY - EPSILON);
       }
 
       // We then need to clean the hitbox so that its children have its position updated to reflect the move
@@ -421,7 +421,7 @@ export function resolveEntityBorderCollisions(transformComponent: TransformCompo
    // If the entity is outside the world border after resolving border collisions, throw an error
    // @Robustness this should be impossible to trigger, so i can remove it and sleep peacefully
    for (const hitbox of transformComponent.hitboxes) {
-      if (hitbox.box.position.x < 0 || hitbox.box.position.x >= Settings.BOARD_UNITS || hitbox.box.position.y < 0 || hitbox.box.position.y >= Settings.BOARD_UNITS) {
+      if (hitbox.box.position.x < 0 || hitbox.box.position.x >= Settings.WORLD_UNITS || hitbox.box.position.y < 0 || hitbox.box.position.y >= Settings.WORLD_UNITS) {
          const entity = TransformComponentArray.getEntityFromComponentNONOSQUARE(transformComponent);
          throw new Error("Unable to properly resolve border collisions for " + EntityTypeString[getEntityType(entity)] + ".");
       }
@@ -543,9 +543,9 @@ const resolveWallCollisions = (entity: Entity, transformComponent: TransformComp
       const boundsMaxY = box.calculateBoundsMaxY();
 
       const minSubtileX = Math.max(Math.floor(boundsMinX / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
-      const maxSubtileX = Math.min(Math.floor(boundsMaxX / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+      const maxSubtileX = Math.min(Math.floor(boundsMaxX / Settings.SUBTILE_SIZE), (Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
       const minSubtileY = Math.max(Math.floor(boundsMinY / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
-      const maxSubtileY = Math.min(Math.floor(boundsMaxY / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+      const maxSubtileY = Math.min(Math.floor(boundsMaxY / Settings.SUBTILE_SIZE), (Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
 
       for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
          for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
@@ -821,13 +821,16 @@ function onRemove(entity: Entity): void {
 function getDataLength(entity: Entity): number {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   let lengthBytes = 3 * Float32Array.BYTES_PER_ELEMENT;
+   // Collision bit and collision mask
+   let lengthBytes = 2 * Float32Array.BYTES_PER_ELEMENT;
    
+   // Traction
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    for (const hitbox of transformComponent.hitboxes) {
       lengthBytes += getHitboxDataLength(hitbox);
    }
-
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
 
    return lengthBytes;
 }
@@ -835,15 +838,15 @@ function getDataLength(entity: Entity): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    
-   packet.addNumber(transformComponent.collisionBit);
-   packet.addNumber(transformComponent.collisionMask);
+   packet.writeNumber(transformComponent.collisionBit);
+   packet.writeNumber(transformComponent.collisionMask);
    
-   packet.addNumber(transformComponent.hitboxes.length);
+   packet.writeNumber(transformComponent.traction);
+   
+   packet.writeNumber(transformComponent.hitboxes.length);
    for (const hitbox of transformComponent.hitboxes) {
       addHitboxDataToPacket(packet, hitbox);
    }
-
-   packet.addNumber(transformComponent.traction);
 }
 
 const propagateRootEntityChange = (hitbox: Hitbox, rootEntity: Entity): void => {
@@ -1069,9 +1072,9 @@ export function changeEntityLayer(entity: Entity, newLayer: Layer): void {
    // Add to the new ones
    // @Cleanup: this logic should be in transformcomponent, perhaps there is a function which already does this...
    const minChunkX = Math.max(Math.floor(transformComponent.boundingAreaMinX / Settings.CHUNK_UNITS), 0);
-   const maxChunkX = Math.min(Math.floor(transformComponent.boundingAreaMaxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const maxChunkX = Math.min(Math.floor(transformComponent.boundingAreaMaxX / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
    const minChunkY = Math.max(Math.floor(transformComponent.boundingAreaMinY / Settings.CHUNK_UNITS), 0);
-   const maxChunkY = Math.min(Math.floor(transformComponent.boundingAreaMaxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const maxChunkY = Math.min(Math.floor(transformComponent.boundingAreaMaxY / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
          const newChunk = newLayer.getChunk(chunkX, chunkY);

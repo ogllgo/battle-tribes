@@ -114,12 +114,11 @@ function getDataLength(entity: Entity): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const structureComponent = StructureComponentArray.getComponent(entity);
 
-   packet.addBoolean(BlueprintComponentArray.hasComponent(structureComponent.activeBlueprint));
-   packet.padOffset(3);
+   packet.writeBool(BlueprintComponentArray.hasComponent(structureComponent.activeBlueprint));
 
-   packet.addNumber(structureComponent.connections.length);
+   packet.writeNumber(structureComponent.connections.length);
    for (const connection of structureComponent.connections) {
-      packet.addNumber(connection.entity);
-      packet.addNumber(connection.relativeOffsetDirection);
+      packet.writeNumber(connection.entity);
+      packet.writeNumber(connection.relativeOffsetDirection);
    }
 }

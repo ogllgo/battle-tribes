@@ -19,13 +19,10 @@ interface IntermediateInfo {}
 
 export interface EmbrasureComponent {}
 
-export const EmbrasureComponentArray = new ClientComponentArray<EmbrasureComponent, IntermediateInfo>(ClientComponentType.embrasure, true, {
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onHit: onHit,
-   onDie: onDie
-});
+export const EmbrasureComponentArray = new ClientComponentArray<EmbrasureComponent, IntermediateInfo>(ClientComponentType.embrasure, true, createComponent, getMaxRenderParts);
+EmbrasureComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+EmbrasureComponentArray.onHit = onHit;
+EmbrasureComponentArray.onDie = onDie;
 
 export function createEmbrasureComponentData(): EmbrasureComponentData {
    return {};

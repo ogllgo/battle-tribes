@@ -89,7 +89,7 @@ const countNumSpawnableTiles = (spawnInfo: EntitySpawnEvent, blockX: number, blo
 /** Max density is the target number of entities per tile */
 export function createRawSpawnDistribution(blockSize: number, maxDensity: number): SpawnDistribution {
    // @Copynpaste
-   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / blockSize;
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.WORLD_SIZE_TILES / blockSize;
    assert(Math.floor(BLOCKS_IN_BOARD_DIMENSIONS) === BLOCKS_IN_BOARD_DIMENSIONS);
 
    const densityPerBlock = maxDensity * blockSize * blockSize;
@@ -113,7 +113,7 @@ export function createRawSpawnDistribution(blockSize: number, maxDensity: number
 const createBaseSpawnDistribution = (spawnInfo: EntitySpawnEvent): void => {
    const blockSize = spawnInfo.spawnDistribution.blockSize;
    
-   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / blockSize;
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.WORLD_SIZE_TILES / blockSize;
    assert(Math.floor(BLOCKS_IN_BOARD_DIMENSIONS) === BLOCKS_IN_BOARD_DIMENSIONS);
    
    const targetDensities = new Float32Array(BLOCKS_IN_BOARD_DIMENSIONS * BLOCKS_IN_BOARD_DIMENSIONS);
@@ -139,7 +139,7 @@ export function addEntityToSpawnDistribution(spawnDistribution: SpawnDistributio
    
    const blockSize = spawnDistribution.blockSize;
    // @Copynpaste
-   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / blockSize;
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.WORLD_SIZE_TILES / blockSize;
    
    const blockX = Math.floor(x / Settings.TILE_SIZE / blockSize);
    const blockY = Math.floor(y / Settings.TILE_SIZE / blockSize);
@@ -287,7 +287,7 @@ export function spawnPositionLacksDensity(spawnInfo: EntitySpawnEvent, x: number
    const blockSize = spawnDistribution.blockSize;
    
    // @Copynpaste
-   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / blockSize;
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.WORLD_SIZE_TILES / blockSize;
 
    const blockX = Math.floor(x / Settings.TILE_SIZE / blockSize);
    const blockY = Math.floor(y / Settings.TILE_SIZE / blockSize);
@@ -300,10 +300,10 @@ export function spawnPositionLacksDensity(spawnInfo: EntitySpawnEvent, x: number
 
 // @Cleanup: won't be necessary once stepping stones are entities (can just use the getentitiesinrange function)
 export function isTooCloseToSteppingStone(x: number, y: number, checkRadius: number): boolean {
-   const minChunkX = Math.max(Math.min(Math.floor((x - checkRadius) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-   const maxChunkX = Math.max(Math.min(Math.floor((x + checkRadius) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-   const minChunkY = Math.max(Math.min(Math.floor((y - checkRadius) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-   const maxChunkY = Math.max(Math.min(Math.floor((y + checkRadius) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+   const minChunkX = Math.max(Math.min(Math.floor((x - checkRadius) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const maxChunkX = Math.max(Math.min(Math.floor((x + checkRadius) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const minChunkY = Math.max(Math.min(Math.floor((y - checkRadius) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const maxChunkY = Math.max(Math.min(Math.floor((y + checkRadius) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
 
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {

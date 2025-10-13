@@ -2,10 +2,10 @@ import { Settings } from "battletribes-shared/settings";
 import { createWebGLProgram, gl } from "../../webgl";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 
-const top = Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE;
+const top = Settings.WORLD_UNITS;
 const bottom = 0;
 const left = 0;
-const right = Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE;
+const right = Settings.WORLD_UNITS;
 
 let program: WebGLProgram;
 let buffer: WebGLBuffer;

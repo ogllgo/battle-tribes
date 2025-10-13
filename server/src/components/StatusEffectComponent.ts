@@ -181,9 +181,9 @@ function getDataLength(entity: Entity): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
 
-   packet.addNumber(statusEffectComponent.activeStatusEffectTypes.length);
+   packet.writeNumber(statusEffectComponent.activeStatusEffectTypes.length);
    for (let i = 0; i < statusEffectComponent.activeStatusEffectTypes.length; i++) {
-      packet.addNumber(statusEffectComponent.activeStatusEffectTypes[i]);
-      packet.addNumber(statusEffectComponent.activeStatusEffectTicksElapsed[i]);
+      packet.writeNumber(statusEffectComponent.activeStatusEffectTypes[i]);
+      packet.writeNumber(statusEffectComponent.activeStatusEffectTicksElapsed[i]);
    }
 }

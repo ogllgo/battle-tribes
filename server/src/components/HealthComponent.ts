@@ -251,6 +251,6 @@ function getDataLength(): number {
 function addDataToPacket(packet: Packet, entityID: number): void {
    const healthComponent = HealthComponentArray.getComponent(entityID);
 
-   packet.addNumber(healthComponent.health);
-   packet.addNumber(healthComponent.maxHealth);
+   packet.writeNumber(healthComponent.health);
+   packet.writeNumber(healthComponent.maxHealth);
 }

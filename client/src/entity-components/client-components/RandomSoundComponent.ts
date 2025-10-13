@@ -37,11 +37,8 @@ export function updateRandomSoundComponentSounds(randomSoundComponent: RandomSou
    }
 }
 
-export const RandomSoundComponentArray = new ClientComponentArray<RandomSoundComponent>(ClientComponentType.randomSound, true, {
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick
-});
+export const RandomSoundComponentArray = new ClientComponentArray<RandomSoundComponent>(ClientComponentType.randomSound, true, createComponent, getMaxRenderParts);
+RandomSoundComponentArray.onTick = onTick;
 
 export function createRandomSoundComponentData(): RandomSoundComponentData {
    return {};

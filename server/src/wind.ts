@@ -8,7 +8,7 @@ const enum Vars {
    NOISE_SIZE = 100,
    /** Size of each cell in tiles */
    CELL_SIZE = 4,
-   CELLS_IN_WORLD_WIDTH = Settings.BOARD_DIMENSIONS / CELL_SIZE
+   CELLS_IN_WORLD_WIDTH = Settings.WORLD_SIZE_TILES / CELL_SIZE
 }
 
 const windVectors = new Array<Point>();

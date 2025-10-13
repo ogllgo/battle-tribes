@@ -1,14 +1,13 @@
 import { Settings } from "battletribes-shared/settings";
 import { distance, getTileX, getTileY, lerp } from "battletribes-shared/utils";
 import { createWebGLProgram, gl } from "../../webgl";
-import Board from "../../Board";
 import OPTIONS from "../../options";
 import { getLightPositionMatrix } from "../../lights";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import Layer from "../../Layer";
 import { surfaceLayer } from "../../world";
-import Camera from "../../Camera";
-import { gameFramebufferTexture } from "../../game";
+import { currentSnapshot, gameFramebufferTexture } from "../../game";
+import { cameraPosition } from "../../camera";
 
 const enum Vars {
    MAX_LIGHTS = 64,
@@ -297,12 +296,13 @@ const getAmbientLightLevel = (layer: Layer): number => {
    }
    
    if (layer === surfaceLayer) {
-      if (Board.time >= 6 && Board.time < 18) {
+      const time = currentSnapshot.time;
+      if (time >= 6 && time < 18) {
          return 1;
-      } else if (Board.time >= 18 && Board.time < 20) {
-         return lerp(1, Settings.NIGHT_LIGHT_LEVEL, (Board.time - 18) / 2);
-      } else if (Board.time >= 4 && Board.time < 6) {
-         return lerp(1, Settings.NIGHT_LIGHT_LEVEL, (6 - Board.time) / 2);
+      } else if (time >= 18 && time < 20) {
+         return lerp(1, Settings.NIGHT_LIGHT_LEVEL, (time - 18) / 2);
+      } else if (time >= 4 && time < 6) {
+         return lerp(1, Settings.NIGHT_LIGHT_LEVEL, (6 - time) / 2);
       } else {
          return Settings.NIGHT_LIGHT_LEVEL;
       }
@@ -327,7 +327,7 @@ const getVisibleRectLights = (layer: Layer): ReadonlyArray<RectLight> => {
       const x = (tileX + 0.5) * Settings.TILE_SIZE;
       const y = (tileY + 0.5) * Settings.TILE_SIZE;
 
-      const dist = distance(x, y, Camera.position.x, Camera.position.y);
+      const dist = distance(x, y, cameraPosition.x, cameraPosition.y);
       const tileDist = dist / Settings.TILE_SIZE;
       if (tileDist < Vars.DROPDOWN_LIGHT_STRENGTH * Vars.DROPDOWN_LIGHT_STRENGTH) {
          rectLights.push({

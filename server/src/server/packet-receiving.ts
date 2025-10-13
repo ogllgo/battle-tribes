@@ -437,9 +437,7 @@ export function processEntitySummonPacket(playerClient: PlayerClient, reader: Pa
 }
 
 export function processToggleSimulationPacket(playerClient: PlayerClient, reader: PacketReader): void {
-   const isSimulating = reader.readBoolean();
-   reader.padOffset(3);
-   SERVER.isSimulating = isSimulating;
+   SERVER.isSimulating = reader.readBool();
 }
 
 // @Cleanup: name, and there is already a shared definition
@@ -522,8 +520,8 @@ export function processTPToEntityPacket(playerClient: PlayerClient, reader: Pack
    const targetHitbox = targetTransformComponent.hitboxes[0];
 
    const packet = new Packet(PacketType.forcePositionUpdate, 3 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(targetHitbox.box.position.x);
-   packet.addNumber(targetHitbox.box.position.y);
+   packet.writeNumber(targetHitbox.box.position.x);
+   packet.writeNumber(targetHitbox.box.position.y);
    playerClient.socket.send(packet.buffer);
 }
 
@@ -541,8 +539,7 @@ export function processSpectateEntityPacket(playerClient: PlayerClient, reader: 
 
 export function processSetAutogiveBaseResourcesPacket(reader: PacketReader): void {
    const tribeID = reader.readNumber();
-   const autogiveBaseResources = reader.readBoolean();
-   reader.padOffset(3);
+   const autogiveBaseResources = reader.readBool();
 
    const tribe = getTribe(tribeID);
    if (tribe !== null) {
@@ -930,8 +927,8 @@ export function receiveChatMessagePacket(reader: PacketReader, playerClient: Pla
    const message = reader.readString();
 
    const packet = new Packet(PacketType.serverToClientChatMessage, Float32Array.BYTES_PER_ELEMENT + getStringLengthBytes(playerClient.username) + getStringLengthBytes(message));
-   packet.addString(playerClient.username);
-   packet.addString(message);
+   packet.writeString(playerClient.username);
+   packet.writeString(message);
 
    for (const playerClient of getPlayerClients()) {
       playerClient.socket.send(packet.buffer);

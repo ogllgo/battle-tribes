@@ -20,15 +20,15 @@ const convertToGamePixel = (x: number): number => {
 }
 
 const getGamePixelIndex = (gamePixelX: number, gamePixelY: number): number => {
-   return (gamePixelY + Settings.EDGE_GENERATION_DISTANCE * 16) * Settings.FULL_BOARD_DIMENSIONS * 16 + gamePixelX + Settings.EDGE_GENERATION_DISTANCE * 16;
+   return (gamePixelY + Settings.EDGE_GENERATION_DISTANCE * 16) * Settings.FULL_WORLD_SIZE_TILES * 16 + gamePixelX + Settings.EDGE_GENERATION_DISTANCE * 16;
 }
 
 export function getGamePixelX(gamePixelIndex: number): number {
-   return gamePixelIndex % (Settings.FULL_BOARD_DIMENSIONS * 16) - Settings.EDGE_GENERATION_DISTANCE * 16;
+   return gamePixelIndex % (Settings.FULL_WORLD_SIZE_TILES * 16) - Settings.EDGE_GENERATION_DISTANCE * 16;
 }
 
 export function getGamePixelY(gamePixelIndex: number): number {
-   return Math.floor(gamePixelIndex / (Settings.FULL_BOARD_DIMENSIONS * 16)) - Settings.EDGE_GENERATION_DISTANCE * 16;
+   return Math.floor(gamePixelIndex / (Settings.FULL_WORLD_SIZE_TILES * 16)) - Settings.EDGE_GENERATION_DISTANCE * 16;
 }
 
 export function createSlimeTrailShaders(): void {
@@ -183,10 +183,10 @@ export function renderSlimeTrails(layer: Layer): void {
       return;
    }
    
-   // const minGamePixelX = convertToGamePixel(Camera.minVisibleX);
-   // const maxGamePixelX = convertToGamePixel(Camera.maxVisibleX);
-   // const minGamePixelY = convertToGamePixel(Camera.minVisibleY);
-   // const maxGamePixelY = convertToGamePixel(Camera.maxVisibleY);
+   // const minGamePixelX = convertToGamePixel(minVisibleX);
+   // const maxGamePixelX = convertToGamePixel(maxVisibleX);
+   // const minGamePixelY = convertToGamePixel(minVisibleY);
+   // const maxGamePixelY = convertToGamePixel(maxVisibleY);
 
    // Create vertices
    // @Garbage

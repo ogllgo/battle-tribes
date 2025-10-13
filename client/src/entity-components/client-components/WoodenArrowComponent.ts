@@ -16,12 +16,9 @@ interface IntermediateInfo {}
 
 export interface WoodenArrowComponent {}
 
-export const WoodenArrowComponentArray = new ClientComponentArray<WoodenArrowComponent, IntermediateInfo>(ClientComponentType.woodenArrow, true, {
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onDie: onDie
-});
+export const WoodenArrowComponentArray = new ClientComponentArray<WoodenArrowComponent, IntermediateInfo>(ClientComponentType.woodenArrow, true, createComponent, getMaxRenderParts);
+WoodenArrowComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+WoodenArrowComponentArray.onDie = onDie;
 
 export function createWoodenArrowComponentData(): WoodenArrowComponentData {
    return {};

@@ -309,8 +309,8 @@ function getDataLength(entity: Entity): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const slimeComponent = SlimeComponentArray.getComponent(entity);
 
-   packet.addNumber(slimeComponent.size);
-   packet.addNumber(slimeComponent.eyeAngle);
+   packet.writeNumber(slimeComponent.size);
+   packet.writeNumber(slimeComponent.eyeAngle);
    
    let anger = -1;
    if (slimeComponent.angeredEntities.length > 0) {
@@ -322,15 +322,15 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
       }
    }
 
-   packet.addNumber(anger);
+   packet.writeNumber(anger);
 
    const spitChargeProgress = slimeComponent.spitChargeTicks >= SPIT_COOLDOWN_TICKS ? (slimeComponent.spitChargeTicks - SPIT_COOLDOWN_TICKS) / (SPIT_CHARGE_TIME_TICKS - SPIT_COOLDOWN_TICKS) : -1;
-   packet.addNumber(spitChargeProgress);
+   packet.writeNumber(spitChargeProgress);
 
-   packet.addNumber(slimeComponent.orbSizes.length);
+   packet.writeNumber(slimeComponent.orbSizes.length);
    for (let i = 0; i < slimeComponent.orbSizes.length; i++) {
       const orbSize = slimeComponent.orbSizes[i];
-      packet.addNumber(orbSize);
+      packet.writeNumber(orbSize);
    }
 }
 

@@ -285,13 +285,13 @@ export function runHerdAI(entity: Entity, herdMembers: ReadonlyArray<Entity>, vi
       let distanceFromWall!: number;
 
       // Top wall
-      if (entityHitbox.box.position.y >= Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - visionRange) {
+      if (entityHitbox.box.position.y >= Settings.WORLD_SIZE_TILES * Settings.TILE_SIZE - visionRange) {
          directionToNearestWall = Math.PI / 2;
-         distanceFromWall = Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - entityHitbox.box.position.y;
+         distanceFromWall = Settings.WORLD_SIZE_TILES * Settings.TILE_SIZE - entityHitbox.box.position.y;
       // Right wall
-      } else if (entityHitbox.box.position.x >= Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - visionRange) {
+      } else if (entityHitbox.box.position.x >= Settings.WORLD_SIZE_TILES * Settings.TILE_SIZE - visionRange) {
          directionToNearestWall = 0;
-         distanceFromWall = Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - entityHitbox.box.position.x;
+         distanceFromWall = Settings.WORLD_SIZE_TILES * Settings.TILE_SIZE - entityHitbox.box.position.x;
       // Bottom wall
       } else if (entityHitbox.box.position.y <= visionRange) {
          directionToNearestWall = Math.PI * 3 / 2;
@@ -343,10 +343,10 @@ export function runHerdAI(entity: Entity, herdMembers: ReadonlyArray<Entity>, vi
 export function getPositionRadialTiles(layer: Layer, position: Point, radius: number): Array<TileIndex> {
    const tiles = new Array<TileIndex>();
 
-   const minTileX = Math.max(Math.min(Math.floor((position.x - radius) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1), 0);
-   const maxTileX = Math.max(Math.min(Math.floor((position.x + radius) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1), 0);
-   const minTileY = Math.max(Math.min(Math.floor((position.y - radius) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1), 0);
-   const maxTileY = Math.max(Math.min(Math.floor((position.y + radius) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1), 0);
+   const minTileX = Math.max(Math.min(Math.floor((position.x - radius) / Settings.TILE_SIZE), Settings.WORLD_SIZE_TILES - 1), 0);
+   const maxTileX = Math.max(Math.min(Math.floor((position.x + radius) / Settings.TILE_SIZE), Settings.WORLD_SIZE_TILES - 1), 0);
+   const minTileY = Math.max(Math.min(Math.floor((position.y - radius) / Settings.TILE_SIZE), Settings.WORLD_SIZE_TILES - 1), 0);
+   const maxTileY = Math.max(Math.min(Math.floor((position.y + radius) / Settings.TILE_SIZE), Settings.WORLD_SIZE_TILES - 1), 0);
 
    const radiusSquared = Math.pow(radius, 2);
 
@@ -380,10 +380,10 @@ export function getPositionRadialTiles(layer: Layer, position: Point, radius: nu
 export function getAllowedPositionRadialTiles(layer: Layer, position: Point, radius: number, validTileTargets: ReadonlyArray<TileType>): Array<TileIndex> {
    const tiles = new Array<TileIndex>();
 
-   const minTileX = Math.max(Math.min(Math.floor((position.x - radius) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1), 0);
-   const maxTileX = Math.max(Math.min(Math.floor((position.x + radius) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1), 0);
-   const minTileY = Math.max(Math.min(Math.floor((position.y - radius) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1), 0);
-   const maxTileY = Math.max(Math.min(Math.floor((position.y + radius) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1), 0);
+   const minTileX = Math.max(Math.min(Math.floor((position.x - radius) / Settings.TILE_SIZE), Settings.WORLD_SIZE_TILES - 1), 0);
+   const maxTileX = Math.max(Math.min(Math.floor((position.x + radius) / Settings.TILE_SIZE), Settings.WORLD_SIZE_TILES - 1), 0);
+   const minTileY = Math.max(Math.min(Math.floor((position.y - radius) / Settings.TILE_SIZE), Settings.WORLD_SIZE_TILES - 1), 0);
+   const maxTileY = Math.max(Math.min(Math.floor((position.y + radius) / Settings.TILE_SIZE), Settings.WORLD_SIZE_TILES - 1), 0);
 
    const radiusSquared = Math.pow(radius, 2);
 
@@ -446,10 +446,10 @@ export function entityIsInVisionRange(position: Point, visionRange: number, enti
 }
 
 export function getEntitiesInRange(layer: Layer, x: number, y: number, range: number): Array<Entity> {
-   const minChunkX = Math.max(Math.min(Math.floor((x - range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-   const maxChunkX = Math.max(Math.min(Math.floor((x + range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-   const minChunkY = Math.max(Math.min(Math.floor((y - range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-   const maxChunkY = Math.max(Math.min(Math.floor((y + range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+   const minChunkX = Math.max(Math.min(Math.floor((x - range) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const maxChunkX = Math.max(Math.min(Math.floor((x + range) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const minChunkY = Math.max(Math.min(Math.floor((y - range) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const maxChunkY = Math.max(Math.min(Math.floor((y + range) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
 
    testCircularBox.radius = range;
    testCircularBox.position.x = x;
@@ -710,10 +710,10 @@ export function entityIsInLineOfSight(sightRayStart: Point, targetEntity: Entity
    const minY = Math.min(rayStartY, rayEndY);
    const maxY = Math.max(rayStartY, rayEndY);
 
-   const minChunkX = clamp(Math.floor(minX / Settings.CHUNK_UNITS), 0, Settings.BOARD_SIZE - 1);
-   const maxChunkX = clamp(Math.floor(maxX / Settings.CHUNK_UNITS), 0, Settings.BOARD_SIZE - 1);
-   const minChunkY = clamp(Math.floor(minY / Settings.CHUNK_UNITS), 0, Settings.BOARD_SIZE - 1);
-   const maxChunkY = clamp(Math.floor(maxY / Settings.CHUNK_UNITS), 0, Settings.BOARD_SIZE - 1);
+   const minChunkX = clamp(Math.floor(minX / Settings.CHUNK_UNITS), 0, Settings.WORLD_SIZE_CHUNKS - 1);
+   const maxChunkX = clamp(Math.floor(maxX / Settings.CHUNK_UNITS), 0, Settings.WORLD_SIZE_CHUNKS - 1);
+   const minChunkY = clamp(Math.floor(minY / Settings.CHUNK_UNITS), 0, Settings.WORLD_SIZE_CHUNKS - 1);
+   const maxChunkY = clamp(Math.floor(maxY / Settings.CHUNK_UNITS), 0, Settings.WORLD_SIZE_CHUNKS - 1);
 
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {

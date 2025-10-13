@@ -43,8 +43,7 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const blockAttackComponent = BlockAttackComponentArray.getComponent(entity);
-   packet.addBoolean(blockAttackComponent.hasBlocked);
-   packet.padOffset(3);
+   packet.writeBool(blockAttackComponent.hasBlocked);
 }
 
 // @COPYNPASTE from the ditto in SwingAttackComponent

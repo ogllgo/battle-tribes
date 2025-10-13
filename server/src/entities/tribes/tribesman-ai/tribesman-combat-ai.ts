@@ -151,9 +151,9 @@ const getNearbyEmbrasureUsePoints = (tribesman: Entity): ReadonlyArray<Point> =>
    
    // Add 30 to the range to account for the fact that use points are disconnected from the embrasure positions
    const minChunkX = Math.max(Math.floor((tribesmanHitbox.box.position.x - (Vars.EMBRASURE_USE_RADIUS + 30)) / Settings.CHUNK_UNITS), 0);
-   const maxChunkX = Math.min(Math.floor((tribesmanHitbox.box.position.x + (Vars.EMBRASURE_USE_RADIUS + 30)) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const maxChunkX = Math.min(Math.floor((tribesmanHitbox.box.position.x + (Vars.EMBRASURE_USE_RADIUS + 30)) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
    const minChunkY = Math.max(Math.floor((tribesmanHitbox.box.position.y - (Vars.EMBRASURE_USE_RADIUS + 30)) / Settings.CHUNK_UNITS), 0);
-   const maxChunkY = Math.min(Math.floor((tribesmanHitbox.box.position.y + (Vars.EMBRASURE_USE_RADIUS + 30)) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const maxChunkY = Math.min(Math.floor((tribesmanHitbox.box.position.y + (Vars.EMBRASURE_USE_RADIUS + 30)) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
 
    const usePoints = new Array<Point>();
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {

@@ -1,6 +1,5 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityComponentData } from "../../world";
@@ -13,11 +12,8 @@ interface IntermediateInfo {}
 
 export interface WorkbenchComponent {}
 
-export const WorkbenchComponentArray = new ClientComponentArray<WorkbenchComponent, IntermediateInfo>(ClientComponentType.workbench, true, {
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts
-});
+export const WorkbenchComponentArray = new ClientComponentArray<WorkbenchComponent, IntermediateInfo>(ClientComponentType.workbench, true, createComponent, getMaxRenderParts);
+WorkbenchComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
 export function createWorkbenchComponentData(): WorkbenchComponentData {
    return {};

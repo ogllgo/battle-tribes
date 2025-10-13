@@ -21,6 +21,7 @@ import { addTexturedParticleToBufferContainer, ParticleRenderLayer } from "../..
 import { playSoundOnHitbox } from "../../sound";
 import { resolveWallCollisions } from "../../collision";
 import { keyIsPressed } from "../../keyboard-input";
+import { currentSnapshot } from "../../game";
 
 export interface TransformComponentData {
    readonly collisionBit: CollisionBit;
@@ -156,10 +157,10 @@ const updateContainingChunks = (transformComponent: TransformComponent, entity: 
       const minY = box.calculateBoundsMinY();
       const maxY = box.calculateBoundsMaxY();
 
-      const minChunkX = Math.max(Math.min(Math.floor(minX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const maxChunkX = Math.max(Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const minChunkY = Math.max(Math.min(Math.floor(minY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const maxChunkY = Math.max(Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+      const minChunkX = Math.max(Math.min(Math.floor(minX / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+      const maxChunkX = Math.max(Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+      const minChunkY = Math.max(Math.min(Math.floor(minY / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+      const maxChunkY = Math.max(Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
       
       for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
          for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
@@ -344,8 +345,8 @@ const resolveAndCleanBorderCollisions = (entity: Entity, transformComponent: Tra
 
       // Right border
       const maxX = hitbox.box.calculateBoundsMaxX();
-      if (maxX > Settings.BOARD_UNITS) {
-         collideWithVerticalWorldBorder(hitbox, Settings.BOARD_UNITS - maxX - EPSILON);
+      if (maxX > Settings.WORLD_UNITS) {
+         collideWithVerticalWorldBorder(hitbox, Settings.WORLD_UNITS - maxX - EPSILON);
          hasCorrected = true;
       }
 
@@ -358,9 +359,9 @@ const resolveAndCleanBorderCollisions = (entity: Entity, transformComponent: Tra
 
       // Top border
       const maxY = hitbox.box.calculateBoundsMaxY();
-      if (maxY > Settings.BOARD_UNITS) {
+      if (maxY > Settings.WORLD_UNITS) {
          hasCorrected = true;
-         collideWithHorizontalWorldBorder(hitbox, Settings.BOARD_UNITS - maxY - EPSILON);
+         collideWithHorizontalWorldBorder(hitbox, Settings.WORLD_UNITS - maxY - EPSILON);
       }
 
       // We then need to clean the hitbox so that its children have its position updated to reflect the move
@@ -374,7 +375,7 @@ const resolveAndCleanBorderCollisions = (entity: Entity, transformComponent: Tra
    // @Robustness this should be impossible to trigger, so i can remove it and sleep peacefully
    // @CRASH if i hyperspeed into the top right
    for (const hitbox of transformComponent.hitboxes) {
-      if (hitbox.box.calculateBoundsMinX() < 0 || hitbox.box.calculateBoundsMaxX() >= Settings.BOARD_UNITS || hitbox.box.calculateBoundsMinY() < 0 || hitbox.box.calculateBoundsMaxY() >= Settings.BOARD_UNITS) {
+      if (hitbox.box.calculateBoundsMinX() < 0 || hitbox.box.calculateBoundsMaxX() >= Settings.WORLD_UNITS || hitbox.box.calculateBoundsMinY() < 0 || hitbox.box.calculateBoundsMaxY() >= Settings.WORLD_UNITS) {
          throw new Error();
       }
    }
@@ -449,6 +450,9 @@ function createComponent(entityComponentData: EntityComponentData): TransformCom
    const rootHitboxes = new Array<Hitbox>();
    const hitboxMap = new Map<number, Hitbox>();
    for (const hitbox of transformComponentData.hitboxes) {
+      // Set all the hitboxes' last update ticks, since they default to 0 and it has to be done here.
+      hitbox.lastUpdateTicks = currentSnapshot.tick;
+      
       hitboxMap.set(hitbox.localID, hitbox);
       if (hitbox.parent === null) {
          rootHitboxes.push(hitbox);
@@ -525,7 +529,7 @@ function onTick(entity: Entity): void {
 
 function onUpdate(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   if (transformComponent.boundingAreaMinX < 0 || transformComponent.boundingAreaMaxX >= Settings.BOARD_UNITS || transformComponent.boundingAreaMinY < 0 || transformComponent.boundingAreaMaxY >= Settings.BOARD_UNITS) {
+   if (transformComponent.boundingAreaMinX < 0 || transformComponent.boundingAreaMaxX >= Settings.WORLD_UNITS || transformComponent.boundingAreaMinY < 0 || transformComponent.boundingAreaMaxY >= Settings.WORLD_UNITS) {
       // @BUG @HACK: This warning should not be a thing. This can occur if I mistakenly set the player spawn position to be outside of the world, then this runs on the player.
       
       console.warn("wat")
@@ -555,7 +559,7 @@ function onUpdate(entity: Entity): void {
 
    resolveAndCleanBorderCollisions(entity, transformComponent);
 
-   if (transformComponent.boundingAreaMinX < 0 || transformComponent.boundingAreaMaxX >= Settings.BOARD_UNITS || transformComponent.boundingAreaMinY < 0 || transformComponent.boundingAreaMaxY >= Settings.BOARD_UNITS) {
+   if (transformComponent.boundingAreaMinX < 0 || transformComponent.boundingAreaMaxX >= Settings.WORLD_UNITS || transformComponent.boundingAreaMinY < 0 || transformComponent.boundingAreaMaxY >= Settings.WORLD_UNITS) {
       throw new Error();
    }
 }
@@ -606,7 +610,7 @@ function updateFromData(data: TransformComponentData, entity: Entity): void {
    // Remove hitboxes which no longer exist
    for (let i = 0; i < transformComponent.hitboxes.length; i++) {
       const hitbox = transformComponent.hitboxes[i];
-      if (hitbox.lastUpdateTicks !== Board.serverTicks) {
+      if (hitbox.lastUpdateTicks !== currentSnapshot.tick) {
          // Hitbox is removed!
          removeHitboxFromEntity(transformComponent, hitbox, i);
          i--;

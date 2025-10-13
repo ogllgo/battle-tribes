@@ -69,7 +69,7 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const guardianGemFragmentProjectileComponent = GuardianGemFragmentProjectileComponentArray.getComponent(entity);
-   packet.addNumber(guardianGemFragmentProjectileComponent.fragmentShape);
-   packet.addNumber(guardianGemFragmentProjectileComponent.gemType);
-   packet.addNumber(guardianGemFragmentProjectileComponent.tintMultiplier);
+   packet.writeNumber(guardianGemFragmentProjectileComponent.fragmentShape);
+   packet.writeNumber(guardianGemFragmentProjectileComponent.gemType);
+   packet.writeNumber(guardianGemFragmentProjectileComponent.tintMultiplier);
 }

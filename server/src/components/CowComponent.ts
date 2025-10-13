@@ -672,14 +672,10 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const cowComponent = CowComponentArray.getComponent(entity);
-
-   packet.addNumber(cowComponent.species);
-   packet.addNumber(cowComponent.grazeProgressTicks > 0 ? cowComponent.grazeProgressTicks / Vars.GRAZE_TIME_TICKS : -1);
-
-   packet.addBoolean(cowComponent.isRamming);
-   packet.padOffset(3);
-
-   packet.addNumber(cowComponent.stamina);
+   packet.writeNumber(cowComponent.species);
+   packet.writeNumber(cowComponent.grazeProgressTicks > 0 ? cowComponent.grazeProgressTicks / Vars.GRAZE_TIME_TICKS : -1);
+   packet.writeBool(cowComponent.isRamming);
+   packet.writeNumber(cowComponent.stamina);
 }
 
 const eatBerry = (cow: Entity, berryItemEntity: Entity, cowComponent: CowComponent): void => {

@@ -25,7 +25,7 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const treeRootSegmentComponent = TreeRootSegmentComponentArray.getComponent(entity);
-   packet.addNumber(treeRootSegmentComponent.variation);
+   packet.writeNumber(treeRootSegmentComponent.variation);
 }
 
 function onJoin(entity: Entity): void {

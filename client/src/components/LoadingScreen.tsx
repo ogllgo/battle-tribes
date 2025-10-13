@@ -4,8 +4,7 @@ import Client from "../networking/Client";
 import Game from "../game";
 import { AppState } from "./App";
 import { definiteGameState } from "../game-state/game-states";
-import { processGameDataPacket } from "../networking/packet-receiving";
-import Camera from "../Camera";
+import { decodeSnapshotFromGameDataPacket, updateGameToSnapshot } from "../networking/packet-snapshots";
 
 // @Cleanup: This file does too much logic on its own. It should really only have UI/loading state
 
@@ -56,7 +55,8 @@ const LoadingScreen = (props: LoadingScreenProps) => {
          }
          
          // @HACK
-         Camera.isSpectating = props.isSpectating;
+         // @INCOMPLETE
+         // Cameraa.isSpectating = props.isSpectating;
          
          Client.sendInitialPlayerData(props.username, props.tribeType, props.isSpectating);
 
@@ -74,8 +74,10 @@ const LoadingScreen = (props: LoadingScreenProps) => {
          
          Client.sendActivatePacket();
          
-         const gameDataPacket = await Client.getNextGameDataPacket();
-         processGameDataPacket(gameDataPacket);
+         // Update the game to the first tick received
+         const reader = await Client.getNextGameDataPacket();
+         const snapshot = decodeSnapshotFromGameDataPacket(reader);
+         updateGameToSnapshot(snapshot);
 
          props.setAppState(AppState.game);
          

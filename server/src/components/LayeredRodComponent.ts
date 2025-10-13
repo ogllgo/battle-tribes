@@ -32,15 +32,15 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    const layeredRodComponent = LayeredRodComponentArray.getComponent(entity);
    
    // Num layers
-   packet.addNumber(layeredRodComponent.numLayers);
+   packet.writeNumber(layeredRodComponent.numLayers);
    // NaturalBendX
-   packet.addNumber(layeredRodComponent.naturalBend.x);
+   packet.writeNumber(layeredRodComponent.naturalBend.x);
    // NaturalBendY
-   packet.addNumber(layeredRodComponent.naturalBend.y);
+   packet.writeNumber(layeredRodComponent.naturalBend.y);
    // Colour R
-   packet.addNumber(layeredRodComponent.r);
+   packet.writeNumber(layeredRodComponent.r);
    // Colour G
-   packet.addNumber(layeredRodComponent.g);
+   packet.writeNumber(layeredRodComponent.g);
    // Colour B
-   packet.addNumber(layeredRodComponent.b);
+   packet.writeNumber(layeredRodComponent.b);
 }

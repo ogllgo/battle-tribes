@@ -12,11 +12,8 @@ interface IntermediateInfo {}
 
 export interface GlurbTailSegmentComponent {}
 
-export const GlurbTailSegmentComponentArray = new ClientComponentArray<GlurbTailSegmentComponent, IntermediateInfo>(ClientComponentType.glurbTailSegment, true, {
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts
-});
+export const GlurbTailSegmentComponentArray = new ClientComponentArray<GlurbTailSegmentComponent, IntermediateInfo>(ClientComponentType.glurbTailSegment, true, createComponent, getMaxRenderParts);
+GlurbTailSegmentComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
 function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
    const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;

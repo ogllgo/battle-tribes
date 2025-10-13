@@ -1,11 +1,11 @@
 import { Settings } from "battletribes-shared/settings";
 import { NUM_TILE_TYPES, SubtileType, TileType, TileTypeString } from "battletribes-shared/tiles";
-import Camera from "../../Camera";
 import { gl, createWebGLProgram, createTextureArray } from "../../webgl";
 import { RENDER_CHUNK_EDGE_GENERATION, RENDER_CHUNK_SIZE, RenderChunkSolidTileInfo, WORLD_RENDER_CHUNK_SIZE, getRenderChunkIndex, getRenderChunkMaxTileX, getRenderChunkMaxTileY, getRenderChunkMinTileX, getRenderChunkMinTileY } from "../render-chunks";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import Layer, { getSubtileIndex, getTileIndexIncludingEdges } from "../../Layer";
 import { layers } from "../../world";
+import { minVisibleRenderChunkX, maxVisibleRenderChunkX, minVisibleRenderChunkY, maxVisibleRenderChunkY } from "../../camera";
 
 export const FLOOR_TILE_TEXTURE_SOURCE_RECORD: Partial<Record<TileType, string | null>> = {
    [TileType.grass]: "tiles/grass.png",
@@ -485,8 +485,8 @@ export function renderSolidTiles(layer: Layer, isWallTiles: boolean): void {
    const layerIdx = layers.indexOf(layer);
    
    const infoArray = isWallTiles ? wallTileInfoArrays[layerIdx] : groundTileInfoArrays[layerIdx];
-   for (let renderChunkX = Camera.minVisibleRenderChunkX; renderChunkX <= Camera.maxVisibleRenderChunkX; renderChunkX++) {
-      for (let renderChunkY = Camera.minVisibleRenderChunkY; renderChunkY <= Camera.maxVisibleRenderChunkY; renderChunkY++) {
+   for (let renderChunkX = minVisibleRenderChunkX; renderChunkX <= maxVisibleRenderChunkX; renderChunkX++) {
+      for (let renderChunkY = minVisibleRenderChunkY; renderChunkY <= maxVisibleRenderChunkY; renderChunkY++) {
          const idx = getRenderChunkIndex(renderChunkX, renderChunkY);
          const tileInfo = infoArray[idx];
 

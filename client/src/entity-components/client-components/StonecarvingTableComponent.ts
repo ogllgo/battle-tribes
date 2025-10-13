@@ -12,11 +12,8 @@ interface IntermediateInfo {}
 
 export interface StonecarvingTableComponent {}
 
-export const StonecarvingTableComponentArray = new ClientComponentArray<StonecarvingTableComponent, IntermediateInfo>(ClientComponentType.stonecarvingTable, true, {
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts
-});
+export const StonecarvingTableComponentArray = new ClientComponentArray<StonecarvingTableComponent, IntermediateInfo>(ClientComponentType.stonecarvingTable, true, createComponent, getMaxRenderParts);
+StonecarvingTableComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
 export function createStonecarvingTableComponentData(): StonecarvingTableComponentData {
    return {};

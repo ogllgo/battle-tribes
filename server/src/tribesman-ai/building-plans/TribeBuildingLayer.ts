@@ -200,15 +200,15 @@ export function createVirtualStructure(buildingLayer: TribeBuildingLayer, positi
 }
 
 export function addVirtualBuildingData(packet: Packet, virtualBuilding: VirtualStructure): void {
-   packet.addNumber(virtualBuilding.id);
-   packet.addNumber(virtualBuilding.entityType);
-   packet.addNumber(virtualBuilding.layer.depth);
-   packet.addNumber(virtualBuilding.position.x);
-   packet.addNumber(virtualBuilding.position.y);
-   packet.addNumber(virtualBuilding.rotation);
+   packet.writeNumber(virtualBuilding.id);
+   packet.writeNumber(virtualBuilding.entityType);
+   packet.writeNumber(virtualBuilding.layer.depth);
+   packet.writeNumber(virtualBuilding.position.x);
+   packet.writeNumber(virtualBuilding.position.y);
+   packet.writeNumber(virtualBuilding.rotation);
 
    // Hitboxes
-   packet.addNumber(virtualBuilding.boxes.length);
+   packet.writeNumber(virtualBuilding.boxes.length);
    for (const box of virtualBuilding.boxes) {
       addBoxDataToPacket(packet, box);
    }

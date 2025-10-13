@@ -144,7 +144,5 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const researchBenchComponent = ResearchBenchComponentArray.getComponent(entity);
-   
-   packet.addBoolean(researchBenchComponent.isOccupied);
-   packet.padOffset(3);
+   packet.writeBool(researchBenchComponent.isOccupied);
 }

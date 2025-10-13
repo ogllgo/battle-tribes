@@ -59,9 +59,9 @@ const hitboxIncludingChildrenWouldSpawnInWall = (layer: Layer, hitbox: Hitbox): 
    const boundsMaxY = box.calculateBoundsMaxY();
 
    const minSubtileX = Math.max(Math.floor(boundsMinX / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
-   const maxSubtileX = Math.min(Math.floor(boundsMaxX / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+   const maxSubtileX = Math.min(Math.floor(boundsMaxX / Settings.SUBTILE_SIZE), (Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
    const minSubtileY = Math.max(Math.floor(boundsMinY / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
-   const maxSubtileY = Math.min(Math.floor(boundsMaxY / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+   const maxSubtileY = Math.min(Math.floor(boundsMaxY / Settings.SUBTILE_SIZE), (Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
 
    for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
       for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {
@@ -149,7 +149,7 @@ const attemptToSpawnEntity = (spawnInfo: EntitySpawnEvent, pos: Point, firstEnti
       }
 
       for (const hitbox of transformComponent.hitboxes) {
-         if (hitbox.box.calculateBoundsMinX() < 0 || hitbox.box.calculateBoundsMaxX() >= Settings.BOARD_UNITS || hitbox.box.calculateBoundsMinY() < 0 || hitbox.box.calculateBoundsMaxY() >= Settings.BOARD_UNITS) {
+         if (hitbox.box.calculateBoundsMinX() < 0 || hitbox.box.calculateBoundsMaxX() >= Settings.WORLD_UNITS || hitbox.box.calculateBoundsMinY() < 0 || hitbox.box.calculateBoundsMaxY() >= Settings.WORLD_UNITS) {
             return null;
          }
       }
@@ -188,9 +188,9 @@ const spawnEntities = (spawnInfo: EntitySpawnEvent, spawnOrigin: Point): void =>
 
    if (typeof spawnInfo.packSpawning !== "undefined") {
       const minX = Math.max(spawnOrigin.x - spawnInfo.packSpawning.spawnRange, 0);
-      const maxX = Math.min(spawnOrigin.x + spawnInfo.packSpawning.spawnRange, Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - 1);
+      const maxX = Math.min(spawnOrigin.x + spawnInfo.packSpawning.spawnRange, Settings.WORLD_SIZE_TILES * Settings.TILE_SIZE - 1);
       const minY = Math.max(spawnOrigin.y - spawnInfo.packSpawning.spawnRange, 0);
-      const maxY = Math.min(spawnOrigin.y + spawnInfo.packSpawning.spawnRange, Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - 1);
+      const maxY = Math.min(spawnOrigin.y + spawnInfo.packSpawning.spawnRange, Settings.WORLD_SIZE_TILES * Settings.TILE_SIZE - 1);
    
       const packSize = spawnInfo.packSpawning.getPackSize(spawnOrigin);
       const additionalSpawnCount = packSize - 1;
@@ -220,10 +220,10 @@ const spawnEntities = (spawnInfo: EntitySpawnEvent, spawnOrigin: Point): void =>
 }
 
 export function spawnPositionIsClear(spawnInfo: EntitySpawnEvent, positionX: number, positionY: number): boolean {
-   const minChunkX = Math.max(Math.min(Math.floor((positionX - spawnInfo.minSpawnDistance) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
-   const maxChunkX = Math.max(Math.min(Math.floor((positionX + spawnInfo.minSpawnDistance) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
-   const minChunkY = Math.max(Math.min(Math.floor((positionY - spawnInfo.minSpawnDistance) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
-   const maxChunkY = Math.max(Math.min(Math.floor((positionY + spawnInfo.minSpawnDistance) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.BOARD_SIZE - 1), 0);
+   const minChunkX = Math.max(Math.min(Math.floor((positionX - spawnInfo.minSpawnDistance) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const maxChunkX = Math.max(Math.min(Math.floor((positionX + spawnInfo.minSpawnDistance) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const minChunkY = Math.max(Math.min(Math.floor((positionY - spawnInfo.minSpawnDistance) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const maxChunkY = Math.max(Math.min(Math.floor((positionY + spawnInfo.minSpawnDistance) / Settings.TILE_SIZE / Settings.CHUNK_SIZE), Settings.WORLD_SIZE_CHUNKS - 1), 0);
 
    // @Incomplete: does this include grass and reeds??
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
@@ -254,11 +254,11 @@ export function spawnPositionIsClear(spawnInfo: EntitySpawnEvent, positionX: num
 }
 
 const runSpawnEvent = (spawnInfo: EntitySpawnEvent): void => {
-   const x = Settings.BOARD_UNITS * Math.random();
-   const y = Settings.BOARD_UNITS * Math.random();
+   const x = Settings.WORLD_UNITS * Math.random();
+   const y = Settings.WORLD_UNITS * Math.random();
 
    // @Copynpaste
-   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / spawnInfo.spawnDistribution.blockSize;
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.WORLD_SIZE_TILES / spawnInfo.spawnDistribution.blockSize;
 
    const blockX = Math.floor(x / Settings.TILE_SIZE / spawnInfo.spawnDistribution.blockSize);
    const blockY = Math.floor(y / Settings.TILE_SIZE / spawnInfo.spawnDistribution.blockSize);
@@ -294,7 +294,7 @@ export function runSpawnAttempt(): void {
          continue;
       }
 
-      let numSpawnEvents = Settings.BOARD_SIZE * Settings.BOARD_SIZE * spawnInfo.spawnRate * Settings.DT_S;
+      let numSpawnEvents = Settings.WORLD_SIZE_CHUNKS * Settings.WORLD_SIZE_CHUNKS * spawnInfo.spawnRate * Settings.DT_S;
       if (Math.random() < numSpawnEvents % 1) {
          numSpawnEvents = Math.ceil(numSpawnEvents);
       } else {
@@ -314,44 +314,44 @@ export function runSpawnAttempt(): void {
 export function spawnInitialEntities(): void {
    // @Temporary
    setTimeout(() => {
-      // const config = createCowConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 0);
-      // const config = createTukmokConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140 + 2000, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100 - 1000), 0);
+      // const config = createCowConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 - 140, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100), 0, 0);
+      // const config = createTukmokConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 - 140 + 2000, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100 - 1000), 0);
       // createEntity(config, surfaceLayer, 0);
 
-      // const dustfleaConfig = createDustfleaConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0);
+      // const dustfleaConfig = createDustfleaConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 - 140, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100), 0);
       // createEntity(dustfleaConfig, surfaceLayer, 0);
       // setTimeout(() => {
          
-      //    const krumblidConfig = createKrumblidConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 32 + 200, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), Math.PI * 0.5);
+      //    const krumblidConfig = createKrumblidConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 - 32 + 200, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100), Math.PI * 0.5);
       //    createEntity(krumblidConfig, surfaceLayer, 0);
       // }, 4000)
 
       // setTimeout(() => {
 
-      //    const ancientOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 + 600, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 4);
+      //    const ancientOkrenConfig = createOkrenConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 + 600, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100), 0, 4);
       //    createEntity(ancientOkrenConfig, surfaceLayer, 0);
       // }, 10000)
 
-      // const juvenileOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 940, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 0);
+      // const juvenileOkrenConfig = createOkrenConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 - 940, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100), 0, 0);
       // createEntity(juvenileOkrenConfig, surfaceLayer, 0);
-      // const youthOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 580, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 1);
+      // const youthOkrenConfig = createOkrenConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 - 580, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100), 0, 1);
       // createEntity(youthOkrenConfig, surfaceLayer, 0);
-      // const adultOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 - 220, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 2);
+      // const adultOkrenConfig = createOkrenConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 - 220, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100), 0, 2);
       // createEntity(adultOkrenConfig, surfaceLayer, 0);
-      // const elderOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 + 140, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 3);
+      // const elderOkrenConfig = createOkrenConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 + 140, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100), 0, 3);
       // createEntity(elderOkrenConfig, surfaceLayer, 0);
-      // const ancientOkrenConfig = createOkrenConfig(new Point(Settings.BOARD_UNITS * 0.5 - 500 + 600, Settings.BOARD_UNITS * 0.5 - 500 - 300 + 100), 0, 4);
+      // const ancientOkrenConfig = createOkrenConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 + 600, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100), 0, 4);
       // createEntity(ancientOkrenConfig, surfaceLayer, 0);
       
       if(1+1===2)return;
-      // const config = createGlurbConfig(Settings.BOARD_UNITS * 0.5 + 200, Settings.BOARD_UNITS * 0.5, 0, randInt(3, 5));
+      // const config = createGlurbConfig(Settings.WORLD_UNITS * 0.5 + 200, Settings.WORLD_UNITS * 0.5, 0, randInt(3, 5));
       // createEntity(config, surfaceLayer, 0);
 
       if(1+1===2)return;
       
-      // // const x = Settings.BOARD_UNITS * 0.5 + 700;
+      // // const x = Settings.WORLD_UNITS * 0.5 + 700;
       const x = 6400;
-      // // const y = Settings.BOARD_UNITS * 0.5;
+      // // const y = Settings.WORLD_UNITS * 0.5;
       const y = 3400;
       
       // const tribe = new Tribe(TribeType.dwarves, true, new Point(x, y));
@@ -361,8 +361,8 @@ export function spawnInitialEntities(): void {
       // createEntity(a, undergroundLayer, 0);
 
       // {
-      // const x = Settings.BOARD_UNITS * 0.5 + 800;
-      // const y = Settings.BOARD_UNITS * 0.5;
+      // const x = Settings.WORLD_UNITS * 0.5 + 800;
+      // const y = Settings.WORLD_UNITS * 0.5;
       
       // const a = createCogwalkerConfig(tribe);
       // // const a = createScrappyConfig(tribe);

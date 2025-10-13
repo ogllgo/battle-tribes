@@ -700,9 +700,9 @@ export function getAvailableCraftingStations(tribeMember: Entity): ReadonlyArray
    const layer = getEntityLayer(tribeMember);
    
    const minChunkX = Math.max(Math.floor((tribeMemberHitbox.box.position.x - Settings.MAX_CRAFTING_STATION_USE_DISTANCE) / Settings.CHUNK_UNITS), 0);
-   const maxChunkX = Math.min(Math.floor((tribeMemberHitbox.box.position.x + Settings.MAX_CRAFTING_STATION_USE_DISTANCE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const maxChunkX = Math.min(Math.floor((tribeMemberHitbox.box.position.x + Settings.MAX_CRAFTING_STATION_USE_DISTANCE) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
    const minChunkY = Math.max(Math.floor((tribeMemberHitbox.box.position.y - Settings.MAX_CRAFTING_STATION_USE_DISTANCE) / Settings.CHUNK_UNITS), 0);
-   const maxChunkY = Math.min(Math.floor((tribeMemberHitbox.box.position.y + Settings.MAX_CRAFTING_STATION_USE_DISTANCE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const maxChunkY = Math.min(Math.floor((tribeMemberHitbox.box.position.y + Settings.MAX_CRAFTING_STATION_USE_DISTANCE) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
 
    const availableCraftingStations = new Array<CraftingStation>();
 

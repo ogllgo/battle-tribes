@@ -6,21 +6,20 @@ import { Packet } from "../../../shared/src/packets";
 import { Hitbox } from "../hitboxes";
 
 const addBaseBoxData = (packet: Packet, box: BaseBox): void => {
-   packet.addNumber(box.position.x);
-   packet.addNumber(box.position.y);
-   packet.addNumber(box.relativeAngle);
-   packet.addNumber(box.angle);
-   packet.addNumber(box.offset.x);
-   packet.addNumber(box.offset.y);
+   packet.writeNumber(box.position.x);
+   packet.writeNumber(box.position.y);
+   packet.writeNumber(box.relativeAngle);
+   packet.writeNumber(box.angle);
+   packet.writeNumber(box.offset.x);
+   packet.writeNumber(box.offset.y);
 
    // Pivot
-   packet.addNumber(box.pivot.type);
-   packet.addNumber(box.pivot.pos.x);
-   packet.addNumber(box.pivot.pos.y);
+   packet.writeNumber(box.pivot.type);
+   packet.writeNumber(box.pivot.pos.x);
+   packet.writeNumber(box.pivot.pos.y);
    
-   packet.addNumber(box.scale);
-   packet.addBoolean(box.totalFlipXMultiplier === -1 ? true : false);
-   packet.padOffset(3);
+   packet.writeNumber(box.scale);
+   packet.writeBool(box.totalFlipXMultiplier === -1 ? true : false);
 }
 const getBaseBoxDataLength = (): number => {
    return 11 * Float32Array.BYTES_PER_ELEMENT;
@@ -28,7 +27,7 @@ const getBaseBoxDataLength = (): number => {
 
 const addCircularBoxData = (packet: Packet, box: CircularBox): void => {
    addBaseBoxData(packet, box);
-   packet.addNumber(box.radius);
+   packet.writeNumber(box.radius);
 }
 const getCircularBoxDataLength = (): number => {
    return getBaseBoxDataLength() + Float32Array.BYTES_PER_ELEMENT;
@@ -36,8 +35,8 @@ const getCircularBoxDataLength = (): number => {
 
 const addRectangularBoxData = (packet: Packet, box: RectangularBox): void => {
    addBaseBoxData(packet, box);
-   packet.addNumber(box.width);
-   packet.addNumber(box.height);
+   packet.writeNumber(box.width);
+   packet.writeNumber(box.height);
 }
 const getRectangularBoxDataLength = (): number => {
    return getBaseBoxDataLength() + 2 * Float32Array.BYTES_PER_ELEMENT;
@@ -45,11 +44,8 @@ const getRectangularBoxDataLength = (): number => {
 
 export function addBoxDataToPacket(packet: Packet, box: Box): void {
    const isCircular = boxIsCircular(box);
-      
-   // Is circular
-   packet.addBoolean(isCircular);
-   packet.padOffset(3);
-
+   
+   packet.writeBool(isCircular);
    if (isCircular) {
       addCircularBoxData(packet, box);
    } else {
@@ -69,62 +65,60 @@ export function getBoxDataLength(box: Box): number {
 
 export function addHitboxDataToPacket(packet: Packet, hitbox: Hitbox): void {
    // Important that local ID is first (see how the client uses it when updating from data)
-   packet.addNumber(hitbox.localID);
+   packet.writeNumber(hitbox.localID);
 
    addBoxDataToPacket(packet, hitbox.box);
 
-   packet.addNumber(hitbox.previousPosition.x);
-   packet.addNumber(hitbox.previousPosition.y);
-   packet.addNumber(hitbox.acceleration.x);
-   packet.addNumber(hitbox.acceleration.y);
+   packet.writeNumber(hitbox.previousPosition.x);
+   packet.writeNumber(hitbox.previousPosition.y);
+   packet.writeNumber(hitbox.acceleration.x);
+   packet.writeNumber(hitbox.acceleration.y);
 
    // Tethers
-   packet.addNumber(hitbox.tethers.length);
+   packet.writeNumber(hitbox.tethers.length);
    for (const tether of hitbox.tethers) {
       const otherHitbox = tether.getOtherHitbox(hitbox);
       addBoxDataToPacket(packet, otherHitbox.box);
-      packet.addNumber(tether.idealDistance);
-      packet.addNumber(tether.springConstant);
-      packet.addNumber(tether.damping);
+      packet.writeNumber(tether.idealDistance);
+      packet.writeNumber(tether.springConstant);
+      packet.writeNumber(tether.damping);
    }
 
-   packet.addNumber(hitbox.previousRelativeAngle);
-   packet.addNumber(hitbox.angularAcceleration);
+   packet.writeNumber(hitbox.previousRelativeAngle);
+   packet.writeNumber(hitbox.angularAcceleration);
    
-   packet.addNumber(hitbox.mass);
-   packet.addNumber(hitbox.collisionType);
-   packet.addNumber(hitbox.collisionBit);
-   packet.addNumber(hitbox.collisionMask);
+   packet.writeNumber(hitbox.mass);
+   packet.writeNumber(hitbox.collisionType);
+   packet.writeNumber(hitbox.collisionBit);
+   packet.writeNumber(hitbox.collisionMask);
    // Flags
-   packet.addNumber(hitbox.flags.length);
+   packet.writeNumber(hitbox.flags.length);
    for (const flag of hitbox.flags) {
-      packet.addNumber(flag);
+      packet.writeNumber(flag);
    }
 
-   packet.addNumber(hitbox.entity);
-   packet.addNumber(hitbox.rootEntity);
+   packet.writeNumber(hitbox.entity);
+   packet.writeNumber(hitbox.rootEntity);
 
    // Parent
    if (hitbox.parent !== null) {
-      packet.addNumber(hitbox.parent.entity);
-      packet.addNumber(hitbox.parent.localID);
+      packet.writeNumber(hitbox.parent.entity);
+      packet.writeNumber(hitbox.parent.localID);
    } else {
-      packet.addNumber(0);
-      packet.addNumber(-1);
+      packet.writeNumber(0);
+      packet.writeNumber(-1);
    }
 
    // Children
    // @BANDWIDTH: might be able to just... not send this, and have the client figure out the children from themselves since they already know all the parents
-   packet.addNumber(hitbox.children.length);
+   packet.writeNumber(hitbox.children.length);
    for (const child of hitbox.children) {
-      packet.addNumber(child.entity);
-      packet.addNumber(child.localID);
+      packet.writeNumber(child.entity);
+      packet.writeNumber(child.localID);
    }
 
-   packet.addBoolean(hitbox.isPartOfParent);
-   packet.padOffset(3);
-   packet.addBoolean(hitbox.isStatic);
-   packet.padOffset(3);
+   packet.writeBool(hitbox.isPartOfParent);
+   packet.writeBool(hitbox.isStatic);
 }
 export function getHitboxDataLength(hitbox: Hitbox): number {
    let lengthBytes = Float32Array.BYTES_PER_ELEMENT;

@@ -1,6 +1,5 @@
 import { ServerComponentType, TurretAmmoType } from "battletribes-shared/components";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import Board from "../../Board";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
@@ -10,6 +9,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { currentSnapshot } from "../../game";
 
 export interface AmmoBoxComponentData {
    readonly ammoType: TurretAmmoType | null;
@@ -117,7 +117,7 @@ const updateAmmoType = (ammoBoxComponent: AmmoBoxComponent, entity: Entity, ammo
          renderInfo.attachRenderPart(ammoBoxComponent.ammoWarningRenderPart);
       }
 
-      ammoBoxComponent.ammoWarningRenderPart.opacity = (Math.sin(Board.serverTicks / 15) * 0.5 + 0.5) * 0.4 + 0.4;
+      ammoBoxComponent.ammoWarningRenderPart.opacity = (Math.sin(currentSnapshot.tick / 15) * 0.5 + 0.5) * 0.4 + 0.4;
       
       return;
    }

@@ -21,13 +21,13 @@ function getDataLength(entity: Entity): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const tribeWarriorComponent = TribeWarriorComponentArray.getComponent(entity);
 
-   packet.addNumber(tribeWarriorComponent.scars.length);
+   packet.writeNumber(tribeWarriorComponent.scars.length);
    for (let i = 0; i < tribeWarriorComponent.scars.length; i++) {
       const scar = tribeWarriorComponent.scars[i];
 
-      packet.addNumber(scar.offsetX);
-      packet.addNumber(scar.offsetY);
-      packet.addNumber(scar.rotation);
-      packet.addNumber(scar.type);
+      packet.writeNumber(scar.offsetX);
+      packet.writeNumber(scar.offsetY);
+      packet.writeNumber(scar.rotation);
+      packet.writeNumber(scar.type);
    }
 }

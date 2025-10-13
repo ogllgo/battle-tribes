@@ -2,8 +2,7 @@ import { Entity, EntityType, PlantedEntityType } from "battletribes-shared/entit
 import { assert, distance, Point, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { TunnelDoorSide } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
-import Game, { getCursorWorldPos } from "./game";
-import Board from "./Board";
+import { currentSnapshot } from "./game";
 import Client from "./networking/Client";
 import { latencyGameState } from "./game-state/game-states";
 import { BuildMenu_hide, BuildMenu_setBuildingID, BuildMenu_updateBuilding, entityCanOpenBuildMenu, isHoveringInBlueprintMenu } from "./components/game/BuildMenu";
@@ -20,7 +19,7 @@ import { TunnelComponentArray } from "./entity-components/server-components/Tunn
 import { PlanterBoxComponentArray } from "./entity-components/server-components/PlanterBoxComponent";
 import { CraftingStationComponentArray } from "./entity-components/server-components/CraftingStationComponent";
 import { getLimbByInventoryName, InventoryUseComponentArray } from "./entity-components/server-components/InventoryUseComponent";
-import { TransformComponent, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { TribeComponentArray } from "./entity-components/server-components/TribeComponent";
 import { playerTribe } from "./tribes";
 import { sendMountCarrySlotPacket, sendPickUpEntityPacket, sendStructureInteractPacket, sendModifyBuildingPacket, sendSetCarryTargetPacket, sendSetAttackTargetPacket } from "./networking/packet-sending";
@@ -41,6 +40,7 @@ import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../shared/src/collision
 import { SignInscribeMenu_setEntity } from "./components/game/SignInscribeMenu";
 import { FloorSignComponentArray } from "./entity-components/server-components/FloorSignComponent";
 import { TamingSkillID } from "../../shared/src/taming";
+import { cursorWorldPos } from "./mouse";
 
 const enum Vars {
    DEFAULT_INTERACT_RANGE = 150
@@ -198,8 +198,6 @@ const getTunnelDoorSide = (groupNum: number): TunnelDoorSide => {
 }
 
 const getSelectedCarrySlotIdx = (entity: Entity): number | null => {
-   const cursorWorldPos = getCursorWorldPos();
-   
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.hitboxes[0];
 
@@ -480,7 +478,7 @@ const interactWithEntity = (setGameInteractState: (state: GameInteractState) => 
          // @Hack
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
          const hotbarUseInfo = getLimbByInventoryName(inventoryUseComponent, InventoryName.hotbar);
-         hotbarUseInfo.lastAttackTicks = Board.serverTicks;
+         hotbarUseInfo.lastAttackTicks = currentSnapshot.tick;
          
          break;
       }
@@ -490,7 +488,7 @@ const interactWithEntity = (setGameInteractState: (state: GameInteractState) => 
          // @Hack
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
          const hotbarUseInfo = getLimbByInventoryName(inventoryUseComponent, InventoryName.hotbar);
-         hotbarUseInfo.lastAttackTicks = Board.serverTicks;
+         hotbarUseInfo.lastAttackTicks = currentSnapshot.tick;
 
          break;
       }
@@ -500,7 +498,7 @@ const interactWithEntity = (setGameInteractState: (state: GameInteractState) => 
          // @Hack
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
          const hotbarUseInfo = getLimbByInventoryName(inventoryUseComponent, InventoryName.hotbar);
-         hotbarUseInfo.lastAttackTicks = Board.serverTicks;
+         hotbarUseInfo.lastAttackTicks = currentSnapshot.tick;
          
          break;
       }
@@ -516,7 +514,7 @@ const interactWithEntity = (setGameInteractState: (state: GameInteractState) => 
          // @Hack
          const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
          const hotbarUseInfo = getLimbByInventoryName(inventoryUseComponent, InventoryName.hotbar);
-         hotbarUseInfo.lastAttackTicks = Board.serverTicks;
+         hotbarUseInfo.lastAttackTicks = currentSnapshot.tick;
 
          break;
       }
@@ -643,12 +641,10 @@ const getEntityID = (gameInteractState: GameInteractState, doPlayerProximityChec
    const playerHitbox = playerTransformComponent.hitboxes[0];
    const layer = getEntityLayer(playerInstance!);
 
-   const cursorPos = getCursorWorldPos();
-   
-   const minChunkX = Math.max(Math.floor((cursorPos.x - HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), 0);
-   const maxChunkX = Math.min(Math.floor((cursorPos.x + HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-   const minChunkY = Math.max(Math.floor((cursorPos.y - HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), 0);
-   const maxChunkY = Math.min(Math.floor((cursorPos.y + HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const minChunkX = Math.max(Math.floor((cursorWorldPos.x - HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), 0);
+   const maxChunkX = Math.min(Math.floor((cursorWorldPos.x + HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
+   const minChunkY = Math.max(Math.floor((cursorWorldPos.y - HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), 0);
+   const maxChunkY = Math.min(Math.floor((cursorWorldPos.y + HIGHLIGHT_CURSOR_RANGE) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
 
    let minDist = HIGHLIGHT_CURSOR_RANGE + 1.1;
    let entityID = -1;
@@ -672,8 +668,8 @@ const getEntityID = (gameInteractState: GameInteractState, doPlayerProximityChec
             
             // Distance from cursor
             for (const hitbox of entityTransformComponent.hitboxes) {
-               if (boxIsWithinRange(hitbox.box, cursorPos, HIGHLIGHT_CURSOR_RANGE)) {
-                  const distance = cursorPos.distanceTo(hitbox.box.position);
+               if (boxIsWithinRange(hitbox.box, cursorWorldPos, HIGHLIGHT_CURSOR_RANGE)) {
+                  const distance = cursorWorldPos.distanceTo(hitbox.box.position);
                   if (distance < minDist) {
                      minDist = distance;
                      entityID = currentEntity;

@@ -6,7 +6,6 @@ import { Settings } from "../../../../shared/src/settings";
 import { getTamingSkill, TamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { TribeType } from "../../../../shared/src/tribes";
 import { UtilVars } from "../../../../shared/src/utils";
-import Board from "../../Board";
 import { getPlayerSelectedItem } from "../../components/game/GameInteractableLayer";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
@@ -22,7 +21,6 @@ interface TamingSkillLearning {
    readonly skill: TamingSkill;
    /** Indexes will be the same as the requirements on the skill */
    readonly requirementProgressArray: Array<number>;
-   lastUpdateTicks: number;
 }
 
 export interface TamingComponentData {
@@ -98,17 +96,13 @@ function decodeData(reader: PacketReader): TamingComponentData {
       
       const skillLearning: TamingSkillLearning = {
          skill: skill,
-         requirementProgressArray: requirementProgressArray,
-         lastUpdateTicks: Board.serverTicks
+         requirementProgressArray: requirementProgressArray
       };
       skillLearningArray.push(skillLearning);
    }
    
-   const isAttacking = reader.readBoolean();
-   reader.padOffset(3);
-   
-   const isFollowing = reader.readBoolean();
-   reader.padOffset(3);
+   const isAttacking = reader.readBool();
+   const isFollowing = reader.readBool();
    
    return {
       tamingTier: tamingTier,

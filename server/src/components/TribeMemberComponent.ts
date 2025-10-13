@@ -55,9 +55,9 @@ function onTick(tribeMember: Entity): void {
    // @Incomplete: Don't vacuum items which the player doesn't have the inventory space for
    // @Bug: permits vacuuming the same item entity twice
    const minChunkX = Math.max(Math.floor((tribeMemberHitbox.box.position.x - VACUUM_RANGE) / Settings.CHUNK_UNITS), 0);
-   const maxChunkX = Math.min(Math.floor((tribeMemberHitbox.box.position.x + VACUUM_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const maxChunkX = Math.min(Math.floor((tribeMemberHitbox.box.position.x + VACUUM_RANGE) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
    const minChunkY = Math.max(Math.floor((tribeMemberHitbox.box.position.y - VACUUM_RANGE) / Settings.CHUNK_UNITS), 0);
-   const maxChunkY = Math.min(Math.floor((tribeMemberHitbox.box.position.y + VACUUM_RANGE) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const maxChunkY = Math.min(Math.floor((tribeMemberHitbox.box.position.y + VACUUM_RANGE) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
          const chunk = layer.getChunk(chunkX, chunkY);
@@ -142,5 +142,5 @@ function getDataLength(entity: Entity): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(entity);
-   packet.addString(tribeMemberComponent.name);
+   packet.writeString(tribeMemberComponent.name);
 }

@@ -127,11 +127,11 @@ export function generateMithrilOre(undergroundLayer: Layer, isInitialGeneration:
    // @Incomplete: generate in edges
 
    const density = isInitialGeneration ? Vars.INITIAL_SPAWN_ATTEMPT_DENSITY : Vars.SUBTILE_SPAWN_ATTEMPTS_PER_SECOND;
-   const numOres = Math.ceil(16 * Settings.BOARD_DIMENSIONS * Settings.BOARD_DIMENSIONS * density);
+   const numOres = Math.ceil(16 * Settings.WORLD_SIZE_TILES * Settings.WORLD_SIZE_TILES * density);
    
    for (let i = 0; i < numOres; i++) {
-      const subtileX = Math.floor(Settings.BOARD_DIMENSIONS * 4 * Math.random());
-      const subtileY = Math.floor(Settings.BOARD_DIMENSIONS * 4 * Math.random());
+      const subtileX = Math.floor(Settings.WORLD_SIZE_TILES * 4 * Math.random());
+      const subtileY = Math.floor(Settings.WORLD_SIZE_TILES * 4 * Math.random());
 
       let moveDirX: number;
       let moveDirY: number;

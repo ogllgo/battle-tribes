@@ -38,11 +38,8 @@ SnobeComponentArray.onHit = onHit;
 SnobeComponentArray.onDie = onDie;
 
 function decodeData(reader: PacketReader): SnobeComponentData {
-   const isDigging = reader.readBoolean();
-   reader.padOffset(3);
-
+   const isDigging = reader.readBool();
    const diggingProgress = reader.readNumber();
-
    return {
       isDigging: isDigging,
       diggingProgress: diggingProgress

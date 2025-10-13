@@ -64,11 +64,11 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    const totemBannerComponent = TotemBannerComponentArray.getComponent(entity);
 
    const banners = Object.values(totemBannerComponent.banners);
-   packet.addNumber(banners.length);
+   packet.writeNumber(banners.length);
    for (let i = 0; i < banners.length; i++) {
       const banner = banners[i];
-      packet.addNumber(banner.hutNum);
-      packet.addNumber(banner.layer);
-      packet.addNumber(banner.direction);
+      packet.writeNumber(banner.hutNum);
+      packet.writeNumber(banner.layer);
+      packet.writeNumber(banner.direction);
    }
 }

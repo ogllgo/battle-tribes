@@ -12,11 +12,8 @@ interface IntermediateInfo {}
 
 export interface LilypadComponent {}
 
-export const LilypadComponentArray = new ClientComponentArray<LilypadComponent, IntermediateInfo>(ClientComponentType.lilypad, true, {
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts
-});
+export const LilypadComponentArray = new ClientComponentArray<LilypadComponent, IntermediateInfo>(ClientComponentType.lilypad, true, createComponent, getMaxRenderParts);
+LilypadComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
 export function createLilypadComponentData(): LilypadComponentData {
    return {};

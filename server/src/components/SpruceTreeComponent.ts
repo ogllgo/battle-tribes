@@ -42,6 +42,6 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const spruceTreeComponent = SpruceTreeComponentArray.getComponent(entity);
-   packet.addNumber(spruceTreeComponent.treeSize);
-   packet.addNumber(spruceTreeComponent.snowVariant);
+   packet.writeNumber(spruceTreeComponent.treeSize);
+   packet.writeNumber(spruceTreeComponent.snowVariant);
 }

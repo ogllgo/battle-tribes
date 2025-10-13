@@ -1,5 +1,4 @@
-import { assert, Point } from "battletribes-shared/utils";
-import { VisibleChunkBounds } from "battletribes-shared/client-server-types";
+import { Point } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { halfWindowHeight, halfWindowWidth } from "./webgl";
 import { RENDER_CHUNK_EDGE_GENERATION, RENDER_CHUNK_SIZE, WORLD_RENDER_CHUNK_SIZE } from "./rendering/render-chunks";
@@ -7,11 +6,39 @@ import Chunk from "./Chunk";
 import Layer from "./Layer";
 import { entityExists } from "./world";
 import { Entity } from "../../shared/src/entities";
-import { calculateHitboxRenderPosition } from "./rendering/render-part-matrices";
-import { getHitboxVelocity, Hitbox } from "./hitboxes";
+import { calculateHitboxRenderPosition, getEntityTickInterp } from "./rendering/render-part-matrices";
+import { Hitbox } from "./hitboxes";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 
-export type VisiblePositionBounds = [minX: number, maxX: number, minY: number, maxY: number];
+let isSpectating = false;
+
+let cameraSubjectHitbox: Hitbox | null = null;
+
+export const cameraPosition = new Point(0, 0);
+
+/** Larger = zoomed in, smaller = zoomed out */
+// @INCOMPLETE @HACK rn i have to fiddle around with this manually, make it be calcualted automatically before public testing
+// export let cameraZoom = 1.4;
+export let cameraZoom = 1;
+
+// @HACK: this garbage is used in spectator mode
+const lastTickPosition = new Point(0, 0);
+const velocity = new Point(0, 0);
+
+export let minVisibleX = 0;
+export let maxVisibleX = 0;
+export let minVisibleY = 0;
+export let maxVisibleY = 0;
+
+export let minVisibleChunkX = 0;
+export let maxVisibleChunkX = 0;
+export let minVisibleChunkY = 0;
+export let maxVisibleChunkY = 0;
+
+export let minVisibleRenderChunkX = -1;
+export let maxVisibleRenderChunkX = -1;
+export let minVisibleRenderChunkY = -1;
+export let maxVisibleRenderChunkY = -1;
 
 // @Incomplete?
 // const registerVisibleChunk = (chunk: Chunk): void => {
@@ -23,6 +50,7 @@ export type VisiblePositionBounds = [minX: number, maxX: number, minY: number, m
 //    // removeEntityRenderedChunkData(chunk.x, chunk.y);
 // }
 
+// @Incomplete: unused
 const getChunksFromRange = (layer: Layer, minChunkX: number, maxChunkX: number, minChunkY: number, maxChunkY: number): ReadonlyArray<Chunk> => {
    const chunks = new Array<Chunk>();
    
@@ -36,6 +64,7 @@ const getChunksFromRange = (layer: Layer, minChunkX: number, maxChunkX: number, 
    return chunks;
 }
 
+// @Incomplete: unused
 /** Gets all the chunks in chunks B missing from chunks A */
 const getMissingChunks = (chunksA: ReadonlyArray<Chunk>, chunksB: ReadonlyArray<Chunk>): ReadonlyArray<Chunk> => {
    const missing = new Array<Chunk>();
@@ -47,167 +76,99 @@ const getMissingChunks = (chunksA: ReadonlyArray<Chunk>, chunksB: ReadonlyArray<
    return missing;
 }
 
-abstract class Camera {
-   public static isSpectating = false;
-   
-   /** Larger = zoomed in, smaller = zoomed out */
-   // @Temporary
-   // public static zoom: number = 1.4;
-   public static zoom: number = 1;
+export function setCameraZoom(zoom: number): void {
+   cameraZoom = zoom;
+}
 
-   public static trackedEntity: Entity = 0;
-   public static trackedHitbox: Hitbox | null = null;
-
-   public static position = new Point(0, 0);
-
-   // this garbage is used in spectator mode
-   public static lastTickPosition = new Point(0, 0);
-   public static velocity = new Point(0, 0);
-   
-   public static isFree = false;
-
-   public static minVisibleX = 0;
-   public static maxVisibleX = 0;
-   public static minVisibleY = 0;
-   public static maxVisibleY = 0;
-
-   public static minVisibleChunkX = 0;
-   public static maxVisibleChunkX = 0;
-   public static minVisibleChunkY = 0;
-   public static maxVisibleChunkY = 0;
-
-   public static minVisibleRenderChunkX = -1;
-   public static maxVisibleRenderChunkX = -1;
-   public static minVisibleRenderChunkY = -1;
-   public static maxVisibleRenderChunkY = -1;
-
-   // @Hack!!!!
-   public static verybadIsTracking = false;
-
-   public static applyCameraKinematics(): void {
-      // this.lastTickPosition.x += this.velocity.x * Settings.DT_S;
-      // this.lastTickPosition.y += this.velocity.y * Settings.DT_S;
-   }
-
-   public static setInitialVisibleChunkBounds(layer: Layer): void {
-      this.minVisibleChunkX = Math.max(Math.floor((this.position.x - halfWindowWidth / this.zoom) / Settings.CHUNK_UNITS), 0);
-      this.maxVisibleChunkX = Math.min(Math.floor((this.position.x + halfWindowWidth / this.zoom) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-      this.minVisibleChunkY = Math.max(Math.floor((this.position.y - halfWindowHeight / this.zoom) / Settings.CHUNK_UNITS), 0);
-      this.maxVisibleChunkY = Math.min(Math.floor((this.position.y + halfWindowHeight / this.zoom) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-
-      const newChunks = getChunksFromRange(layer, this.minVisibleChunkX, this.maxVisibleChunkX, this.minVisibleChunkY, this.maxVisibleChunkY);
-
-      // for (const chunk of newChunks) {
-      //    registerVisibleChunk(chunk);
-      // }
-   }
-
-   public static getVisibleChunkBounds(): VisibleChunkBounds {
-      return [this.minVisibleChunkX, this.maxVisibleChunkX, this.minVisibleChunkY, this.maxVisibleChunkY];
-   }
-
-   public static trackEntity(trackedEntity: Entity): void {
-      // @Hack
-      if (entityExists(trackedEntity)) {
-         const transformComponent = TransformComponentArray.getComponent(trackedEntity);
-         const hitbox = transformComponent.hitboxes[0];
-         this.trackedHitbox = hitbox;
-      } else {
-         this.trackedHitbox = null;
-      }
-      
-      this.trackedEntity = trackedEntity;
-      this.isFree = trackedEntity === 0;
-   }
-
-   public static setPosition(x: number, y: number): void {
-      this.position.x = x;
-      this.position.y = y;
-      this.lastTickPosition.x = x;
-      this.lastTickPosition.y = y;
-   }
-
-   public static updateSpectatorPosition(deltaTime: number): void {
-      this.position.x += this.velocity.x * deltaTime;
-      this.position.y += this.velocity.y * deltaTime;
-   }
-
-   public static update(tickInterp: number): void {
-      if (this.isSpectating) {
-         // this.position.x = this.lastTickPosition.x + this.velocity.x * Settings.DT_S * frameProgress;
-         // this.position.y = this.lastTickPosition.y + this.velocity.y * Settings.DT_S * frameProgress;
-         this.position.x = this.lastTickPosition.x;
-         this.position.y = this.lastTickPosition.y;
-         return;
-      }
-
-      if (this.isFree) {
-         return;
-      }
-      
-      if (!entityExists(this.trackedEntity)) {
-         this.trackedEntity = 0;
-         this.trackedHitbox = null;
-         return;
-      }
-
-      assert(this.trackedHitbox !== null);
-
-      const pos = calculateHitboxRenderPosition(this.trackedHitbox, tickInterp);
-      this.position.x = pos.x;
-      this.position.y = pos.y;
-
-      // Update visible chunk bounds
-
-      // const previousChunks = getChunksFromRange(layer, this.minVisibleChunkX, this.maxVisibleChunkX, this.minVisibleChunkY, this.maxVisibleChunkY);
-      
-      this.minVisibleX = this.position.x - halfWindowWidth / this.zoom;
-      this.maxVisibleX = this.position.x + halfWindowWidth / this.zoom;
-      this.minVisibleY = this.position.y - halfWindowHeight / this.zoom;
-      this.maxVisibleY = this.position.y + halfWindowHeight / this.zoom;
-      
-      this.minVisibleChunkX = Math.max(Math.floor(this.minVisibleX / Settings.CHUNK_UNITS), 0);
-      this.maxVisibleChunkX = Math.min(Math.floor(this.maxVisibleX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-      this.minVisibleChunkY = Math.max(Math.floor(this.minVisibleY / Settings.CHUNK_UNITS), 0);
-      this.maxVisibleChunkY = Math.min(Math.floor(this.maxVisibleY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
-
-      // const newChunks = getChunksFromRange(layer, this.minVisibleChunkX, this.maxVisibleChunkX, this.minVisibleChunkY, this.maxVisibleChunkY);
-
-      // const removedChunks = getMissingChunks(newChunks, previousChunks);
-      // for (const chunk of removedChunks) {
-      //    deregisterVisibleChunk(chunk);
-      // }
-
-      // const addedChunks = getMissingChunks(previousChunks, newChunks);
-      // for (const chunk of addedChunks) {
-      //    registerVisibleChunk(chunk);
-      // }
-
-      // Update visible render chunk bounds
-      const unitsInChunk = Settings.TILE_SIZE * RENDER_CHUNK_SIZE;
-      this.minVisibleRenderChunkX = Math.max(Math.floor((this.position.x - halfWindowWidth / this.zoom) / unitsInChunk), -RENDER_CHUNK_EDGE_GENERATION);
-      this.maxVisibleRenderChunkX = Math.min(Math.floor((this.position.x + halfWindowWidth / this.zoom) / unitsInChunk), WORLD_RENDER_CHUNK_SIZE + RENDER_CHUNK_EDGE_GENERATION - 1);
-      this.minVisibleRenderChunkY = Math.max(Math.floor((this.position.y - halfWindowHeight / this.zoom) / unitsInChunk), -RENDER_CHUNK_EDGE_GENERATION);
-      this.maxVisibleRenderChunkY = Math.min(Math.floor((this.position.y + halfWindowHeight / this.zoom) / unitsInChunk), WORLD_RENDER_CHUNK_SIZE + RENDER_CHUNK_EDGE_GENERATION - 1);
-   }
-
-   /** X position in the screen (0 = left, windowWidth = right) */
-   public static calculateXScreenPos(x: number): number {
-      // Account for the player position
-      const playerRelativePosition = x - this.position.x;
-      
-      // Account for zoom
-      return playerRelativePosition * this.zoom + halfWindowWidth;
-   }
-
-   /** Y position in the screen (0 = bottom, windowHeight = top) */
-   public static calculateYScreenPos(y: number): number {
-      // Account for the player position
-      const playerRelativePosition = y - this.position.y;
-      
-      // Account for zoom
-      return playerRelativePosition * this.zoom + halfWindowHeight;
+export function setCameraSubject(cameraSubject: Entity): void {
+   if (entityExists(cameraSubject)) {
+      const transformComponent = TransformComponentArray.getComponent(cameraSubject);
+      const hitbox = transformComponent.hitboxes[0];
+      cameraSubjectHitbox = hitbox;
+   } else {
+      cameraSubjectHitbox = null;
    }
 }
 
-export default Camera;
+export function getCameraSubject(): Entity | null {
+   if (cameraSubjectHitbox === null || !entityExists(cameraSubjectHitbox.entity)) {
+      return null;
+   }
+   return cameraSubjectHitbox.entity;
+}
+
+export function setCameraPosition(x: number, y: number): void {
+   cameraPosition.x = x;
+   cameraPosition.y = y;
+}
+
+export function refreshCameraPosition(clientTickInterp: number, serverTickInterp: number): void {
+   // @CLEANUP with the ghost rework this shouldn't exist, it should just use the same movement shenanigans with a fake player.
+   if (isSpectating) {
+      // this.position.x = this.lastTickPosition.x + this.velocity.x * Settings.DT_S * frameProgress;
+      // this.position.y = this.lastTickPosition.y + this.velocity.y * Settings.DT_S * frameProgress;
+      cameraPosition.x = lastTickPosition.x;
+      cameraPosition.y = lastTickPosition.y;
+      return;
+   }
+
+   if (cameraSubjectHitbox === null) {
+      return;
+   }
+
+   const tickInterp = getEntityTickInterp(cameraSubjectHitbox.entity, clientTickInterp, serverTickInterp);
+   const pos = calculateHitboxRenderPosition(cameraSubjectHitbox, tickInterp);
+   cameraPosition.set(pos);
+}
+
+export function refreshCameraView(): void {
+   // const previousChunks = getChunksFromRange(layer, this.minVisibleChunkX, this.maxVisibleChunkX, this.minVisibleChunkY, this.maxVisibleChunkY);
+   
+   minVisibleX = cameraPosition.x - halfWindowWidth / cameraZoom;
+   maxVisibleX = cameraPosition.x + halfWindowWidth / cameraZoom;
+   minVisibleY = cameraPosition.y - halfWindowHeight / cameraZoom;
+   maxVisibleY = cameraPosition.y + halfWindowHeight / cameraZoom;
+   
+   minVisibleChunkX = Math.max(Math.floor(minVisibleX / Settings.CHUNK_UNITS), 0);
+   maxVisibleChunkX = Math.min(Math.floor(maxVisibleX / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
+   minVisibleChunkY = Math.max(Math.floor(minVisibleY / Settings.CHUNK_UNITS), 0);
+   maxVisibleChunkY = Math.min(Math.floor(maxVisibleY / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
+
+   // const newChunks = getChunksFromRange(layer, this.minVisibleChunkX, this.maxVisibleChunkX, this.minVisibleChunkY, this.maxVisibleChunkY);
+
+   // const removedChunks = getMissingChunks(newChunks, previousChunks);
+   // for (const chunk of removedChunks) {
+   //    deregisterVisibleChunk(chunk);
+   // }
+
+   // const addedChunks = getMissingChunks(previousChunks, newChunks);
+   // for (const chunk of addedChunks) {
+   //    registerVisibleChunk(chunk);
+   // }
+
+   // Update visible render chunk bounds
+   const RENDER_CHUNK_UNITS = Settings.TILE_SIZE * RENDER_CHUNK_SIZE;
+   minVisibleRenderChunkX = Math.max(Math.floor((cameraPosition.x - halfWindowWidth / cameraZoom) / RENDER_CHUNK_UNITS), -RENDER_CHUNK_EDGE_GENERATION);
+   maxVisibleRenderChunkX = Math.min(Math.floor((cameraPosition.x + halfWindowWidth / cameraZoom) / RENDER_CHUNK_UNITS), WORLD_RENDER_CHUNK_SIZE + RENDER_CHUNK_EDGE_GENERATION - 1);
+   minVisibleRenderChunkY = Math.max(Math.floor((cameraPosition.y - halfWindowHeight / cameraZoom) / RENDER_CHUNK_UNITS), -RENDER_CHUNK_EDGE_GENERATION);
+   maxVisibleRenderChunkY = Math.min(Math.floor((cameraPosition.y + halfWindowHeight / cameraZoom) / RENDER_CHUNK_UNITS), WORLD_RENDER_CHUNK_SIZE + RENDER_CHUNK_EDGE_GENERATION - 1);
+}
+
+/** X position in the screen (0, 0) = bottom left, (windowWidth, windowHeight) = top right) */
+export function worldToScreenPos(worldPos: Point): Point {
+   // Account for the player position
+   const playerRelativePositionX = worldPos.x - cameraPosition.x;
+   const playerRelativePositionY = worldPos.y - cameraPosition.y;
+   
+   // Account for zoom
+   return new Point(
+      playerRelativePositionX * cameraZoom + halfWindowWidth,
+      playerRelativePositionY * cameraZoom + halfWindowHeight
+   );
+}
+
+export function screenToWorldPos(screenPos: Point): Point {
+   const worldX = (screenPos.x - halfWindowWidth) / cameraZoom + cameraPosition.x;
+   const worldY = -(screenPos.y - halfWindowHeight) / cameraZoom + cameraPosition.y;
+   return new Point(worldX, worldY);
+}

@@ -1,6 +1,5 @@
-import { clamp, distance, lerp } from "battletribes-shared/utils";
+import { clamp, distance, lerp, Point } from "battletribes-shared/utils";
 import { useEffect, useState } from "react";
-import Camera from "../../Camera";
 import { getHoveredEntityID } from "../../entity-selection";
 import { latencyGameState } from "../../game-state/game-states";
 import { BuildMenu_isOpen } from "./BuildMenu";
@@ -11,6 +10,7 @@ import { Entity } from "../../../../shared/src/entities";
 import { playerTribe } from "../../tribes";
 import { playerInstance } from "../../player";
 import { Hitbox } from "../../hitboxes";
+import { worldToScreenPos } from "../../camera";
 
 const Y_OFFSET = -50;
 
@@ -89,10 +89,11 @@ export function updateInspectHealthBar(): void {
    const healthComponent = HealthComponentArray.getComponent(hoveredEntity);
    InspectHealthBar_setHealth(healthComponent.health);
 
-   // @INCOMPLETE: do render position !
+   // @INCOMPLETE @Bug: do render position !
    const barX = hitbox.box.position.x;
    const barY = hitbox.box.position.y + Y_OFFSET;
-   InspectHealthBar_setPos(Camera.calculateXScreenPos(barX), Camera.calculateYScreenPos(barY));
+   const screenPos = worldToScreenPos(new Point(barX, barY));
+   InspectHealthBar_setPos(screenPos.x, screenPos.y);
 
 
    const dist = distance(barX, barY, hitbox.box.position.x, hitbox.box.position.y);

@@ -9,9 +9,9 @@ export const enum LightLevelVars {
 export type LightLevelNode = number;
 
 export function getLightLevelNodeX(node: LightLevelNode): number {
-   return node % (Settings.FULL_BOARD_DIMENSIONS * 4) - Settings.EDGE_GENERATION_DISTANCE * 4;
+   return node % (Settings.FULL_WORLD_DIMENSIONS * 4) - Settings.EDGE_GENERATION_DISTANCE * 4;
 }
 
 export function getLightLevelNodeY(node: LightLevelNode): number {
-   return Math.floor(node / (Settings.FULL_BOARD_DIMENSIONS * 4)) - Settings.EDGE_GENERATION_DISTANCE * 4;
+   return Math.floor(node / (Settings.FULL_WORLD_DIMENSIONS * 4)) - Settings.EDGE_GENERATION_DISTANCE * 4;
 }

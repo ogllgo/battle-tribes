@@ -48,8 +48,7 @@ function decodeData(reader: PacketReader): TombstoneComponentData {
    const zombieSpawnX = reader.readNumber();
    const zombieSpawnY = reader.readNumber();
 
-   const hasDeathInfo = reader.readBoolean();
-   reader.padOffset(3);
+   const hasDeathInfo = reader.readBool();
    
    let deathInfo: DeathInfo | null;
    if (hasDeathInfo) {

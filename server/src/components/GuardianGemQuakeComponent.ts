@@ -67,5 +67,5 @@ function getDataLength(): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const age = getEntityAgeTicks(entity);
    const life = getLife(age);
-   packet.addNumber(life);
+   packet.writeNumber(life);
 }

@@ -16,9 +16,7 @@ export const BlockAttackComponentArray = new ServerComponentArray<BlockAttackCom
 BlockAttackComponentArray.updateFromData = updateFromData;
 
 function decodeData(reader: PacketReader): BlockAttackComponentData {
-   const hasBlocked = reader.readBoolean();
-   reader.padOffset(3);
-   
+   const hasBlocked = reader.readBool();
    return {
       hasBlocked: hasBlocked
    };

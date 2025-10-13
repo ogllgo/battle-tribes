@@ -46,7 +46,7 @@ export function buildingCandidateIsValid(candidate: BuildingCandidate): boolean 
       const maxX = box.calculateBoundsMaxX();
       const minY = box.calculateBoundsMinY();
       const maxY = box.calculateBoundsMaxY();
-      if (minX < 0 || maxX >= Settings.BOARD_UNITS || minY < 0 || maxY >= Settings.BOARD_UNITS) {
+      if (minX < 0 || maxX >= Settings.WORLD_UNITS || minY < 0 || maxY >= Settings.WORLD_UNITS) {
          return false;
       }
    }

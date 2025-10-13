@@ -22,6 +22,6 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const mossComponent = MossComponentArray.getComponent(entity);
-   packet.addNumber(mossComponent.size);
-   packet.addNumber(mossComponent.colour);
+   packet.writeNumber(mossComponent.size);
+   packet.writeNumber(mossComponent.colour);
 }

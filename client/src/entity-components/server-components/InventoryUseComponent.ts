@@ -16,7 +16,6 @@ import { PacketReader } from "battletribes-shared/packets";
 import { Hotbar_updateRightThrownBattleaxeItemID } from "../../components/game/inventories/Hotbar";
 import { createZeroedLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, SPEAR_CHARGED_LIMB_STATE, interpolateLimbState, copyLimbState } from "battletribes-shared/attack-patterns";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
-import { playSound } from "../../sound";
 import { EntityComponentData, getEntityRenderInfo } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
@@ -25,6 +24,7 @@ import { getRenderPartRenderPosition } from "../../rendering/render-part-matrice
 import { getHumanoidRadius } from "./TribesmanComponent";
 import { playerInstance } from "../../player";
 import { getHitboxVelocity } from "../../hitboxes";
+import { currentSnapshot } from "../../game";
 
 export interface LimbInfo {
    selectedItemSlot: number;
@@ -62,6 +62,12 @@ export interface LimbInfo {
    animationTicksElapsed: number;
 
    torchLight: Light | null;
+
+   // @HACK fo da blocking effects which will be clean up into serverside based thing l@r anyways.
+   lastBlockTick: number;
+   blockPositionX: number;
+   blockPositionY: number;
+   blockType: BlockType;
 }
 
 export interface InventoryUseComponentData {
@@ -326,7 +332,11 @@ const createZeroedLimbInfo = (inventoryName: InventoryName): LimbInfo => {
       animationEndOffset: new Point(-1, -1),
       animationDurationTicks: 0,
       animationTicksElapsed: 0,
-      torchLight: null
+      torchLight: null,
+      lastBlockTick: 0,
+      blockPositionX: 0,
+      blockPositionY: 0,
+      blockType: 0
    };
 }
 
@@ -1444,7 +1454,8 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
 }
 
 const playBlockEffects = (x: number, y: number, blockType: BlockType): void => {
-   playSound(blockType === BlockType.shieldBlock ? "shield-block.mp3" : "block.mp3", blockType === BlockType.toolBlock ? 0.8 : 0.5, 1, new Point(x, y), null);
+   // @HACK @Incomplete removed this cuz cant access the layer in start. aaaaaaaa
+   // playSound(blockType === BlockType.shieldBlock ? "shield-block.mp3" : "block.mp3", blockType === BlockType.toolBlock ? 0.8 : 0.5, 1, new Point(x, y), layer);
    
    for (let i = 0; i < 8; i++) {
       const offsetMagnitude = randFloat(0, 18);
@@ -1533,9 +1544,10 @@ const updateLimbInfoFromData = (limbInfo: LimbInfo, reader: PacketReader): void 
       limbInfo.animationStartOffset.x = -1;
    }
 
-   if (lastBlockTick === Board.serverTicks) {
-      playBlockEffects(blockPositionX, blockPositionY, blockType);
-   }
+   limbInfo.lastBlockTick = lastBlockTick;
+   limbInfo.blockPositionX = blockPositionX;
+   limbInfo.blockPositionY = blockPositionY;
+   limbInfo.blockType = blockType;
 }
 
 function updateFromData(data: InventoryUseComponentData, entity: Entity): void {
@@ -1547,6 +1559,10 @@ function updateFromData(data: InventoryUseComponentData, entity: Entity): void {
 
       inventoryUseComponent.limbInfos.push(limbInfo);
       updateLimb(inventoryUseComponent, entity, i, limbInfo);
+
+      if (limbInfo.lastBlockTick === currentSnapshot.tick) {
+         playBlockEffects(limbInfo.blockPositionX, limbInfo.blockPositionY, limbInfo.blockType);
+      }
    }
 }
 
@@ -1576,7 +1592,7 @@ function updatePlayerFromData(data: InventoryUseComponentData): void {
       limbInfo.blockAttack = limbInfoData.blockAttack;
       
       // @INCOMPLETE no worky it brokey
-      // if (limbInfoData.lastBlockTick === Board.serverTicks) {
+      // if (limbInfoData.lastBlockTick === currentSnapshot.tick) {
       //    playBlockEffects(blockPositionX, blockPositionY, blockType);
       // }
 

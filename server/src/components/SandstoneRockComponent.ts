@@ -19,5 +19,5 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const sandstoneRockComponent = SandstoneRockComponentArray.getComponent(entity);
-   packet.addNumber(sandstoneRockComponent.size);
+   packet.writeNumber(sandstoneRockComponent.size);
 }

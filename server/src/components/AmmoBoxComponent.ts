@@ -66,6 +66,6 @@ function getDataLength(): number {
 function addDataToPacket(packet: Packet, entityID: number): void {
    const ballistaComponent = AmmoBoxComponentArray.getComponent(entityID);
 
-   packet.addNumber(ballistaComponent.ammoType);
-   packet.addNumber(ballistaComponent.ammoRemaining);
+   packet.writeNumber(ballistaComponent.ammoType);
+   packet.writeNumber(ballistaComponent.ammoRemaining);
 }

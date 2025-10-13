@@ -40,7 +40,7 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, fragment: Entity): void {
    const pricklyPearFragmentProjectileComponent = PricklyPearFragmentProjectileComponentArray.getComponent(fragment);
-   packet.addNumber(pricklyPearFragmentProjectileComponent.variant);
+   packet.writeNumber(pricklyPearFragmentProjectileComponent.variant);
 }
 
 function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {

@@ -1,7 +1,7 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { getHitboxVelocity, Hitbox } from "../../hitboxes";
+import { getHitboxVelocity } from "../../hitboxes";
 import { createArrowDestroyParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -16,12 +16,9 @@ interface IntermediateInfo {}
 
 export interface BallistaWoodenBoltComponent {}
 
-export const BallistaWoodenBoltComponentArray = new ClientComponentArray<BallistaWoodenBoltComponent, IntermediateInfo>(ClientComponentType.ballistaWoodenBolt, true, {
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onDie: onDie
-});
+export const BallistaWoodenBoltComponentArray = new ClientComponentArray<BallistaWoodenBoltComponent, IntermediateInfo>(ClientComponentType.ballistaWoodenBolt, true, createComponent, getMaxRenderParts);
+BallistaWoodenBoltComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+BallistaWoodenBoltComponentArray.onDie = onDie;
 
 export function createBallistaWoodenBoltComponentData(): BallistaWoodenBoltComponentData {
    return {};

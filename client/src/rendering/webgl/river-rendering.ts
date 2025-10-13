@@ -4,12 +4,12 @@ import { RIVER_STEPPING_STONE_SIZES, RiverSteppingStoneData, RiverSteppingStoneS
 import { Settings } from "battletribes-shared/settings";
 import { createWebGLProgram, gl } from "../../webgl";
 import { getTexture } from "../../textures";
-import Camera from "../../Camera";
 import { RenderChunkRiverInfo, WORLD_RENDER_CHUNK_SIZE, getRenderChunkMaxTileX, getRenderChunkMaxTileY, getRenderChunkMinTileX, getRenderChunkMinTileY, getRenderChunkRiverInfo } from "../render-chunks";
 import { Tile } from "../../Tile";
 import { UBOBindingIndex, bindUBOToProgram } from "../ubos";
 import Layer, { getTileIndexIncludingEdges, tileIsWithinEdge } from "../../Layer";
 import { layers, undergroundLayer } from "../../world";
+import { minVisibleRenderChunkX, maxVisibleRenderChunkX, minVisibleRenderChunkY, maxVisibleRenderChunkY } from "../../camera";
 
 const SHALLOW_WATER_COLOUR = [118/255, 185/255, 242/255] as const;
 const DEEP_WATER_COLOUR = [86/255, 141/255, 184/255] as const;
@@ -1639,8 +1639,8 @@ export function calculateVisibleRiverInfo(layer: Layer): ReadonlyArray<RenderChu
    // @Speed: Garbage collection
    const riverInfoArray = new Array<RenderChunkRiverInfo>();
 
-   for (let renderChunkX = Camera.minVisibleRenderChunkX; renderChunkX <= Camera.maxVisibleRenderChunkX; renderChunkX++) {
-      for (let renderChunkY = Camera.minVisibleRenderChunkY; renderChunkY <= Camera.maxVisibleRenderChunkY; renderChunkY++) {
+   for (let renderChunkX = minVisibleRenderChunkX; renderChunkX <= maxVisibleRenderChunkX; renderChunkX++) {
+      for (let renderChunkY = minVisibleRenderChunkY; renderChunkY <= maxVisibleRenderChunkY; renderChunkY++) {
          const riverInfo = getRenderChunkRiverInfo(layer, renderChunkX, renderChunkY);
          if (riverInfo !== null) {
             riverInfoArray.push(riverInfo);

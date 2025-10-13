@@ -1,6 +1,5 @@
 import { assertBoxIsCircular, assertBoxIsRectangular, Box, boxIsCircular, HitboxCollisionType, HitboxFlag, updateVertexPositionsAndSideAxes } from "battletribes-shared/boxes/boxes";
 import { CollisionBit } from "../../shared/src/collision";
-import Board from "./Board";
 import { Entity } from "../../shared/src/entities";
 import { Point, randAngle, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "../../shared/src/utils";
 import { Settings } from "../../shared/src/settings";
@@ -14,6 +13,7 @@ import { PacketReader } from "../../shared/src/packets";
 import { readBoxFromData } from "./networking/packet-hitboxes";
 import CircularBox from "../../shared/src/boxes/CircularBox";
 import RectangularBox from "../../shared/src/boxes/RectangularBox";
+import { currentSnapshot } from "./game";
 
 export interface HitboxTether {
    readonly originBox: Box;
@@ -125,7 +125,8 @@ export function createHitbox(localID: number, entity: Entity, rootEntity: Entity
       flags: flags,
       isPartOfParent: isPartOfParent,
       isStatic: isStatic,
-      lastUpdateTicks: Board.serverTicks
+      // Can't use the current snapshot's tick here cuz what if the hitbox is being created during the creation of the current snapshot! I gotta set it once the hitbox is actually added to the transform component.
+      lastUpdateTicks: 0
    };
 }
 
@@ -151,7 +152,7 @@ export function createHitboxQuick(localID: number, parent: Hitbox | null, box: B
       collisionBit: collisionBit,
       collisionMask: collisionMask,
       flags: flags,
-      lastUpdateTicks: Board.serverTicks
+      lastUpdateTicks: currentSnapshot.tick
    };
 }
 export function readHitboxFromData(reader: PacketReader, localID: number, entityHitboxes: ReadonlyArray<Hitbox>): Hitbox {
@@ -216,10 +217,8 @@ export function readHitboxFromData(reader: PacketReader, localID: number, entity
       }
    }
 
-   const isPartOfParent = reader.readBoolean();
-   reader.padOffset(3);
-   const isStatic = reader.readBoolean();
-   reader.padOffset(3);
+   const isPartOfParent = reader.readBool();
+   const isStatic = reader.readBool();
 
    return createHitbox(localID, entity, rootEntity, parentHitbox, children, isPartOfParent, isStatic, box, previousPosition, acceleration, tethers, previousRelativeAngle, angularAcceleration, mass, collisionType, collisionBit, collisionMask, flags);
 }
@@ -279,7 +278,7 @@ export function updateHitboxFromData(hitbox: Hitbox, data: Hitbox): void {
    hitbox.isPartOfParent = data.isPartOfParent;
    hitbox.isStatic = data.isStatic;
 
-   hitbox.lastUpdateTicks = Board.serverTicks;
+   hitbox.lastUpdateTicks = currentSnapshot.tick;
 }
 
 export function updatePlayerHitboxFromData(hitbox: Hitbox, data: Hitbox): void {
@@ -316,7 +315,7 @@ export function updatePlayerHitboxFromData(hitbox: Hitbox, data: Hitbox): void {
       }
    }
 
-   hitbox.lastUpdateTicks = Board.serverTicks;
+   hitbox.lastUpdateTicks = currentSnapshot.tick;
 }
 
 export function getHitboxVelocity(hitbox: Hitbox): Point {

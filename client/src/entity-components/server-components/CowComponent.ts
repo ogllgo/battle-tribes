@@ -49,10 +49,8 @@ CowComponentArray.onDie = onDie;
 function decodeData(reader: PacketReader): CowComponentData {
    const species = reader.readNumber();
    const grazeProgress = reader.readNumber();
-   const isRamming = reader.readBoolean();
-   reader.padOffset(3);
+   const isRamming = reader.readBool();
    const stamina = reader.readNumber();
-
    return {
       species: species,
       grazeProgress: grazeProgress,

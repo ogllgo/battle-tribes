@@ -17,8 +17,6 @@ export default class ServerComponentArray<
    public updateFromData?(data: ComponentData, entity: Entity): void;
    /** Updates the player instance from server data */
    public updatePlayerFromData?(data: ComponentData, isInitialData: boolean): void;
-   /** Called on the player instance after all components are updated from server data */
-   public updatePlayerAfterData?(): void;
    public calculateTint?(entity: Entity): ComponentTint;
 
    constructor(componentType: ComponentType, isActiveByDefault: boolean, createComponent: (entityComponentData: Readonly<EntityComponentData>, intermediateInfo: Readonly<ComponentIntermediateInfo>, renderInfo: EntityRenderInfo) => T, getMaxRenderParts: (entityComponentData: EntityComponentData) => number, decodeData: (reader: PacketReader) => ComponentData) {

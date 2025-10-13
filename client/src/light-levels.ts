@@ -1,6 +1,6 @@
 import { LightLevelNode } from "../../shared/src/light-levels";
 import { PacketReader } from "../../shared/src/packets";
-import Board from "./Board";
+import { currentSnapshot } from "./game";
 import { getLightLevelRenderingChunkIndex, LightLevelBGUpdateInfo, updateLightLevelRenderingChunks } from "./rendering/webgl/light-levels-bg-rendering";
 
 interface LightLevelNodeInfo {
@@ -26,12 +26,12 @@ export function updateLightLevelsFromData(reader: PacketReader): void {
       if (typeof existingNodeInfo === "undefined") {
          const nodeInfo: LightLevelNodeInfo = {
             lightLevel: lightLevel,
-            lastUpdateTicks: Board.serverTicks
+            lastUpdateTicks: currentSnapshot.tick
          };
          nodeInfos.set(node, nodeInfo);
       } else {
          existingNodeInfo.lightLevel = lightLevel;
-         existingNodeInfo.lastUpdateTicks = Board.serverTicks;
+         existingNodeInfo.lastUpdateTicks = currentSnapshot.tick;
       }
 
       const renderingChunkIdx = getLightLevelRenderingChunkIndex(node);
@@ -53,7 +53,7 @@ export function updateLightLevelsFromData(reader: PacketReader): void {
    for (const pair of nodeInfos) {
       const node = pair[0];
       const nodeInfo = pair[1];
-      if (nodeInfo.lastUpdateTicks === Board.serverTicks) {
+      if (nodeInfo.lastUpdateTicks === currentSnapshot.tick) {
          continue;
       }
       

@@ -39,9 +39,9 @@ const propagateAmbientLightFactor = (ambientLightFactors: Float32Array, nodeX: n
    const RANGE = 80;
 
    const minNodeX = Math.max(nodeX - RANGE, -Settings.EDGE_GENERATION_DISTANCE * 4);
-   const maxNodeX = Math.min(nodeX + RANGE, (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+   const maxNodeX = Math.min(nodeX + RANGE, (Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
    const minNodeY = Math.max(nodeY - RANGE, -Settings.EDGE_GENERATION_DISTANCE * 4);
-   const maxNodeY = Math.min(nodeY + RANGE, (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+   const maxNodeY = Math.min(nodeY + RANGE, (Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
    
    // @Speed: only run this propagate function on the edge nodes of dropdown zones, and fill in the inside node with 1's
    
@@ -62,9 +62,9 @@ const propagateAmbientLightFactor = (ambientLightFactors: Float32Array, nodeX: n
 
 const spreadDropdownCloseness = (dropdownTileX: number, dropdownTileY: number, closenessArray: Float32Array): void => {
    const minTileX = Math.max(dropdownTileX - Vars.DROPDOWN_TILE_WEIGHT_REDUCTION_RANGE, -Settings.EDGE_GENERATION_DISTANCE);
-   const maxTileX = Math.min(dropdownTileX + Vars.DROPDOWN_TILE_WEIGHT_REDUCTION_RANGE, Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE - 1);
+   const maxTileX = Math.min(dropdownTileX + Vars.DROPDOWN_TILE_WEIGHT_REDUCTION_RANGE, Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE - 1);
    const minTileY = Math.max(dropdownTileY - Vars.DROPDOWN_TILE_WEIGHT_REDUCTION_RANGE, -Settings.EDGE_GENERATION_DISTANCE);
-   const maxTileY = Math.min(dropdownTileY + Vars.DROPDOWN_TILE_WEIGHT_REDUCTION_RANGE, Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE - 1);
+   const maxTileY = Math.min(dropdownTileY + Vars.DROPDOWN_TILE_WEIGHT_REDUCTION_RANGE, Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE - 1);
    
    for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
       for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
@@ -87,11 +87,11 @@ const spreadDropdownCloseness = (dropdownTileX: number, dropdownTileY: number, c
 
 const generateDepths = (dropdowns: ReadonlyArray<TileIndex>): ReadonlyArray<number> => {
    // To instill some randomness into the depths
-   const weightMap = generateOctavePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 35, 12, 1.75, 0.65);
+   const weightMap = generateOctavePerlinNoise(Settings.FULL_WORLD_SIZE_TILES, Settings.FULL_WORLD_SIZE_TILES, 35, 12, 1.75, 0.65);
    
    const depths = new Array<TileIndex>();
-   for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
-      for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
+   for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
+      for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
          let distTiles = Number.MAX_SAFE_INTEGER;
          for (const dropdownTileIndex of dropdowns) {
             const dropdownTileX = getTileX(dropdownTileIndex);
@@ -157,7 +157,7 @@ const getMossHumidity = (layer: Layer, x: number, y: number): number => {
 
 const setWaterInMossHumidityMultipliers = (mossSpawnDistribution: Readonly<SpawnDistribution>, mossHumidityMultipliers: Float32Array, waterTileIndex: number): void => {
    // @Copynpaste
-   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / mossSpawnDistribution.blockSize;
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.WORLD_SIZE_TILES / mossSpawnDistribution.blockSize;
 
    const originTileX = getTileX(waterTileIndex);
    const originTileY = getTileY(waterTileIndex);
@@ -190,8 +190,8 @@ const setWaterInMossHumidityMultipliers = (mossSpawnDistribution: Readonly<Spawn
 }
 
 export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer: Layer): void {
-   for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
-      for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
+   for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
+      for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
          if (surfaceLayer.getTileXYType(tileX, tileY) === TileType.dropdown) {
             for (let nodeX = tileX * 4; nodeX < (tileX + 1) * 4; nodeX++) {
                for (let nodeY = tileY * 4; nodeY < (tileY + 1) * 4; nodeY++) {
@@ -202,12 +202,12 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
       }
    }
 
-   const weightMap = generateOctavePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 35, 12, 1.75, 0.65);
+   const weightMap = generateOctavePerlinNoise(Settings.FULL_WORLD_SIZE_TILES, Settings.FULL_WORLD_SIZE_TILES, 35, 12, 1.75, 0.65);
 
-   const dropdownClosenessArray = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS);
+   const dropdownClosenessArray = new Float32Array(Settings.FULL_WORLD_SIZE_TILES * Settings.FULL_WORLD_SIZE_TILES);
    const dropdowns = new Array<TileIndex>();
-   for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
-      for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
+   for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
+      for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
          const tileType = surfaceLayer.tileTypes[tileIndex];
          if (tileType === TileType.dropdown) {
@@ -219,16 +219,16 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
 
    const mossSpawnDistribution = createRawSpawnDistribution(2, 0.12);
    // @Copynpaste
-   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.BOARD_DIMENSIONS / mossSpawnDistribution.blockSize;
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.WORLD_SIZE_TILES / mossSpawnDistribution.blockSize;
    const mossHumidityMultipliers = new Float32Array(BLOCKS_IN_BOARD_DIMENSIONS * BLOCKS_IN_BOARD_DIMENSIONS);
    
    const depths = generateDepths(dropdowns);
 
-   const waterGenerationNoise = generatePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 8);
-   const mithrilGenerationNoise = generatePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 16);
+   const waterGenerationNoise = generatePerlinNoise(Settings.FULL_WORLD_SIZE_TILES, Settings.FULL_WORLD_SIZE_TILES, 8);
+   const mithrilGenerationNoise = generatePerlinNoise(Settings.FULL_WORLD_SIZE_TILES, Settings.FULL_WORLD_SIZE_TILES, 16);
    
-   for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
-      for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
+   for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
+      for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
          let weight = weightMap[tileY + Settings.EDGE_GENERATION_DISTANCE][tileX + Settings.EDGE_GENERATION_DISTANCE];
          
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
@@ -353,10 +353,10 @@ export function generateUndergroundTerrain(surfaceLayer: Layer, undergroundLayer
 
    // Generate tree roots
    // @Cleanup: make entity spawning able to do this (will also make the tree roots show up in the spawn info!)
-   const numAttempts = Math.floor(Settings.BOARD_DIMENSIONS * Settings.BOARD_DIMENSIONS * Vars.TREE_ROOT_SPAWN_ATTEMPT_DENSITY);
+   const numAttempts = Math.floor(Settings.WORLD_SIZE_TILES * Settings.WORLD_SIZE_TILES * Vars.TREE_ROOT_SPAWN_ATTEMPT_DENSITY);
    for (let i = 0; i < numAttempts; i++) {
-      const tileX = Math.floor(Math.random() * Settings.BOARD_DIMENSIONS);
-      const tileY = Math.floor(Math.random() * Settings.BOARD_DIMENSIONS);
+      const tileX = Math.floor(Math.random() * Settings.WORLD_SIZE_TILES);
+      const tileY = Math.floor(Math.random() * Settings.WORLD_SIZE_TILES);
 
       // Only generate at low depths
       const tileIndex = getTileIndexIncludingEdges(tileX, tileY);

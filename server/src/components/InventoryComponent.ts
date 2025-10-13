@@ -484,7 +484,7 @@ function addDataToPacket(packet: Packet, entity: Entity, player: Entity | null):
          numSentInventories++;
       }
    }
-   packet.addNumber(numSentInventories);
+   packet.writeNumber(numSentInventories);
    
    for (let i = 0; i < inventoryComponent.inventories.length; i++) {
       const isSentToEnemyPlayers = inventoryComponent.inventoryIsSentToEnemyPlayersArray[i];

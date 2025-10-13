@@ -76,7 +76,7 @@ const getConnectedBiomeTiles = (layer: Layer, processedTiles: Set<TileIndex>, ti
       const currentTileY = getTileY(currentTile);
 
       // Top
-      if (currentTileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE - 1) {
+      if (currentTileY < Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE - 1) {
          // @Speed: can calculate this directly by offsetting the currentTile
          const tileIndex = getTileIndexIncludingEdges(currentTileX, currentTileY + 1);
          if (!processedTiles.has(tileIndex)) {
@@ -89,7 +89,7 @@ const getConnectedBiomeTiles = (layer: Layer, processedTiles: Set<TileIndex>, ti
          }
       }
       // Right
-      if (currentTileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE - 1) {
+      if (currentTileX < Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE - 1) {
          // @Speed: can calculate this directly by offsetting the currentTile
          const tileIndex = getTileIndexIncludingEdges(currentTileX + 1, currentTileY);
          if (!processedTiles.has(tileIndex)) {
@@ -138,8 +138,8 @@ export function groupLocalBiomes(layer: Layer): void {
    
    const processedTiles = new Set<TileIndex>();
    
-   for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
-      for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
+   for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
+      for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
          if (processedTiles.has(tileIndex)) {
             continue;

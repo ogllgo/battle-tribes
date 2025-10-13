@@ -4,7 +4,6 @@ import { Settings } from "battletribes-shared/settings";
 import { TitleGenerationInfo, TribesmanTitle } from "battletribes-shared/titles";
 import { Point, assert, lerp, randAngle, randFloat, randInt, randItem, veryBadHash } from "battletribes-shared/utils";
 import { Light } from "../../lights";
-import Board from "../../Board";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createBloodPoolParticle, createLeafParticle, createSprintParticle, createTitleObtainParticle, LeafParticleSize } from "../../particles";
 import { createRenderPartOverlayGroup } from "../../rendering/webgl/overlay-rendering";
@@ -27,6 +26,7 @@ import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { playerInstance } from "../../player";
 import { getHitboxTile, getHitboxVelocity, Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { currentSnapshot } from "../../game";
 
 export interface TribesmanComponentData {
    readonly warpaintType: number | null;
@@ -179,7 +179,7 @@ const getSecondsSinceLastAttack = (entity: Entity): number => {
       }
    }
 
-   const ticksSinceLastAttack = Board.serverTicks - maxLastTicks;
+   const ticksSinceLastAttack = currentSnapshot.tick - maxLastTicks;
    return ticksSinceLastAttack * Settings.DT_S;
 }
 

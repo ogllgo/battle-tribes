@@ -26,14 +26,11 @@ export interface WallComponent {
 
 const NUM_DAMAGE_STAGES = 6;
 
-export const WallComponentArray = new ClientComponentArray<WallComponent, IntermediateInfo>(ClientComponentType.wall, true, {
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   onHit: onHit,
-   onDie: onDie
-});
+export const WallComponentArray = new ClientComponentArray<WallComponent, IntermediateInfo>(ClientComponentType.wall, true, createComponent, getMaxRenderParts);
+WallComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+WallComponentArray.onTick = onTick;
+WallComponentArray.onHit = onHit;
+WallComponentArray.onDie = onDie;
 
 export function createWallComponentData(): WallComponentData {
    return {};

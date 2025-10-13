@@ -85,9 +85,9 @@ const updateLight = (light: Light, nodeX: number, nodeY: number, layer: Layer) =
    const range = calculateLightRangeNodes(light.strength, light.intensity, light.radius);
 
    const minNodeX = Math.max(nodeX - range, -Settings.EDGE_GENERATION_DISTANCE * 4);
-   const maxNodeX = Math.min(nodeX + range, (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+   const maxNodeX = Math.min(nodeX + range, (Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
    const minNodeY = Math.max(nodeY - range, -Settings.EDGE_GENERATION_DISTANCE * 4);
-   const maxNodeY = Math.min(nodeY + range, (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+   const maxNodeY = Math.min(nodeY + range, (Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
    
    // @Speed: only run this propagate function on the edge nodes of dropdown zones, and fill in the inside node with 1's
    
@@ -196,7 +196,7 @@ export function getAmbientLightLevel(): number {
 }
 
 export function getLightLevelNode(nodeX: number, nodeY: number): LightLevelNode {
-   return (nodeY + Settings.EDGE_GENERATION_DISTANCE * 4) * (Settings.FULL_BOARD_DIMENSIONS * 4) + nodeX + Settings.EDGE_GENERATION_DISTANCE * 4;
+   return (nodeY + Settings.EDGE_GENERATION_DISTANCE * 4) * (Settings.FULL_WORLD_SIZE_TILES * 4) + nodeX + Settings.EDGE_GENERATION_DISTANCE * 4;
 }
 
 export function getLightIntensityAtNode(layer: Layer, node: LightLevelNode): number {
@@ -244,15 +244,15 @@ export function addPlayerLightLevelsData(packet: Packet, playerClient: PlayerCli
    const maxNodeY = Math.floor(playerClient.maxVisibleY / LightLevelVars.LIGHT_NODE_SIZE);
 
    const numNodes = (maxNodeX + 1 - minNodeX) * (maxNodeY + 1 - minNodeY);
-   packet.addNumber(numNodes);
+   packet.writeNumber(numNodes);
    
    for (let nodeX = minNodeX; nodeX <= maxNodeX; nodeX++) {
       for (let nodeY = minNodeY; nodeY <= maxNodeY; nodeY++) {
          const node = getLightLevelNode(nodeX, nodeY);
          const lightLevel = getLightIntensityAtNode(playerClient.lastLayer, node);
 
-         packet.addNumber(node);
-         packet.addNumber(lightLevel);
+         packet.writeNumber(node);
+         packet.writeNumber(lightLevel);
       }
    }
 }
@@ -263,16 +263,16 @@ export function getLightDataLength(): number {
 }
 
 export function addLightData(packet: Packet, hitbox: Hitbox, light: Light): void {
-   packet.addNumber(hitbox.entity);
-   packet.addNumber(hitbox.localID);
+   packet.writeNumber(hitbox.entity);
+   packet.writeNumber(hitbox.localID);
    
    // Light data
-   packet.addNumber(light.id);
-   packet.addPoint(light.offset);
-   packet.addNumber(light.intensity);
-   packet.addNumber(light.strength);
-   packet.addNumber(light.radius);
-   packet.addNumber(light.r);
-   packet.addNumber(light.g);
-   packet.addNumber(light.b);
+   packet.writeNumber(light.id);
+   packet.writePoint(light.offset);
+   packet.writeNumber(light.intensity);
+   packet.writeNumber(light.strength);
+   packet.writeNumber(light.radius);
+   packet.writeNumber(light.r);
+   packet.writeNumber(light.g);
+   packet.writeNumber(light.b);
 }

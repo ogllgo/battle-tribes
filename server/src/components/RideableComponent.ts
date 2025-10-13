@@ -38,12 +38,12 @@ function getDataLength(entity: Entity): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const rideableComponent = RideableComponentArray.getComponent(entity);
 
-   packet.addNumber(rideableComponent.carrySlots.length);
+   packet.writeNumber(rideableComponent.carrySlots.length);
    for (const carrySlot of rideableComponent.carrySlots) {
-      packet.addNumber(carrySlot.occupiedEntity);
-      packet.addNumber(carrySlot.parentHitbox.localID);
-      packet.addPoint(carrySlot.offset);
-      packet.addPoint(carrySlot.dismountOffset);
+      packet.writeNumber(carrySlot.occupiedEntity);
+      packet.writeNumber(carrySlot.parentHitbox.localID);
+      packet.writePoint(carrySlot.offset);
+      packet.writePoint(carrySlot.dismountOffset);
    }
 }
 

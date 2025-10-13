@@ -32,8 +32,7 @@ export function createResearchBenchComponentData(): ResearchBenchComponentData {
 }
 
 function decodeData(reader: PacketReader): ResearchBenchComponentData {
-   const isOccupied = reader.readBoolean();
-   reader.padOffset(3);
+   const isOccupied = reader.readBool();
    return {
       isOccupied: isOccupied
    };

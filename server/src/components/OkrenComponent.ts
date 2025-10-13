@@ -591,9 +591,9 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, okren: Entity): void {
    const okrenComponent = OkrenComponentArray.getComponent(okren);
-   packet.addNumber(okrenComponent.size);
-   packet.addNumber(okrenComponent.eyeHardenTimers[0]);
-   packet.addNumber(okrenComponent.eyeHardenTimers[1]);
+   packet.writeNumber(okrenComponent.size);
+   packet.writeNumber(okrenComponent.eyeHardenTimers[0]);
+   packet.writeNumber(okrenComponent.eyeHardenTimers[1]);
 }
 
 function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {

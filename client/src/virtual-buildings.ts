@@ -3,7 +3,6 @@ import { EntityComponents, ServerComponentType, BuildingMaterial } from "../../s
 import { PacketReader } from "../../shared/src/packets";
 import { StructureType } from "../../shared/src/structures";
 import { distance, Point } from "../../shared/src/utils";
-import Board from "./Board";
 import { createHitboxQuick } from "./hitboxes";
 import { createBracingsComponentData } from "./entity-components/server-components/BracingsComponent";
 import { createBuildingMaterialComponentData } from "./entity-components/server-components/BuildingMaterialComponent";
@@ -20,15 +19,17 @@ import { createStructureComponentData } from "./entity-components/server-compone
 import { createTransformComponentData } from "./entity-components/server-components/TransformComponent";
 import { createTribeComponentData } from "./entity-components/server-components/TribeComponent";
 import { EntityRenderInfo, updateEntityRenderInfoRenderData } from "./EntityRenderInfo";
-import Game, { getCursorWorldPos } from "./game";
+import { currentSnapshot } from "./game";
 import Layer from "./Layer";
 import { thingIsVisualRenderPart } from "./render-parts/render-parts";
 import { removeGhostRenderInfo } from "./rendering/webgl/entity-ghost-rendering";
 import { playerTribe } from "./tribes";
-import { createEntity, EntityComponentData, EntityServerComponentData, layers } from "./world";
+import { createEntity, EntityComponentData, layers } from "./world";
 import { padBoxData, readBoxFromData } from "./networking/packet-hitboxes";
 import { Box, HitboxCollisionType } from "../../shared/src/boxes/boxes";
 import { createBarrelComponentData } from "./entity-components/server-components/BarrelComponent";
+import { EntityServerComponentData } from "./networking/packet-snapshots";
+import { cursorWorldPos } from "./mouse";
 
 export interface VirtualBuilding {
    readonly entityType: StructureType;
@@ -81,7 +82,7 @@ const readVirtualBuildingFromData = (reader: PacketReader, virtualBuildingID: nu
 
    // @Copynpaste @Hack
 
-   const components = {} as EntityServerComponentData;
+   const components: EntityServerComponentData = {};
 
    // @Hack @Cleanup: make the client and server use the some component data system
    const componentTypes = EntityComponents[entityType];
@@ -223,9 +224,7 @@ const readVirtualBuildingFromData = (reader: PacketReader, virtualBuildingID: nu
 }
 
 export function readGhostVirtualBuildings(reader: PacketReader): void {
-   while (reader.readBoolean()) {
-      reader.padOffset(3);
-
+   while (reader.readBool()) {
       const virtualBuildingID = reader.readNumber();
 
       const existingGhostBuildingPlan = ghostBuildingPlans.get(virtualBuildingID);
@@ -239,7 +238,7 @@ export function readGhostVirtualBuildings(reader: PacketReader): void {
             reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
          }
 
-         existingGhostBuildingPlan.lastUpdateTicks = Board.serverTicks;
+         existingGhostBuildingPlan.lastUpdateTicks = currentSnapshot.tick;
       } else {
          const virtualBuilding = readVirtualBuildingFromData(reader, virtualBuildingID);
    
@@ -261,17 +260,14 @@ export function readGhostVirtualBuildings(reader: PacketReader): void {
          const ghostBuildingPlan: GhostBuildingPlan = {
             virtualBuilding: virtualBuilding,
             virtualBuildingsMap: virtualBuildingSafetySimulationMap,
-            lastUpdateTicks: Board.serverTicks
+            lastUpdateTicks: currentSnapshot.tick
          };
          ghostBuildingPlans.set(virtualBuilding.id, ghostBuildingPlan);
       }
    }
-   reader.padOffset(3);
 }
 
 export function getVisibleBuildingPlan(): GhostBuildingPlan | null {
-   const cursorWorldPos = getCursorWorldPos();
-   
    let closestGhostBuildingPlan: GhostBuildingPlan | undefined;
    let minDist = 64;
    for (const pair of ghostBuildingPlans) {
@@ -294,7 +290,7 @@ export function getVisibleBuildingPlan(): GhostBuildingPlan | null {
 export function pruneGhostBuildingPlans(): void {
    for (const pair of ghostBuildingPlans) {
       const ghostBuildingInfo = pair[1];
-      if (ghostBuildingInfo.lastUpdateTicks !== Board.serverTicks) {
+      if (ghostBuildingInfo.lastUpdateTicks !== currentSnapshot.tick) {
          removeGhostRenderInfo(ghostBuildingInfo.virtualBuilding.renderInfo);
          ghostBuildingPlans.delete(pair[0]);
       }

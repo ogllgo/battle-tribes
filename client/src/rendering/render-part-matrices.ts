@@ -252,19 +252,22 @@ export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo, tickInterp: 
    renderInfo.renderPartsAreDirty = false;
 }
 
-export function getEntityTickInterp(entity: Entity, serverTickInterp: number, clientTickInterp: number): number {
-   // this happens sometimes for some reason
+export function entityUsesClientInterp(entity: Entity): boolean {
    if (!TransformComponentArray.hasComponent(entity)) {
-      return serverTickInterp;
+      return false;
    }
    
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
    const entityHitbox = entityTransformComponent.hitboxes[0];
    const rootEntity = entityHitbox.rootEntity;
-   return rootEntity === playerInstance ? clientTickInterp : serverTickInterp;
+   return rootEntity === playerInstance;
 }
 
-export function updateRenderPartMatrices(serverTickInterp: number, clientTickInterp: number): void {
+export function getEntityTickInterp(entity: Entity, clientTickInterp: number, serverTickInterp: number): number {
+   return entityUsesClientInterp(entity) ? clientTickInterp : serverTickInterp;
+}
+
+export function updateRenderPartMatrices(clientTickInterp: number, serverTickInterp: number): void {
    // Do this before so that binding buffers during the loop doesn't mess up any previously bound vertex array.
    gl.bindVertexArray(null);
 
@@ -279,7 +282,7 @@ export function updateRenderPartMatrices(serverTickInterp: number, clientTickInt
    for (let i = 0; i < dirtyEntityRenderInfos.length; i++) {
       const renderInfo = dirtyEntityRenderInfos[i];
 
-      const tickInterp = getEntityTickInterp(renderInfo.entity, serverTickInterp, clientTickInterp);
+      const tickInterp = getEntityTickInterp(renderInfo.entity, clientTickInterp, serverTickInterp);
       cleanEntityRenderInfo(renderInfo, tickInterp);
    }
 

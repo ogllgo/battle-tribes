@@ -65,8 +65,8 @@ export function generateLayers(): void {
       // @Incomplete: investigate whether generate walls mode actually does anything
       // This check isn't strictly necessary but it improves speed
       if (OPTIONS.generateWalls) {
-         for (let tileY = 0; tileY < Settings.BOARD_DIMENSIONS; tileY++) {
-            for (let tileX = 0; tileX < Settings.BOARD_DIMENSIONS; tileX++) {
+         for (let tileY = 0; tileY < Settings.WORLD_SIZE_TILES; tileY++) {
+            for (let tileX = 0; tileX < Settings.WORLD_SIZE_TILES; tileX++) {
                if (tileHasWallSubtile(layer.wallSubtileTypes, tileX, tileY)) {
                   // Mark which chunks have wall tiles
                   const chunkX = Math.floor(tileX / Settings.CHUNK_SIZE);

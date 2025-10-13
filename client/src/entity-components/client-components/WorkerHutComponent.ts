@@ -16,13 +16,10 @@ interface IntermediateInfo {}
 
 export interface WorkerHutComponent {}
 
-export const WorkerHutComponentArray = new ClientComponentArray<WorkerHutComponent, IntermediateInfo>(ClientComponentType.workerHut, true, {
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onHit: onHit,
-   onDie: onDie
-});
+export const WorkerHutComponentArray = new ClientComponentArray<WorkerHutComponent, IntermediateInfo>(ClientComponentType.workerHut, true, createComponent, getMaxRenderParts);
+WorkerHutComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+WorkerHutComponentArray.onHit = onHit;
+WorkerHutComponentArray.onDie = onDie;
 
 export function createWorkerHutComponentData(): WorkerHutComponentData {
    return {};

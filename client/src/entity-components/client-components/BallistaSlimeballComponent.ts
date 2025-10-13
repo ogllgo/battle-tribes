@@ -16,12 +16,9 @@ interface IntermediateInfo {}
 
 export interface BallistaSlimeballComponent {}
 
-export const BallistaSlimeballComponentArray = new ClientComponentArray<BallistaSlimeballComponent, IntermediateInfo>(ClientComponentType.ballistaSlimeball, true, {
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onDie: onDie
-});
+export const BallistaSlimeballComponentArray = new ClientComponentArray<BallistaSlimeballComponent, IntermediateInfo>(ClientComponentType.ballistaSlimeball, true, createComponent, getMaxRenderParts);
+BallistaSlimeballComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+BallistaSlimeballComponentArray.onDie = onDie;
 
 export function createBallistaSlimeballComponentData(): BallistaSlimeballComponentData {
    return {};

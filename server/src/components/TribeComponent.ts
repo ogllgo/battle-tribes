@@ -164,11 +164,11 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const tribeComponent = TribeComponentArray.getComponent(entity);
-   packet.addNumber(tribeComponent.tribe.id);
+   packet.writeNumber(tribeComponent.tribe.id);
    // Not strictly necessary, as it can be inferred from the tribe data sent and the tribe ID,
    // but this helps eliminate/convert-to-warning crashes where a tribe ID gets sent but the data
    // for that tribe isn't sent for some reason.
-   packet.addNumber(tribeComponent.tribe.tribeType);
+   packet.writeNumber(tribeComponent.tribe.tribeType);
 }
 
 export function recruitTribesman(tribesman: Entity, newTribe: Tribe): void {

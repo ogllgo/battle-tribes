@@ -16,7 +16,7 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const glurbSegmentComponent = GlurbSegmentComponentArray.getComponent(entity);
-   packet.addNumber(glurbSegmentComponent.mossBallCompleteness);
+   packet.writeNumber(glurbSegmentComponent.mossBallCompleteness);
 }
 
 function onTakeDamage(entity: Entity): void {

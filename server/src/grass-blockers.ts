@@ -38,10 +38,10 @@ const getBlockerChunks = (blocker: GrassBlocker): ReadonlyArray<Chunk> => {
    const minY = blocker.box.calculateBoundsMinY();
    const maxY = blocker.box.calculateBoundsMaxY();
    
-   const minChunkX = Math.max(Math.min(Math.floor(minX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-   const maxChunkX = Math.max(Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-   const minChunkY = Math.max(Math.min(Math.floor(minY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-   const maxChunkY = Math.max(Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+   const minChunkX = Math.max(Math.min(Math.floor(minX / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const maxChunkX = Math.max(Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const minChunkY = Math.max(Math.min(Math.floor(minY / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const maxChunkY = Math.max(Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
 
    const chunks = new Array<Chunk>();
    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
@@ -143,13 +143,13 @@ export function getGrassBlockerLengthBytes(blocker: GrassBlocker): number {
 }
 
 export function addGrassBlockerToData(packet: Packet, blocker: GrassBlocker): void {
-   packet.addNumber(blocker.id);
-   packet.addNumber(blocker.layer.depth);
+   packet.writeNumber(blocker.id);
+   packet.writeNumber(blocker.layer.depth);
 
    addBoxDataToPacket(packet, blocker.box);
    
-   packet.addNumber(blocker.blockAmount);
-   packet.addNumber(blocker.maxBlockAmount);
+   packet.writeNumber(blocker.blockAmount);
+   packet.writeNumber(blocker.maxBlockAmount);
 }
 
 export function positionHasGrassBlocker(layer: Layer, x: number, y: number): boolean {

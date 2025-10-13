@@ -13,6 +13,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { currentSnapshot } from "../../game";
 
 type HutType = EntityType.workerHut | EntityType.warriorHut;
 
@@ -45,7 +46,7 @@ const DOOR_REMAIN_TICKS = secondsToTicks(0.175);
 const DOOR_CLOSE_TICKS = secondsToTicks(0.175);
 
 const calculateDoorSwingAmount = (lastDoorSwingTicks: number): number => {
-   const ticksSinceLastSwing = Board.serverTicks - lastDoorSwingTicks;
+   const ticksSinceLastSwing = currentSnapshot.tick - lastDoorSwingTicks;
    if (ticksSinceLastSwing <= DOOR_OPEN_TICKS) {
       return lerp(0, 1, ticksSinceLastSwing / DOOR_OPEN_TICKS);
    } else if (ticksSinceLastSwing <= DOOR_OPEN_TICKS + DOOR_REMAIN_TICKS) {
@@ -91,9 +92,7 @@ export function createHutComponentData(): HutComponentData {
 
 function decodeData(reader: PacketReader): HutComponentData {
    const doorSwingTicks = reader.readNumber();
-   const isRecalling = reader.readBoolean();
-   reader.padOffset(3);
-
+   const isRecalling = reader.readBool();
    return {
       doorSwingAmount: doorSwingTicks,
       isRecalling: isRecalling
@@ -169,7 +168,7 @@ function updateFromData(data: HutComponentData, entity: Entity): void {
    const isRecalling = data.isRecalling;
 
    // @Incomplete: What if this packet is skipped?
-   if (lastDoorSwingTicks === Board.serverTicks) {
+   if (lastDoorSwingTicks === currentSnapshot.tick) {
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.hitboxes[0];
       playSoundOnHitbox("door-open.mp3", 0.4, 1, entity, hitbox, false);

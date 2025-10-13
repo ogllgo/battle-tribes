@@ -313,8 +313,8 @@ export function clampToBoardDimensions(tileCoord: number): number {
    if (tileCoord < 0) {
       return 0;
    }
-   if (tileCoord >= Settings.BOARD_DIMENSIONS) {
-      return Settings.BOARD_DIMENSIONS - 1;
+   if (tileCoord >= Settings.WORLD_SIZE_TILES) {
+      return Settings.WORLD_SIZE_TILES - 1;
    }
    return tileCoord;
 }
@@ -323,8 +323,8 @@ export function clampToSubtileBoardDimensions(subtileCoord: number): number {
    if (subtileCoord < 0) {
       return 0;
    }
-   if (subtileCoord >= Settings.BOARD_DIMENSIONS * 4) {
-      return Settings.BOARD_DIMENSIONS * 4 - 1;
+   if (subtileCoord >= Settings.WORLD_SIZE_TILES * 4) {
+      return Settings.WORLD_SIZE_TILES * 4 - 1;
    }
    return subtileCoord;
 }
@@ -454,27 +454,27 @@ export function angleToPoint(angle: number): Point {
 }
 
 export function getTileIndexIncludingEdges(tileX: number, tileY: number): TileIndex {
-   return (tileY + Settings.EDGE_GENERATION_DISTANCE) * Settings.FULL_BOARD_DIMENSIONS + tileX + Settings.EDGE_GENERATION_DISTANCE;
+   return (tileY + Settings.EDGE_GENERATION_DISTANCE) * Settings.FULL_WORLD_SIZE_TILES + tileX + Settings.EDGE_GENERATION_DISTANCE;
 }
 
 export function getTileX(tileIndex: TileIndex): number {
-   return tileIndex % Settings.FULL_BOARD_DIMENSIONS - Settings.EDGE_GENERATION_DISTANCE;
+   return tileIndex % Settings.FULL_WORLD_SIZE_TILES - Settings.EDGE_GENERATION_DISTANCE;
 }
 
 export function getTileY(tileIndex: TileIndex): number {
-   return Math.floor(tileIndex / Settings.FULL_BOARD_DIMENSIONS) - Settings.EDGE_GENERATION_DISTANCE;
+   return Math.floor(tileIndex / Settings.FULL_WORLD_SIZE_TILES) - Settings.EDGE_GENERATION_DISTANCE;
 }
 
 export function tileIsInWorld(tileX: number, tileY: number): boolean {
-   return tileX >= 0 && tileX < Settings.BOARD_DIMENSIONS && tileY >= 0 && tileY < Settings.BOARD_DIMENSIONS;
+   return tileX >= 0 && tileX < Settings.WORLD_SIZE_TILES && tileY >= 0 && tileY < Settings.WORLD_SIZE_TILES;
 }
 
 export function tileIsInWorldIncludingEdges(tileX: number, tileY: number): boolean {
-   return tileX >= -Settings.EDGE_GENERATION_DISTANCE && tileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE && tileY >= -Settings.EDGE_GENERATION_DISTANCE && tileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE;
+   return tileX >= -Settings.EDGE_GENERATION_DISTANCE && tileX < Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE && tileY >= -Settings.EDGE_GENERATION_DISTANCE && tileY < Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE;
 }
 
 export function positionIsInWorld(x: number, y: number): boolean {
-   return x >= 0 && x < Settings.BOARD_UNITS && y >= 0 && y < Settings.BOARD_UNITS;
+   return x >= 0 && x < Settings.WORLD_UNITS && y >= 0 && y < Settings.WORLD_UNITS;
 }
 
 /** Returns x modulo n (according to the mathematical definition related to congruence) */
@@ -490,8 +490,8 @@ export function unitsToChunksClamped(a: number): number {
    let aChunks = Math.floor(a / Settings.CHUNK_UNITS);
    if (aChunks < 0) {
       aChunks = 0;
-   }  else if (aChunks >= Settings.BOARD_SIZE) {
-      aChunks = Settings.BOARD_SIZE - 1;
+   }  else if (aChunks >= Settings.WORLD_SIZE_CHUNKS) {
+      aChunks = Settings.WORLD_SIZE_CHUNKS - 1;
    }
    return aChunks;
 }

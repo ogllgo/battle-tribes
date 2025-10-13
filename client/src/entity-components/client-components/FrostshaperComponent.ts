@@ -12,11 +12,8 @@ interface IntermediateInfo {}
 
 export interface FrostshaperComponent {}
 
-export const FrostshaperComponentArray = new ClientComponentArray<FrostshaperComponent, IntermediateInfo>(ClientComponentType.frostshaper, true, {
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts
-});
+export const FrostshaperComponentArray = new ClientComponentArray<FrostshaperComponent, IntermediateInfo>(ClientComponentType.frostshaper, true, createComponent, getMaxRenderParts);
+FrostshaperComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
 export function createFrostshaperComponentData(): FrostshaperComponentData {
    return {};

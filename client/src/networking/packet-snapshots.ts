@@ -1,222 +1,519 @@
+import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { PacketReader } from "../../../shared/src/packets";
-import Camera from "../Camera";
-import { updateDebugScreenCurrentTime, updateDebugScreenIsPaused, updateDebugScreenTicks } from "../components/game/dev/GameInfoDisplay";
-import { selectItemSlot } from "../components/game/GameInteractableLayer";
-import { setGameTime } from "../game";
-import { playerInstance } from "../player";
-import { playSound } from "../sound";
-import { ExtendedTribe, readExtendedTribeData, readShortTribeData, ShortTribe } from "../tribes";
-import { getCurrentLayer, layers, removeEntity, setCurrentLayer } from "../world";
+import { setCameraSubject } from "../camera";
+import { updateDebugScreenCurrentSnapshot, updateDebugScreenIsPaused } from "../components/game/dev/GameInfoDisplay";
+import { getComponentArrays, getServerComponentArray } from "../entity-components/ComponentArray";
+import { setCurrentSnapshot } from "../game";
+import Layer from "../Layer";
+import { playerInstance, setPlayerInstance } from "../player";
+import { playHeadSound, playSound } from "../sound";
+import { ExtendedTribe, readExtendedTribeData, readShortTribeData, Tribe, tribes, updatePlayerTribe } from "../tribes";
+import { addEntityToWorld, changeEntityLayer, createEntity, EntityComponentData, entityExists, getCurrentLayer, getEntityComponentTypes, getEntityLayer, getEntityRenderInfo, getEntityType, layers, removeEntity, setCurrentLayer } from "../world";
+import { ClientComponentData, getEntityClientComponentConfigs } from "../entity-components/client-components";
+import { TribesTab_refresh } from "../components/game/dev/tabs/TribesTab";
+import { ServerComponentData } from "../entity-components/components";
+import { ClientComponentType } from "../entity-components/client-component-types";
+import { registerDirtyRenderInfo } from "../rendering/render-part-matrices";
+import { assert, Point, randAngle, randFloat } from "../../../shared/src/utils";
+import { LightData, readLightsFromData, updateLightsFromData } from "../lights";
+import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
+import { getRandomPositionInEntity, TransformComponentArray } from "../entity-components/server-components/TransformComponent";
+import { createHealingParticle, createSlimePoolParticle, createSparkParticle } from "../particles";
+import { HitFlags } from "../../../shared/src/client-server-types";
+import { addHitboxVelocity, getHitboxByLocalID, getHitboxVelocity, setHitboxVelocity } from "../hitboxes";
+import { createDamageNumber, createHealNumber, createResearchNumber } from "../text-canvas";
+import { STRUCTURE_TYPES } from "../../../shared/src/structures";
+import { SubtileType, TileType } from "../../../shared/src/tiles";
+import { updateRenderChunkFromTileUpdate } from "../rendering/render-chunks";
+import { TribesmanTitle } from "../../../shared/src/titles";
+import { Infocards_setTitleOffer } from "../components/game/infocards/Infocards";
+import { EntityTickEventType } from "../../../shared/src/entity-events";
+import { processTickEvent } from "../entity-tick-events";
+import { setMinedSubtiles, tickCollapse } from "../collapses";
+import { GrassBlockerData, readGrassBlockers, updateGrassBlockersFromData } from "../grass-blockers";
 
 // @Speed @Memory I cause a lot of GC right now by reading things in the snapshot decoding process which aren't necessary for snapshots (e.g. data for all tribes), instead of reading that when updating the game state to that.
+
+export type EntityServerComponentData = Partial<{
+   [T in ServerComponentType]: ServerComponentData<T>;
+}>;
+export type EntityClientComponentData = Partial<{
+   [T in ClientComponentType]: ClientComponentData<T>;
+}>;
 
 interface EntitySnapshot {
    readonly entityType: EntityType;
    readonly spawnTicks: number;
-   readonly layerIdx: number;
+   readonly layer: Layer;
+   readonly serverComponentData: EntityServerComponentData;
+   readonly clientComponentData: EntityClientComponentData;
 }
 
-/** A snapshot of the game represented in a packet. */
-export interface GameSnapshot {
+interface RemovedEntityInfo {
+   readonly entity: Entity;
+   readonly isDestroyed: boolean;
+}
+
+interface EntityHitData {
+   readonly entity: Entity;
+   readonly hitboxLocalID: number;
+   readonly position: Point;
+   readonly attackEffectiveness: AttackEffectiveness;
+   readonly damage: number;
+   readonly shouldShowDamageNumber: boolean;
+   readonly flags: number;
+}
+
+interface PlayerKnockbackData {
+   readonly knockback: number;
+   readonly knockbackDirection: number;
+}
+
+interface EntityHealData {
+   readonly position: Point;
+   readonly healedEntity: Entity;
+   readonly healerEntity: Entity;
+   readonly healAmount: number;
+}
+
+interface ResearchOrbCompleteData {
+   readonly position: Point;
+   readonly amount: number;
+}
+
+interface TileUpdateData {
+   readonly layer: Layer;
+   readonly tileIndex: number;
+   readonly tileType: TileType;
+}
+
+interface WallSubtileUpdateData {
+   readonly subtileIndex: number;
+   readonly subtileType: SubtileType;
+   readonly damageTaken: number;
+}
+
+interface EntityTickEventData {
+   readonly entity: Entity;
+   readonly type: EntityTickEventType;
+   readonly data: number;
+}
+
+interface MinedSubtileData {
+   readonly subtileIndex: number;
+   readonly subtileType: SubtileType;
+   readonly support: number;
+   readonly isCollapsing: boolean;
+}
+
+interface CollapseData {
+   readonly collapsingSubtileIndex: number;
+   readonly ageTicks: number;
+}
+
+/** A snapshot of the game represented by a game tick packet. */
+export interface PacketSnapshot {
    // @CLEANUP @INCOMPLETE best done as a separate packet instead of this.
    readonly simulationIsPaused: boolean;
    readonly tick: number;
    readonly time: number;
-   readonly layerIdx: number;
+   readonly layer: Layer;
    readonly entities: Map<Entity, EntitySnapshot>;
-   readonly playerInstance: number;
-   readonly cameraSubject: number;
+   readonly removedEntities: ReadonlyArray<RemovedEntityInfo>;
    readonly playerTribeData: ExtendedTribe;
-   readonly enemyTribeData: ShortTribe;
+   readonly enemyTribeData: ReadonlyArray<Tribe>;
+   readonly playerInstance: Entity | null;
+   readonly cameraSubject: number;
+   readonly lights: ReadonlyArray<LightData>;
+   readonly hits: ReadonlyArray<EntityHitData>;
+   readonly playerKnockbacks: ReadonlyArray<PlayerKnockbackData>;
+   readonly heals: ReadonlyArray<EntityHealData>;
+   readonly researchOrbCompletes: ReadonlyArray<ResearchOrbCompleteData>;
+   readonly tileUpdates: ReadonlyArray<TileUpdateData>;
+   readonly wallSubtileUpdates: Map<Layer, ReadonlyArray<WallSubtileUpdateData>>;
+   readonly hasPickedUpItem: boolean;
+   readonly titleOffer: TribesmanTitle | null;
+   readonly entityTickEvents: ReadonlyArray<EntityTickEventData>;
+   readonly minedSubtiles: ReadonlyArray<MinedSubtileData>;
+   readonly collapses: ReadonlyArray<CollapseData>;
+   readonly grassBlockers: ReadonlyArray<GrassBlockerData>;
 }
+
+// @Cleanup: when i rework shit this awful existence will go away
+// Use prime numbers / 100 to ensure a decent distribution of different types of particles
+const HEALING_PARTICLE_AMOUNTS = [0.05, 0.37, 1.01];
 
 const decodeEntitySnapshot = (reader: PacketReader): EntitySnapshot => {
    const entityType = reader.readNumber() as EntityType;
    const spawnTicks = reader.readNumber();
+   
    const layerIdx = reader.readNumber();
    console.assert(Number.isInteger(layerIdx) && layerIdx < layers.length);
+   const layer = layers[layerIdx];
 
+   const entityServerComponentTypes = new Array<ServerComponentType>();
+   const entityServerComponentData: EntityServerComponentData = {};
    
+   // Component data
+   const numComponents = reader.readNumber();
+   for (let i = 0; i < numComponents; i++) {
+      const componentType = reader.readNumber() as ServerComponentType;
+      entityServerComponentTypes.push(componentType);
+
+      const componentArray = getServerComponentArray(componentType);
+
+      // @Cleanup: cast
+      entityServerComponentData[componentType] = componentArray.decodeData(reader) as any;
+   }
+      
+   return {
+      entityType: entityType,
+      spawnTicks: spawnTicks,
+      layer: layer,
+      serverComponentData: entityServerComponentData,
+      // @HACK
+      clientComponentData: getEntityClientComponentConfigs(entityType)
+   };
 }
 
-export function decodeSnapshotFromGameDataPacket(reader: PacketReader): GameSnapshot {
-   const simulationIsPaused = reader.readBoolean();
-   reader.padOffset(3);
+export function decodeSnapshotFromGameDataPacket(reader: PacketReader): PacketSnapshot {
+   const simulationIsPaused = reader.readBool();
 
    const tick = reader.readNumber();
    
    const time = reader.readNumber();
 
    const layerIdx = reader.readNumber();
+   const layer = layers[layerIdx];
 
    const numEntities = reader.readNumber();
    const entities = new Map<Entity, EntitySnapshot>();
    for (let i = 0; i < numEntities; i++) {
       const entity = reader.readNumber() as Entity;
+      const entitySnapshot = decodeEntitySnapshot(reader);
+      entities.set(entity, entitySnapshot);
+   }
+
+   const numRemovedEntities = reader.readNumber();
+   const removedEntities = new Array<RemovedEntityInfo>();
+   for (let i = 0; i < numRemovedEntities; i++) {
+      const entity = reader.readNumber();
+      const isDestroyed = reader.readBool();
+      removedEntities.push({
+         entity: entity,
+         isDestroyed: isDestroyed
+      });
+   }
+   
+   // read a useless bool here cuz the tribe data reading stuff expects a premonition bool to be read first
+   reader.readBool();
+   const playerTribeData = readExtendedTribeData(reader);
+   
+   const enemyTribeData = new Array<Tribe>();
+   const numEnemyTribes = reader.readNumber();
+   for (let i = 0; i < numEnemyTribes; i++) {
+      const isExtended = reader.readBool();
+      const tribeData = isExtended ? readExtendedTribeData(reader) : readShortTribeData(reader);
+      enemyTribeData.push(tribeData);
    }
 
    const playerInstance = reader.readNumber();
    const cameraSubject = reader.readNumber() as Entity;
 
+   const lightData = readLightsFromData(reader);
+
+   const hits = new Array<EntityHitData>();
+   const numHits = reader.readNumber();
+   for (let i = 0; i < numHits; i++) {
+      const hitEntity = reader.readNumber() as Entity;
+      const hitHitboxLocalID = reader.readNumber();
+      const hitPosition = reader.readPoint();
+      const attackEffectiveness: AttackEffectiveness = reader.readNumber();
+      const damage = reader.readNumber();
+      const shouldShowDamageNumber = reader.readBool();
+      const flags = reader.readNumber();
+      hits.push({
+         entity: hitEntity,
+         hitboxLocalID: hitHitboxLocalID,
+         position: hitPosition,
+         attackEffectiveness: attackEffectiveness,
+         damage: damage,
+         shouldShowDamageNumber: shouldShowDamageNumber,
+         flags: flags
+      });
+   }
+
+   const playerKnockbacks = new Array<PlayerKnockbackData>();
+   const numKnockbacks = reader.readNumber();
+   for (let i = 0; i < numKnockbacks; i++) {
+      const knockback = reader.readNumber();
+      const knockbackDirection = reader.readNumber();
+      playerKnockbacks.push({
+         knockback: knockback,
+         knockbackDirection: knockbackDirection
+      });
+   }
+
+   const heals = new Array<EntityHealData>();
+   const numHeals = reader.readNumber();
+   for (let i = 0; i < numHeals; i++) {
+      const position = reader.readPoint();
+      const healedEntity = reader.readNumber() as Entity;
+      const healerEntity = reader.readNumber() as Entity;
+      const healAmount = reader.readNumber();
+      heals.push({
+         position: position,
+         healedEntity: healedEntity,
+         healerEntity: healerEntity,
+         healAmount: healAmount
+      });
+   }
+
+   const researchOrbCompletes = new Array<ResearchOrbCompleteData>();
+   const numOrbs = reader.readNumber();
+   for (let i = 0; i < numOrbs; i++) {
+      const position = reader.readPoint();
+      const amount = reader.readNumber();
+
+      researchOrbCompletes.push({
+         position: position,
+         amount: amount
+      });
+   }
+
+   const tileUpdates = new Array<TileUpdateData>();
+   const numTileUpdates = reader.readNumber();
+   console.assert(Number.isInteger(numTileUpdates));
+   for (let i = 0; i < numTileUpdates; i++) {
+      const layerIdx = reader.readNumber();
+      const layer = layers[layerIdx];
+
+      const tileIndex = reader.readNumber();
+      const tileType: TileType = reader.readNumber();
+
+      tileUpdates.push({
+         layer: layer,
+         tileIndex: tileIndex,
+         tileType: tileType
+      });
+   }
+   
+   const wallSubtileUpdates = new Map<Layer, ReadonlyArray<WallSubtileUpdateData>>();
+   for (const layer of layers) {
+      const layerSubtileUpdates = new Array<WallSubtileUpdateData>();
+      
+      const numUpdates = reader.readNumber();
+      for (let i = 0; i < numUpdates; i++) {
+         const subtileIndex = reader.readNumber();
+         const subtileType = reader.readNumber() as SubtileType;
+         const damageTaken = reader.readNumber();
+
+         layerSubtileUpdates.push({
+            subtileIndex: subtileIndex,
+            subtileType: subtileType,
+            damageTaken: damageTaken
+         });
+      }
+
+      wallSubtileUpdates.set(layer, layerSubtileUpdates);
+   }
+
+   const hasPickedUpItem = reader.readBool();
+
+   const hasTitleOffer = reader.readBool();
+   let titleOffer: TribesmanTitle | null = null;
+   if (hasTitleOffer) {
+      titleOffer = reader.readNumber();
+   }
+
+   const entityTickEvents = new Array<EntityTickEventData>();
+   const numEntityTickEvents = reader.readNumber();
+   for (let i = 0; i < numEntityTickEvents; i++) {
+      const entity = reader.readNumber() as Entity;
+      const type = reader.readNumber() as EntityTickEventType;
+      const data = reader.readNumber();
+
+      entityTickEvents.push({
+         entity: entity,
+         type: type,
+         data: data
+      });
+   }
+
+   const minedSubtiles = new Array<MinedSubtileData>();
+   const numMinedSubtiles = reader.readNumber();
+   for (let i = 0; i < numMinedSubtiles; i++) {
+      const subtile = reader.readNumber();
+      const subtileType = reader.readNumber() as SubtileType;
+      const support = reader.readNumber();
+      const isCollapsing = reader.readBool();
+
+      const minedSubtile: MinedSubtileData = {
+         subtileIndex: subtile,
+         subtileType: subtileType,
+         support: support,
+         isCollapsing: isCollapsing
+      };
+      minedSubtiles.push(minedSubtile);
+   }
+   
+   const collapses = new Array<CollapseData>();
+   const numCollapses = reader.readNumber();
+   assert(Number.isInteger(numCollapses));
+   for (let i = 0; i < numCollapses; i++) {
+      const collapsingSubtileIndex = reader.readNumber();
+      const ageTicks = reader.readNumber();
+      collapses.push({
+         collapsingSubtileIndex: collapsingSubtileIndex,
+         ageTicks: ageTicks
+      });
+   }
+
+   const grassBlockers = readGrassBlockers(reader);
+
    return {
       simulationIsPaused: simulationIsPaused,
       tick: tick,
       time: time,
-      layerIdx: layerIdx,
+      layer: layer,
+      entities: entities,
+      removedEntities: removedEntities,
+      playerTribeData: playerTribeData,
+      enemyTribeData: enemyTribeData,
       playerInstance: playerInstance,
-      cameraSubject: cameraSubject
+      cameraSubject: cameraSubject,
+      lights: lightData,
+      hits: hits,
+      playerKnockbacks: playerKnockbacks,
+      heals: heals,
+      researchOrbCompletes: researchOrbCompletes,
+      tileUpdates: tileUpdates,
+      wallSubtileUpdates: wallSubtileUpdates,
+      hasPickedUpItem: hasPickedUpItem,
+      titleOffer: titleOffer,
+      entityTickEvents: entityTickEvents,
+      minedSubtiles: minedSubtiles,
+      collapses: collapses,
+      grassBlockers: grassBlockers
    };
 }
 
-export function updateGameToSnapshot(snapshot: GameSnapshot): void {
-   updateDebugScreenIsPaused(snapshot.simulationIsPaused);
-
-   // @INCOMPLETE
-   // Board.serverTicks = ticks;
-   updateDebugScreenTicks(snapshot.tick);
+export function createEntityFromData(entity: Entity, data: EntitySnapshot): void {
+   const entityComponentData: EntityComponentData = {
+      entityType: data.entityType,
+      serverComponentData: data.serverComponentData,
+      // @HACK
+      clientComponentData: data.clientComponentData
+   };
    
-   setGameTime(snapshot.time);
-   updateDebugScreenCurrentTime(snapshot.time);
+   const entityCreationInfo = createEntity(entity, entityComponentData);
+   addEntityToWorld(entity, data.spawnTicks, data.layer, entityCreationInfo);
+}
 
-   const layer = layers[snapshot.layerIdx];
-   if (layer !== getCurrentLayer()) {
-      setCurrentLayer(layer);
-      playSound("layer-change.mp3", 0.55, 1, Camera.position.copy(), null);
+const updateEntityFromData = (entity: Entity, data: EntitySnapshot): void => {
+   const previousLayer = getEntityLayer(entity);
+   if (data.layer !== previousLayer) {
+      // Change layers
+      changeEntityLayer(entity, data.layer);
    }
    
-   // @SQUEAM
-    // player has gone from not existing to existing
-   // let hasNewPlayerInstance = false;
+   // Update server components from data
+   const componentTypes = getEntityComponentTypes(entity);
+   for (const componentType of componentTypes) {
+      const componentArray = getServerComponentArray(componentType);
+      if (typeof componentArray.updateFromData !== "undefined") {
+         const componentData = data.serverComponentData[componentType]!;
+         componentArray.updateFromData(componentData, entity);
+      }
+   }
 
-   if (playerInstance === null && snapshot.playerInstance !== 0) {
-      // @CLEANUP this is weird: callled twice.
-      setPlayerInstance(newPlayerInstance);
-      // hasNewPlayerInstance = true;
+   // @Speed: Does this mean we can just collect all updated entities each tick and not have to do the dirty array bullshit?
+   // If you're updating the entity, then the server must have had some reason to send the data, so we should always consider the entity dirty.
+   // @Incomplete: Are there some situations where this isn't the case?
+   const renderInfo = getEntityRenderInfo(entity);
+   registerDirtyRenderInfo(renderInfo);
+}
+
+// @CLEANUP see comment in txt
+const updatePlayerFromData = (playerInstance: number, data: EntitySnapshot): void => {
+   // @Copynpaste
+   const previousLayer = getEntityLayer(playerInstance);
+   if (data.layer !== previousLayer) {
+      // Change layers
+      changeEntityLayer(playerInstance, data.layer);
+   }
+   
+   const componentTypes = getEntityComponentTypes(playerInstance);
+   for (const componentType of componentTypes) {
+      const componentArray = getServerComponentArray(componentType);
+      if (typeof componentArray.updatePlayerFromData !== "undefined") {
+         const componentData = data.serverComponentData[componentType]!;
+         // @INCOMPLETE: is never true??
+         componentArray.updatePlayerFromData(componentData, false);
+      }
    }
 }
 
+export function updateGameToSnapshot(snapshot: PacketSnapshot): void {
+   setCurrentSnapshot(snapshot);
+   updateDebugScreenCurrentSnapshot(snapshot);
+   
+   // @SQUEAM if kept then can be put in the update debug screen, else just fully removed.
+   updateDebugScreenIsPaused(snapshot.simulationIsPaused);
 
+   if (snapshot.layer !== getCurrentLayer()) {
+      setCurrentLayer(snapshot.layer);
+      playHeadSound("layer-change.mp3", 0.55, 1);
+   }
 
+   // Update entities
+   for (const pair of snapshot.entities) {
+      const entity = pair[0] as Entity;
+      const entitySnapshot = pair[1];
 
-
-   // Process entities
-   const numEntities = reader.readNumber();
-   for (let i = 0; i < numEntities; i++) {
-      const entityID = reader.readNumber() as Entity;
-      if (entityID === playerInstance) {
-         if (entityExists(playerInstance)) {
-            processPlayerUpdateData(reader);
+      if (entity === snapshot.playerInstance) {
+         if (entityExists(entity)) {
+            updatePlayerFromData(entity, entitySnapshot);
          } else {
-            processEntityCreationData(entityID, reader);
+            createEntityFromData(entity, entitySnapshot);
          }
-      } else if (entityExists(entityID)) {
-         processEntityUpdateData(entityID, reader);
       } else {
-         processEntityCreationData(entityID, reader);
+         if (entityExists(entity)) {
+            updateEntityFromData(entity, entitySnapshot);
+         } else {
+            createEntityFromData(entity, entitySnapshot);
+         }
       }
    }
 
-   // @CLEANUP this is strange and weird to use cameraSubject variable in disjointed way, etc. other stranges too.
-   // Set the tracked entity after the entities are created so that it can find the first render part of the tracked entity
-   if (!Camera.verybadIsTracking) {
-      Camera.trackEntity(cameraSubject);
-   }
-   
-   // @HACKISH
-   if (hasNewPlayerInstance) {
-      // Done after all the components are updated as the selectItemSlot function needs the player's inventory use component
-      selectItemSlot(1);
-      gameScreenSetIsDead(false);
+   for (const entityRemoveInfo of snapshot.removedEntities) {
+      removeEntity(entityRemoveInfo.entity, entityRemoveInfo.isDestroyed);
    }
 
-   const entitiesToRemove = new Set<Entity>();
-   
-   // Read removed entity IDs
-   const serverRemovedEntityIDs = new Set<number>();
-   const numRemovedEntities = reader.readNumber();
-   for (let i = 0; i < numRemovedEntities; i++) {
-      const entityID = reader.readNumber();
-
-      serverRemovedEntityIDs.add(entityID);
-      
-      if (entityExists(entityID)) {
-         entitiesToRemove.add(entityID);
-      }
-   }
-
-   // Tribes
-   // @Temporary @Garbage
-   const tempTribes = new Set<Tribe>();
-   const numTribes = reader.readNumber();
-   for (let i = 0; i < numTribes; i++) {
-      const isExtended = reader.readBoolean();
-      reader.padOffset(3);
-
-      const tribe = isExtended ? readExtendedTribeData(reader) : readShortTribeData(reader);
-      tempTribes.add(tribe);
-      
-      if (i === 0) {
-         updatePlayerTribe(tribe as ExtendedTribe);
-      }
-   }
+   updatePlayerTribe(snapshot.playerTribeData);
+   // @GARBAGE
    tribes.splice(0, tribes.length);
-   for (const tribe of tempTribes) {
+   tribes.push(snapshot.playerTribeData);
+   for (const tribe of snapshot.enemyTribeData) {
       tribes.push(tribe);
    }
-   // @Hack: shouldn't do always
+   // @Hack @Speed: shouldn't do always
    TribesTab_refresh();
-
-   // Lights
-   updateLightsFromData(reader);
-
-   // @Cleanup: move to own function
    
-   // @Temporary: I seem to be having an issue with some trees being invisible, possibly caused by this removing entities when they shouldn't be removed?
-   
-   // Remove entities which are no longer visible
-   // const minVisibleChunkX = Camera.minVisibleChunkX - 2;
-   // const maxVisibleChunkX = Camera.maxVisibleChunkX + 2;
-   // const minVisibleChunkY = Camera.minVisibleChunkY - 2;
-   // const maxVisibleChunkY = Camera.maxVisibleChunkY + 2;
-   // // @Speed
-   // for (let chunkX = 0; chunkX < Settings.BOARD_SIZE; chunkX++) {
-   //    for (let chunkY = 0; chunkY < Settings.BOARD_SIZE; chunkY++) {
-   //       // Skip visible chunks
-   //       if (chunkX >= minVisibleChunkX && chunkX <= maxVisibleChunkX && chunkY >= minVisibleChunkY && chunkY <= maxVisibleChunkY) {
-   //          continue;
-   //       }
+   setPlayerInstance(snapshot.playerInstance);
+   setCameraSubject(snapshot.cameraSubject);
 
-   //       const chunk = playerLayer.getChunk(chunkX, chunkY);
-   //       for (let i = 0; i < chunk.entities.length; i++) {
-   //          const entity = chunk.entities[i];
-   //          // @Hack?
-   //          if (entity !== playerInstance) {
-   //             entitiesToRemove.add(entity);
-   //          }
-   //       }
-   //    }
-   // }
+   updateLightsFromData(snapshot.lights);
 
+   // @CLEANUP this is so bad in comparison to how clean i've made the rest of this lol, but it'll clear itself up as i change the game in the ways i am planning to
    // Register hits
-   const numHits = reader.readNumber();
-   console.assert(Number.isInteger(numHits));
-   for (let i = 0; i < numHits; i++) {
-      const hitEntity = reader.readNumber() as Entity;
-      const hitHitboxLocalID = reader.readNumber();
-      const hitPositionX = reader.readNumber();
-      const hitPositionY = reader.readNumber();
-      const attackEffectiveness = reader.readNumber() as AttackEffectiveness;
-      const damage = reader.readNumber();
-      const shouldShowDamageNumber = reader.readBoolean();
-      reader.padOffset(3);
-      const flags = reader.readNumber();
-
-      if (entityExists(hitEntity)) {
-         if (attackEffectiveness === AttackEffectiveness.stopped) {
+   for (const hit of snapshot.hits) {
+      if (entityExists(hit.entity)) {
+         if (hit.attackEffectiveness === AttackEffectiveness.stopped) {
             // Register stopped hit
                      
-            const transformComponent = TransformComponentArray.getComponent(hitEntity);
+            const transformComponent = TransformComponentArray.getComponent(hit.entity);
             const hitbox = transformComponent.hitboxes[0];
             for (let i = 0; i < 6; i++) {
                const position = hitbox.box.position.offset(randFloat(0, 6), randAngle());
@@ -225,10 +522,10 @@ export function updateGameToSnapshot(snapshot: GameSnapshot): void {
          } else {
             // Register hit
 
-            const transformComponent = TransformComponentArray.getComponent(hitEntity);
+            const transformComponent = TransformComponentArray.getComponent(hit.entity);
 
             // If the entity is hit by a flesh sword, create slime puddles
-            if (flags & HitFlags.HIT_BY_FLESH_SWORD) {
+            if (hit.flags & HitFlags.HIT_BY_FLESH_SWORD) {
                const hitbox = transformComponent.hitboxes[0];
                for (let i = 0; i < 2; i++) {
                   createSlimePoolParticle(hitbox.box.position.x, hitbox.box.position.y, 32);
@@ -236,34 +533,30 @@ export function updateGameToSnapshot(snapshot: GameSnapshot): void {
             }
 
             // @Incomplete @Hack
-            if (flags & HitFlags.HIT_BY_SPIKES) {
-               playSound("spike-stab.mp3", 0.3, 1, new Point(hitPositionX, hitPositionY), getEntityLayer(hitEntity));
+            if (hit.flags & HitFlags.HIT_BY_SPIKES) {
+               playSound("spike-stab.mp3", 0.3, 1, hit.position, getEntityLayer(hit.entity));
             }
 
-            const hitHitbox = getHitboxByLocalID(transformComponent.hitboxes, hitHitboxLocalID);
+            const hitHitbox = getHitboxByLocalID(transformComponent.hitboxes, hit.hitboxLocalID);
             if (hitHitbox !== null) {
                // @Speed
                const componentArrays = getComponentArrays();
                for (let i = 0; i < componentArrays.length; i++) {
                   const componentArray = componentArrays[i];
-                  if (typeof componentArray.onHit !== "undefined" && componentArray.hasComponent(hitEntity)) {
-                     componentArray.onHit(hitEntity, hitHitbox, new Point(hitPositionX, hitPositionY), flags);
+                  if (typeof componentArray.onHit !== "undefined" && componentArray.hasComponent(hit.entity)) {
+                     componentArray.onHit(hit.entity, hitHitbox, hit.position, hit.flags);
                   }
                }
             }
          }
       }
       
-      if (damage > 0 && shouldShowDamageNumber) {
-         createDamageNumber(hitPositionX, hitPositionY, damage);
+      if (hit.damage > 0 && hit.shouldShowDamageNumber) {
+         createDamageNumber(hit.position.x, hit.position.y, hit.damage);
       }
    }
 
-   const numPlayerKnockbacks = reader.readNumber();
-   for (let i = 0; i < numPlayerKnockbacks; i++) {
-      const knockback = reader.readNumber();
-      const knockbackDirection = reader.readNumber();
-
+   for (const knockbackData of snapshot.playerKnockbacks) {
       if (playerInstance !== null) {
          const transformComponent = TransformComponentArray.getComponent(playerInstance);
          const playerHitbox = transformComponent.hitboxes[0];
@@ -271,24 +564,21 @@ export function updateGameToSnapshot(snapshot: GameSnapshot): void {
          const previousVelocity = getHitboxVelocity(playerHitbox);
          setHitboxVelocity(playerHitbox, previousVelocity.x * 0.5, previousVelocity.y * 0.5);
 
-         addHitboxVelocity(playerHitbox, knockback * Math.sin(knockbackDirection), knockback * Math.cos(knockbackDirection));
+         addHitboxVelocity(playerHitbox, knockbackData.knockback * Math.sin(knockbackData.knockbackDirection), knockbackData.knockback * Math.cos(knockbackData.knockbackDirection));
       }
    }
 
-   const numHeals = reader.readNumber();
-   for (let i = 0; i < numHeals; i++) {
-      const x = reader.readNumber();
-      const y = reader.readNumber();
-      const healedEntity = reader.readNumber() as Entity;
-      const healerEntity = reader.readNumber() as Entity;
-      const healAmount = reader.readNumber();
+   for (const healData of snapshot.heals) {
+      const healedEntity = healData.healedEntity;
+      const healerEntity = healData.healerEntity as Entity;
+      const healAmount = healData.healAmount;
 
       if (healAmount === 0) {
          continue;
       }
 
       if (healerEntity === playerInstance) {
-         createHealNumber(healedEntity, x, y, healAmount);
+         createHealNumber(healedEntity, healData.position.x, healData.position.y, healAmount);
       }
 
       if (entityExists(healedEntity)) {
@@ -308,153 +598,63 @@ export function updateGameToSnapshot(snapshot: GameSnapshot): void {
 
          // @Hack @Incomplete: This will trigger the repair sound effect even if a hammer isn't the one healing the structure
          if (STRUCTURE_TYPES.includes(getEntityType(healedEntity) as any)) { // @Cleanup
-            playSound("repair.mp3", 0.4, 1, new Point(x, y), getEntityLayer(healedEntity));
+            playSound("repair.mp3", 0.4, 1, healData.position, getEntityLayer(healedEntity));
          }
       }
    }
 
-   const visibleEntityDeathIDs = new Set<Entity>();
-   const numVisibleDeaths = reader.readNumber();
-   for (let i = 0; i < numVisibleDeaths; i++) {
-      const id = reader.readNumber();
-      visibleEntityDeathIDs.add(id);
+   for (const orbCompleteData of snapshot.researchOrbCompletes) {
+      createResearchNumber(orbCompleteData.position.x, orbCompleteData.position.y, orbCompleteData.amount);
    }
 
-   for (const entity of entitiesToRemove) {
-      const isDeath = visibleEntityDeathIDs.has(entity);
-      removeEntity(entity, isDeath);
-
-      // @CLEANUP THIS IS WEIRD
-      if (entity === playerInstance) {
-         // Kill the player
-
-         // Remove the player from the game
-         setPlayerInstance(null);
-
-         latencyGameState.resetFlags();
-         definiteGameState.resetFlags();
-
-         gameScreenSetIsDead(true);
-         closeCurrentMenu();
-
-         // We want the hotbar to refresh now to show the empty hotbar
-         // This will propagate down to refresh the hotbar.
-         // @CLEANUP bruuuh this is just to update the hotbar. React.js shittery.
-         GameScreen_update();
-      }
+   for (const tileUpdate of snapshot.tileUpdates) {
+      const tile = tileUpdate.layer.getTile(tileUpdate.tileIndex);
+      tile.type = tileUpdate.tileType;
+      updateRenderChunkFromTileUpdate(tileUpdate.tileIndex, tileUpdate.layer);
    }
 
-   // Research orb completes
-   const numOrbs = reader.readNumber();
-   for (let i = 0; i < numOrbs; i++) {
-      const x = reader.readNumber();
-      const y = reader.readNumber();
-      const amount = reader.readNumber();
-      createResearchNumber(x, y, amount);
-   }
-
-   const numTileUpdates = reader.readNumber();
-   console.assert(Number.isInteger(numTileUpdates));
-   for (let i = 0; i < numTileUpdates; i++) {
-      const layerIdx = reader.readNumber();
-      const tileIndex = reader.readNumber();
-      const tileType = reader.readNumber();
-
-      const layer = layers[layerIdx];
-      
-      const tile = layer.getTile(tileIndex);
-      tile.type = tileType;
-      
-      updateRenderChunkFromTileUpdate(tileIndex, layer);
-   }
-
-   // Wall subtile updates
    for (const layer of layers) {
-      const numUpdates = reader.readNumber();
-      for (let i = 0; i < numUpdates; i++) {
-         const subtileIndex = reader.readNumber();
-         const subtileType = reader.readNumber() as SubtileType;
-         const damageTaken = reader.readNumber();
-         layer.registerSubtileUpdate(subtileIndex, subtileType, damageTaken);
+      const layerSubtileUpdates = snapshot.wallSubtileUpdates.get(layer)!;
+      for (const subtileUpdateData of layerSubtileUpdates) {
+         layer.registerSubtileUpdate(subtileUpdateData.subtileIndex, subtileUpdateData.subtileType, subtileUpdateData.damageTaken);
       }
    }
 
-   const playerHealth = reader.readNumber();
+   // @Cleanup (this'll go away when i do the sound server-to-client)
+   if (snapshot.hasPickedUpItem) {
+      playHeadSound("item-pickup.mp3", 0.3, 1);
+   }
 
-   const hasDebugData = reader.readBoolean();
-   reader.padOffset(3);
+   Infocards_setTitleOffer(snapshot.titleOffer);
+
+   for (const entityTickEvent of snapshot.entityTickEvents) {
+      processTickEvent(entityTickEvent.entity, entityTickEvent.type, entityTickEvent.data);
+   }
    
-   if (hasDebugData && isDev()) {
-      const debugData = readDebugData(reader);
-      Game.setGameObjectDebugData(debugData);
-   } else {
-      Game.setGameObjectDebugData(null);
+   setMinedSubtiles(snapshot.minedSubtiles);
+
+   for (const collapse of snapshot.collapses) {
+      tickCollapse(collapse.collapsingSubtileIndex, collapse.ageTicks);
    }
 
-   const hasPickedUpItem = reader.readBoolean();
-   reader.padOffset(3);
-   if (hasPickedUpItem) {
-      playSound("item-pickup.mp3", 0.3, 1, Camera.position, null);
-   }
-
-   if (playerInstance !== null) {
-      definiteGameState.hotbarCrossbowLoadProgressRecord = readCrossbowLoadProgressRecord(reader);
-   }
-
-   // Title offer
-   const hasTitleOffer = reader.readBoolean();
-   reader.padOffset(3);
-   let titleOffer: TribesmanTitle | null = null;
-   if (hasTitleOffer) {
-      titleOffer = reader.readNumber();
-   }
-   Infocards_setTitleOffer(titleOffer);
-   
-   // Tick events
-   const numTickEvents = reader.readNumber();
-   for (let i = 0; i < numTickEvents; i++) {
-      const entity = reader.readNumber() as Entity;
-      const type = reader.readNumber() as EntityTickEventType;
-      const data = reader.readNumber();
-      processTickEvent(entity, type, data);
-   }
-
-   // Mined subtiles
-   const minedSubtiles = new Array<MinedSubtile>();
-   const numMinedSubtiles = reader.readNumber();
-   for (let i = 0; i < numMinedSubtiles; i++) {
-      const subtile = reader.readNumber();
-      const subtileType = reader.readNumber() as SubtileType;
-      const support = reader.readNumber();
-      const isCollapsing = reader.readBoolean();
-      reader.padOffset(3);
-
-      const minedSubtile: MinedSubtile = {
-         subtileIndex: subtile,
-         subtileType: subtileType,
-         support: support,
-         isCollapsing: isCollapsing
-      };
-      minedSubtiles.push(minedSubtile);
-   }
-   setMinedSubtiles(minedSubtiles);
-
-   // Collapses
-   const numCollapses = reader.readNumber();
-   assert(Number.isInteger(numCollapses));
-   for (let i = 0; i < numCollapses; i++) {
-      const collapsingSubtileIndex = reader.readNumber();
-      const ageTicks = reader.readNumber();
-      tickCollapse(collapsingSubtileIndex, ageTicks);
-   }
-
-   updateGrassBlockers(reader);
-
-   // Tribe plans and virtual buildings
-   // @Cleanup: remove underscore
-   const _isDev = reader.readBoolean();
-   reader.padOffset(3);
-   if (_isDev) {
-      readPacketDevData(reader);
-   }
+   updateGrassBlockersFromData(snapshot.grassBlockers);
 }
+
+// @INCOMPLETE @SQUEAM
+   // const hasDebugData = reader.readBool();
+   
+   // if (hasDebugData && isDev()) {
+   //    const debugData = readDebugData(reader);
+   //    Game.setGameObjectDebugData(debugData);
+   // } else {
+   //    Game.setGameObjectDebugData(null);
+   // }
+
+
+// @INCOMPLETE @SQUEAM
+   // // Tribe plans and virtual buildings
+   // // @Cleanup: remove underscore
+   // const _isDev = reader.readBool();
+   // if (_isDev) {
+   //    readPacketDevData(reader);
+   // }

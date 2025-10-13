@@ -60,7 +60,7 @@ const generateZombieSpawnPosition = (tombstone: Entity): Point => {
       const y = tombstoneHitbox.box.position.y + offsetMagnitude * Math.cos(angleFromTombstone);
    
       // Make sure the spawn position is valid
-      if (x < 0 || x >= Settings.BOARD_UNITS || y < 0 || y >= Settings.BOARD_UNITS) {
+      if (x < 0 || x >= Settings.WORLD_UNITS || y < 0 || y >= Settings.WORLD_UNITS) {
          seenIs.push(i);
          if (seenIs.length === 4) {
             return new Point(-1, -1);
@@ -156,15 +156,14 @@ const getZombieSpawnProgress = (tombstoneComponent: TombstoneComponent): number 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const tombstoneComponent = TombstoneComponentArray.getComponent(entity);
 
-   packet.addNumber(tombstoneComponent.tombstoneType);
-   packet.addNumber(getZombieSpawnProgress(tombstoneComponent));
-   packet.addNumber(tombstoneComponent.zombieSpawnPositionX);
-   packet.addNumber(tombstoneComponent.zombieSpawnPositionY);
+   packet.writeNumber(tombstoneComponent.tombstoneType);
+   packet.writeNumber(getZombieSpawnProgress(tombstoneComponent));
+   packet.writeNumber(tombstoneComponent.zombieSpawnPositionX);
+   packet.writeNumber(tombstoneComponent.zombieSpawnPositionY);
 
-   packet.addBoolean(tombstoneComponent.deathInfo !== null);
-   packet.padOffset(3);
+   packet.writeBool(tombstoneComponent.deathInfo !== null);
    if (tombstoneComponent.deathInfo !== null) {
-      packet.addString(tombstoneComponent.deathInfo.username);
-      packet.addNumber(tombstoneComponent.deathInfo.damageSource);
+      packet.writeString(tombstoneComponent.deathInfo.username);
+      packet.writeNumber(tombstoneComponent.deathInfo.damageSource);
    }
 }

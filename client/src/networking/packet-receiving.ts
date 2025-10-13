@@ -1,37 +1,27 @@
 import { WaterRockData, RiverSteppingStoneData, GrassTileInfo, RiverFlowDirectionsRecord, WaterRockSize, RiverSteppingStoneSize, EntityDebugData, LineDebugData, CircleDebugData, TileHighlightData, PathData, PathfindingNodeIndex, RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
-import { ServerComponentType } from "battletribes-shared/components";
-import { Entity, EntityType } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
 import Game from "../game";
-import Camera from "../Camera";
+import { refreshCameraView, setCameraPosition } from "../camera";
 import { Tile } from "../Tile";
-import { getComponentArrays, getServerComponentArray } from "../entity-components/ComponentArray";
-import { createEntity, addLayer, changeEntityLayer, EntityServerComponentData, getEntityLayer, getEntityRenderInfo, layers, setCurrentLayer, EntityComponentData, surfaceLayer, addEntityToWorld } from "../world";
+import { addLayer, layers, setCurrentLayer, surfaceLayer } from "../world";
 import { NEIGHBOUR_OFFSETS } from "../utils";
 import { createRiverSteppingStoneData } from "../rendering/webgl/river-rendering";
 import Layer, { getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorld, tileIsWithinEdge } from "../Layer";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { initialiseRenderables } from "../rendering/render-loop";
-import ServerComponentArray from "../entity-components/ServerComponentArray";
-import { registerDirtyRenderInfo } from "../rendering/render-part-matrices";
 import { Biome } from "../../../shared/src/biomes";
-import { assert, TileIndex } from "../../../shared/src/utils";
-import { playerInstance, setPlayerInstance } from "../player";
+import { TileIndex } from "../../../shared/src/utils";
+import { playerInstance } from "../player";
 import { registerTamingSpecsFromData } from "../taming-specs";
-import { getEntityClientComponentConfigs } from "../entity-components/client-components"
 import { addChatMessage } from "../components/game/ChatBox";
-
-// @Cleanup: location
-// Use prime numbers / 100 to ensure a decent distribution of different types of particles
-const HEALING_PARTICLE_AMOUNTS = [0.05, 0.37, 1.01];
 
 const getBuildingBlockingTiles = (): ReadonlySet<TileIndex> => {
    // Initially find all tiles below a dropdown tile
    const buildingBlockingTiles = new Set<TileIndex>();
-   for (let tileX = 0; tileX < Settings.BOARD_DIMENSIONS; tileX++) {
-      for (let tileY = 0; tileY < Settings.BOARD_DIMENSIONS; tileY++) {
+   for (let tileX = 0; tileX < Settings.WORLD_SIZE_TILES; tileX++) {
+      for (let tileY = 0; tileY < Settings.WORLD_SIZE_TILES; tileY++) {
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
          const surfaceTile = surfaceLayer.getTile(tileIndex);
          if (surfaceTile.type === TileType.dropdown) {
@@ -78,7 +68,7 @@ export function processInitialGameDataPacket(reader: PacketReader): void {
       const tiles = new Array<Tile>();
       const flowDirections: RiverFlowDirectionsRecord = {};
       const grassInfoRecord: Record<number, Record<number, GrassTileInfo>> = {};
-      for (let tileIndex = 0; tileIndex < Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS; tileIndex++) {
+      for (let tileIndex = 0; tileIndex < Settings.FULL_WORLD_SIZE_TILES * Settings.FULL_WORLD_SIZE_TILES; tileIndex++) {
          const tileType = reader.readNumber() as TileType;
          const tileBiome = reader.readNumber() as Biome;
          const flowDirection = reader.readNumber();
@@ -110,8 +100,8 @@ export function processInitialGameDataPacket(reader: PacketReader): void {
       }
 
       // Read in subtiles
-      const wallSubtileTypes = new Float32Array(Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS * 16);
-      for (let i = 0; i < Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS * 16; i++) {
+      const wallSubtileTypes = new Float32Array(Settings.FULL_WORLD_SIZE_TILES * Settings.FULL_WORLD_SIZE_TILES * 16);
+      for (let i = 0; i < Settings.FULL_WORLD_SIZE_TILES * Settings.FULL_WORLD_SIZE_TILES * 16; i++) {
          const subtileType = reader.readNumber();
          wallSubtileTypes[i] = subtileType;
       }
@@ -130,8 +120,8 @@ export function processInitialGameDataPacket(reader: PacketReader): void {
       for (let i = 0; i < tiles.length; i++) {
          const tile = tiles[i];
          if (tile.type === TileType.water) {
-            const tileX = i % (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE * 2) - Settings.EDGE_GENERATION_DISTANCE;
-            const tileY = Math.floor(i / (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE * 2)) - Settings.EDGE_GENERATION_DISTANCE;
+            const tileX = i % (Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE * 2) - Settings.EDGE_GENERATION_DISTANCE;
+            const tileY = Math.floor(i / (Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE * 2)) - Settings.EDGE_GENERATION_DISTANCE;
 
             for (let j = 0; j < NEIGHBOUR_OFFSETS.length; j++) {
                const neighbourTileX = tileX + NEIGHBOUR_OFFSETS[j][0];
@@ -157,8 +147,8 @@ export function processInitialGameDataPacket(reader: PacketReader): void {
    initialiseRenderables();
 
    // Set the initial camera position
-   Camera.setPosition(spawnPositionX, spawnPositionY);
-   Camera.setInitialVisibleChunkBounds(spawnLayer);
+   setCameraPosition(spawnPositionX, spawnPositionY);
+   refreshCameraView();
 
    setCurrentLayer(spawnLayer);
 
@@ -204,10 +194,10 @@ export function processInitialGameDataPacket(reader: PacketReader): void {
    for (const steppingStone of surfaceLayer.riverSteppingStones) {
       const size = RIVER_STEPPING_STONE_SIZES[steppingStone.size];
 
-      const minChunkX = Math.max(Math.min(Math.floor((steppingStone.positionX - size/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const maxChunkX = Math.max(Math.min(Math.floor((steppingStone.positionX + size/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const minChunkY = Math.max(Math.min(Math.floor((steppingStone.positionY - size/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      const maxChunkY = Math.max(Math.min(Math.floor((steppingStone.positionY + size/2) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+      const minChunkX = Math.max(Math.min(Math.floor((steppingStone.positionX - size/2) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+      const maxChunkX = Math.max(Math.min(Math.floor((steppingStone.positionX + size/2) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+      const minChunkY = Math.max(Math.min(Math.floor((steppingStone.positionY - size/2) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+      const maxChunkY = Math.max(Math.min(Math.floor((steppingStone.positionY + size/2) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
       
       for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
          for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
@@ -283,8 +273,7 @@ const readDebugData = (reader: PacketReader): EntityDebugData => {
 
    let pathData: PathData | undefined;
 
-   const hasPathData = reader.readBoolean();
-   reader.padOffset(3);
+   const hasPathData = reader.readBool();
    if (hasPathData) {
       const goalX = reader.readNumber();
       const goalY = reader.readNumber();
@@ -329,132 +318,6 @@ const readDebugData = (reader: PacketReader): EntityDebugData => {
       debugEntries: entries,
       pathData: pathData
    };
-}
-
-const processPlayerUpdateData = (reader: PacketReader): void => {
-   if (playerInstance === null) {
-      throw new Error();
-   }
-   
-   // Skip entity type and spawn ticks
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-
-   // @Copynpaste
-   const layerIdx = reader.readNumber();
-   const layer = layers[layerIdx];
-   const previousLayer = getEntityLayer(playerInstance);
-   if (layer !== previousLayer) {
-      // Change layers
-      changeEntityLayer(playerInstance, layer);
-   }
-   
-   const numComponents = reader.readNumber();
-   for (let i = 0; i < numComponents; i++) {
-      const componentType = reader.readNumber() as ServerComponentType;
-      const componentArray = getServerComponentArray(componentType);
-
-      if (typeof componentArray.updatePlayerFromData !== "undefined") {
-         componentArray.updatePlayerFromData(reader, false);
-      } else {
-         componentArray.decodeData(reader);
-      }
-   }
-
-   // @Speed
-   const componentArrays = getComponentArrays();
-   for (let i = 0; i < componentArrays.length; i++) {
-      const componentArray = componentArrays[i];
-      if (componentArray.hasComponent(playerInstance) && typeof (componentArray as ServerComponentArray).updatePlayerAfterData !== "undefined") {
-         (componentArray as ServerComponentArray).updatePlayerAfterData!();
-      }
-   }
-
-      // @Incomplete
-      // const leftThrownBattleaxeItemID = entiaaaaatyData.clientArgs[14] as number;
-      // player.leftThrownBattleaxeItemID = leftThrownBattleaxeItemID;
-      // Hotbar_updateLeftThrownBattleaxeItemID(leftThrownBattleaxeItemID);
-}
-
-export function processEntityCreationData(entity: Entity, reader: PacketReader): void {
-   // @Cleanup: might be able to be cleaned up by making a separate processPlayerCreationData
-   
-   const entityType = reader.readNumber() as EntityType;
-   const spawnTicks = reader.readNumber();
-   const layerIdx = reader.readNumber();
-   console.assert(Number.isInteger(layerIdx) && layerIdx < layers.length);
-
-   const entityServerComponentTypes = new Array<ServerComponentType>();
-   const entityServerComponentData = {} as EntityServerComponentData;
-   
-   // Create component data
-   const numComponents = reader.readNumber();
-   for (let i = 0; i < numComponents; i++) {
-      const componentType = reader.readNumber() as ServerComponentType;
-      entityServerComponentTypes.push(componentType);
-
-      const componentArray = getServerComponentArray(componentType);
-
-      // @Cleanup: cast
-      entityServerComponentData[componentType] = componentArray.decodeData(reader) as any;
-   }
-
-   const layer = layers[layerIdx];
-   
-   const entityComponentData: EntityComponentData = {
-      entityType: entityType,
-      serverComponentData: entityServerComponentData,
-      // @HACK
-      clientComponentData: getEntityClientComponentConfigs(entityType)
-   };
-   
-   const entityCreationInfo = createEntity(entity, entityComponentData);
-
-   addEntityToWorld(entity, spawnTicks, layer, entityCreationInfo);
-
-   // @CLEANUP weird that this is hidden in here.
-   // Set the player instance
-   if (entity === playerInstance) {
-      setPlayerInstance(entity);
-
-      // @Speed @Copynpaste
-      const componentArrays = getComponentArrays();
-      for (let i = 0; i < componentArrays.length; i++) {
-         const componentArray = componentArrays[i];
-         if (componentArray.hasComponent(playerInstance!) && typeof (componentArray as ServerComponentArray).updatePlayerAfterData !== "undefined") {
-            (componentArray as ServerComponentArray).updatePlayerAfterData!();
-         }
-      }
-   }
-}
-
-const processEntityUpdateData = (entity: Entity, reader: PacketReader): void => {
-   // Skip entity type and spawn ticks
-   // @Temporary
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-
-   const layerIdx = reader.readNumber();
-
-   const layer = layers[layerIdx];
-   const previousLayer = getEntityLayer(entity);
-   if (layer !== previousLayer) {
-      // Change layers
-      changeEntityLayer(entity, layer);
-   }
-   
-   const numComponents = reader.readNumber();
-   for (let i = 0; i < numComponents; i++) {
-      const componentType = reader.readNumber() as ServerComponentType;
-      assert(Number.isInteger(componentType) && componentType >= 0);
-      const componentArray = getServerComponentArray(componentType);
-      
-      componentArray.updateFromData(reader, entity);
-   }
-
-   // @Speed: Does this mean we can just collect all updated entities each tick and not have to do the dirty array bullshit?
-   // If you're updating the entity, then the server must have had some reason to send the data, so we should always consider the entity dirty.
-   // @Incomplete: Are there some situations where this isn't the case?
-   const renderInfo = getEntityRenderInfo(entity);
-   registerDirtyRenderInfo(renderInfo);
 }
 
 export function processSyncDataPacket(reader: PacketReader): void {

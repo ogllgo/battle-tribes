@@ -16,12 +16,9 @@ interface IntermediateInfo {}
 
 export interface BallistaRockComponent {}
 
-export const BallistaRockComponentArray = new ClientComponentArray<BallistaRockComponent, IntermediateInfo>(ClientComponentType.ballistaRock, true, {
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onDie: onDie
-});
+export const BallistaRockComponentArray = new ClientComponentArray<BallistaRockComponent, IntermediateInfo>(ClientComponentType.ballistaRock, true, createComponent, getMaxRenderParts);
+BallistaRockComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+BallistaRockComponentArray.onDie = onDie;
 
 export function createBallistaRockComponentData(): BallistaRockComponentData {
    return {};

@@ -13,8 +13,8 @@ import { BlueprintType } from "../../../shared/src/components";
 import { TechID } from "../../../shared/src/techs";
 import { playerInstance } from "../player";
 import { TamingSkillID } from "../../../shared/src/taming";
-import Camera from "../Camera";
 import { Point } from "../../../shared/src/utils";
+import { cameraPosition } from "../camera";
 
 export function createPlayerDataPacket(): ArrayBuffer {
    // Position, rotation
@@ -38,28 +38,28 @@ export function createPlayerDataPacket(): ArrayBuffer {
    
    const transformComponent = TransformComponentArray.getComponent(playerInstance!);
    const playerHitbox = transformComponent.hitboxes[0];
-   packet.addNumber(playerHitbox.box.position.x);
-   packet.addNumber(playerHitbox.box.position.y);
-   packet.addNumber(playerHitbox.box.relativeAngle);
+   packet.writeNumber(playerHitbox.box.position.x);
+   packet.writeNumber(playerHitbox.box.position.y);
+   packet.writeNumber(playerHitbox.box.relativeAngle);
 
-   packet.addNumber(playerHitbox.previousPosition.x);
-   packet.addNumber(playerHitbox.previousPosition.y);
-   packet.addNumber(playerHitbox.acceleration.x);
-   packet.addNumber(playerHitbox.acceleration.y);
+   packet.writeNumber(playerHitbox.previousPosition.x);
+   packet.writeNumber(playerHitbox.previousPosition.y);
+   packet.writeNumber(playerHitbox.acceleration.x);
+   packet.writeNumber(playerHitbox.acceleration.y);
 
    const movementIntention = getPlayerMoveIntention();
-   packet.addNumber(movementIntention.x);
-   packet.addNumber(movementIntention.y);
+   packet.writeNumber(movementIntention.x);
+   packet.writeNumber(movementIntention.y);
 
-   packet.addNumber(playerHitbox.previousRelativeAngle);
-   packet.addNumber(playerHitbox.angularAcceleration);
+   packet.writeNumber(playerHitbox.previousRelativeAngle);
+   packet.writeNumber(playerHitbox.angularAcceleration);
 
-   packet.addNumber(windowWidth);
-   packet.addNumber(windowHeight);
+   packet.writeNumber(windowWidth);
+   packet.writeNumber(windowHeight);
 
-   packet.addNumber(getHotbarSelectedItemSlot());
-   packet.addNumber(getInstancePlayerAction(InventoryName.hotbar));
-   packet.addNumber(getInstancePlayerAction(InventoryName.offhand));
+   packet.writeNumber(getHotbarSelectedItemSlot());
+   packet.writeNumber(getInstancePlayerAction(InventoryName.hotbar));
+   packet.writeNumber(getInstancePlayerAction(InventoryName.offhand));
 
    let interactingEntityID = 0;
    const selectedEntityID = getSelectedEntityID();
@@ -71,7 +71,7 @@ export function createPlayerDataPacket(): ArrayBuffer {
       }
    }
 
-   packet.addNumber(interactingEntityID);
+   packet.writeNumber(interactingEntityID);
    
    let gameDataOptions = 0;
    if (OPTIONS.showPathfindingNodes) {
@@ -99,7 +99,7 @@ export function createPlayerDataPacket(): ArrayBuffer {
       gameDataOptions |= GameDataPacketOptions.sendLightLevels;
    }
    
-   packet.addNumber(gameDataOptions);
+   packet.writeNumber(gameDataOptions);
    
    return packet.buffer;
 }
@@ -120,8 +120,8 @@ export function createAttackPacket(): ArrayBuffer {
    
    const packet = new Packet(PacketType.attack, 3 * Float32Array.BYTES_PER_ELEMENT);
 
-   packet.addNumber(getHotbarSelectedItemSlot());
-   packet.addNumber(playerHitbox.box.angle);
+   packet.writeNumber(getHotbarSelectedItemSlot());
+   packet.writeNumber(playerHitbox.box.angle);
    
    return packet.buffer;
 }
@@ -129,8 +129,8 @@ export function createAttackPacket(): ArrayBuffer {
 export function sendDevGiveItemPacket(itemType: ItemType, amount: number): void {
    const packet = new Packet(PacketType.devGiveItem, 3 * Float32Array.BYTES_PER_ELEMENT);
 
-   packet.addNumber(itemType);
-   packet.addNumber(amount);
+   packet.writeNumber(itemType);
+   packet.writeNumber(amount);
 
    Client.sendPacket(packet.buffer);
 }
@@ -143,7 +143,7 @@ export function sendRespawnPacket(): void {
 export function sendStartItemUsePacket(): void {
    const packet = new Packet(PacketType.startItemUse, 2 * Float32Array.BYTES_PER_ELEMENT);
    
-   packet.addNumber(getHotbarSelectedItemSlot());
+   packet.writeNumber(getHotbarSelectedItemSlot());
 
    Client.sendPacket(packet.buffer);
 }
@@ -151,7 +151,7 @@ export function sendStartItemUsePacket(): void {
 export function sendItemUsePacket(): void {
    const packet = new Packet(PacketType.useItem, 2 * Float32Array.BYTES_PER_ELEMENT);
    
-   packet.addNumber(getHotbarSelectedItemSlot());
+   packet.writeNumber(getHotbarSelectedItemSlot());
 
    Client.sendPacket(packet.buffer);
 }
@@ -164,10 +164,10 @@ export function sendStopItemUsePacket(): void {
 export function sendItemDropPacket(inventoryName: InventoryName, itemSlot: number, dropAmount: number, throwDirection: number): void {
    const packet = new Packet(PacketType.dropItem, 5 * Float32Array.BYTES_PER_ELEMENT);
 
-   packet.addNumber(inventoryName);
-   packet.addNumber(itemSlot);
-   packet.addNumber(dropAmount);
-   packet.addNumber(throwDirection);
+   packet.writeNumber(inventoryName);
+   packet.writeNumber(itemSlot);
+   packet.writeNumber(dropAmount);
+   packet.writeNumber(throwDirection);
 
    Client.sendPacket(packet.buffer);
 }
@@ -176,10 +176,10 @@ export function sendItemDropPacket(inventoryName: InventoryName, itemSlot: numbe
 export function sendItemPickupPacket(entityID: number, inventoryName: InventoryName, itemSlot: number, amount: number): void {
    const packet = new Packet(PacketType.itemPickup, 5 * Float32Array.BYTES_PER_ELEMENT);
 
-   packet.addNumber(entityID);
-   packet.addNumber(inventoryName);
-   packet.addNumber(itemSlot);
-   packet.addNumber(amount);
+   packet.writeNumber(entityID);
+   packet.writeNumber(inventoryName);
+   packet.writeNumber(itemSlot);
+   packet.writeNumber(amount);
 
    Client.sendPacket(packet.buffer);
 }
@@ -187,10 +187,10 @@ export function sendItemPickupPacket(entityID: number, inventoryName: InventoryN
 export function sendItemReleasePacket(entityID: number, inventoryName: InventoryName, itemSlot: number, amount: number): void {
    const packet = new Packet(PacketType.itemRelease, 5 * Float32Array.BYTES_PER_ELEMENT);
 
-   packet.addNumber(entityID);
-   packet.addNumber(inventoryName);
-   packet.addNumber(itemSlot);
-   packet.addNumber(amount);
+   packet.writeNumber(entityID);
+   packet.writeNumber(inventoryName);
+   packet.writeNumber(itemSlot);
+   packet.writeNumber(amount);
 
    Client.sendPacket(packet.buffer);
 }
@@ -198,10 +198,10 @@ export function sendItemReleasePacket(entityID: number, inventoryName: Inventory
 export function sendEntitySummonPacket(entityType: EntityType, x: number, y: number, rotation: number): void {
    const packet = new Packet(PacketType.summonEntity, 5 * Float32Array.BYTES_PER_ELEMENT);
 
-   packet.addNumber(entityType);
-   packet.addNumber(x);
-   packet.addNumber(y);
-   packet.addNumber(rotation);
+   packet.writeNumber(entityType);
+   packet.writeNumber(x);
+   packet.writeNumber(y);
+   packet.writeNumber(rotation);
 
    Client.sendPacket(packet.buffer);
 }
@@ -209,8 +209,7 @@ export function sendEntitySummonPacket(entityType: EntityType, x: number, y: num
 export function sendToggleSimulationPacket(isSimulating: boolean): void {
    const packet = new Packet(PacketType.toggleSimulation, 2 * Float32Array.BYTES_PER_ELEMENT);
 
-   packet.addBoolean(isSimulating);
-   packet.padOffset(3);
+   packet.writeBool(isSimulating);
 
    Client.sendPacket(packet.buffer);
 }
@@ -218,8 +217,8 @@ export function sendToggleSimulationPacket(isSimulating: boolean): void {
 export function sendPlaceBlueprintPacket(structure: Entity, blueprintType: BlueprintType): void {
    const packet = new Packet(PacketType.placeBlueprint, 3 * Float32Array.BYTES_PER_ELEMENT);
 
-   packet.addNumber(structure);
-   packet.addNumber(blueprintType);
+   packet.writeNumber(structure);
+   packet.writeNumber(blueprintType);
 
    Client.sendPacket(packet.buffer);
 }
@@ -227,7 +226,7 @@ export function sendPlaceBlueprintPacket(structure: Entity, blueprintType: Bluep
 export function sendCraftItemPacket(recipeIndex: number): void {
    const packet = new Packet(PacketType.craftItem, 2 * Float32Array.BYTES_PER_ELEMENT);
 
-   packet.addNumber(recipeIndex);
+   packet.writeNumber(recipeIndex);
 
    Client.sendPacket(packet.buffer);
 }
@@ -235,7 +234,7 @@ export function sendCraftItemPacket(recipeIndex: number): void {
 export function sendSetDebugEntityPacket(entity: Entity): void {
    const packet = new Packet(PacketType.devSetDebugEntity, 2 * Float32Array.BYTES_PER_ELEMENT);
 
-   packet.addNumber(entity);
+   packet.writeNumber(entity);
 
    Client.sendPacket(packet.buffer);
 }
@@ -247,59 +246,58 @@ export function sendAscendPacket(): void {
 
 export function sendTPTOEntityPacket(targetEntity: Entity): void {
    const packet = new Packet(PacketType.devTPToEntity, 2 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(targetEntity);
+   packet.writeNumber(targetEntity);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendSpectateEntityPacket(entity: Entity): void {
    const packet = new Packet(PacketType.devSpectateEntity, 2 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(entity);
+   packet.writeNumber(entity);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendSetAutogiveBaseResourcesPacket(tribeID: number, autogiveBaseResource: boolean): void {
    const packet = new Packet(PacketType.devSetAutogiveBaseResource, 3 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(tribeID);
-   packet.addBoolean(autogiveBaseResource);
-   packet.padOffset(3);
+   packet.writeNumber(tribeID);
+   packet.writeBool(autogiveBaseResource);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendStructureInteractPacket(structureID: number, interactData: number): void {
    const packet = new Packet(PacketType.structureInteract, 3 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(structureID);
-   packet.addNumber(interactData);
+   packet.writeNumber(structureID);
+   packet.writeNumber(interactData);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendUnlockTechPacket(techID: TechID): void {
    const packet = new Packet(PacketType.unlockTech, 2 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(techID);
+   packet.writeNumber(techID);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendStudyTechPacket(studyAmount: number): void {
    const packet = new Packet(PacketType.studyTech, 2 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(studyAmount);
+   packet.writeNumber(studyAmount);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendSelectTechPacket(techID: TechID): void {
    const packet = new Packet(PacketType.selectTech, 2 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(techID);
+   packet.writeNumber(techID);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendAnimalStaffFollowCommandPacket(entity: Entity): void {
    const packet = new Packet(PacketType.animalStaffFollowCommand, 2 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(entity);
+   packet.writeNumber(entity);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendMountCarrySlotPacket(mount: Entity, carrySlotIdx: number): void {
    const packet = new Packet(PacketType.mountCarrySlot, 3 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(mount);
-   packet.addNumber(carrySlotIdx);
+   packet.writeNumber(mount);
+   packet.writeNumber(carrySlotIdx);
    Client.sendPacket(packet.buffer);
 }
 
@@ -310,101 +308,101 @@ export function sendDismountCarrySlotPacket(): void {
 
 export function sendPickUpEntityPacket(entity: Entity): void {
    const packet = new Packet(PacketType.pickUpEntity, 2 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(entity);
+   packet.writeNumber(entity);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendModifyBuildingPacket(structure: Entity, data: number): void {
    const packet = new Packet(PacketType.modifyBuilding, 3 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(structure);
-   packet.addNumber(data);
+   packet.writeNumber(structure);
+   packet.writeNumber(data);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendSetMoveTargetPositionPacket(entity: Entity, targetX: number, targetY: number): void {
    const packet = new Packet(PacketType.setMoveTargetPosition, 4 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(entity);
-   packet.addNumber(targetX);
-   packet.addNumber(targetY);
+   packet.writeNumber(entity);
+   packet.writeNumber(targetX);
+   packet.writeNumber(targetY);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendSetCarryTargetPacket(entity: Entity, carryTarget: Entity): void {
    const packet = new Packet(PacketType.setCarryTarget, 3 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(entity);
-   packet.addNumber(carryTarget);
+   packet.writeNumber(entity);
+   packet.writeNumber(carryTarget);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendSelectRiderDepositLocationPacket(entity: Entity, depositLocation: Point): void {
    const packet = new Packet(PacketType.selectRiderDepositLocation, 4 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(entity);
-   packet.addPoint(depositLocation);
+   packet.writeNumber(entity);
+   packet.writePoint(depositLocation);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendSetAttackTargetPacket(entity: Entity, attackTarget: Entity): void {
    const packet = new Packet(PacketType.setAttackTarget, 3 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(entity);
-   packet.addNumber(attackTarget);
+   packet.writeNumber(entity);
+   packet.writeNumber(attackTarget);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendCompleteTamingTierPacket(entity: Entity): void {
    const packet = new Packet(PacketType.completeTamingTier, 2 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(entity);
+   packet.writeNumber(entity);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendForceCompleteTamingTierPacket(entity: Entity): void {
    const packet = new Packet(PacketType.forceCompleteTamingTier, 2 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(entity);
+   packet.writeNumber(entity);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendAcquireTamingSkillPacket(entity: Entity, skillID: TamingSkillID): void {
    const packet = new Packet(PacketType.acquireTamingSkill, 3 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(entity);
-   packet.addNumber(skillID);
+   packet.writeNumber(entity);
+   packet.writeNumber(skillID);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendForceAcquireTamingSkillPacket(entity: Entity, skillID: TamingSkillID): void {
    const packet = new Packet(PacketType.forceAcquireTamingSkill, 3 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(entity);
-   packet.addNumber(skillID);
+   packet.writeNumber(entity);
+   packet.writeNumber(skillID);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendSetSpectatingPositionPacket(): void {
    const packet = new Packet(PacketType.setSpectatingPosition, 3 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(Camera.position.x);
-   packet.addNumber(Camera.position.y);
+   packet.writeNumber(cameraPosition.x);
+   packet.writeNumber(cameraPosition.y);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendDevSetViewedSpawnDistributionPacket(entityType: EntityType | -1): void {
    const packet = new Packet(PacketType.devSetViewedSpawnDistribution, 2 * Float32Array.BYTES_PER_ELEMENT);
-   packet.addNumber(entityType);
+   packet.writeNumber(entityType);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendSetSignMessagePacket(entity: Entity, message: string): void {
    const packet = new Packet(PacketType.setSignMessage, 2 * Float32Array.BYTES_PER_ELEMENT + getStringLengthBytes(message));
-   packet.addNumber(entity);
-   packet.addString(message);
+   packet.writeNumber(entity);
+   packet.writeString(message);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendRenameAnimalPacket(entity: Entity, name: string): void {
    const packet = new Packet(PacketType.renameAnimal, 2 * Float32Array.BYTES_PER_ELEMENT + getStringLengthBytes(name));
-   packet.addNumber(entity);
-   packet.addString(name);
+   packet.writeNumber(entity);
+   packet.writeString(name);
    Client.sendPacket(packet.buffer);
 }
 
 export function sendChatMessagePacket(message: string): void {
    const packet = new Packet(PacketType.chatMessage, Float32Array.BYTES_PER_ELEMENT + getStringLengthBytes(message));
-   packet.addString(message);
+   packet.writeString(message);
    Client.sendPacket(packet.buffer);
 }

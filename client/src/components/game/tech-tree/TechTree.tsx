@@ -8,8 +8,7 @@ import OPTIONS from "../../../options";
 import { countItemTypesInInventory } from "../../../inventory-manipulation";
 import { createTechTreeItem } from "../../../rendering/webgl/tech-tree-item-rendering";
 import { Point, randAngle, randFloat } from "battletribes-shared/utils";
-import Camera from "../../../Camera";
-import { playSound } from "../../../sound";
+import { playHeadSound } from "../../../sound";
 import TechTreeProgressBar from "./TechTreeProgressBar";
 import { ItemTally2, tallyInventoryItems } from "battletribes-shared/items/ItemTally";
 import { InventoryName } from "battletribes-shared/items/items";
@@ -224,7 +223,7 @@ const TechNode = ({ tech, positionX, positionY, zoom }: TechNodeProps) => {
          
          // @Incomplete: This sounds like an error sound when it's not...
          // @Incomplete @Bug: will decrease in loudness as the sound plays: - attach to camera so it doesn't decrease in loudness. or make 'global sounds'
-         playSound("item-research.mp3", 0.4, 1, Camera.position, null);
+         playHeadSound("item-research.mp3", 0.4, 1);
       }
    }
 

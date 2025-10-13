@@ -45,5 +45,5 @@ function getDataLength(): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const berryComponent = BerryBushComponentArray.getComponent(entity);
 
-   packet.addNumber(berryComponent.numBerries);
+   packet.writeNumber(berryComponent.numBerries);
 }

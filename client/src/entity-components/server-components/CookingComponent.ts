@@ -33,9 +33,7 @@ export function createCookingComponentData(): CookingComponentData {
 
 function decodeData(reader: PacketReader): CookingComponentData {
    const heatingProgress = reader.readNumber();
-   const isCooking = reader.readBoolean();
-   reader.padOffset(3);
-
+   const isCooking = reader.readBool();
    return {
       heatingProgress: heatingProgress,
       isCooking: isCooking
