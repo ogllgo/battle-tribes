@@ -8,7 +8,7 @@ import Layer from "./Layer";
 import { entityExists } from "./world";
 import { Entity } from "../../shared/src/entities";
 import { calculateHitboxRenderPosition } from "./rendering/render-part-matrices";
-import { getHitboxVelocity, Hitbox } from "./hitboxes";
+import { Hitbox } from "./hitboxes";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 
 export type VisiblePositionBounds = [minX: number, maxX: number, minY: number, maxY: number];
@@ -52,8 +52,8 @@ abstract class Camera {
    
    /** Larger = zoomed in, smaller = zoomed out */
    // @Temporary
-   // public static zoom: number = 1.4;
-   public static zoom: number = 1;
+   public static zoom: number = 1.4;
+   // public static zoom: number = 1;
 
    public static trackedEntity: Entity = 0;
    public static trackedHitbox: Hitbox | null = null;

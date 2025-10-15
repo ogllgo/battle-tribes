@@ -28,6 +28,7 @@ import { applyAcceleration, applyAccelerationFromGround, getRootHitbox, Hitbox, 
 import { tetherHitboxes } from "../../tethers";
 import { findAngleAlignment } from "../../ai-shared";
 import { createNormalisedPivotPoint } from "../../../../shared/src/boxes/BaseBox";
+import { DustfleaHibernateAI } from "../../ai/DustfleaHibernateAI";
 
 registerEntityTamingSpec(EntityType.cow, {
    maxTamingTier: 3,
@@ -148,7 +149,7 @@ export function createCowConfig(position: Point, angle: number, species: CowSpec
    headHitbox.box.pivot = createNormalisedPivotPoint(0, -0.5);
    addHitboxToTransformComponent(transformComponent, headHitbox);
 
-   tetherHitboxes(headHitbox, bodyHitbox, idealHeadDist, 60, 2);
+   tetherHitboxes(headHitbox, bodyHitbox, idealHeadDist, 150, 2);
    // @Hack: method of adding
    headHitbox.angularTethers.push({
       originHitbox: bodyHitbox,

@@ -2,12 +2,13 @@ import { PivotPointType } from "../../../shared/src/boxes/BaseBox";
 import { Box, HitboxCollisionType, HitboxFlag, updateVertexPositionsAndSideAxes } from "../../../shared/src/boxes/boxes";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import RectangularBox from "../../../shared/src/boxes/RectangularBox";
-import { Entity } from "../../../shared/src/entities";
+import { Entity, EntityType } from "../../../shared/src/entities";
 import { PacketReader } from "../../../shared/src/packets";
 import { distBetweenPointAndRectangle, Point } from "../../../shared/src/utils";
 import Board from "../Board";
 import { getHitboxByLocalID, TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { createHitbox, Hitbox, HitboxTether } from "../hitboxes";
+import { getEntityType } from "../world";
 
 const readCircularBoxFromData = (reader: PacketReader): CircularBox => {
    const x = reader.readNumber();
@@ -247,6 +248,10 @@ export function updateHitboxExceptLocalIDFromData(hitbox: Hitbox, reader: Packet
    hitbox.previousAngle = hitbox.box.angle;
    
    updateBoxFromData(hitbox.box, reader);
+   // @SQUEAM
+   if (getEntityType(hitbox.entity) === EntityType.player) {
+      console.log(hitbox.box.angle, hitbox.previousAngle);
+   }
 
    hitbox.previousPosition.x = reader.readNumber();
    hitbox.previousPosition.y = reader.readNumber();

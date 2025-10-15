@@ -303,6 +303,10 @@ export function getHitboxAngularVelocity(hitbox: Hitbox): number {
    return getAngleDiff(hitbox.previousRelativeAngle, hitbox.box.relativeAngle) * Settings.TICK_RATE;
 }
 
+export function setHitboxAngularVelocity(hitbox: Hitbox, angularVelocity: number): void {
+   hitbox.previousRelativeAngle = hitbox.box.relativeAngle - angularVelocity * Settings.DT_S;
+}
+
 export function addHitboxAngularVelocity(hitbox: Hitbox, angularVelocity: number): void {
    hitbox.box.relativeAngle += angularVelocity * Settings.DT_S;
 }

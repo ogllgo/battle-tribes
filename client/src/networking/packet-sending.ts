@@ -40,7 +40,7 @@ export function createPlayerDataPacket(): ArrayBuffer {
    const playerHitbox = transformComponent.hitboxes[0];
    packet.addNumber(playerHitbox.box.position.x);
    packet.addNumber(playerHitbox.box.position.y);
-   packet.addNumber(playerHitbox.box.relativeAngle);
+   packet.addNumber(playerHitbox.box.angle);
 
    packet.addNumber(playerHitbox.previousPosition.x);
    packet.addNumber(playerHitbox.previousPosition.y);
@@ -51,7 +51,11 @@ export function createPlayerDataPacket(): ArrayBuffer {
    packet.addNumber(movementIntention.x);
    packet.addNumber(movementIntention.y);
 
-   packet.addNumber(playerHitbox.previousRelativeAngle);
+   // @Incomplete: Temporarily setting this such that the angular velocity inferred will be 0.
+   // I do want to send something like this so that the server can have an angular velocity for smoothing, but just sending
+   // this rn will cause it to overshoot.
+   // packet.addNumber(playerHitbox.previousRelativeAngle);
+   packet.addNumber(playerHitbox.box.relativeAngle);
    packet.addNumber(playerHitbox.angularAcceleration);
 
    packet.addNumber(windowWidth);

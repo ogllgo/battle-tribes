@@ -212,7 +212,7 @@ export function applyForce(hitbox: Hitbox, force: Point): void {
    }
 }
 
-export function setHitboxAngularVelocity(hitbox: Hitbox, angularVelocity: number): void {
+export function setHitboxObservedAngularVelocity(hitbox: Hitbox, angularVelocity: number): void {
    hitbox.previousRelativeAngle = hitbox.box.angle - angularVelocity * Settings.DT_S;
 }
 

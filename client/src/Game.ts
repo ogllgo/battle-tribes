@@ -75,10 +75,10 @@ import { updateDebugEntity } from "./entity-debugging";
 import { playerInstance } from "./player";
 import { TamingMenu_forceUpdate } from "./components/game/taming-menu/TamingMenu";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
-import { setHitboxAngle, setHitboxAngularVelocity } from "./hitboxes";
+import { setHitboxAngle, setHitboxObservedAngularVelocity } from "./hitboxes";
 import { callEntityOnUpdateFunctions, getComponentArrays } from "./entity-components/ComponentArray";
 import { resolveEntityCollisions, resolvePlayerCollisions } from "./collision";
-import { Point } from "../../shared/src/utils";
+import { angle, getAngleDiff, Point } from "../../shared/src/utils";
 import { CowStaminaBar_forceUpdate } from "./components/game/CowStaminaBar";
 import { updateBox } from "../../shared/src/boxes/boxes";
 import { processGameDataPacket } from "./networking/packet-receiving";
@@ -154,8 +154,7 @@ const updatePlayerRotation = (): void => {
    const relativeCursorX = cursorScreenPos.x - halfWindowWidth;
    const relativeCursorY = -cursorScreenPos.y + halfWindowHeight;
 
-   let cursorDirection = Math.atan2(relativeCursorY, relativeCursorX);
-   cursorDirection = Math.PI/2 - cursorDirection;
+   const cursorDirection = angle(relativeCursorX, relativeCursorY);
 
    const transformComponent = TransformComponentArray.getComponent(playerInstance);
    const playerHitbox = transformComponent.hitboxes[0];
@@ -173,7 +172,8 @@ const updatePlayerRotation = (): void => {
 
    // Angular velocity
    // We don't use relativeAngle here cuz that wouldn't work for when the player is mounted.
-   setHitboxAngularVelocity(playerHitbox, (playerHitbox.box.angle - previousAngle) * Settings.TICK_RATE);
+   // setHitboxAngularVelocity(playerHitbox, (playerHitbox.box.angle - previousAngle) * Settings.TICK_RATE);
+   setHitboxObservedAngularVelocity(playerHitbox, 0);
 
    const renderInfo = getEntityRenderInfo(playerInstance);
    registerDirtyRenderInfo(renderInfo);
@@ -228,12 +228,11 @@ const runFrame = (frameStartTime: number): void => {
 
       // @Cleanup: try to cancel out tick_rate and server_packet_send_rate from these.
       
-      // To account for the ACTUAL tps of the server
-      const lagFactor = 1000 / measuredServerPacketIntervalMS / Settings.SERVER_PACKET_SEND_RATE;
+      const TICKS_PER_NTICK = Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE;
 
       // Tick the player (independently from all other entities)
-      clientTickInterp += deltaTimeMS / 1000 * lagFactor;
-      while (clientTickInterp >= 1 / Settings.SERVER_PACKET_SEND_RATE) {
+      clientTickInterp += deltaTimeMS / measuredServerPacketIntervalMS * TICKS_PER_NTICK;
+      while (clientTickInterp >= 1) {
          if (playerInstance !== null) {
             const trackedEntityTransformComponent = TransformComponentArray.getComponent(Camera.trackedEntity);
             const trackedEntityHitbox = trackedEntityTransformComponent.hitboxes[0];
@@ -244,7 +243,7 @@ const runFrame = (frameStartTime: number): void => {
             }
          }
 
-         clientTickInterp -= 1 / Settings.SERVER_PACKET_SEND_RATE;
+         clientTickInterp--;
          
          updateSpamFilter();
 
@@ -281,8 +280,8 @@ const runFrame = (frameStartTime: number): void => {
          updateDebugEntity();
       }
 
-      serverTickInterp += deltaTimeMS / 1000 * Settings.TICK_RATE * lagFactor;
-      if (serverTickInterp >= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE) {
+      serverTickInterp += deltaTimeMS / measuredServerPacketIntervalMS * TICKS_PER_NTICK;
+      if (serverTickInterp >= TICKS_PER_NTICK) {
          if (bufferedPackets.length === 0) {
             // No buffered packets - guess we have to get a jitter here.
          } else {
@@ -293,20 +292,20 @@ const runFrame = (frameStartTime: number): void => {
                bufferedPackets.splice(0, 1);
             }
             
-            const reader = bufferedPackets[0];
-            
             // Done before so that server data can override particles
             Board.updateParticles();
             
+            const reader = bufferedPackets[0];
             processGameDataPacket(reader);
+
             Board.tickEntities();
 
             bufferedPackets.splice(0, 1);
          }
-         serverTickInterp -= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE;
+         serverTickInterp -= TICKS_PER_NTICK;
       }
-      while (serverTickInterp >= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE) {
-         serverTickInterp -= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE;
+      while (serverTickInterp >= TICKS_PER_NTICK) {
+         serverTickInterp -= TICKS_PER_NTICK;
       }
       
       Game.render(clientTickInterp, serverTickInterp);

@@ -173,7 +173,10 @@ const calculateHitboxMatrix = (hitbox: Hitbox, tickInterp: number): Matrix3x2 =>
 
    // Rotation
    // we don't want the relative angular velocity here, we want to interpolate the ACTUAL angle not the local thing.
-   const angularVelocityTick = getAngleDiff(hitbox.previousAngle, hitbox.box.angle);
+   // @SQUEAM
+   // const angularVelocityTick = getAngleDiff(hitbox.previousAngle, hitbox.box.angle);
+   // @HACK? doing this check cuz it doesn't make sense for the player instance to have angular velocity cuz the angle is tightly controlled.
+   const angularVelocityTick = hitbox.entity === playerInstance ? 0 : getAngleDiff(hitbox.previousAngle, hitbox.box.angle);
    const angle = hitbox.box.angle + (angularVelocityTick + hitbox.angularAcceleration * Settings.DT_S * Settings.DT_S) * tickInterp;
    rotateMatrix(matrix, angle);
    // overrideWithRotationMatrix(matrix, hitbox.box.angle);

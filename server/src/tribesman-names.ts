@@ -46,8 +46,7 @@ const COGWALKER_NAMES = [
    "Mechus",
    "Pistorius",
    "Weldon",
-   "Thunderclock",
-   "MiniLad"
+   "Thunderclock"
 ];
 
 const STRIDER_NAMES = [

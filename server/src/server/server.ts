@@ -88,7 +88,9 @@ const getPlayerVisibleEntities = (playerClient: PlayerClient): Set<Entity> => {
                for (const rootHitbox of transformComponent.rootHitboxes) {
                   const rootEntity = rootHitbox.rootEntity;
                   const rootTransformComponent = TransformComponentArray.getComponent(rootEntity);
-                  // @Crash rootTransformComponent is undefined sometimes idfky
+                  // @CRASH @Investigate rootTransformComponent is undefined sometimes idfky
+                  // - Once this happened when a cow had been hit by a bunch of arrows which were embedded in them, and then i killed the cow.
+                  //    - might have been an arrow attached to another arrow attached to the cow? maybe just arrows attached to the cow? Investigate.
                   // @Cleanup lolllllllll
                   for (const rootRootHitbox of rootTransformComponent.rootHitboxes) {
                      addHitboxHeirarchyToEntities(playerClient, visibleEntities, rootRootHitbox);

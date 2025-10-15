@@ -36,9 +36,10 @@ import { BlockAttackComponentArray } from "../components/BlockAttackComponent";
 import { getTamingSkill, TamingSkillID, TamingTier } from "../../../shared/src/taming";
 import { getTamingSkillLearning, skillLearningIsComplete, TamingComponentArray } from "../components/TamingComponent";
 import { getTamingSpec } from "../taming-specs";
-import { getHitboxTile, getHitboxVelocity } from "../hitboxes";
+import { getHitboxTile, getHitboxVelocity, setHitboxAngle, setHitboxAngularVelocity } from "../hitboxes";
 import { FloorSignComponentArray } from "../components/FloorSignComponent";
 import { BLOCKING_LIMB_STATE, copyLimbState, SHIELD_BLOCKING_LIMB_STATE } from "../../../shared/src/attack-patterns";
+import { updateBox } from "../../../shared/src/boxes/boxes";
 
 // @Cleanup: Messy as fuck
 export function processPlayerDataPacket(playerClient: PlayerClient, reader: PacketReader): void {
@@ -69,7 +70,8 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
    playerComponent.movementIntention.x = reader.readNumber();
    playerComponent.movementIntention.y = reader.readNumber();
 
-   playerHitbox.previousRelativeAngle = reader.readNumber();
+   // @HACK just made this not be "playerHitbox.previousRelativeAngle" to fix the overshooting
+   const previousRelativeAngle = reader.readNumber();
    playerHitbox.angularAcceleration = reader.readNumber();
 
    const screenWidth = reader.readNumber();
@@ -89,17 +91,27 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
    playerHitbox.box.position.x = positionX;
    playerHitbox.box.position.y = positionY;
    
-   // @Hack
-   if (playerHitbox.parent === null) {
-      playerHitbox.box.angle = angle;
-      playerHitbox.box.relativeAngle = angle;
-
-      playerHitbox.previousRelativeAngle = angle;
+   setHitboxAngle(playerHitbox, angle);
+   
+   if (playerHitbox.parent !== null) {
+      updateBox(playerHitbox.box, playerHitbox.parent.box);
    } else {
-      // @HACK cuz this is reaaally broken right now and i dont know what to do D:
-      playerHitbox.box.relativeAngle = angle;
-      playerHitbox.previousRelativeAngle = angle;
+      playerHitbox.box.angle = playerHitbox.box.relativeAngle;
    }
+   
+   // @Hack
+   // if (playerHitbox.parent === null) {
+   //    playerHitbox.box.angle = angle;
+   //    playerHitbox.box.relativeAngle = angle;
+
+   //    playerHitbox.previousRelativeAngle = angle;
+   // } else {
+   //    // @HACK cuz this is reaaally broken right now and i dont know what to do D:
+   //    playerHitbox.box.relativeAngle = angle;
+   //    playerHitbox.previousRelativeAngle = angle;
+   // }
+   // @HACK im doing this rn so it stops overshooting but will need to be properly fixed at some point
+   setHitboxAngularVelocity(playerHitbox, 0);
 
    playerClient.screenWidth = screenWidth;
    playerClient.screenHeight = screenHeight;
