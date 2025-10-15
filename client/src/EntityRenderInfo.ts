@@ -5,7 +5,7 @@ import { RenderPartOverlayGroup } from "./rendering/webgl/overlay-rendering";
 import { removeRenderable } from "./rendering/render-loop";
 import { RenderPart } from "./render-parts/render-parts";
 import { RenderLayer } from "./render-layers";
-import { registerDirtyRenderInfo, renderParentIsHitbox } from "./rendering/render-part-matrices";
+import { registerDirtyRenderInfo, renderParentIsHitboxReference } from "./rendering/render-part-matrices";
 import { getEntityLayer, getEntityType } from "./world";
 import { getServerComponentArrays } from "./entity-components/ComponentArray";
 import { gl } from "./webgl";
@@ -135,7 +135,7 @@ export class EntityRenderInfo {
       }
       this.renderPartsByZIndex.splice(idx, 0, renderPart);
 
-      if (renderParentIsHitbox(renderPart.parent)) {
+      if (renderParentIsHitboxReference(renderPart.parent)) {
          this.rootRenderParts.push(renderPart);
       } else {
          renderPart.parent.children.push(renderPart);

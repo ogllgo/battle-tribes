@@ -1,10 +1,9 @@
 import { TribeType } from "battletribes-shared/tribes";
 import { useEffect, useRef, useState } from "react";
 import Client from "../networking/Client";
-import Game from "../game";
+import Game, { receiveInitialPacket } from "../game";
 import { AppState } from "./App";
 import { definiteGameState } from "../game-state/game-states";
-import { decodeSnapshotFromGameDataPacket, updateGameToSnapshot } from "../networking/packet-snapshots";
 
 // @Cleanup: This file does too much logic on its own. It should really only have UI/loading state
 
@@ -76,8 +75,7 @@ const LoadingScreen = (props: LoadingScreenProps) => {
          
          // Update the game to the first tick received
          const reader = await Client.getNextGameDataPacket();
-         const snapshot = decodeSnapshotFromGameDataPacket(reader);
-         updateGameToSnapshot(snapshot);
+         receiveInitialPacket(reader);
 
          props.setAppState(AppState.game);
          

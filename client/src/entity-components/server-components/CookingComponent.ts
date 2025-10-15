@@ -1,10 +1,10 @@
-import Board from "../../Board";
 import { Light, removeLight } from "../../lights";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityComponentData } from "../../world";
+import { tickIntervalHasPassed } from "../../game";
 
 export interface CookingComponentData {
    readonly heatingProgress: number;
@@ -74,7 +74,7 @@ const updateLight = (cookingComponent: CookingComponent, entity: Entity): void =
          // attachLightToRenderPart(cookingComponent.light, renderInfo.renderPartsByZIndex[0], entity);
       }
 
-      if (Board.tickIntervalHasPassed(0.15)) {
+      if (tickIntervalHasPassed(0.15)) {
          // cookingComponent.light.radius = 40 + randFloat(-7, 7);
       }
    } else if (cookingComponent.light !== null) {

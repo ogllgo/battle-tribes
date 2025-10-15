@@ -1,4 +1,4 @@
-import { assertBoxIsCircular, assertBoxIsRectangular, Box, boxIsCircular, HitboxCollisionType, HitboxFlag, updateVertexPositionsAndSideAxes } from "battletribes-shared/boxes/boxes";
+import { assertBoxIsCircular, assertBoxIsRectangular, Box, boxIsCircular, cloneBox, HitboxCollisionType, HitboxFlag, updateVertexPositionsAndSideAxes } from "battletribes-shared/boxes/boxes";
 import { CollisionBit } from "../../shared/src/collision";
 import { Entity } from "../../shared/src/entities";
 import { Point, randAngle, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "../../shared/src/utils";
@@ -155,6 +155,7 @@ export function createHitboxQuick(localID: number, parent: Hitbox | null, box: B
       lastUpdateTicks: currentSnapshot.tick
    };
 }
+
 export function readHitboxFromData(reader: PacketReader, localID: number, entityHitboxes: ReadonlyArray<Hitbox>): Hitbox {
    const box = readBoxFromData(reader);
 
@@ -223,8 +224,12 @@ export function readHitboxFromData(reader: PacketReader, localID: number, entity
    return createHitbox(localID, entity, rootEntity, parentHitbox, children, isPartOfParent, isStatic, box, previousPosition, acceleration, tethers, previousRelativeAngle, angularAcceleration, mass, collisionType, collisionBit, collisionMask, flags);
 }
 
+export function createHitboxFromData(data: Hitbox): Hitbox {
+   return createHitbox(data.localID, data.entity, data.rootEntity, data.parent, data.children, data.isPartOfParent, data.isStatic, cloneBox(data.box), data.previousPosition, data.acceleration, data.tethers, data.previousRelativeAngle, data.angularAcceleration, data.mass, data.collisionType, data.collisionBit, data.collisionMask, data.flags);
+}
+
 // @Hack this is a lil bit of a hack
-const findEntityHitbox = (entity: Entity, localID: number): Hitbox | null => {
+export function findEntityHitbox(entity: Entity, localID: number): Hitbox | null {
    if (!TransformComponentArray.hasComponent(entity)) {
       return null;
    }

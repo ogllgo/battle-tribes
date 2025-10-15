@@ -237,8 +237,20 @@ export class Vector {
    }
 }
 
-export function lerp(start: number, end: number, amount: number): number {
-   return start * (1 - amount) + end * amount;
+export function lerp(start: number, end: number, t: number): number {
+   return start * (1 - t) + end * t;
+}
+
+export function slerp(startAngle: number, endAngle: number, t: number): number {
+   const clockwiseDist = clampAngleA(endAngle - startAngle);
+   if (clockwiseDist < Math.PI) {
+      // Clockwise
+      return startAngle + clockwiseDist * t;
+   } else {
+      // Counterclockwise
+      const counterclockwiseDist = 2 * Math.PI - clockwiseDist;
+      return startAngle - counterclockwiseDist * t;
+   }
 }
 
 export function randItem<T>(arr: Array<T> | ReadonlyArray<T>): T {

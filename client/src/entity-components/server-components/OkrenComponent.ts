@@ -9,7 +9,7 @@ import { Entity } from "../../../../shared/src/entities";
 import { Hitbox } from "../../hitboxes";
 import { Point, randAngle, randFloat } from "../../../../shared/src/utils";
 import { createOkrenEyeParticle } from "../../particles";
-import { renderParentIsHitbox } from "../../rendering/render-part-matrices";
+import { renderParentIsHitboxReference } from "../../rendering/render-part-matrices";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 // @Copynpaste from server
@@ -133,7 +133,7 @@ function getMaxRenderParts(): number {
 const getEyeRenderPart = (okren: Entity, flipX: boolean): TexturedRenderPart => {
    const renderInfo = getEntityRenderInfo(okren);
    for (const renderPart of renderInfo.renderPartsByZIndex) {
-      if (renderParentIsHitbox(renderPart.parent) && renderPart.parent.flags.includes(HitboxFlag.OKREN_EYE) && renderPart.parent.box.flipX === flipX) {
+      if (renderParentIsHitboxReference(renderPart.parent) && renderPart.parent.flags.includes(HitboxFlag.OKREN_EYE) && renderPart.parent.box.flipX === flipX) {
          return renderPart as TexturedRenderPart;
       }
    }

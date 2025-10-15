@@ -3,7 +3,6 @@ import { Entity, FishColour } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { TileType } from "battletribes-shared/tiles";
-import Board from "../../Board";
 import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createWaterSplashParticle } from "../../particles";
 import { EntityComponentData } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
@@ -13,6 +12,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { playSoundOnHitbox } from "../../sound";
 import { getHitboxTile, Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { tickIntervalHasPassed } from "../../game";
 
 export interface FishComponentData {
    readonly colour: FishColour;
@@ -79,7 +79,7 @@ function onTick(entity: Entity): void {
    const hitbox = transformComponent.hitboxes[0];
    
    const tile = getHitboxTile(hitbox);
-   if (tile.type !== TileType.water && Board.tickIntervalHasPassed(0.4)) {
+   if (tile.type !== TileType.water && tickIntervalHasPassed(0.4)) {
       for (let i = 0; i < 8; i++) {
          const spawnOffsetDirection = randAngle();
          const spawnPositionX = hitbox.box.position.x + 8 * Math.sin(spawnOffsetDirection);

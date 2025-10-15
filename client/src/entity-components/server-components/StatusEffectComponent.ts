@@ -16,6 +16,7 @@ import { EntityComponentData, getEntityRenderInfo } from "../../world";
 import { ComponentTint, createComponentTint } from "../../EntityRenderInfo";
 import { playerInstance } from "../../player";
 import { getHitboxVelocity } from "../../hitboxes";
+import { tickIntervalHasPassed } from "../../game";
 
 export interface StatusEffectComponentData {
    readonly statusEffects: Array<StatusEffectData>;
@@ -262,7 +263,7 @@ function onTick(entity: Entity): void {
 
    const bleedingStatusEffect = getStatusEffect(statusEffectComponent, StatusEffect.bleeding);
    if (bleedingStatusEffect !== null) {
-      if (Board.tickIntervalHasPassed(0.15)) {
+      if (tickIntervalHasPassed(0.15)) {
          const spawnOffsetDirection = randAngle();
          const spawnPositionX = hitbox.box.position.x + 32 * Math.sin(spawnOffsetDirection);
          const spawnPositionY = hitbox.box.position.y + 32 * Math.cos(spawnOffsetDirection);
@@ -272,7 +273,7 @@ function onTick(entity: Entity): void {
 
    const heatSicknessStatusEffect = getStatusEffect(statusEffectComponent, StatusEffect.heatSickness);
    if (heatSicknessStatusEffect !== null) {
-      if (Board.tickIntervalHasPassed(0.15)) {
+      if (tickIntervalHasPassed(0.15)) {
          const hitboxVelocity = getHitboxVelocity(hitbox);
          
          const spawnOffsetDirection = randAngle();

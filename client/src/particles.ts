@@ -6,6 +6,7 @@ import Board from "./Board";
 import { TransformComponent, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { BlockType } from "../../shared/src/components";
 import { getHitboxVelocity, Hitbox } from "./hitboxes";
+import { tickIntervalHasPassed } from "./game";
 
 // @Cleanup: Standardise all these functions to just take the stuff necessary to create them, then have the places which call them modify the returned particle
 
@@ -1635,7 +1636,7 @@ const createFrozenYetiBloodParticle = (size: BloodParticleSize, spawnPositionX: 
 }
 
 export function createDeepFrostHeartBloodParticles(originX: number, originY: number, extraVelocityX: number, extraVelocityY: number): void {
-   if (Board.tickIntervalHasPassed(0.4)) {
+   if (tickIntervalHasPassed(0.4)) {
       for (let i = 0; i < 6; i++) {
          const spawnPositionOffsetMagnitude = 13;
          const spawnPositionOffsetDirection = randAngle();

@@ -10,7 +10,7 @@ import { playerInstance } from "../../../player";
 import { EntityType, NUM_ENTITY_TYPES } from "../../../../../shared/src/entities";
 import CLIENT_ENTITY_INFO_RECORD from "../../../client-entity-info";
 import { getNumLights } from "../../../lights";
-import { getSnapshotBufferLength, getMeasuredServerTPS, currentSnapshot } from "../../../game";
+import { getMeasuredServerTPS, currentSnapshot } from "../../../game";
 import { cameraZoom, setCameraZoom } from "../../../camera";
 import { PacketSnapshot } from "../../../networking/packet-snapshots";
 
@@ -24,6 +24,7 @@ export let updateDebugScreenCurrentSnapshot: (snapshot: PacketSnapshot) => void 
 export let updateDebugScreen: () => void = () => {};
 export let updateDebugScreenRenderTime: (renderTime: number) => void = () => {};
 export let updateDebugScreenIsPaused: (isPaused: boolean) => void = () => {};
+export let GameInfoDisplay_setBufferSize: (size: number) => void = () => {};
 
 const GameInfoDisplay = (props: GameInfoDisplayProps) => {
    const rangeInputRef = useRef<HTMLInputElement | null>(null);
@@ -33,6 +34,7 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
    const [ticks, setTicks] = useState(currentSnapshot.tick);
    const [zoom, setZoom] = useState(cameraZoom);
    const [isPaused, setIsPaused] = useState(false);
+   const [bufferSize, setBufferSize] = useState(0);
 
    const [_, forceUpdate] = useReducer(x => x + 1, 0);
 
@@ -62,6 +64,8 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
       updateDebugScreen = forceUpdate;
 
       updateDebugScreenIsPaused = setIsPaused;
+
+      GameInfoDisplay_setBufferSize = setBufferSize;
    }, []);
 
    const toggleNightvision = useCallback(() => {
@@ -193,7 +197,7 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
       <p>Time: {currentTime.toFixed(2)}</p>
       <p>Ticks: {roundNum(ticks, 2)}</p>
       <p>Server TPS: {getMeasuredServerTPS().toFixed(2)}</p>
-      <p>Buffer size: {getSnapshotBufferLength()}</p>
+      <p>Buffer size: {bufferSize}</p>
 
       <button onClick={toggleSimulation}>{isPaused ? "Resume" : "Pause"} Simulation</button>
 

@@ -1,6 +1,5 @@
 import { PacketReader } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
-import Board from "../../Board";
 import { createPoisonParticle } from "../../particles";
 import { ServerComponentType } from "battletribes-shared/components";
 import { Entity } from "../../../../shared/src/entities";
@@ -11,6 +10,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityComponentData, getEntityRenderInfo } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { tickIntervalHasPassed } from "../../game";
 
 export interface SlimeSpitComponentData {}
 
@@ -77,7 +77,7 @@ function onTick(entity: Entity): void {
    rotatingRenderPart.angle += 1.5 * Math.PI * Settings.DT_S;
    rotatingRenderPart.angle -= 1.5 * Math.PI * Settings.DT_S;
 
-   if (Board.tickIntervalHasPassed(0.2)) {
+   if (tickIntervalHasPassed(0.2)) {
       for (let i = 0; i < 5; i++) {
          createPoisonParticle(entity);
       }

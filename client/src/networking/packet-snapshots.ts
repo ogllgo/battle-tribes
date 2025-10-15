@@ -32,6 +32,7 @@ import { EntityTickEventType } from "../../../shared/src/entity-events";
 import { processTickEvent } from "../entity-tick-events";
 import { setMinedSubtiles, tickCollapse } from "../collapses";
 import { GrassBlockerData, readGrassBlockers, updateGrassBlockersFromData } from "../grass-blockers";
+import Board from "../Board";
 
 // @Speed @Memory I cause a lot of GC right now by reading things in the snapshot decoding process which aren't necessary for snapshots (e.g. data for all tribes), instead of reading that when updating the game state to that.
 
@@ -42,7 +43,7 @@ export type EntityClientComponentData = Partial<{
    [T in ClientComponentType]: ClientComponentData<T>;
 }>;
 
-interface EntitySnapshot {
+export interface EntitySnapshot {
    readonly entityType: EntityType;
    readonly spawnTicks: number;
    readonly layer: Layer;
@@ -456,6 +457,9 @@ const updatePlayerFromData = (playerInstance: number, data: EntitySnapshot): voi
 }
 
 export function updateGameToSnapshot(snapshot: PacketSnapshot): void {
+   // @HACK @CLEANUP impure Done before so that server data can override particles
+   Board.updateParticles();
+
    setCurrentSnapshot(snapshot);
    updateDebugScreenCurrentSnapshot(snapshot);
    

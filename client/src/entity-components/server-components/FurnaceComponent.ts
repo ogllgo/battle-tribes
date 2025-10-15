@@ -7,11 +7,11 @@ import { randFloat, angle, randAngle } from "../../../../shared/src/utils";
 import { createEmberParticle, createRockParticle, createRockSpeckParticle, createSmokeParticle } from "../../particles";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { TransformComponentArray } from "./TransformComponent";
-import Board from "../../Board";
 import { CookingComponentArray } from "./CookingComponent";
 import { EntityComponentData } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { tickIntervalHasPassed } from "../../game";
 
 export interface FurnaceComponentData {}
 
@@ -66,7 +66,7 @@ function onTick(entity: Entity): void {
       const hitbox = transformComponent.hitboxes[0];
 
       // Smoke particles
-      if (Board.tickIntervalHasPassed(0.17)) {
+      if (tickIntervalHasPassed(0.17)) {
          const spawnOffsetMagnitude = 20 * Math.random();
          const spawnOffsetDirection = randAngle();
          const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
@@ -75,7 +75,7 @@ function onTick(entity: Entity): void {
       }
 
       // Ember particles
-      if (Board.tickIntervalHasPassed(0.05)) {
+      if (tickIntervalHasPassed(0.05)) {
          let spawnPositionX = hitbox.box.position.x - 30 * Math.sin(hitbox.box.angle);
          let spawnPositionY = hitbox.box.position.y - 30 * Math.cos(hitbox.box.angle);
 

@@ -49,14 +49,6 @@ abstract class Board {
       }
    }
 
-   public static tickIntervalHasPassed(intervalSeconds: number): boolean {
-      const ticksPerInterval = intervalSeconds * Settings.TICK_RATE;
-      
-      const previousCheck = (currentSnapshot.tick - 1) / ticksPerInterval;
-      const check = currentSnapshot.tick / ticksPerInterval;
-      return Math.floor(previousCheck) !== Math.floor(check);
-   }
-
    private static updateParticleArray(particles: Array<Particle>, bufferContainer: ObjectBufferContainer): void {
       const removedParticleIndexes = new Array<number>();
       for (let i = 0; i < particles.length; i++) {

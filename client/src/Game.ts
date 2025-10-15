@@ -13,7 +13,7 @@ import { createTexture, createWebGLContext, gl, halfWindowHeight, halfWindowWidt
 import { loadTextures, preloadTextureImages } from "./textures";
 import { GameScreen_getGameInteractState, GameScreen_update } from "./components/game/GameScreen";
 import { createHitboxShaders, renderHitboxes } from "./rendering/webgl/box-wireframe-rendering";
-import { updateDebugScreen, updateDebugScreenRenderTime } from "./components/game/dev/GameInfoDisplay";
+import { GameInfoDisplay_setBufferSize, updateDebugScreen, updateDebugScreenRenderTime } from "./components/game/dev/GameInfoDisplay";
 import { createWorldBorderShaders, renderWorldBorder } from "./rendering/webgl/world-border-rendering";
 import { clearSolidTileRenderingData, createSolidTileShaders, renderSolidTiles } from "./rendering/webgl/solid-tile-rendering";
 import { calculateVisibleRiverInfo, createRiverShaders, renderLowerRiverFeatures, renderUpperRiverFeatures } from "./rendering/webgl/river-rendering";
@@ -76,38 +76,50 @@ import { playerInstance } from "./player";
 import { TamingMenu_forceUpdate } from "./components/game/taming-menu/TamingMenu";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { setHitboxAngle, setHitboxAngularVelocity } from "./hitboxes";
-import { callEntityOnUpdateFunctions, getComponentArrays } from "./entity-components/ComponentArray";
-import { resolveEntityCollisions, resolvePlayerCollisions } from "./collision";
+import { callEntityOnUpdateFunctions } from "./entity-components/ComponentArray";
+import { resolvePlayerCollisions } from "./collision";
 import { CowStaminaBar_forceUpdate } from "./components/game/CowStaminaBar";
 import { updateBox } from "../../shared/src/boxes/boxes";
 import { PacketReader } from "../../shared/src/packets";
 import { decodeSnapshotFromGameDataPacket, PacketSnapshot, updateGameToSnapshot } from "./networking/packet-snapshots";
+
+const SNAPSHOT_BUFFER_LENGTH = 2;
 
 let entityDebugData: EntityDebugData | null = null;
 
 export let gameFramebuffer: WebGLFramebuffer;
 export let gameFramebufferTexture: WebGLTexture;
 
-// @Cleanup: this is ambiguous... what texture?
+// @Cleanup: this is ambiguous... what texture? should this be here??
 let lastTextureWidth = 0;
 let lastTextureHeight = 0;
 
-let lastFrameTime = performance.now();
+let lastFrameTime = 0;
 
+let clientTick = 0;
 let clientTickInterp = 0;
-let serverTickInterp = 0;
 
-export let currentSnapshot: PacketSnapshot;
 const snapshotBuffer = new Array<PacketSnapshot>();
+export let currentSnapshot: PacketSnapshot;
+export let nextSnapshot: PacketSnapshot;
 
 /** The number of ticks it takes for the measured server packet interval to fully adjust (if going from a constant tps of A to a constant tps of B) */
 const PACKET_INTERVAL_ADJUST_TIME = 10;
 let lastPacketTime = 0;
 let measuredServerPacketIntervalMS = 1000 / Settings.SERVER_PACKET_SEND_RATE; // Start it off at the value we expect it to be at
 
+let playerPacketAccumulator = 0;
+
+document.addEventListener("visibilitychange", () => {
+   if (document.visibilityState === "visible") {
+      lastPacketTime = performance.now();
+   }
+})
+
 export function receivePacket(reader: PacketReader): void {
    const snapshot = decodeSnapshotFromGameDataPacket(reader);
    snapshotBuffer.push(snapshot);
+   GameInfoDisplay_setBufferSize(snapshotBuffer.length);
 
    const timeNow = performance.now();
    
@@ -120,16 +132,33 @@ export function receivePacket(reader: PacketReader): void {
    lastPacketTime = timeNow;
 }
 
+export function receiveInitialPacket(reader: PacketReader): void {
+   lastPacketTime = performance.now();
+   
+   receivePacket(reader);
+
+   const snapshot = snapshotBuffer[0]; // @Hack since we dont have the snapshot variable from inside receivePacket
+   updateGameToSnapshot(snapshot);
+   currentSnapshot = snapshot;
+   clientTick = snapshot.tick; // Start the client tick off at the tick of the very first packet received.
+}
+
 export function setCurrentSnapshot(snapshot: PacketSnapshot): void {
    currentSnapshot = snapshot;
 }
 
-export function getSnapshotBufferLength(): number {
-   return snapshotBuffer.length;
-}
-
 export function getMeasuredServerTPS(): number {
    return 1000 / measuredServerPacketIntervalMS;
+}
+
+export function tickIntervalHasPassed(intervalSeconds: number): boolean {
+   const currentTick = Math.floor(clientTick);
+   
+   const ticksPerInterval = intervalSeconds * Settings.TICK_RATE;
+   
+   const previousCheck = (currentTick - 1) / ticksPerInterval;
+   const check = currentTick / ticksPerInterval;
+   return Math.floor(previousCheck) !== Math.floor(check);
 }
 
 // @Location
@@ -167,19 +196,54 @@ const updatePlayerRotation = (): void => {
 
 const runFrame = (frameStartTime: number): void => {
    if (Game.isSynced) {
-      const renderStartTime = performance.now();
-      
       const deltaTimeMS = frameStartTime - lastFrameTime;
       lastFrameTime = frameStartTime;
 
-      // To account for the ACTUAL tps of the server
+      // Calculate the client tick's error
+      const serverTick = snapshotBuffer[snapshotBuffer.length - 1].tick;
+      const delayTicks = serverTick - clientTick;
+      const errorTicks = delayTicks + Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE;
+
+      const timeDilationFactor = errorTicks < -0.5 || errorTicks > 0.5 ? 1 + 0.15 * errorTicks : 1;
+      
+      // Delta tick accounting for the ACTUAL tps of the server
       const deltaTick = deltaTimeMS / measuredServerPacketIntervalMS * Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE;
+
+      clientTick += deltaTick * timeDilationFactor;
+      
+      // Calculate the subtick time to render at (render tick)
+      const renderTick = clientTick - SNAPSHOT_BUFFER_LENGTH * Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE;
+
+      // Make sure the current snapshot is the min snapshot
+      for (let i = 0; i < snapshotBuffer.length; i++) {
+         const snapshot = snapshotBuffer[i];
+         if (snapshot.tick < renderTick && snapshot.tick > currentSnapshot.tick) {
+            updateGameToSnapshot(snapshot);
+            currentSnapshot = snapshot;
+         }
+      }
+
+      // Snapshots older than the current one are now useless
+      while (snapshotBuffer.length > 0) {
+         const snapshot = snapshotBuffer[0];
+         if (snapshot.tick < currentSnapshot.tick) {
+            snapshotBuffer.splice(0, 1);
+         } else {
+            break;
+         }
+      }
+      GameInfoDisplay_setBufferSize(snapshotBuffer.length);
+
+      // @Cleanup kinda unclear at a glance
+      nextSnapshot = (snapshotBuffer[snapshotBuffer.indexOf(currentSnapshot) + 1]) || currentSnapshot;
+
+      const serverTickInterp = (renderTick - currentSnapshot.tick) / (nextSnapshot.tick - currentSnapshot.tick);
    
       // send player packets to server
-      Game.playerPacketAccumulator += deltaTick;
-      while (Game.playerPacketAccumulator >= Settings.TICK_RATE / Settings.CLIENT_PACKET_SEND_RATE) {
+      playerPacketAccumulator += deltaTick;
+      while (playerPacketAccumulator >= Settings.TICK_RATE / Settings.CLIENT_PACKET_SEND_RATE) {
          Client.sendPlayerDataPacket();
-         Game.playerPacketAccumulator -= Settings.TICK_RATE / Settings.CLIENT_PACKET_SEND_RATE;
+         playerPacketAccumulator -= Settings.TICK_RATE / Settings.CLIENT_PACKET_SEND_RATE;
       }
 
       // Tick the player (independently from all other entities)
@@ -229,40 +293,13 @@ const runFrame = (frameStartTime: number): void => {
          updateDebugEntity();
       }
 
-      serverTickInterp += deltaTick;
-      if (serverTickInterp >= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE) {
-         if (snapshotBuffer.length === 0) {
-            // No buffered snapshots - guess we have to get a jitter here.
-         } else {
-            // If too many buffered, get back up to date
-            while (snapshotBuffer.length > 2) {
-               const snapshot = snapshotBuffer[0];
-               updateGameToSnapshot(snapshot);
-               snapshotBuffer.splice(0, 1);
-            }
-            
-            const snapshot = snapshotBuffer[0];
-            
-            // Done before so that server data can override particles
-            Board.updateParticles();
-            
-            updateGameToSnapshot(snapshot);
-
-            snapshotBuffer.splice(0, 1);
-         }
-         serverTickInterp -= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE;
-      }
-      while (serverTickInterp >= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE) {
-         serverTickInterp -= Settings.TICK_RATE / Settings.SERVER_PACKET_SEND_RATE;
-      }
-      
       Game.render(clientTickInterp, serverTickInterp);
 
       const renderEndTime = performance.now();
-      const renderTime = renderEndTime - renderStartTime;
-      registerFrame(renderStartTime, renderEndTime);
+      const renderTimeTaken = renderEndTime - frameStartTime;
+      registerFrame(frameStartTime, renderEndTime);
       updateFrameGraph();
-      updateDebugScreenRenderTime(renderTime);
+      updateDebugScreenRenderTime(renderTimeTaken);
 
       GameScreen_update();
       updateTextNumbers();
@@ -398,9 +435,6 @@ abstract class Game {
    public static isSynced = true;
 
    public static hasInitialised = false;
-
-   /** Amount of time the game is through the current frame */
-   public static playerPacketAccumulator = 0;
 
    public static setGameObjectDebugData(newEntityDebugData: EntityDebugData | null): void {
       entityDebugData = newEntityDebugData;

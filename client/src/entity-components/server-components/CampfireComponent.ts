@@ -4,12 +4,12 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
 import { randAngle, randFloat } from "../../../../shared/src/utils";
-import Board from "../../Board";
 import { createSmokeParticle, createEmberParticle } from "../../particles";
 import { CookingComponentArray } from "./CookingComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { tickIntervalHasPassed } from "../../game";
 
 export interface CampfireComponentData {}
 
@@ -60,7 +60,7 @@ function onTick(entity: Entity): void {
       const hitbox = transformComponent.hitboxes[0];
 
       // Smoke particles
-      if (Board.tickIntervalHasPassed(0.17)) {
+      if (tickIntervalHasPassed(0.17)) {
          const spawnOffsetMagnitude = 20 * Math.random();
          const spawnOffsetDirection = randAngle();
          const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
@@ -69,7 +69,7 @@ function onTick(entity: Entity): void {
       }
 
       // Ember particles
-      if (Board.tickIntervalHasPassed(0.05)) {
+      if (tickIntervalHasPassed(0.05)) {
          let spawnPositionX = hitbox.box.position.x;
          let spawnPositionY = hitbox.box.position.y;
 

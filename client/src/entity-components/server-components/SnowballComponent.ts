@@ -14,6 +14,7 @@ import { EntityComponentData } from "../../world";
 import { getHitboxVelocity, Hitbox } from "../../hitboxes";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { tickIntervalHasPassed } from "../../game";
 
 export interface SnowballComponentData {
    readonly size: number;
@@ -67,7 +68,7 @@ function onTick(entity: Entity): void {
    const hitbox = transformComponent.hitboxes[0];
    const velocity = getHitboxVelocity(hitbox);
    if (velocity.magnitude() > 50) {
-      if (Board.tickIntervalHasPassed(0.05)) {
+      if (tickIntervalHasPassed(0.05)) {
          createSnowParticle(hitbox.box.position.x, hitbox.box.position.y, randFloat(40, 60));
       }
    }

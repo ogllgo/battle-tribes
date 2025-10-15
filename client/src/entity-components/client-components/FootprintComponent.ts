@@ -2,7 +2,6 @@ import { Settings } from "battletribes-shared/settings";
 import { randInt } from "battletribes-shared/utils";
 import { TileType } from "battletribes-shared/tiles";
 import { playSound } from "../../sound";
-import Board from "../../Board";
 import { createFootprintParticle } from "../../particles";
 import { EntityComponentData, getEntityLayer } from "../../world";
 import { entityIsInRiver, TransformComponentArray } from "../server-components/TransformComponent";
@@ -10,6 +9,7 @@ import { Entity } from "../../../../shared/src/entities";
 import ClientComponentArray from "../ClientComponentArray";
 import { ClientComponentType } from "../client-component-types";
 import { getHitboxTile, getHitboxVelocity } from "../../hitboxes";
+import { tickIntervalHasPassed } from "../../game";
 
 export interface FootprintComponentData {
    readonly footstepParticleIntervalSeconds: number;
@@ -106,7 +106,7 @@ function onTick(entity: Entity): void {
       const velocity = getHitboxVelocity(hitbox);
       
       // Footsteps
-      if (velocity.magnitude() >= 50 && !entityIsInRiver(transformComponent, entity) && Board.tickIntervalHasPassed(footprintComponent.footstepParticleIntervalSeconds)) {
+      if (velocity.magnitude() >= 50 && !entityIsInRiver(transformComponent, entity) && tickIntervalHasPassed(footprintComponent.footstepParticleIntervalSeconds)) {
          if (footprintComponent.doDoubleFootprints) {
             createFootprintParticle(entity, false, footprintComponent.footstepOffset, footprintComponent.footstepSize, footprintComponent.footstepLifetime);
             createFootprintParticle(entity, true, footprintComponent.footstepOffset, footprintComponent.footstepSize, footprintComponent.footstepLifetime);

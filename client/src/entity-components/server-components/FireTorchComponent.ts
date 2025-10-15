@@ -5,10 +5,10 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { randAngle, randFloat } from "../../../../shared/src/utils";
 import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
-import Board from "../../Board";
 import { createEmberParticle, createSmokeParticle } from "../../particles";
 import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { tickIntervalHasPassed } from "../../game";
 
 export interface FireTorchComponentData {}
 
@@ -58,7 +58,7 @@ function onTick(entity: Entity): void {
    const hitbox = transformComponent.hitboxes[0];
    
    // Ember particles
-   if (Board.tickIntervalHasPassed(0.08)) {
+   if (tickIntervalHasPassed(0.08)) {
       let spawnPositionX = hitbox.box.position.x;
       let spawnPositionY = hitbox.box.position.y;
 
@@ -71,7 +71,7 @@ function onTick(entity: Entity): void {
    }
 
    // Smoke particles
-   if (Board.tickIntervalHasPassed(0.18)) {
+   if (tickIntervalHasPassed(0.18)) {
       const spawnOffsetMagnitude = 5 * Math.random();
       const spawnOffsetDirection = randAngle();
       const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);

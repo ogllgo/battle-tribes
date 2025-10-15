@@ -24,7 +24,7 @@ import { getRenderPartRenderPosition } from "../../rendering/render-part-matrice
 import { getHumanoidRadius } from "./TribesmanComponent";
 import { playerInstance } from "../../player";
 import { getHitboxVelocity } from "../../hitboxes";
-import { currentSnapshot } from "../../game";
+import { currentSnapshot, tickIntervalHasPassed } from "../../game";
 
 export interface LimbInfo {
    selectedItemSlot: number;
@@ -659,7 +659,7 @@ function onTick(entity: Entity): void {
             }
             
             // Ember particles
-            if (Board.tickIntervalHasPassed(0.08)) {
+            if (tickIntervalHasPassed(0.08)) {
                const renderPosition = getRenderPartRenderPosition(activeItemRenderPart);
                let spawnPositionX = renderPosition.x;
                let spawnPositionY = renderPosition.y;
@@ -675,7 +675,7 @@ function onTick(entity: Entity): void {
             }
 
             // Smoke particles
-            if (Board.tickIntervalHasPassed(0.18)) {
+            if (tickIntervalHasPassed(0.18)) {
                const renderPosition = getRenderPartRenderPosition(activeItemRenderPart);
 
                const spawnOffsetMagnitude = 5 * Math.random();
@@ -694,7 +694,7 @@ function onTick(entity: Entity): void {
                break;
             }
 
-            if (Board.tickIntervalHasPassed(0.4)) {
+            if (tickIntervalHasPassed(0.4)) {
                const renderPosition = getRenderPartRenderPosition(activeItemRenderPart);
                let spawnPositionX = renderPosition.x;
                let spawnPositionY = renderPosition.y;
@@ -710,7 +710,7 @@ function onTick(entity: Entity): void {
       }
 
       // @Incomplete: If eating multiple foods at once, shouldn't be on the same tick interval
-      if (Board.tickIntervalHasPassed(0.25) && limbInfo.action === LimbAction.eat && ITEM_TYPE_RECORD[limbInfo.heldItemType] === "healing") {
+      if (tickIntervalHasPassed(0.25) && limbInfo.action === LimbAction.eat && ITEM_TYPE_RECORD[limbInfo.heldItemType] === "healing") {
          // Create food eating particles
          for (let i = 0; i < 3; i++) {
             let spawnPositionX = hitbox.box.position.x + 37 * Math.sin(hitbox.box.angle);
@@ -954,7 +954,7 @@ const updateLimbTorch = (limb: LimbInfo, heldItemRenderPart: RenderPart, entity:
             limb.torchLight.b = lightB;
          }
 
-         if (Board.tickIntervalHasPassed(0.15) && heldItemType === ItemType.fireTorch) {
+         if (tickIntervalHasPassed(0.15) && heldItemType === ItemType.fireTorch) {
             // limb.torchLight.radius = lightRadius + randFloat(-7, 7);
          }
          

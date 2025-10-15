@@ -1,7 +1,6 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import { Settings } from "battletribes-shared/settings";
 import { Point, randAngle, randFloat, randInt } from "battletribes-shared/utils";
-import Board from "../../Board";
 import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createBloodPoolParticle, createDirtParticle } from "../../particles";
 import { playSoundOnHitbox } from "../../sound";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
@@ -16,6 +15,7 @@ import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { RenderPart } from "../../render-parts/render-parts";
 import { getHitboxTile, Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { tickIntervalHasPassed } from "../../game";
 
 export interface CowComponentData {
    readonly species: CowSpecies;
@@ -112,7 +112,7 @@ function getMaxRenderParts(): number {
 function onTick(entity: Entity): void {
    const cowComponent = CowComponentArray.getComponent(entity);
 
-   if (cowComponent.grazeProgress !== -1 && Board.tickIntervalHasPassed(0.1)) {
+   if (cowComponent.grazeProgress !== -1 && tickIntervalHasPassed(0.1)) {
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.hitboxes[0];
       

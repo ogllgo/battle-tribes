@@ -451,6 +451,8 @@ const createInteractRenderInfo = (interactAction: InteractAction): EntityRenderI
          );
          renderPart.offset.x = carrySlot.offsetX;
          renderPart.offset.y = carrySlot.offsetY;
+         // @Hack
+         renderPart.parentHitbox = hitbox;
          renderInfo.attachRenderPart(renderPart);
          
          return renderInfo;

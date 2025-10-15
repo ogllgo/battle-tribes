@@ -12,9 +12,9 @@ import Board from "../../Board";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../../shared/src/collision";
-import { registerDirtyRenderInfo } from "../../rendering/render-part-matrices";
+import { registerDirtyRenderInfo, renderParentIsHitboxReference } from "../../rendering/render-part-matrices";
 import { playerInstance } from "../../player";
-import { applyAccelerationFromGround, getHitboxTile, getHitboxVelocity, getRandomPositionInBox, getRootHitbox, Hitbox, readHitboxFromData, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox, updateHitboxFromData, updatePlayerHitboxFromData } from "../../hitboxes";
+import { applyAccelerationFromGround, createHitboxFromData, findEntityHitbox, getHitboxTile, getHitboxVelocity, getRandomPositionInBox, getRootHitbox, Hitbox, readHitboxFromData, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox, updateHitboxFromData, updatePlayerHitboxFromData } from "../../hitboxes";
 import Particle from "../../Particle";
 import { createWaterSplashParticle } from "../../particles";
 import { addTexturedParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
@@ -27,7 +27,7 @@ export interface TransformComponentData {
    readonly collisionBit: CollisionBit;
    readonly collisionMask: number;
    readonly traction: number;
-   readonly hitboxes: Array<Hitbox>;
+   readonly hitboxes: ReadonlyArray<Readonly<Hitbox>>;
 }
 
 export interface TransformComponent {
@@ -446,13 +446,15 @@ TransformComponentArray.updatePlayerFromData = updatePlayerFromData;
 function createComponent(entityComponentData: EntityComponentData): TransformComponent {
    const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
    
-   // @INCOMPLETE
+   const hitboxes = new Array<Hitbox>();
    const rootHitboxes = new Array<Hitbox>();
    const hitboxMap = new Map<number, Hitbox>();
-   for (const hitbox of transformComponentData.hitboxes) {
+   for (const hitboxData of transformComponentData.hitboxes) {
+      const hitbox = createHitboxFromData(hitboxData);
       // Set all the hitboxes' last update ticks, since they default to 0 and it has to be done here.
       hitbox.lastUpdateTicks = currentSnapshot.tick;
       
+      hitboxes.push(hitbox);
       hitboxMap.set(hitbox.localID, hitbox);
       if (hitbox.parent === null) {
          rootHitboxes.push(hitbox);
@@ -461,7 +463,7 @@ function createComponent(entityComponentData: EntityComponentData): TransformCom
 
    return {
       chunks: new Set(),
-      hitboxes: transformComponentData.hitboxes,
+      hitboxes: hitboxes,
       hitboxMap: hitboxMap,
       rootHitboxes: rootHitboxes,
       collisionBit: transformComponentData.collisionBit,
@@ -481,6 +483,14 @@ function getMaxRenderParts(): number {
 
 function onLoad(entity: Entity): void {
    cleanEntityTransform(entity);
+
+   // @Hack: this whole system with optional parentHitbox
+   const renderInfo = getEntityRenderInfo(entity);
+   for (const renderPart of renderInfo.renderPartsByZIndex) {
+      if (renderParentIsHitboxReference(renderPart.parent)) {
+         renderPart.parentHitbox = findEntityHitbox(renderPart.parent.entity, renderPart.parent.localID);
+      }
+   }
 }
 
 function onTick(entity: Entity): void {
