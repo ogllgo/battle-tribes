@@ -1,6 +1,5 @@
 import { Settings } from "battletribes-shared/settings";
 import { distance, lerp, randAngle, randFloat } from "battletribes-shared/utils";
-import Camera from "./Camera";
 import { halfWindowHeight, halfWindowWidth, windowHeight, windowWidth } from "./webgl";
 import OPTIONS from "./options";
 import { getCurrentLayer, getEntityLayer, getEntityType } from "./world";
@@ -14,8 +13,9 @@ import { addGhostRenderInfo, removeGhostRenderInfo } from "./rendering/webgl/ent
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { calculateHitboxRenderPosition } from "./rendering/render-part-matrices";
 import { FloorSignComponentArray } from "./entity-components/server-components/FloorSignComponent";
-import { getCursorWorldPos } from "./Game";
 import { TamingComponentArray } from "./entity-components/server-components/TamingComponent";
+import { cameraPosition, cameraZoom } from "./camera";
+import { cursorWorldPos } from "./mouse";
 
 // @Cleanup: The logic for damage, research and heal numbers is extremely similar, can probably be combined
 
@@ -86,10 +86,10 @@ export function getTextContext(): CanvasRenderingContext2D {
 }
 
 export function getXPosInTextCanvas(x: number): number {
-   return (x - Camera.position.x) * Camera.zoom + halfWindowWidth;
+   return (x - cameraPosition.x) * cameraZoom + halfWindowWidth;
 }
 export function getYPosInTextCanvas(y: number): number {
-   return (-y + Camera.position.y) * Camera.zoom + halfWindowHeight;
+   return (-y + cameraPosition.y) * cameraZoom + halfWindowHeight;
 }
 
 const clearTextCanvas = (): void => {
@@ -382,7 +382,6 @@ const renderNames = (tickInterp: number): void => {
 
    // @CLeanup: these aren't names!!
    // Floor signs
-   const cursorWorldPos = getCursorWorldPos();
    for (const entity of FloorSignComponentArray.entities) {
       const floorSignComponent = FloorSignComponentArray.getComponent(entity);
       if (floorSignComponent.message === "") {

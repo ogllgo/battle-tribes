@@ -246,9 +246,9 @@ function onTick(entity: Entity): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(entity);
    
    const minChunkX = Math.max(Math.floor((aiHelperComponent.seeingHitbox.box.position.x - aiHelperComponent.visionRange) / Settings.CHUNK_UNITS), 0);
-   const maxChunkX = Math.min(Math.floor((aiHelperComponent.seeingHitbox.box.position.x + aiHelperComponent.visionRange) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const maxChunkX = Math.min(Math.floor((aiHelperComponent.seeingHitbox.box.position.x + aiHelperComponent.visionRange) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
    const minChunkY = Math.max(Math.floor((aiHelperComponent.seeingHitbox.box.position.y - aiHelperComponent.visionRange) / Settings.CHUNK_UNITS), 0);
-   const maxChunkY = Math.min(Math.floor((aiHelperComponent.seeingHitbox.box.position.y + aiHelperComponent.visionRange) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const maxChunkY = Math.min(Math.floor((aiHelperComponent.seeingHitbox.box.position.y + aiHelperComponent.visionRange) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
    
    // If the entity hasn't changed visible chunk bounds, then the potential visible entities will be the same
    // and only the visible entities need to updated
@@ -331,5 +331,5 @@ function getDataLength(): number {
 function addDataToPacket(packet: Packet, entityID: number): void {
    const aiHelperComponent = AIHelperComponentArray.getComponent(entityID);
    
-   packet.addNumber(aiHelperComponent.visionRange);
+   packet.writeNumber(aiHelperComponent.visionRange);
 }

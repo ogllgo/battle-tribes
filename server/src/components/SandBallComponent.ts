@@ -45,5 +45,5 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const sandBallComponent = SandBallComponentArray.getComponent(entity);
-   packet.addNumber(Math.floor(sandBallComponent.size));
+   packet.writeNumber(Math.floor(sandBallComponent.size));
 }

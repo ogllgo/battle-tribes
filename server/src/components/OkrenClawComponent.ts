@@ -105,8 +105,8 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, okrenClaw: Entity): void {
    const okrenClawComponent = OkrenClawComponentArray.getComponent(okrenClaw);
-   packet.addNumber(okrenClawComponent.size);
-   packet.addNumber(okrenClawComponent.growthStage);
+   packet.writeNumber(okrenClawComponent.size);
+   packet.writeNumber(okrenClawComponent.growthStage);
 }
 
 function onTick(okrenClaw: Entity): void {

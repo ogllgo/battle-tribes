@@ -2,13 +2,12 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { PacketReader } from "../../../../shared/src/packets";
 import { Entity } from "../../../../shared/src/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface SnowberryBushComponentParams {
+export interface SnowberryBushComponentData {
    readonly numBerries: number;
 }
 
@@ -20,16 +19,11 @@ export interface SnowberryBushComponent {
    readonly renderPart: TexturedRenderPart;
 }
 
-export const SnowberryBushComponentArray = new ServerComponentArray<SnowberryBushComponent, SnowberryBushComponentParams, IntermediateInfo>(ServerComponentType.snowberryBush, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-});
+export const SnowberryBushComponentArray = new ServerComponentArray<SnowberryBushComponent, SnowberryBushComponentData, IntermediateInfo>(ServerComponentType.snowberryBush, true, createComponent, getMaxRenderParts, decodeData);
+SnowberryBushComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+SnowberryBushComponentArray.updateFromData = updateFromData;
 
-function createParamsFromData(reader: PacketReader): SnowberryBushComponentParams {
+function decodeData(reader: PacketReader): SnowberryBushComponentData {
    const numBerries = reader.readNumber();
    return {
       numBerries: numBerries
@@ -40,17 +34,17 @@ const getTextureSource = (numBerries: number): string => {
    return "entities/snowberry-bush/stage-" + numBerries + ".png";
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
-   const snowberryBushComponentParams = entityParams.serverComponentParams[ServerComponentType.snowberryBush]!;
+   const snowberryBushComponentData = entityComponentData.serverComponentData[ServerComponentType.snowberryBush]!;
 
    const renderPart = new TexturedRenderPart(
       hitbox,
       0,
       0,
-      getTextureArrayIndex(getTextureSource(snowberryBushComponentParams.numBerries))
+      getTextureArrayIndex(getTextureSource(snowberryBushComponentData.numBerries))
    )
    renderInfo.attachRenderPart(renderPart);
 
@@ -59,7 +53,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    };
 }
 
-function createComponent(_entityParams: EntityParams, intermediateInfo: IntermediateInfo): SnowberryBushComponent {
+function createComponent(_entityComponentData: EntityComponentData, intermediateInfo: IntermediateInfo): SnowberryBushComponent {
    return {
       renderPart: intermediateInfo.renderPart
    };
@@ -69,13 +63,9 @@ function getMaxRenderParts(): number {
    return 1;
 }
    
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, snowberryBush: Entity): void {
+function updateFromData(data: SnowberryBushComponentData, snowberryBush: Entity): void {
    const snowberryBushComponent = SnowberryBushComponentArray.getComponent(snowberryBush);
 
-   const numBerries = reader.readNumber();
+   const numBerries = data.numBerries;
    snowberryBushComponent.renderPart.switchTextureSource(getTextureSource(numBerries));
 }

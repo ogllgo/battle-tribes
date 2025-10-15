@@ -3,11 +3,10 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface TundraRockComponentParams {
+export interface TundraRockComponentData {
    readonly variant: number;
 }
 
@@ -17,39 +16,33 @@ export interface TundraRockComponent {
    readonly variant: number;
 }
 
-export const TundraRockComponentArray = new ServerComponentArray<TundraRockComponent, TundraRockComponentParams, IntermediateInfo>(ServerComponentType.tundraRock, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-});
+export const TundraRockComponentArray = new ServerComponentArray<TundraRockComponent, TundraRockComponentData, IntermediateInfo>(ServerComponentType.tundraRock, true, createComponent, getMaxRenderParts, decodeData);
+TundraRockComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
-function createParamsFromData(reader: PacketReader): TundraRockComponentParams {
+function decodeData(reader: PacketReader): TundraRockComponentData {
    const variant = reader.readNumber();
    return {
       variant: variant
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
-   const tundraRockComponentParams = entityParams.serverComponentParams[ServerComponentType.tundraRock]!;
+   const tundraRockComponentData = entityComponentData.serverComponentData[ServerComponentType.tundraRock]!;
    
    const renderPart = new TexturedRenderPart(
       hitbox,
       0,
       0,
-      getTextureArrayIndex("entities/tundra-rock/rock-" + (tundraRockComponentParams.variant + 1) + ".png")
+      getTextureArrayIndex("entities/tundra-rock/rock-" + (tundraRockComponentData.variant + 1) + ".png")
    )
-   if (tundraRockComponentParams.variant === 0) {
+   if (tundraRockComponentData.variant === 0) {
       renderPart.angle = -Math.PI * 0.25;
-   } else if (tundraRockComponentParams.variant === 1) {
+   } else if (tundraRockComponentData.variant === 1) {
       renderPart.angle = -Math.PI * 0.25;
-   } else if (tundraRockComponentParams.variant === 2) {
+   } else if (tundraRockComponentData.variant === 2) {
       renderPart.angle = -Math.PI * 0.08;
    }
    renderInfo.attachRenderPart(renderPart);
@@ -57,20 +50,12 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    return {};
 }
 
-function createComponent(entityParams: EntityParams): TundraRockComponent {
+function createComponent(entityComponentData: EntityComponentData): TundraRockComponent {
    return {
-      variant: entityParams.serverComponentParams[ServerComponentType.tundraRock]!.variant
+      variant: entityComponentData.serverComponentData[ServerComponentType.tundraRock]!.variant
    };
 }
 
 function getMaxRenderParts(): number {
    return 1;
-}
-   
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }

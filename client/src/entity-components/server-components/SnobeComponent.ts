@@ -2,7 +2,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityComponentData, getEntityRenderInfo } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { TransformComponentArray } from "./TransformComponent";
@@ -18,7 +18,7 @@ import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 const AMBIENT_SOUNDS: ReadonlyArray<string> = ["snobe-ambient-1.mp3", "snobe-ambient-2.mp3", "snobe-ambient-3.mp3", "snobe-ambient-4.mp3"];
 
-export interface SnobeComponentParams {
+export interface SnobeComponentData {
    readonly isDigging: boolean;
    readonly diggingProgress: number;
 }
@@ -30,33 +30,25 @@ export interface SnobeComponent {
    diggingProgress: number;
 }
 
-export const SnobeComponentArray = new ServerComponentArray<SnobeComponent, SnobeComponentParams, IntermediateInfo>(ServerComponentType.snobe, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onTick: onTick,
-   onHit: onHit,
-   onDie: onDie
-});
+export const SnobeComponentArray = new ServerComponentArray<SnobeComponent, SnobeComponentData, IntermediateInfo>(ServerComponentType.snobe, true, createComponent, getMaxRenderParts, decodeData);
+SnobeComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+SnobeComponentArray.updateFromData = updateFromData;
+SnobeComponentArray.onTick = onTick;
+SnobeComponentArray.onHit = onHit;
+SnobeComponentArray.onDie = onDie;
 
-function createParamsFromData(reader: PacketReader): SnobeComponentParams {
-   const isDigging = reader.readBoolean();
-   reader.padOffset(3);
-
+function decodeData(reader: PacketReader): SnobeComponentData {
+   const isDigging = reader.readBool();
    const diggingProgress = reader.readNumber();
-
    return {
       isDigging: isDigging,
       diggingProgress: diggingProgress
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   for (const hitbox of transformComponentParams.hitboxes) {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   for (const hitbox of transformComponentData.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.SNOBE_BODY)) {
          const renderPart = new TexturedRenderPart(
             hitbox,
@@ -90,12 +82,12 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    return {};
 }
 
-function createComponent(entityParams: EntityParams): SnobeComponent {
-   const snobeComponentParams = entityParams.serverComponentParams[ServerComponentType.snobe]!;
+function createComponent(entityComponentData: EntityComponentData): SnobeComponent {
+   const snobeComponentData = entityComponentData.serverComponentData[ServerComponentType.snobe]!;
    
    return {
-      isDigging: snobeComponentParams.isDigging,
-      diggingProgress: snobeComponentParams.diggingProgress
+      isDigging: snobeComponentData.isDigging,
+      diggingProgress: snobeComponentData.diggingProgress
    };
 }
 
@@ -117,16 +109,11 @@ function onTick(snobe: Entity): void {
    }
 }
    
-function padData(reader: PacketReader): void {
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, snobe: Entity): void {
+function updateFromData(data: SnobeComponentData, snobe: Entity): void {
    const snobeComponent = SnobeComponentArray.getComponent(snobe);
-   snobeComponent.isDigging = reader.readBoolean();
-   reader.padOffset(3);
+   snobeComponent.isDigging = data.isDigging;
 
-   snobeComponent.diggingProgress = reader.readNumber();
+   snobeComponent.diggingProgress = data.diggingProgress;
    const opacity = 1 - Math.pow(snobeComponent.diggingProgress, 2);
    const renderInfo = getEntityRenderInfo(snobe);
    for (const renderPart of renderInfo.renderPartsByZIndex) {

@@ -8,11 +8,10 @@ import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface PunjiSticksComponentParams {}
+export interface PunjiSticksComponentData {}
 
 interface IntermediateInfo {}
 
@@ -21,32 +20,22 @@ export interface PunjiSticksComponent {
    ticksSinceLastFlySound: number;
 }
 
-export const PunjiSticksComponentArray = new ServerComponentArray<PunjiSticksComponent, PunjiSticksComponentParams, IntermediateInfo>(ServerComponentType.punjiSticks, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const PunjiSticksComponentArray = new ServerComponentArray<PunjiSticksComponent, PunjiSticksComponentData, IntermediateInfo>(ServerComponentType.punjiSticks, true, createComponent, getMaxRenderParts, decodeData);
+PunjiSticksComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+PunjiSticksComponentArray.onTick = onTick;
+PunjiSticksComponentArray.onHit = onHit;
+PunjiSticksComponentArray.onDie = onDie;
 
-const fillParams = (): PunjiSticksComponentParams => {
+export function createPunjiSticksComponentData(): PunjiSticksComponentData {
    return {};
 }
 
-export function createPunjiSticksComponentParams(): PunjiSticksComponentParams {
-   return fillParams();
+function decodeData(): PunjiSticksComponentData {
+   return {};
 }
 
-function createParamsFromData(): PunjiSticksComponentParams {
-   return fillParams();
-}
-
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const isAttachedToWall = entityParams.entityType === EntityType.wallPunjiSticks;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const isAttachedToWall = entityComponentData.entityType === EntityType.wallPunjiSticks;
    let textureArrayIndex: number;
    if (isAttachedToWall) {
       textureArrayIndex = getTextureArrayIndex("entities/wall-punji-sticks/wall-punji-sticks.png");
@@ -54,8 +43,8 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
       textureArrayIndex = getTextureArrayIndex("entities/floor-punji-sticks/floor-punji-sticks.png");
    }
 
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -104,10 +93,6 @@ function onTick(entity: Entity): void {
       punjiSticksComponent.ticksSinceLastFlySound = 0;
    }
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}
 
 function onHit(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);

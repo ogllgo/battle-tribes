@@ -5,36 +5,30 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
 import { createSlimePoolParticle, createSlimeSpeckParticle } from "../../particles";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import CircularBox from "../../../../shared/src/boxes/CircularBox";
 
-export interface SlimewispComponentParams {}
+export interface SlimewispComponentData {}
 
 interface IntermediateInfo {}
 
 export interface SlimewispComponent {}
 
-const RADIUS = 16;
+export const SlimewispComponentArray = new ServerComponentArray<SlimewispComponent, SlimewispComponentData, IntermediateInfo>(ServerComponentType.slimewisp, true, createComponent, getMaxRenderParts, decodeData);
+SlimewispComponentArray.updateFromData = updateFromData;
+SlimewispComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+SlimewispComponentArray.onHit = onHit;
+SlimewispComponentArray.onDie = onDie;
 
-export const SlimewispComponentArray = new ServerComponentArray<SlimewispComponent, SlimewispComponentParams, IntermediateInfo>(ServerComponentType.slimewisp, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
-
-function createParamsFromData(): SlimewispComponentParams {
+function decodeData(): SlimewispComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -56,25 +50,26 @@ function getMaxRenderParts(): number {
    return 1;
 }
 
-function padData(): void {}
-
 function updateFromData(): void {}
 
 function onHit(_entity: Entity, hitbox: Hitbox): void {
-   createSlimePoolParticle(hitbox.box.position.x, hitbox.box.position.y, RADIUS);
+   const radius = (hitbox.box as CircularBox).radius;
+   
+   createSlimePoolParticle(hitbox.box.position.x, hitbox.box.position.y, radius);
 
    for (let i = 0; i < 2; i++) {
-      createSlimeSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, RADIUS * Math.random());
+      createSlimeSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, radius * Math.random());
    }
 }
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.hitboxes[0];
+   const radius = (hitbox.box as CircularBox).radius;
 
-   createSlimePoolParticle(hitbox.box.position.x, hitbox.box.position.y, RADIUS);
+   createSlimePoolParticle(hitbox.box.position.x, hitbox.box.position.y, radius);
 
    for (let i = 0; i < 3; i++) {
-      createSlimeSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, RADIUS * Math.random());
+      createSlimeSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, radius * Math.random());
    }
 }

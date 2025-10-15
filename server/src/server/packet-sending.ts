@@ -2,9 +2,8 @@ import { ServerComponentTypeString } from "battletribes-shared/components";
 import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import Layer from "../Layer";
 import { ComponentArrays, getComponentArrayRecord } from "../components/ComponentArray";
-import { HealthComponentArray } from "../components/HealthComponent";
 import { InventoryComponentArray, getInventory } from "../components/InventoryComponent";
-import { addCrossbowLoadProgressRecordToPacket, getCrossbowLoadProgressRecordLength, InventoryUseComponentArray, limbHeldItemCanBeSwitched, LimbInfo } from "../components/InventoryUseComponent";
+import { addCrossbowLoadProgressRecordToPacket, getCrossbowLoadProgressRecordLength, InventoryUseComponentArray, LimbInfo } from "../components/InventoryUseComponent";
 import { SERVER } from "./server";
 import { Settings } from "battletribes-shared/settings";
 import { addEntityDebugDataToPacket, createEntityDebugData, getEntityDebugDataLength } from "../entity-debug-data";
@@ -22,7 +21,6 @@ import { addDevPacketData, getDevPacketDataLength } from "./dev-packet-creation"
 import { addGrassBlockerToData, getGrassBlockerLengthBytes, GrassBlocker } from "../grass-blockers";
 import { addTamingSpecToData, getTamingSpecDataLength, getTamingSpecsMap } from "../taming-specs";
 import { Point } from "../../../shared/src/utils";
-import { Hitbox } from "../hitboxes";
 import { addLightData, getEntityHitboxLights, getLightDataLength } from "../lights";
 
 export function getInventoryDataLength(inventory: Inventory): number {
@@ -32,19 +30,19 @@ export function getInventoryDataLength(inventory: Inventory): number {
 }
 
 export function addInventoryDataToPacket(packet: Packet, inventory: Inventory): void {
-   packet.addNumber(inventory.name);
-   packet.addNumber(inventory.width);
-   packet.addNumber(inventory.height);
+   packet.writeNumber(inventory.name);
+   packet.writeNumber(inventory.width);
+   packet.writeNumber(inventory.height);
 
-   packet.addNumber(inventory.items.length);
+   packet.writeNumber(inventory.items.length);
    for (let j = 0; j < inventory.items.length; j++) {
       const item = inventory.items[j];
       const itemSlot = inventory.getItemSlot(item);
       
-      packet.addNumber(itemSlot);
-      packet.addNumber(item.id);
-      packet.addNumber(item.type);
-      packet.addNumber(item.count);
+      packet.writeNumber(itemSlot);
+      packet.writeNumber(item.id);
+      packet.writeNumber(item.type);
+      packet.writeNumber(item.count);
    }
 }
 
@@ -65,17 +63,17 @@ export function getEntityDataLength(entity: Entity, player: Entity | null): numb
 
 export function addEntityDataToPacket(packet: Packet, entity: Entity, player: Entity | null): void {
    // Entity ID, type, spawn time, and layer
-   packet.addNumber(entity);
-   packet.addNumber(getEntityType(entity));
+   packet.writeNumber(entity);
+   packet.writeNumber(getEntityType(entity));
    // @Bandwidth: Only include when client doesn't know about this information
-   packet.addNumber(getEntitySpawnTicks(entity));
-   packet.addNumber(layers.indexOf(getEntityLayer(entity)));
+   packet.writeNumber(getEntitySpawnTicks(entity));
+   packet.writeNumber(layers.indexOf(getEntityLayer(entity)));
 
    const componentTypes = getEntityComponentTypes(entity);
    const componentArrayRecord = getComponentArrayRecord();
 
    // Components
-   packet.addNumber(componentTypes.length);
+   packet.writeNumber(componentTypes.length);
    for (let i = 0; i < componentTypes.length; i++) {
       const componentType = componentTypes[i];
       const componentArray = componentArrayRecord[componentType];
@@ -84,7 +82,7 @@ export function addEntityDataToPacket(packet: Packet, entity: Entity, player: En
       if (componentArray.hasComponent(entity)) {
          const start = packet.currentByteOffset;
          
-         packet.addNumber(componentType);
+         packet.writeNumber(componentType);
          componentArray.addDataToPacket(packet, entity, player);
 
          // @Speed
@@ -173,8 +171,15 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    // Layer
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-   // Player instance and camera subject
-   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
+
+   // Entities
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   for (const entity of entitiesToSend) {
+      lengthBytes += getEntityDataLength(entity, player);
+   }
+
+   // Removed entities
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT + 2 * Float32Array.BYTES_PER_ELEMENT * removedEntities.length;
 
    // Tribes
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
@@ -185,15 +190,9 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
          lengthBytes += getShortTribeDataLength(tribe);
       }
    }
-
-   // Entities
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-   for (const entity of entitiesToSend) {
-      lengthBytes += getEntityDataLength(entity, player);
-   }
-
-   // Removed entity IDs
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT + Float32Array.BYTES_PER_ELEMENT * removedEntities.length;
+   
+   // Player instance and camera subject
+   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
 
    // Lights
    let numVisibleLights = 0;
@@ -219,30 +218,23 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    // Orb completes
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + 3 * Float32Array.BYTES_PER_ELEMENT * playerClient.orbCompletes.length;
    // Tile updates
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT + 3 * Float32Array.BYTES_PER_ELEMENT * tileUpdates.length;
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT + 2 * Float32Array.BYTES_PER_ELEMENT * tileUpdates.length;
 
    // Wall subtile updates
    for (const layer of layers) {
       lengthBytes += Float32Array.BYTES_PER_ELEMENT + 3 * layer.wallSubtileUpdates.length * Float32Array.BYTES_PER_ELEMENT;
    }
    
+   // hasPickedUpItem
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
 
-   // Has debug data boolean
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-   const debugDataLength = debugData !== null ? getEntityDebugDataLength(debugData) : 0;
-   lengthBytes += debugDataLength;
-
-   lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
-   if (player !== null) {
-      lengthBytes += getCrossbowLoadProgressRecordLength(hotbarUseInfo!);
-   }
-
+   // Title offer
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    if (titleOffer !== null) {
       lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    }
 
+   // Tick events
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + 3 * Float32Array.BYTES_PER_ELEMENT * playerClient.entityTickEvents.length;
 
    // Mined subtiles
@@ -266,20 +258,30 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    const packet = new Packet(PacketType.gameData, lengthBytes);
 
    // Whether or not the simulation is paused
-   packet.addBoolean(!SERVER.isSimulating);
-   packet.padOffset(3);
+   packet.writeBool(!SERVER.isSimulating);
 
-   packet.addNumber(getGameTicks());
-   packet.addNumber(getGameTime());
+   packet.writeNumber(getGameTicks());
+   packet.writeNumber(getGameTime());
 
-   packet.addNumber(layers.indexOf(layer));
+   packet.writeNumber(layers.indexOf(layer));
 
-   packet.addNumber(entityExists(playerClient.instance) ? playerClient.instance : 0);
-   packet.addNumber(entityExists(playerClient.cameraSubject) ? playerClient.cameraSubject : 0);
+   // Add entities
+   packet.writeNumber(entitiesToSend.size);
+   for (const entity of entitiesToSend) {
+      addEntityDataToPacket(packet, entity, player);
+   }
+
+   // Removed/destroyed entities
+   packet.writeNumber(removedEntities.length);
+   for (const entity of removedEntities) {
+      packet.writeNumber(entity);
+      // @Bandwidth: we could split this into 2 instead and avoid having the bool for each one. But this likely won't matter and in fact will harm for small remove counts.
+      packet.writeBool(playerClient.visibleDestroyedEntities.includes(entity));
+   }
 
    // Tribes
-   packet.addNumber(tribes.length);
-   addExtendedTribeData(packet, playerClient.tribe); // Always add player at index 0
+   addExtendedTribeData(packet, playerClient.tribe);
+   packet.writeNumber(tribes.length - 1); // minus one cuz the player is handled separately
    for (const tribe of tribes) {
       // Player tribe is already added
       if (tribe === playerClient.tribe) {
@@ -293,24 +295,11 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
       }
    }
 
-   // Add entities
-   packet.addNumber(entitiesToSend.size);
-   for (const entity of entitiesToSend) {
-      addEntityDataToPacket(packet, entity, player);
-   }
-
-   // Removed entity IDs
-   packet.addNumber(removedEntities.length);
-   for (const entity of removedEntities) {
-      packet.addNumber(entity);
-   }
-   // packet.addNumber(playerClient.visibleEntityDeathIDs.length);
-   // for (const entity of playerClient.visibleEntityDeathIDs) {
-   //    packet.addNumber(entity);
-   // }
+   packet.writeNumber(entityExists(playerClient.instance) ? playerClient.instance : 0);
+   packet.writeNumber(entityExists(playerClient.cameraSubject) ? playerClient.cameraSubject : 0);
 
    // Lights
-   packet.addNumber(numVisibleLights);
+   packet.writeNumber(numVisibleLights);
    for (const entity of playerClient.visibleEntities) {
       const hitboxLights = getEntityHitboxLights(entity);
       if (hitboxLights !== null) {
@@ -323,146 +312,111 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    }
    
    // Add visible hits
-   packet.addNumber(playerClient.visibleHits.length);
+   packet.writeNumber(playerClient.visibleHits.length);
    for (let i = 0; i < playerClient.visibleHits.length; i++) {
       const hitData = playerClient.visibleHits[i];
-      packet.addNumber(hitData.hitEntity);
-      packet.addNumber(hitData.hitHitbox.localID);
-      packet.addNumber(hitData.hitPosition.x);
-      packet.addNumber(hitData.hitPosition.y);
-      packet.addNumber(hitData.attackEffectiveness);
-      packet.addNumber(hitData.damage);
-      packet.addBoolean(hitData.shouldShowDamageNumber);
-      packet.padOffset(3);
-      packet.addNumber(hitData.flags);
+      packet.writeNumber(hitData.hitEntity);
+      packet.writeNumber(hitData.hitHitbox.localID);
+      packet.writeNumber(hitData.hitPosition.x);
+      packet.writeNumber(hitData.hitPosition.y);
+      packet.writeNumber(hitData.attackEffectiveness);
+      packet.writeNumber(hitData.damage);
+      packet.writeBool(hitData.shouldShowDamageNumber);
+      packet.writeNumber(hitData.flags);
    }
 
    // Add player knockbacks
-   packet.addNumber(playerClient.playerKnockbacks.length);
+   packet.writeNumber(playerClient.playerKnockbacks.length);
    for (let i = 0; i < playerClient.playerKnockbacks.length; i++) {
       const knockbackData = playerClient.playerKnockbacks[i];
-      packet.addNumber(knockbackData.knockback);
-      packet.addNumber(knockbackData.knockbackDirection);
+      packet.writeNumber(knockbackData.knockback);
+      packet.writeNumber(knockbackData.knockbackDirection);
    }
 
    // Add player heals
-   packet.addNumber(playerClient.heals.length);
+   packet.writeNumber(playerClient.heals.length);
    for (let i = 0; i < playerClient.heals.length; i++) {
       const healData = playerClient.heals[i];
-      packet.addNumber(healData.entityPositionX);
-      packet.addNumber(healData.entityPositionY);
-      packet.addNumber(healData.healedID);
-      packet.addNumber(healData.healerID);
-      packet.addNumber(healData.healAmount);
-   }
-
-   // Visible entity deaths
-   packet.addNumber(playerClient.visibleDestroyedEntities.length);
-   for (let i = 0; i < playerClient.visibleDestroyedEntities.length; i++) {
-      const entity = playerClient.visibleDestroyedEntities[i];
-      packet.addNumber(entity);
+      packet.writeNumber(healData.entityPositionX);
+      packet.writeNumber(healData.entityPositionY);
+      packet.writeNumber(healData.healedID);
+      packet.writeNumber(healData.healerID);
+      packet.writeNumber(healData.healAmount);
    }
 
    // Orb completes
-   packet.addNumber(playerClient.orbCompletes.length);
+   packet.writeNumber(playerClient.orbCompletes.length);
    for (let i = 0; i < playerClient.orbCompletes.length; i++) {
       const orbCompleteData = playerClient.orbCompletes[i];
-      packet.addNumber(orbCompleteData.x);
-      packet.addNumber(orbCompleteData.y);
-      packet.addNumber(orbCompleteData.amount);
+      packet.writeNumber(orbCompleteData.x);
+      packet.writeNumber(orbCompleteData.y);
+      packet.writeNumber(orbCompleteData.amount);
    }
    
    // Tile updates
-   packet.addNumber(tileUpdates.length);
+   packet.writeNumber(tileUpdates.length);
    for (let i = 0; i < tileUpdates.length; i++) {
       const tileUpdate = tileUpdates[i];
-      packet.addNumber(tileUpdate.tileIndex);
-      packet.addNumber(tileUpdate.type);
+      packet.writeNumber(tileUpdate.tileIndex);
+      packet.writeNumber(tileUpdate.type);
    }
 
    // Wall subtile updates
    for (const layer of layers) {
-      packet.addNumber(layer.wallSubtileUpdates.length);
+      packet.writeNumber(layer.wallSubtileUpdates.length);
       for (const subtileUpdate of layer.wallSubtileUpdates) {
-         packet.addNumber(subtileUpdate.subtileIndex);
-         packet.addNumber(subtileUpdate.subtileType);
-         packet.addNumber(subtileUpdate.damageTaken);
+         packet.writeNumber(subtileUpdate.subtileIndex);
+         packet.writeNumber(subtileUpdate.subtileType);
+         packet.writeNumber(subtileUpdate.damageTaken);
       }
    }
 
-   // @Hack: why is this necessary? the player should be able to gather this information simply
-   // from the health component's health value and whether or not the player has its data sent
-   packet.addNumber(player !== null ? HealthComponentArray.getComponent(player).health : 0);
-
-   // @Bug: Shared for all players
-   if (debugData !== null) {
-      packet.addBoolean(true);
-      packet.padOffset(3);
-      
-      const start = packet.currentByteOffset;
-      addEntityDebugDataToPacket(packet, trackedEntity, debugData);
-      if (packet.currentByteOffset - start !== debugDataLength) {
-         throw new Error(`Debug data had unexpected length. Expected: ${debugDataLength}. Got: ${packet.currentByteOffset - start}`);
-      }
-   } else {
-      packet.addBoolean(false);
-      packet.padOffset(3);
-   }
-
-   packet.addBoolean(playerClient.hasPickedUpItem);
-   packet.padOffset(3);
-
-   if (player !== null) {
-      addCrossbowLoadProgressRecordToPacket(packet, hotbarUseInfo!);
-   }
+   packet.writeBool(playerClient.hasPickedUpItem);
 
    // Title offer
-   packet.addBoolean(titleOffer !== null);
-   packet.padOffset(3);
+   packet.writeBool(titleOffer !== null);
    if (titleOffer !== null) {
-      packet.addNumber(titleOffer);
+      packet.writeNumber(titleOffer);
    }
    
    // Tick events
-   packet.addNumber(playerClient.entityTickEvents.length);
+   packet.writeNumber(playerClient.entityTickEvents.length);
    for (const tickEvent of playerClient.entityTickEvents) {
-      packet.addNumber(tickEvent.entityID);
-      packet.addNumber(tickEvent.type);
-      packet.addNumber(tickEvent.data as number);
+      packet.writeNumber(tickEvent.entityID);
+      packet.writeNumber(tickEvent.type);
+      packet.writeNumber(tickEvent.data as number);
    }
 
    // Mined subtiles
-   packet.addNumber(minedSubtiles.length);
+   packet.writeNumber(minedSubtiles.length);
    for (const subtileIndex of minedSubtiles) {
-      packet.addNumber(subtileIndex);
+      packet.writeNumber(subtileIndex);
 
       const subtileType = layer.getMinedSubtileType(subtileIndex);
-      packet.addNumber(subtileType);
+      packet.writeNumber(subtileType);
       
       const support = getSubtileSupport(layer, subtileIndex);
-      packet.addNumber(support);
+      packet.writeNumber(support);
 
-      packet.addBoolean(subtileIsCollapsing(subtileIndex));
-      packet.padOffset(3);
+      packet.writeBool(subtileIsCollapsing(subtileIndex));
    }
 
    // Collapses
-   packet.addNumber(nearbyCollapses.length);
+   packet.writeNumber(nearbyCollapses.length);
    // @Cleanup: unused?
    for (const [collapse, subtileIndex] of nearbyCollapses) {
-      packet.addNumber(subtileIndex);
-      packet.addNumber(collapse.age);
+      packet.writeNumber(subtileIndex);
+      packet.writeNumber(collapse.age);
    }
 
    // Grass blockers
-   packet.addNumber(visibleGrassBlockers.length);
+   packet.writeNumber(visibleGrassBlockers.length);
    for (const blocker of visibleGrassBlockers) {
       addGrassBlockerToData(packet, blocker);
    }
 
    // Dev data
-   packet.addBoolean(playerClient.isDev);
-   packet.padOffset(3);
+   packet.writeBool(playerClient.isDev);
    if (playerClient.isDev) {
       addDevPacketData(packet, playerClient);
    }
@@ -507,6 +461,20 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    return packet.buffer;
 }
 
+   
+// @SQUEAM @INCOMPLETE
+   // // Debug data
+   // lengthBytes += Float32Array.BYTES_PER_ELEMENT; // Has debug data boolean
+   // lengthBytes += debugData !== null ? getEntityDebugDataLength(debugData) : 0;
+// @SQUEAM @INCOMPLETE
+   // // @Bug: Shared for all players
+   // if (debugData !== null) {
+   //    packet.writeBool(true);
+   //    addEntityDebugDataToPacket(packet, trackedEntity, debugData);
+   // } else {
+   //    packet.writeBool(false);
+   // }
+
 export function createInitialGameDataPacket(spawnLayer: Layer, spawnPosition: Point): ArrayBuffer {
    const tamingSpecsMap = getTamingSpecsMap();
 
@@ -514,9 +482,9 @@ export function createInitialGameDataPacket(spawnLayer: Layer, spawnPosition: Po
    // Layer idx
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    // Per-tile data
-   lengthBytes += layers.length * Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS * 7 * Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += layers.length * Settings.FULL_WORLD_SIZE_TILES * Settings.FULL_WORLD_SIZE_TILES * 7 * Float32Array.BYTES_PER_ELEMENT;
    // Subtile data
-   lengthBytes += layers.length * Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS * 16 * Float32Array.BYTES_PER_ELEMENT;
+   lengthBytes += layers.length * Settings.FULL_WORLD_SIZE_TILES * Settings.FULL_WORLD_SIZE_TILES * 16 * Float32Array.BYTES_PER_ELEMENT;
    // Subtile damage taken
    for (const layer of layers) {
       lengthBytes += Float32Array.BYTES_PER_ELEMENT + layer.wallSubtileDamageTakenMap.size * 2 * Float32Array.BYTES_PER_ELEMENT;
@@ -533,66 +501,66 @@ export function createInitialGameDataPacket(spawnLayer: Layer, spawnPosition: Po
    const packet = new Packet(PacketType.initialGameData, lengthBytes);
    
    // Layer idx
-   packet.addNumber(layers.indexOf(spawnLayer));
+   packet.writeNumber(layers.indexOf(spawnLayer));
    
    // Spawn position
-   packet.addNumber(spawnPosition.x);
-   packet.addNumber(spawnPosition.y);
+   packet.writeNumber(spawnPosition.x);
+   packet.writeNumber(spawnPosition.y);
    
    // Layers and their terrain data
-   packet.addNumber(layers.length);
+   packet.writeNumber(layers.length);
    for (let layerIdx = 0; layerIdx < layers.length; layerIdx++) {
       const layer = layers[layerIdx];
       // Per-tile data
-      for (let tileIndex = 0; tileIndex < Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS; tileIndex++) {
-         packet.addNumber(layer.tileTypes[tileIndex]);
-         packet.addNumber(layer.tileBiomes[tileIndex]);
-         packet.addNumber(layer.riverFlowDirections[tileIndex]);
-         packet.addNumber(layer.tileTemperatures[tileIndex]);
-         packet.addNumber(layer.tileHumidities[tileIndex]);
-         packet.addNumber(layer.tileMithrilRichnesses[tileIndex]);
+      for (let tileIndex = 0; tileIndex < Settings.FULL_WORLD_SIZE_TILES * Settings.FULL_WORLD_SIZE_TILES; tileIndex++) {
+         packet.writeNumber(layer.tileTypes[tileIndex]);
+         packet.writeNumber(layer.tileBiomes[tileIndex]);
+         packet.writeNumber(layer.riverFlowDirections[tileIndex]);
+         packet.writeNumber(layer.tileTemperatures[tileIndex]);
+         packet.writeNumber(layer.tileHumidities[tileIndex]);
+         packet.writeNumber(layer.tileMithrilRichnesses[tileIndex]);
       }
 
       // Subtiles
       const subtiles = layer.wallSubtileTypes;
-      for (let i = 0; i < Settings.FULL_BOARD_DIMENSIONS * Settings.FULL_BOARD_DIMENSIONS * 16; i++) {
-         packet.addNumber(subtiles[i]);
+      for (let i = 0; i < Settings.FULL_WORLD_SIZE_TILES * Settings.FULL_WORLD_SIZE_TILES * 16; i++) {
+         packet.writeNumber(subtiles[i]);
       }
 
       // Subtile damage taken
-      packet.addNumber(layer.wallSubtileDamageTakenMap.size);
+      packet.writeNumber(layer.wallSubtileDamageTakenMap.size);
       for (const [subtileIndex, damageTaken] of layer.wallSubtileDamageTakenMap) {
-         packet.addNumber(subtileIndex);
-         packet.addNumber(damageTaken);
+         packet.writeNumber(subtileIndex);
+         packet.writeNumber(damageTaken);
       }
    }
 
-   packet.addNumber(spawnLayer.waterRocks.length);
+   packet.writeNumber(spawnLayer.waterRocks.length);
    for (let i = 0; i < spawnLayer.waterRocks.length; i++) {
       const waterRock = spawnLayer.waterRocks[i];
 
-      packet.addNumber(waterRock.position[0]);
-      packet.addNumber(waterRock.position[1]);
-      packet.addNumber(waterRock.rotation);
-      packet.addNumber(waterRock.size);
-      packet.addNumber(waterRock.opacity);
+      packet.writeNumber(waterRock.position[0]);
+      packet.writeNumber(waterRock.position[1]);
+      packet.writeNumber(waterRock.rotation);
+      packet.writeNumber(waterRock.size);
+      packet.writeNumber(waterRock.opacity);
    }
 
-   packet.addNumber(spawnLayer.riverSteppingStones.length);
+   packet.writeNumber(spawnLayer.riverSteppingStones.length);
    for (let i = 0; i < spawnLayer.riverSteppingStones.length; i++) {
       const steppingStone = spawnLayer.riverSteppingStones[i];
 
-      packet.addNumber(steppingStone.positionX);
-      packet.addNumber(steppingStone.positionY);
-      packet.addNumber(steppingStone.rotation);
-      packet.addNumber(steppingStone.size);
-      packet.addNumber(steppingStone.groupID);
+      packet.writeNumber(steppingStone.positionX);
+      packet.writeNumber(steppingStone.positionY);
+      packet.writeNumber(steppingStone.rotation);
+      packet.writeNumber(steppingStone.size);
+      packet.writeNumber(steppingStone.groupID);
    }
 
    // Taming specs
-   packet.addNumber(tamingSpecsMap.size);
+   packet.writeNumber(tamingSpecsMap.size);
    for (const pair of tamingSpecsMap) {
-      packet.addNumber(pair[0])
+      packet.writeNumber(pair[0])
       addTamingSpecToData(packet, pair[1]);
    }
 
@@ -636,14 +604,14 @@ export function createSyncDataPacket(playerClient: PlayerClient): ArrayBuffer {
    
    const transformComponent = TransformComponentArray.getComponent(player);
    const hitbox = transformComponent.hitboxes[0];
-   packet.addNumber(hitbox.box.position.x);
-   packet.addNumber(hitbox.box.position.y);
-   packet.addNumber(hitbox.box.angle);
+   packet.writeNumber(hitbox.box.position.x);
+   packet.writeNumber(hitbox.box.position.y);
+   packet.writeNumber(hitbox.box.angle);
 
-   packet.addNumber(hitbox.previousPosition.x);
-   packet.addNumber(hitbox.previousPosition.y);
-   packet.addNumber(hitbox.acceleration.x);
-   packet.addNumber(hitbox.acceleration.y);
+   packet.writeNumber(hitbox.previousPosition.x);
+   packet.writeNumber(hitbox.previousPosition.y);
+   packet.writeNumber(hitbox.acceleration.x);
+   packet.writeNumber(hitbox.acceleration.y);
 
    // Add inventory data
    addInventoryDataToPacket(packet, hotbarInventory);

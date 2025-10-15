@@ -2,11 +2,11 @@ import { Box } from "../../shared/src/boxes/boxes";
 import { Entity, EntityType } from "../../shared/src/entities";
 import { PacketReader } from "../../shared/src/packets";
 import { assert, unitsToChunksClamped } from "../../shared/src/utils";
-import Board from "./Board";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { EntityRenderInfo } from "./EntityRenderInfo";
+import { currentSnapshot } from "./game";
 import Layer from "./Layer";
-import { padBoxData, readBoxFromData } from "./networking/packet-hitboxes";
+import { readBoxFromData } from "./networking/packet-hitboxes";
 import ColouredRenderPart from "./render-parts/ColouredRenderPart";
 import { registerDirtyRenderInfo } from "./rendering/render-part-matrices";
 import { calculateGrassBlockerVertexData } from "./rendering/webgl/grass-blocker-rendering";
@@ -26,6 +26,14 @@ export interface GrassBlocker {
    readonly vertexBuffer: WebGLBuffer;
    // @Cleanup: should be readonly
    vertexDataLength: number;
+}
+
+export interface GrassBlockerData {
+   readonly id: number;
+   readonly box: Box;
+   readonly layer: Layer;
+   readonly blockAmount: number;
+   readonly maxBlockAmount: number;
 }
 
 const grassBlockers = new Map<number, GrassBlocker>();
@@ -59,29 +67,22 @@ const addAffectedGrassStrands = (layer: Layer, blockerBox: Box, blocker: GrassBl
    }
 }
 
-const readGrassBlockerExceptIDFromData = (reader: PacketReader): GrassBlocker => {
-   const layerIdx = reader.readNumber();
-   const box = readBoxFromData(reader);
-   const blockAmount = reader.readNumber();
-   const maxBlockAmount = reader.readNumber();
-   
+const createGrassBlockerFromData = (data: GrassBlockerData): GrassBlocker => {
    const vao = gl.createVertexArray();
    const vertexBuffer = gl.createBuffer()!;
 
    const blocker: GrassBlocker = {
-      box: box,
-      blockAmount: blockAmount,
-      maxBlockAmount: maxBlockAmount,
-      lastUpdateTicks: Board.serverTicks,
+      box: data.box,
+      blockAmount: data.blockAmount,
+      maxBlockAmount: data.maxBlockAmount,
+      lastUpdateTicks: currentSnapshot.tick,
       affectedGrassStrands: [],
       vao: vao,
       vertexBuffer: vertexBuffer,
       vertexDataLength: 0
    };
 
-   const layer = layers[layerIdx];
-
-   addAffectedGrassStrands(layer, box, blocker);
+   addAffectedGrassStrands(data.layer, data.box, blocker);
 
    gl.bindVertexArray(vao);
 
@@ -120,26 +121,42 @@ const updateGrassStrandOpacity = (renderInfo: EntityRenderInfo, opacity: number)
    }
 }
 
-export function updateGrassBlockers(reader: PacketReader): void {
+export function readGrassBlockers(reader: PacketReader): ReadonlyArray<GrassBlockerData> {
+   const grassBlockerData = new Array<GrassBlockerData>();
    const numBlockers = reader.readNumber();
    for (let i = 0; i < numBlockers; i++) {
       const id = reader.readNumber();
+      
+      const layerIdx = reader.readNumber();
+      const layer = layers[layerIdx];
+      
+      const box = readBoxFromData(reader);
+      const blockAmount = reader.readNumber();
+      const maxBlockAmount = reader.readNumber();
+      
+      const data: GrassBlockerData = {
+         id: id,
+         box: box,
+         layer: layer,
+         blockAmount: blockAmount,
+         maxBlockAmount: maxBlockAmount
+      };
+      grassBlockerData.push(data);
+   }
+   return grassBlockerData;
+}
 
-      const existingGrassBlocker = grassBlockers.get(id);
+export function updateGrassBlockersFromData(grassBlockerData: ReadonlyArray<GrassBlockerData>): void {
+   for (const data of grassBlockerData) {
+      const existingGrassBlocker = grassBlockers.get(data.id);
       if (typeof existingGrassBlocker !== "undefined") {
          // Update grass blocker
-         
-         reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-         padBoxData(reader);
-         existingGrassBlocker.blockAmount = reader.readNumber();
-         reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-
+         existingGrassBlocker.blockAmount = data.blockAmount;
          updateGrassBlockerVertices(existingGrassBlocker);
-
-         existingGrassBlocker.lastUpdateTicks = Board.serverTicks;
+         existingGrassBlocker.lastUpdateTicks = currentSnapshot.tick;
       } else {
-         const grassBlocker = readGrassBlockerExceptIDFromData(reader);
-         grassBlockers.set(id, grassBlocker);
+         const grassBlocker = createGrassBlockerFromData(data);
+         grassBlockers.set(data.id, grassBlocker);
 
          for (const grassStrand of grassBlocker.affectedGrassStrands) {
             const renderInfo = getEntityRenderInfo(grassStrand);
@@ -149,9 +166,9 @@ export function updateGrassBlockers(reader: PacketReader): void {
 
             const blockers = strandBlockers.get(grassStrand);
             if (typeof blockers === "undefined") {
-               strandBlockers.set(grassStrand, [id]);
+               strandBlockers.set(grassStrand, [data.id]);
             } else {
-               blockers.push(id);
+               blockers.push(data.id);
             }
          }
       }
@@ -160,7 +177,7 @@ export function updateGrassBlockers(reader: PacketReader): void {
    // Check for removed blockers
    for (const pair of grassBlockers) {
       const blocker = pair[1];
-      if (blocker.lastUpdateTicks !== Board.serverTicks) {
+      if (blocker.lastUpdateTicks !== currentSnapshot.tick) {
          const id = pair[0];
          grassBlockers.delete(id);
 

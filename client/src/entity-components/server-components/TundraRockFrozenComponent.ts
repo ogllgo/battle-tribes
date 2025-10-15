@@ -3,11 +3,10 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface TundraRockFrozenComponentParams {
+export interface TundraRockFrozenComponentData {
    readonly variant: number;
 }
 
@@ -17,39 +16,33 @@ export interface TundraRockFrozenComponent {
    readonly variant: number;
 }
 
-export const TundraRockFrozenComponentArray = new ServerComponentArray<TundraRockFrozenComponent, TundraRockFrozenComponentParams, IntermediateInfo>(ServerComponentType.tundraRockFrozen, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-});
+export const TundraRockFrozenComponentArray = new ServerComponentArray<TundraRockFrozenComponent, TundraRockFrozenComponentData, IntermediateInfo>(ServerComponentType.tundraRockFrozen, true, createComponent, getMaxRenderParts, decodeData);
+TundraRockFrozenComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
-function createParamsFromData(reader: PacketReader): TundraRockFrozenComponentParams {
+function decodeData(reader: PacketReader): TundraRockFrozenComponentData {
    const variant = reader.readNumber();
    return {
       variant: variant
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
-   const tundraRockFrozenComponentParams = entityParams.serverComponentParams[ServerComponentType.tundraRockFrozen]!;
+   const tundraRockFrozenComponentData = entityComponentData.serverComponentData[ServerComponentType.tundraRockFrozen]!;
    
    const renderPart = new TexturedRenderPart(
       hitbox,
       0,
       0,
-      getTextureArrayIndex("entities/tundra-rock-frozen/rock-" + (tundraRockFrozenComponentParams.variant + 1) + ".png")
+      getTextureArrayIndex("entities/tundra-rock-frozen/rock-" + (tundraRockFrozenComponentData.variant + 1) + ".png")
    )
-   if (tundraRockFrozenComponentParams.variant === 0) {
+   if (tundraRockFrozenComponentData.variant === 0) {
       renderPart.angle = -Math.PI * 0.25;
-   } else if (tundraRockFrozenComponentParams.variant === 1) {
+   } else if (tundraRockFrozenComponentData.variant === 1) {
       renderPart.angle = -Math.PI * 0.25;
-   } else if (tundraRockFrozenComponentParams.variant === 2) {
+   } else if (tundraRockFrozenComponentData.variant === 2) {
       renderPart.angle = -Math.PI * 0.08;
    }
    renderInfo.attachRenderPart(renderPart);
@@ -57,20 +50,12 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    return {};
 }
 
-function createComponent(entityParams: EntityParams): TundraRockFrozenComponent {
+function createComponent(entityComponentData: EntityComponentData): TundraRockFrozenComponent {
    return {
-      variant: entityParams.serverComponentParams[ServerComponentType.tundraRockFrozen]!.variant
+      variant: entityComponentData.serverComponentData[ServerComponentType.tundraRockFrozen]!.variant
    };
 }
 
 function getMaxRenderParts(): number {
    return 1;
-}
-   
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }

@@ -3,9 +3,9 @@ import { getEntityLayer, layers } from "./world";
 import { createTranslationMatrix, Matrix3x2 } from "./rendering/matrices";
 import { Entity } from "../../shared/src/entities";
 import { PacketReader } from "../../shared/src/packets";
-import { Hitbox } from "./hitboxes";
-import { getHitboxByLocalID, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
-import Board from "./Board";
+import { getHitboxByLocalID, Hitbox } from "./hitboxes";
+import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { currentSnapshot } from "./game";
 
 export type LightID = number;
 
@@ -53,7 +53,7 @@ export function createLight(id: LightID, offset: Point, intensity: number, stren
       r: r,
       g: g,
       b: b,
-      lastUpdateTicks: Board.serverTicks
+      lastUpdateTicks: currentSnapshot.tick
    };
 }
 
@@ -139,39 +139,85 @@ export function getLightPositionMatrix(light: Light): Matrix3x2 {
    // return light.offset;
 }
 
-export function updateLightsFromData(reader: PacketReader): void {
+export interface LightData {
+   readonly entity: Entity;
+   readonly hitboxLocalID: number;
+   readonly id: LightID;
+   readonly offset: Point;
+   readonly intensity: number;
+   readonly strength: number;
+   readonly radius: number;
+   readonly r: number;
+   readonly g: number;
+   readonly b: number;
+}
+
+export function readLightsFromData(reader: PacketReader): ReadonlyArray<LightData> {
+   const lightData = new Array<LightData>();
+   
    const numLights = reader.readNumber();
    for (let i = 0; i < numLights; i++) {
       const entity = reader.readNumber();
       const hitboxLocalID = reader.readNumber();
 
+      const lightID = reader.readNumber();
+
+      const offset = reader.readPoint();
+      const intensity = reader.readNumber();
+      const strength = reader.readNumber();
+      const radius = reader.readNumber();
+      const r = reader.readNumber();
+      const g = reader.readNumber();
+      const b = reader.readNumber();
+
+      lightData.push({
+         entity: entity,
+         hitboxLocalID: hitboxLocalID,
+         id: lightID,
+         offset: offset,
+         intensity: intensity,
+         strength: strength,
+         radius: radius,
+         r: r,
+         g: g,
+         b: b
+      });
+   }
+
+   return lightData;
+}
+
+export function updateLightsFromData(lightData: ReadonlyArray<LightData>): void {
+   for (const data of lightData) {
+      const entity = data.entity;
+      const hitboxLocalID = data.hitboxLocalID;
+
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = getHitboxByLocalID(transformComponent.hitboxes, hitboxLocalID);
       assert(hitbox !== null);
       
-      const lightID = reader.readNumber();
+      const lightID = data.id;
 
       const existingLight = lightMap.get(lightID);
       if (typeof existingLight !== "undefined") {
-         reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-         existingLight.intensity = reader.readNumber();
-         existingLight.strength = reader.readNumber();
-         existingLight.radius = reader.readNumber();
-         existingLight.r = reader.readNumber();
-         existingLight.g = reader.readNumber();
-         existingLight.b = reader.readNumber();
+         existingLight.intensity = data.intensity;
+         existingLight.strength = data.strength;
+         existingLight.radius = data.radius
+         existingLight.r = data.r;
+         existingLight.g = data.g;
+         existingLight.b = data.b;
 
-         existingLight.lastUpdateTicks = Board.serverTicks;
+         existingLight.lastUpdateTicks = currentSnapshot.tick;
       } else {
          // New light
 
-         const offset = reader.readPoint();
-         const intensity = reader.readNumber();
-         const strength = reader.readNumber();
-         const radius = reader.readNumber();
-         const r = reader.readNumber();
-         const g = reader.readNumber();
-         const b = reader.readNumber();
+         const offset = data.offset;
+         const intensity = data.intensity;
+         const strength = data.strength;
+         const radius = data.radius;
+         const r = data.r;
+         const g = data.g;
+         const b = data.b;
 
          const light = createLight(lightID, offset, intensity, strength, radius, r, g, b);
          attachLightToHitbox(light, entity, hitbox);
@@ -182,7 +228,7 @@ export function updateLightsFromData(reader: PacketReader): void {
    for (const pair of lightMap) {
       const light = pair[1];
 
-      if (light.lastUpdateTicks !== Board.serverTicks) {
+      if (light.lastUpdateTicks !== currentSnapshot.tick) {
          removeLight(light);
       }
    }

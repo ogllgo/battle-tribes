@@ -4,12 +4,11 @@ import { Entity } from "battletribes-shared/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { clearEntityInVertexData, EntityRenderingVars, getEntityRenderingProgram, setRenderInfoInVertexData } from "./entity-rendering";
-import Camera from "../../Camera";
 import { gl } from "../../webgl";
 import { getEntityTextureAtlas } from "../../texture-atlases/texture-atlases";
 import { getEntityLayer, getEntityRenderInfo } from "../../world";
 import Layer from "../../Layer";
-import { Hitbox } from "../../hitboxes";
+import { minVisibleChunkX, maxVisibleChunkX, minVisibleChunkY, maxVisibleChunkY } from "../../camera";
 
 type ChunkedRenderLayer = typeof CHUNKED_RENDER_LAYERS[number];
 
@@ -148,7 +147,7 @@ export function removeEntityRenderedChunkData(layer: Layer, chunkX: number, chun
 }
 
 const getChunkIndex = (chunkX: number, chunkY: number): number => {
-   return chunkY * Settings.BOARD_SIZE + chunkX;
+   return chunkY * Settings.WORLD_SIZE_CHUNKS + chunkX;
 }
 
 const getEntityChunkIndex = (entity: Entity): number => {
@@ -318,8 +317,8 @@ export function renderChunkedEntities(layer: Layer, renderLayer: ChunkedRenderLa
    gl.activeTexture(gl.TEXTURE0);
    gl.bindTexture(gl.TEXTURE_2D, textureAtlas.texture);
    
-   for (let chunkX = Camera.minVisibleChunkX; chunkX <= Camera.maxVisibleChunkX; chunkX++) {
-      for (let chunkY = Camera.minVisibleChunkY; chunkY <= Camera.maxVisibleChunkY; chunkY++) {
+   for (let chunkX = minVisibleChunkX; chunkX <= maxVisibleChunkX; chunkX++) {
+      for (let chunkY = minVisibleChunkY; chunkY <= maxVisibleChunkY; chunkY++) {
          const chunkIdx = getChunkIndex(chunkX, chunkY);
          const chunkData = chunkDataArray[chunkIdx];
          if (typeof chunkData === "undefined") {

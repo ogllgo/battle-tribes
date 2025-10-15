@@ -111,9 +111,9 @@ const estimateVisibleChunkBounds = (spawnPosition: Point, screenWidth: number, s
    const halfScreenHeight = screenHeight * 0.5;
    
    const minChunkX = Math.max(Math.floor((spawnPosition.x - halfScreenWidth / zoom) / Settings.CHUNK_UNITS), 0);
-   const maxChunkX = Math.min(Math.floor((spawnPosition.x + halfScreenWidth / zoom) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const maxChunkX = Math.min(Math.floor((spawnPosition.x + halfScreenWidth / zoom) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
    const minChunkY = Math.max(Math.floor((spawnPosition.y - halfScreenHeight / zoom) / Settings.CHUNK_UNITS), 0);
-   const maxChunkY = Math.min(Math.floor((spawnPosition.y + halfScreenHeight / zoom) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+   const maxChunkY = Math.min(Math.floor((spawnPosition.y + halfScreenHeight / zoom) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
 
    return [minChunkX, maxChunkX, minChunkY, maxChunkY];
 }
@@ -209,8 +209,7 @@ class GameServer {
                const screenWidth = reader.readNumber();
                const screenHeight = reader.readNumber();
 
-               const isSpectating = reader.readBoolean();
-               reader.padOffset(3);
+               const isSpectating = reader.readBool();
 
                const spawnPosition = generatePlayerSpawnPosition(tribeType);
                // @Incomplete? Unused?

@@ -1,7 +1,7 @@
 import { Settings } from "../../../../shared/src/settings";
 import { getSubtileX, getSubtileY } from "../../../../shared/src/subtiles";
-import Camera from "../../Camera";
-import Layer, { getSubtileIndex } from "../../Layer";
+import { minVisibleX, maxVisibleX, minVisibleY, maxVisibleY } from "../../camera";
+import Layer from "../../Layer";
 import { createWebGLProgram, gl, createTextureArray } from "../../webgl";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 
@@ -72,10 +72,10 @@ export function createTileBreakProgressShaders(): void {
 }
 
 export function renderTileBreakProgress(layer: Layer): void {
-   const minSubtileX = Math.max(Math.floor(Camera.minVisibleX / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
-   const maxSubtileX = Math.min(Math.floor(Camera.maxVisibleX / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4);
-   const minSubtileY = Math.max(Math.floor(Camera.minVisibleY / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
-   const maxSubtileY = Math.min(Math.floor(Camera.maxVisibleY / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4);
+   const minSubtileX = Math.max(Math.floor(minVisibleX / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
+   const maxSubtileX = Math.min(Math.floor(maxVisibleX / Settings.SUBTILE_SIZE), (Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE) * 4);
+   const minSubtileY = Math.max(Math.floor(minVisibleY / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
+   const maxSubtileY = Math.min(Math.floor(maxVisibleY / Settings.SUBTILE_SIZE), (Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE) * 4);
 
    gl.useProgram(program);
 
@@ -99,7 +99,7 @@ export function renderTileBreakProgress(layer: Layer): void {
       const y1 = subtileY * Settings.SUBTILE_SIZE;
       const y2 = y1 + Settings.SUBTILE_SIZE;
 
-      if (x2 >= Camera.minVisibleX || x1 <= Camera.maxVisibleX || y2 >= Camera.minVisibleY || y1 <= Camera.maxVisibleY) {
+      if (x2 >= minVisibleX || x1 <= maxVisibleX || y2 >= minVisibleY || y1 <= maxVisibleY) {
          const textureIdx = damageTaken - 1;
       
          vertices.push(x1);

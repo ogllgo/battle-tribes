@@ -36,9 +36,9 @@ export function generateLightPosition(tribe: Tribe, layer: Layer, x: number, y: 
    const buildingLayer = tribe.getBuildingLayer(layer);
    
    const minNodeX = Math.max(nodeX - range, -Settings.EDGE_GENERATION_DISTANCE * 4);
-   const maxNodeX = Math.min(nodeX + range, (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+   const maxNodeX = Math.min(nodeX + range, (Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
    const minNodeY = Math.max(nodeY - range, -Settings.EDGE_GENERATION_DISTANCE * 4);
-   const maxNodeY = Math.min(nodeY + range, (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+   const maxNodeY = Math.min(nodeY + range, (Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
 
    const validCandidates = new Array<BuildingCandidate>();
 

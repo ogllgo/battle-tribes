@@ -4,8 +4,7 @@ import CLIENT_ITEM_INFO_RECORD, { getItemTypeImage } from "../../../client-item-
 import { windowHeight } from "../../../webgl";
 import ItemSlot, { ItemSlotCallbackInfo } from "../inventories/ItemSlot";
 import { countItemTypesInInventory } from "../../../inventory-manipulation";
-import Game from "../../../Game";
-import { playSound } from "../../../sound";
+import { playHeadSound } from "../../../sound";
 import { CraftingRecipe, CraftingStation, CRAFTING_RECIPES, forceGetItemRecipe } from "battletribes-shared/items/crafting-recipes";
 import { ItemType, Item, Inventory, InventoryName } from "battletribes-shared/items/items";
 import { ItemTally2, tallyInventoryItems } from "battletribes-shared/items/ItemTally";
@@ -13,10 +12,9 @@ import InventoryContainer from "../inventories/InventoryContainer";
 import { deselectHighlightedEntity } from "../../../entity-selection";
 import { addMenuCloseFunction } from "../../../menus";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
-import { sendCraftItemPacket, sendItemDropPacket, sendItemReleasePacket } from "../../../networking/packet-sending";
+import { sendCraftItemPacket, sendItemDropPacket } from "../../../networking/packet-sending";
 import { playerTribe } from "../../../tribes";
 import { playerInstance } from "../../../player";
-import { Hitbox } from "../../../hitboxes";
 import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 
 interface RecipeViewerProps {
@@ -226,10 +224,7 @@ const CraftingMenu = (props: CraftingMenuProps) => {
          return;
       }
 
-      const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
-      const playerHitbox = playerTransformComponent.hitboxes[0];
-
-      playSound("craft.mp3", 0.25, 1, playerHitbox.box.position, null);
+      playHeadSound("craft.mp3", 0.25, 1);
       sendCraftItemPacket(selectedRecipeIndex.current);
    }, [selectedRecipe, craftableRecipes]);
 

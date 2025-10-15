@@ -8,42 +8,32 @@ import { randItem } from "../../../../shared/src/utils";
 import { ROCK_HIT_SOUNDS, ROCK_DESTROY_SOUNDS, playSoundOnHitbox } from "../../sound";
 import { RenderPart } from "../../render-parts/render-parts";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface BallistaComponentParams {}
+export interface BallistaComponentData {}
 
 interface IntermediateInfo {}
 
 export interface BallistaComponent {}
 
-export const BallistaComponentArray = new ServerComponentArray<BallistaComponent, BallistaComponentParams, IntermediateInfo>(ServerComponentType.ballista, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const BallistaComponentArray = new ServerComponentArray<BallistaComponent, BallistaComponentData, IntermediateInfo>(ServerComponentType.ballista, true, createComponent, getMaxRenderParts, decodeData);
+BallistaComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+BallistaComponentArray.onHit = onHit;
+BallistaComponentArray.onDie = onDie;
 
-const fillParams = (): BallistaComponentParams => {
+export function createBallistaComponentData(): BallistaComponentData {
    return {};
 }
 
-export function createBallistaComponentParams(): BallistaComponentParams {
-   return fillParams();
+function decodeData(): BallistaComponentData {
+   return {};
 }
 
-function createParamsFromData(): BallistaComponentParams {
-   return fillParams();
-}
-
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    // Base
    renderInfo.attachRenderPart(
@@ -122,10 +112,6 @@ function createComponent(): BallistaComponent {
 function getMaxRenderParts(): number {
    return 7;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}
 
 function onHit(entity: Entity, hitbox: Hitbox): void {
    // @Temporary

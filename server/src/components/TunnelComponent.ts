@@ -199,9 +199,9 @@ function getDataLength(): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const tunnelComponent = TunnelComponentArray.getComponent(entity);
    
-   packet.addNumber(tunnelComponent.doorBitset);
-   packet.addNumber(tunnelComponent.topDoorOpenProgress);
-   packet.addNumber(tunnelComponent.bottomDoorOpenProgress);
+   packet.writeNumber(tunnelComponent.doorBitset);
+   packet.writeNumber(tunnelComponent.topDoorOpenProgress);
+   packet.writeNumber(tunnelComponent.bottomDoorOpenProgress);
 }
 
 export function updateTunnelDoorBitset(tunnel: Entity, doorBitset: number): void {

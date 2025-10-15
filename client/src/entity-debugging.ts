@@ -1,5 +1,5 @@
 import { Entity } from "../../shared/src/entities";
-import Camera from "./Camera";
+import { getCameraSubject } from "./camera";
 import { nerdVisionIsVisible } from "./components/game/dev/NerdVision";
 import { getMouseTargetEntity } from "./mouse";
 import { sendSetDebugEntityPacket } from "./networking/packet-sending";
@@ -13,10 +13,12 @@ export function updateDebugEntity(): void {
    if (!isDev()) {
       return;
    }
+
+   const cameraSubject = getCameraSubject();
    
    let debugEntity: Entity;
-   if (entityExists(Camera.trackedEntity) && Camera.trackedEntity !== playerInstance) {
-      debugEntity = Camera.trackedEntity;
+   if (cameraSubject !== null && entityExists(cameraSubject) && cameraSubject !== playerInstance) {
+      debugEntity = cameraSubject;
    } else if (nerdVisionIsVisible()) {
       const targettedEntity = getMouseTargetEntity();
       debugEntity = targettedEntity !== null ? targettedEntity : 0;

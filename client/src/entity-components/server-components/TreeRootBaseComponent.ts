@@ -7,34 +7,28 @@ import { createWoodSpeckParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
-export interface TreeRootBaseComponentParams {}
+export interface TreeRootBaseComponentData {}
 
 interface IntermediateInfo {}
 
 export interface TreeRootBaseComponent {}
 
-export const TreeRootBaseComponentArray = new ServerComponentArray<TreeRootBaseComponent, TreeRootBaseComponentParams, IntermediateInfo>(ServerComponentType.treeRootBase, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const TreeRootBaseComponentArray = new ServerComponentArray<TreeRootBaseComponent, TreeRootBaseComponentData, IntermediateInfo>(ServerComponentType.treeRootBase, true, createComponent, getMaxRenderParts, decodeData);
+TreeRootBaseComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+TreeRootBaseComponentArray.onHit = onHit;
+TreeRootBaseComponentArray.onDie = onDie;
 
-function createParamsFromData(): TreeRootBaseComponentParams {
+function decodeData(): TreeRootBaseComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -55,10 +49,6 @@ function createComponent(): TreeRootBaseComponent {
 function getMaxRenderParts(): number {
    return 1;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}
 
 function onHit(entity: Entity, hitbox: Hitbox): void {
    for (let i = 0; i < 6; i++) {

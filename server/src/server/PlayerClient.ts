@@ -62,7 +62,6 @@ class PlayerClient {
    /** All entity tick events visible to the player */
    public entityTickEvents = new Array<EntityTickEvent>();
    
-   public visibleDestroyedEntities = new Array<number>();
    public orbCompletes = new Array<ResearchOrbCompleteData>();
    public hasPickedUpItem = false;
    public gameDataOptions = 0;
@@ -70,6 +69,7 @@ class PlayerClient {
    public visibleEntities = new Set<Entity>();
    public visibleDirtiedEntities = new Array<Entity>();
    public visibleRemovedEntities = new Array<Entity>();
+   public visibleDestroyedEntities = new Array<number>();
 
    public viewedSpawnDistribution = -1;
 
@@ -95,10 +95,10 @@ class PlayerClient {
       this.minVisibleY = this.lastViewedPositionY - this.screenHeight * 0.5 - PlayerClientVars.VIEW_PADDING;
       this.maxVisibleY = this.lastViewedPositionY + this.screenHeight * 0.5 + PlayerClientVars.VIEW_PADDING;
       
-      this.minVisibleChunkX = Math.max(Math.min(Math.floor(this.minVisibleX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      this.maxVisibleChunkX = Math.max(Math.min(Math.floor(this.maxVisibleX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      this.minVisibleChunkY = Math.max(Math.min(Math.floor(this.minVisibleY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-      this.maxVisibleChunkY = Math.max(Math.min(Math.floor(this.maxVisibleY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+      this.minVisibleChunkX = Math.max(Math.min(Math.floor(this.minVisibleX / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+      this.maxVisibleChunkX = Math.max(Math.min(Math.floor(this.maxVisibleX / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+      this.minVisibleChunkY = Math.max(Math.min(Math.floor(this.minVisibleY / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+      this.maxVisibleChunkY = Math.max(Math.min(Math.floor(this.maxVisibleY / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
    }
 
    public updatePosition(x: number, y: number): void {

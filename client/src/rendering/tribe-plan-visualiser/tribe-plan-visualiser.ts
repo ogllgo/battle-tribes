@@ -244,8 +244,7 @@ const readAssignmentData = (reader: PacketReader, depth: number): AIPlan => {
       assignedEntity = null;
    }
 
-   const isComplete = reader.readBoolean();
-   reader.padOffset(3);
+   const isComplete = reader.readBool();
 
    let plan: AIPlan;
    switch (planType) {

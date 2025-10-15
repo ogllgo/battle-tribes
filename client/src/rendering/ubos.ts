@@ -1,9 +1,9 @@
-import Camera from "../Camera";
 import { getEntityTextureAtlas } from "../texture-atlases/texture-atlases";
 import { ATLAS_SLOT_SIZE } from "../texture-atlases/texture-atlas-stitching";
 import { gl, halfWindowHeight, halfWindowWidth } from "../webgl";
 import { getTechTreeGL } from "./webgl/tech-tree-rendering";
 import { TEXTURE_SOURCES } from "../texture-atlases/texture-sources";
+import { cameraPosition, cameraZoom } from "../camera";
 
 export const enum UBOBindingIndex {
    CAMERA = 0,
@@ -91,25 +91,25 @@ export function updateUBOs(): void {
    // @Speed: don't do these calls if the values haven't changed
    
    // Update the camera buffer
-   if (cameraData[0] !== Camera.position.x ||
-       cameraData[1] !== Camera.position.y ||
+   if (cameraData[0] !== cameraPosition.x ||
+       cameraData[1] !== cameraPosition.y ||
        cameraData[2] !== halfWindowWidth ||
        cameraData[3] !== halfWindowHeight ||
-       cameraData[4] !== Camera.zoom) {
-      cameraData[0] = Camera.position.x;
-      cameraData[1] = Camera.position.y;
+       cameraData[4] !== cameraZoom) {
+      cameraData[0] = cameraPosition.x;
+      cameraData[1] = cameraPosition.y;
       cameraData[2] = halfWindowWidth;
       cameraData[3] = halfWindowHeight;
-      cameraData[4] = Camera.zoom;
+      cameraData[4] = cameraZoom;
       gl.bindBuffer(gl.UNIFORM_BUFFER, cameraBuffer);
       gl.bufferSubData(gl.UNIFORM_BUFFER, 0, cameraData);
 
       {
-         cameraDataTechTree[0] = Camera.position.x;
-         cameraDataTechTree[1] = Camera.position.y;
+         cameraDataTechTree[0] = cameraPosition.x;
+         cameraDataTechTree[1] = cameraPosition.y;
          cameraDataTechTree[2] = halfWindowWidth;
          cameraDataTechTree[3] = halfWindowHeight;
-         cameraDataTechTree[4] = Camera.zoom;
+         cameraDataTechTree[4] = cameraZoom;
 
          const gl = getTechTreeGL();
          gl.bindBuffer(gl.UNIFORM_BUFFER, cameraBufferTechTree);

@@ -359,8 +359,8 @@ function getDataLength(): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const turretComponent = TurretComponentArray.getComponent(entity);
 
-   packet.addNumber(turretComponent.aimDirection);
+   packet.writeNumber(turretComponent.aimDirection);
    // @Speed: Both these functions call getComponent for turretComponent when we already get it in this function
-   packet.addNumber(getChargeProgress(entity));
-   packet.addNumber(getReloadProgress(entity));
+   packet.writeNumber(getChargeProgress(entity));
+   packet.writeNumber(getReloadProgress(entity));
 }

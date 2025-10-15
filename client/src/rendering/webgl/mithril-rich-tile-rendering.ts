@@ -1,7 +1,7 @@
 import { Settings } from "../../../../shared/src/settings";
 import { SubtileType } from "../../../../shared/src/tiles";
 import { clampToBoardDimensions } from "../../../../shared/src/utils";
-import Camera from "../../Camera";
+import { minVisibleX, maxVisibleX, minVisibleY, maxVisibleY } from "../../camera";
 import Layer, { getSubtileIndex, getTileIndexIncludingEdges } from "../../Layer";
 import { createWebGLProgram, gl } from "../../webgl";
 import { getCurrentLayer, surfaceLayer } from "../../world";
@@ -61,10 +61,10 @@ export function createMithrilRichTileRenderingShaders(): void {
 const getFloorVertices = (layer: Layer): Array<number> => {
    const vertices = new Array<number>();
 
-   const minTileX = clampToBoardDimensions(Math.floor(Camera.minVisibleX / Settings.TILE_SIZE));
-   const maxTileX = clampToBoardDimensions(Math.floor(Camera.maxVisibleX / Settings.TILE_SIZE));
-   const minTileY = clampToBoardDimensions(Math.floor(Camera.minVisibleY / Settings.TILE_SIZE));
-   const maxTileY = clampToBoardDimensions(Math.floor(Camera.maxVisibleY / Settings.TILE_SIZE));
+   const minTileX = clampToBoardDimensions(Math.floor(minVisibleX / Settings.TILE_SIZE));
+   const maxTileX = clampToBoardDimensions(Math.floor(maxVisibleX / Settings.TILE_SIZE));
+   const minTileY = clampToBoardDimensions(Math.floor(minVisibleY / Settings.TILE_SIZE));
+   const maxTileY = clampToBoardDimensions(Math.floor(maxVisibleY / Settings.TILE_SIZE));
 
    for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
       for (let tileY = minTileY; tileY <= maxTileY; tileY++) {
@@ -99,10 +99,10 @@ const getFloorVertices = (layer: Layer): Array<number> => {
 const getWallVertices = (layer: Layer): Array<number> => {
    const vertices = new Array<number>();
 
-   const minSubtileX = clampToBoardDimensions(Math.floor(Camera.minVisibleX / Settings.SUBTILE_SIZE));
-   const maxSubtileX = clampToBoardDimensions(Math.floor(Camera.maxVisibleX / Settings.SUBTILE_SIZE));
-   const minSubtileY = clampToBoardDimensions(Math.floor(Camera.minVisibleY / Settings.SUBTILE_SIZE));
-   const maxSubtileY = clampToBoardDimensions(Math.floor(Camera.maxVisibleY / Settings.SUBTILE_SIZE));
+   const minSubtileX = clampToBoardDimensions(Math.floor(minVisibleX / Settings.SUBTILE_SIZE));
+   const maxSubtileX = clampToBoardDimensions(Math.floor(maxVisibleX / Settings.SUBTILE_SIZE));
+   const minSubtileY = clampToBoardDimensions(Math.floor(minVisibleY / Settings.SUBTILE_SIZE));
+   const maxSubtileY = clampToBoardDimensions(Math.floor(maxVisibleY / Settings.SUBTILE_SIZE));
 
    for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
       for (let subtileY = minSubtileY; subtileY <= maxSubtileY; subtileY++) {

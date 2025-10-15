@@ -9,11 +9,11 @@ import Board from "../../Board";
 import Particle from "../../Particle";
 import { playSoundOnHitbox } from "../../sound";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface IceSpikesComponentParams {}
+export interface IceSpikesComponentData {}
 
 interface IntermediateInfo {}
 
@@ -23,24 +23,18 @@ const ICE_SPECK_COLOUR: ParticleColour = [140/255, 143/255, 207/255];
 
 const SIZE = 80;
 
-export const IceSpikesComponentArray = new ServerComponentArray<IceSpikesComponent, IceSpikesComponentParams, IntermediateInfo>(ServerComponentType.iceSpikes, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const IceSpikesComponentArray = new ServerComponentArray<IceSpikesComponent, IceSpikesComponentData, IntermediateInfo>(ServerComponentType.iceSpikes, true, createComponent, getMaxRenderParts, decodeData);
+IceSpikesComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+IceSpikesComponentArray.onHit = onHit;
+IceSpikesComponentArray.onDie = onDie;
 
-function createParamsFromData(): IceSpikesComponentParams {
+function decodeData(): IceSpikesComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -61,10 +55,6 @@ function createComponent(): IceSpikesComponent {
 function getMaxRenderParts(): number {
    return 1;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}
 
 const createIceSpeckProjectile = (hitbox: Hitbox): void => {
    const spawnOffsetDirection = randAngle();

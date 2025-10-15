@@ -19,5 +19,5 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const desertBushSandyComponent = DesertBushSandyComponentArray.getComponent(entity);
-   packet.addNumber(desertBushSandyComponent.size);
+   packet.writeNumber(desertBushSandyComponent.size);
 }

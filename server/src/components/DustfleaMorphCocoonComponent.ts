@@ -52,5 +52,5 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const dustfleaMorphCocoonComponent = DustfleaMorphCocoonComponentArray.getComponent(entity);
-   packet.addNumber(dustfleaMorphCocoonComponent.stage);
+   packet.writeNumber(dustfleaMorphCocoonComponent.stage);
 }

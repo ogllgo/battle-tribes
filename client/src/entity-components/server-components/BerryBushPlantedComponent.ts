@@ -6,12 +6,12 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
 import { randInt } from "../../../../shared/src/utils";
 import { playSoundOnHitbox } from "../../sound";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface BerryBushPlantedComponentParams {
+export interface BerryBushPlantedComponentData {
    readonly growthProgress: number;
    readonly numFruits: number;
 }
@@ -34,16 +34,11 @@ const FULLY_GROWN_TEXTURE_SOURCES: ReadonlyArray<string> = [
    "entities/plant/berry-bush-plant-5.png"
 ];
 
-export const BerryBushPlantedComponentArray = new ServerComponentArray<BerryBushPlantedComponent, BerryBushPlantedComponentParams, IntermediateInfo>(ServerComponentType.berryBushPlanted, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const BerryBushPlantedComponentArray = new ServerComponentArray<BerryBushPlantedComponent, BerryBushPlantedComponentData, IntermediateInfo>(ServerComponentType.berryBushPlanted, true, createComponent, getMaxRenderParts, decodeData);
+BerryBushPlantedComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+BerryBushPlantedComponentArray.updateFromData = updateFromData;
+BerryBushPlantedComponentArray.onHit = onHit;
+BerryBushPlantedComponentArray.onDie = onDie;
 
 const getTextureSource = (growthProgress: number, numFruits: number): string => {
    if (growthProgress < 1) {
@@ -59,7 +54,7 @@ const getTextureSource = (growthProgress: number, numFruits: number): string => 
    }
 }
 
-function createParamsFromData(reader: PacketReader): BerryBushPlantedComponentParams {
+function decodeData(reader: PacketReader): BerryBushPlantedComponentData {
    const growthProgress = reader.readNumber();
    const numFruits = reader.readNumber();
    return {
@@ -68,18 +63,18 @@ function createParamsFromData(reader: PacketReader): BerryBushPlantedComponentPa
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
-   const berryBushPlantedComponentParams = entityParams.serverComponentParams[ServerComponentType.berryBushPlanted]!;
+   const berryBushPlantedComponentData = entityComponentData.serverComponentData[ServerComponentType.berryBushPlanted]!;
    
    const renderPart = new TexturedRenderPart(
       hitbox,
       // @Cleanup: why is this 9 instead of 0?
       9,
       0,
-      getTextureArrayIndex(getTextureSource(berryBushPlantedComponentParams.growthProgress, berryBushPlantedComponentParams.numFruits))
+      getTextureArrayIndex(getTextureSource(berryBushPlantedComponentData.growthProgress, berryBushPlantedComponentData.numFruits))
    );
    renderInfo.attachRenderPart(renderPart);
 
@@ -88,7 +83,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    };
 }
 
-function createComponent(_entityParams: EntityParams, intermediateInfo: IntermediateInfo): BerryBushPlantedComponent {
+function createComponent(_entityComponentData: EntityComponentData, intermediateInfo: IntermediateInfo): BerryBushPlantedComponent {
    return {
       renderPart: intermediateInfo.renderPart
    };
@@ -98,16 +93,9 @@ function getMaxRenderParts(): number {
    return 1;
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: BerryBushPlantedComponentData, entity: Entity): void {
    const berryBushPlantedComponent = BerryBushPlantedComponentArray.getComponent(entity);
-   
-   const growthProgress = reader.readNumber();
-   const numFruits = reader.readNumber();
-   berryBushPlantedComponent.renderPart.switchTextureSource(getTextureSource(growthProgress, numFruits));
+   berryBushPlantedComponent.renderPart.switchTextureSource(getTextureSource(data.growthProgress, data.numFruits));
 }
 
 function onHit(entity: Entity, hitbox: Hitbox): void {

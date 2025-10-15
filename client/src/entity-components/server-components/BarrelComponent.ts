@@ -5,30 +5,24 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
 import { playBuildingHitSound, playSoundOnHitbox } from "../../sound";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface BarrelComponentParams {}
+export interface BarrelComponentData {}
 
 interface IntermediateInfo {}
 
 export interface BarrelComponent {}
 
-export const BarrelComponentArray = new ServerComponentArray<BarrelComponent, BarrelComponentParams, IntermediateInfo>(ServerComponentType.barrel, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const BarrelComponentArray = new ServerComponentArray<BarrelComponent, BarrelComponentData, IntermediateInfo>(ServerComponentType.barrel, true, createComponent, getMaxRenderParts, decodeData);
+BarrelComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+BarrelComponentArray.onHit = onHit;
+BarrelComponentArray.onDie = onDie;
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -42,12 +36,12 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    return {};
 }
 
-export function createBarrelComponentParams(): BarrelComponentParams {
+export function createBarrelComponentData(): BarrelComponentData {
    return {};
 }
 
-function createParamsFromData(): BarrelComponentParams {
-   return createBarrelComponentParams();
+function decodeData(): BarrelComponentData {
+   return {};
 }
 
 function createComponent(): BarrelComponent {
@@ -57,10 +51,6 @@ function createComponent(): BarrelComponent {
 function getMaxRenderParts(): number {
    return 1;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}
 
 function onHit(entity: Entity, hitbox: Hitbox): void {
    playBuildingHitSound(entity, hitbox);

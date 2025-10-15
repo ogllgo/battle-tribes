@@ -6,34 +6,28 @@ import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
-export interface TumbleweedDeadComponentParams {}
+export interface TumbleweedDeadComponentData {}
 
 interface IntermediateInfo {}
 
 export interface TumbleweedDeadComponent {}
 
-export const TumbleweedDeadComponentArray = new ServerComponentArray<TumbleweedDeadComponent, TumbleweedDeadComponentParams, IntermediateInfo>(ServerComponentType.tumbleweedDead, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const TumbleweedDeadComponentArray = new ServerComponentArray<TumbleweedDeadComponent, TumbleweedDeadComponentData, IntermediateInfo>(ServerComponentType.tumbleweedDead, true, createComponent, getMaxRenderParts, decodeData);
+TumbleweedDeadComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+TumbleweedDeadComponentArray.onHit = onHit;
+TumbleweedDeadComponentArray.onDie = onDie;
 
-function createParamsFromData(): TumbleweedDeadComponentParams {
+function decodeData(): TumbleweedDeadComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -58,10 +52,6 @@ function createComponent(): TumbleweedDeadComponent {
 function getMaxRenderParts(): number {
    return 1;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}
 
 function onHit(entity: Entity, hitbox: Hitbox): void {
    playSoundOnHitbox("desert-plant-hit.mp3", randFloat(0.375, 0.425), randFloat(0.85, 1.15), entity, hitbox, false);

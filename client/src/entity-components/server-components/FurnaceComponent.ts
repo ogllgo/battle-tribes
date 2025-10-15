@@ -7,13 +7,13 @@ import { randFloat, angle, randAngle } from "../../../../shared/src/utils";
 import { createEmberParticle, createRockParticle, createRockSpeckParticle, createSmokeParticle } from "../../particles";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { TransformComponentArray } from "./TransformComponent";
-import Board from "../../Board";
 import { CookingComponentArray } from "./CookingComponent";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { tickIntervalHasPassed } from "../../game";
 
-export interface FurnaceComponentParams {}
+export interface FurnaceComponentData {}
 
 interface IntermediateInfo {}
 
@@ -21,33 +21,23 @@ export interface FurnaceComponent {}
 
 const SIZE = 80;
 
-export const FurnaceComponentArray = new ServerComponentArray<FurnaceComponent, FurnaceComponentParams, IntermediateInfo>(ServerComponentType.furnace, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onTick: onTick,
-   onHit: onHit,
-   onDie: onDie
-});
+export const FurnaceComponentArray = new ServerComponentArray<FurnaceComponent, FurnaceComponentData, IntermediateInfo>(ServerComponentType.furnace, true, createComponent, getMaxRenderParts, decodeData);
+FurnaceComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+FurnaceComponentArray.onTick = onTick;
+FurnaceComponentArray.onHit = onHit;
+FurnaceComponentArray.onDie = onDie;
 
-const fillParams = (): FurnaceComponentParams => {
+export function createFurnaceComponentData(): FurnaceComponentData {
    return {};
 }
 
-export function createFurnaceComponentParams(): FurnaceComponentParams {
-   return fillParams();
+function decodeData(): FurnaceComponentData {
+   return {};
 }
 
-function createParamsFromData(): FurnaceComponentParams {
-   return fillParams();
-}
-
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -69,10 +59,6 @@ function getMaxRenderParts(): number {
    return 1;
 }
 
-function padData(): void {}
-
-function updateFromData(): void {}
-
 function onTick(entity: Entity): void {
    const cookingComponent = CookingComponentArray.getComponent(entity);
    if (cookingComponent.isCooking) {
@@ -80,7 +66,7 @@ function onTick(entity: Entity): void {
       const hitbox = transformComponent.hitboxes[0];
 
       // Smoke particles
-      if (Board.tickIntervalHasPassed(0.17)) {
+      if (tickIntervalHasPassed(0.17)) {
          const spawnOffsetMagnitude = 20 * Math.random();
          const spawnOffsetDirection = randAngle();
          const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
@@ -89,7 +75,7 @@ function onTick(entity: Entity): void {
       }
 
       // Ember particles
-      if (Board.tickIntervalHasPassed(0.05)) {
+      if (tickIntervalHasPassed(0.05)) {
          let spawnPositionX = hitbox.box.position.x - 30 * Math.sin(hitbox.box.angle);
          let spawnPositionY = hitbox.box.position.y - 30 * Math.cos(hitbox.box.angle);
 

@@ -185,7 +185,7 @@ const resolveCollisionPairs = (collisionPairs: CollisionPairs, onlyResolvePlayer
 export function resolveEntityCollisions(layer: Layer): void {
    const collisionPairs: CollisionPairs = new Map();
    
-   const numChunks = Settings.BOARD_SIZE * Settings.BOARD_SIZE;
+   const numChunks = Settings.WORLD_SIZE_CHUNKS * Settings.WORLD_SIZE_CHUNKS;
    for (let i = 0; i < numChunks; i++) {
       const chunk = layer.chunks[i];
 
@@ -233,9 +233,9 @@ export function resolveWallCollisions(entity: Entity): boolean {
       
       // @Hack: use actual bounding area
       const minSubtileX = Math.max(Math.floor(boundsMinX / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
-      const maxSubtileX = Math.min(Math.floor(boundsMaxX / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+      const maxSubtileX = Math.min(Math.floor(boundsMaxX / Settings.SUBTILE_SIZE), (Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
       const minSubtileY = Math.max(Math.floor(boundsMinY / Settings.SUBTILE_SIZE), -Settings.EDGE_GENERATION_DISTANCE * 4);
-      const maxSubtileY = Math.min(Math.floor(boundsMaxY / Settings.SUBTILE_SIZE), (Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
+      const maxSubtileY = Math.min(Math.floor(boundsMaxY / Settings.SUBTILE_SIZE), (Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE) * 4 - 1);
    
       // @Incomplete
       for (let subtileX = minSubtileX; subtileX <= maxSubtileX; subtileX++) {
@@ -288,20 +288,20 @@ export function getHitboxesCollidingEntities(layer: Layer, hitboxes: ReadonlyArr
       if (minX < 0) {
          minX = 0;
       }
-      if (maxX >= Settings.BOARD_UNITS) {
-         maxX = Settings.BOARD_UNITS - 1;
+      if (maxX >= Settings.WORLD_UNITS) {
+         maxX = Settings.WORLD_UNITS - 1;
       }
       if (minY < 0) {
          minY = 0;
       }
-      if (maxY >= Settings.BOARD_UNITS) {
-         maxY = Settings.BOARD_UNITS - 1;
+      if (maxY >= Settings.WORLD_UNITS) {
+         maxY = Settings.WORLD_UNITS - 1;
       }
       
       const minChunkX = Math.max(Math.floor(minX / Settings.CHUNK_UNITS), 0);
-      const maxChunkX = Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+      const maxChunkX = Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
       const minChunkY = Math.max(Math.floor(minY / Settings.CHUNK_UNITS), 0);
-      const maxChunkY = Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+      const maxChunkY = Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
       
       for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
          for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
@@ -331,10 +331,10 @@ const testCircularBox = new CircularBox(new Point(0, 0), new Point(0, 0), 0, 0);
 
 // @Location
 export function getEntitiesInRange(layer: Layer, x: number, y: number, range: number): Array<Entity> {
-   const minChunkX = Math.max(Math.min(Math.floor((x - range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-   const maxChunkX = Math.max(Math.min(Math.floor((x + range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-   const minChunkY = Math.max(Math.min(Math.floor((y - range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-   const maxChunkY = Math.max(Math.min(Math.floor((y + range) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+   const minChunkX = Math.max(Math.min(Math.floor((x - range) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const maxChunkX = Math.max(Math.min(Math.floor((x + range) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const minChunkY = Math.max(Math.min(Math.floor((y - range) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const maxChunkY = Math.max(Math.min(Math.floor((y + range) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
 
    testCircularBox.radius = range;
    testCircularBox.position.x = x;

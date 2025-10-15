@@ -7,36 +7,30 @@ import { Point, randAngle, randFloat, randInt } from "../../../../shared/src/uti
 import { createBloodPoolParticle, createBloodParticle, BloodParticleSize, createBloodParticleFountain, createKrumblidChitinParticle } from "../../particles";
 import { TransformComponentArray } from "./TransformComponent";
 import { playSoundOnHitbox } from "../../sound";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { HealthComponentArray } from "./HealthComponent";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface KrumblidComponentParams {}
+export interface KrumblidComponentData {}
 
 interface IntermediateInfo {}
 
 export interface KrumblidComponent {}
 
-export const KrumblidComponentArray = new ServerComponentArray<KrumblidComponent, KrumblidComponentParams, IntermediateInfo>(ServerComponentType.krumblid, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const KrumblidComponentArray = new ServerComponentArray<KrumblidComponent, KrumblidComponentData, IntermediateInfo>(ServerComponentType.krumblid, true, createComponent, getMaxRenderParts, decodeData);
+KrumblidComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+KrumblidComponentArray.onHit = onHit;
+KrumblidComponentArray.onDie = onDie;
 
-function createParamsFromData(): KrumblidComponentParams {
+function decodeData(): KrumblidComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   for (const hitbox of transformComponentParams.hitboxes) {
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   for (const hitbox of transformComponentData.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.KRUMBLID_BODY)) {
          renderInfo.attachRenderPart(
             new TexturedRenderPart(
@@ -68,10 +62,6 @@ function createComponent(): KrumblidComponent {
 function getMaxRenderParts(): number {
    return 3;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}
 
 function onHit(krumblid: Entity, hitbox: Hitbox, hitPosition: Point): void {
    createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 20);

@@ -3,35 +3,28 @@ import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { randInt } from "../../../../shared/src/utils";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface SpikyBastardComponentParams {}
+export interface SpikyBastardComponentData {}
 
 interface IntermediateInfo {}
 
 export interface SpikyBastardComponent {}
 
-export const SpikyBastardComponentArray = new ServerComponentArray<SpikyBastardComponent, SpikyBastardComponentParams, IntermediateInfo>(ServerComponentType.spikyBastard, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const SpikyBastardComponentArray = new ServerComponentArray<SpikyBastardComponent, SpikyBastardComponentData, IntermediateInfo>(ServerComponentType.spikyBastard, true, createComponent, getMaxRenderParts, decodeData);
+SpikyBastardComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
-export function createSpikyBastardComponentParams(): SpikyBastardComponentParams {
+export function createSpikyBastardComponentData(): SpikyBastardComponentData {
    return {};
 }
 
-function createParamsFromData(): SpikyBastardComponentParams {
-   return createSpikyBastardComponentParams();
+function decodeData(): SpikyBastardComponentData {
+   return createSpikyBastardComponentData();
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponent = entityComponentData.serverComponentData[ServerComponentType.transform]!;
    const hitbox = transformComponent.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
@@ -55,7 +48,3 @@ function createComponent(): SpikyBastardComponent {
 function getMaxRenderParts(): number {
    return 1;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}

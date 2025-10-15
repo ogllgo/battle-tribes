@@ -3,9 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { isDev } from "../../../utils";
 import Client from "../../../networking/Client";
 import { setTerminalButtonOpened } from "./TerminalButton";
-import Camera from "../../../Camera";
-import Board from "../../../Board";
-import { entityExists } from "../../../world";
 
 /** All lines output by the terminal */
 let terminalLines = new Array<string>();
@@ -128,28 +125,6 @@ const Terminal = ({ startingIsVisible }: TerminalParams) => {
          // @Cleanup
          if (command.split(" ")[0] === "clear") {
             terminalLines = [];
-         } else if (command.split(" ")[0] === "zoom") {
-            const zoomAmountString = command.split(" ")[1];
-            if (!Number.isNaN(zoomAmountString)) {
-               const zoomAmount = Number(zoomAmountString);
-               Camera.zoom = zoomAmount;
-            }
-         } else if (command.split(" ")[0] === "track") {
-            const trackedEntityID = command.split(" ")[1];
-            if (!Number.isNaN(trackedEntityID)) {
-               const id = Number(trackedEntityID);
-               if (entityExists(id)) {
-                  Camera.verybadIsTracking = true;
-                  Camera.trackEntity(id);
-               }
-            }
-         } else if (command.split(" ")[0] === "tpcam") {
-            const x = command.split(" ")[1];
-            const y = command.split(" ")[2];
-            if (!Number.isNaN(x) && !Number.isNaN(y)) {
-               Camera.setPosition(Number(x), Number(y));
-               Camera.trackEntity(0);
-            }
          } else {
             Client.sendCommand(command);
          }

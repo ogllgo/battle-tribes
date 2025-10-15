@@ -1,7 +1,7 @@
 import { getLightLevelNodeX, getLightLevelNodeY, LightLevelVars } from "../../../shared/src/light-levels";
 import { distance, roundNum } from "../../../shared/src/utils";
-import { getCursorWorldPos } from "../Game";
 import { getLightLevelNodeInfos } from "../light-levels";
+import { cursorWorldPos } from "../mouse";
 import { getTextContext, getXPosInTextCanvas, getYPosInTextCanvas } from "../text-canvas";
 
 const enum Vars {
@@ -9,8 +9,6 @@ const enum Vars {
 }
 
 export function renderLightLevelsText() {
-   const cursorWorldPos = getCursorWorldPos();
-   
    const nodeInfos = getLightLevelNodeInfos();
    
    const ctx = getTextContext();

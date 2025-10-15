@@ -4,19 +4,19 @@ import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../shared/src/collis
 import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType } from "../../../shared/src/entities";
 import { Point } from "../../../shared/src/utils";
-import { createAIHelperComponentParams } from "../entity-components/server-components/AIHelperComponent";
-import { createHealthComponentParams } from "../entity-components/server-components/HealthComponent";
-import { createSlingTurretComponentParams } from "../entity-components/server-components/SlingTurretComponent";
-import { createStatusEffectComponentParams } from "../entity-components/server-components/StatusEffectComponent";
-import { createStructureComponentParams } from "../entity-components/server-components/StructureComponent";
-import { createTransformComponentParams } from "../entity-components/server-components/TransformComponent";
-import { createTribeComponentParams } from "../entity-components/server-components/TribeComponent";
-import { createTurretComponentParams } from "../entity-components/server-components/TurretComponent";
+import { createAIHelperComponentData } from "../entity-components/server-components/AIHelperComponent";
+import { createHealthComponentData } from "../entity-components/server-components/HealthComponent";
+import { createSlingTurretComponentData } from "../entity-components/server-components/SlingTurretComponent";
+import { createStatusEffectComponentData } from "../entity-components/server-components/StatusEffectComponent";
+import { createStructureComponentData } from "../entity-components/server-components/StructureComponent";
+import { createTransformComponentData } from "../entity-components/server-components/TransformComponent";
+import { createTribeComponentData } from "../entity-components/server-components/TribeComponent";
+import { createTurretComponentData } from "../entity-components/server-components/TurretComponent";
 import { createHitboxQuick, Hitbox } from "../hitboxes";
 import { Tribe } from "../tribes";
-import { EntityParams } from "../world";
+import { EntityComponentData } from "../world";
 
-export function createSlingTurretConfig(position: Point, rotation: number, tribe: Tribe): EntityParams {
+export function createSlingTurretConfig(position: Point, rotation: number, tribe: Tribe): EntityComponentData {
    const hitboxes = new Array<Hitbox>();
    let hitboxLocalID = 0;
 
@@ -26,16 +26,16 @@ export function createSlingTurretConfig(position: Point, rotation: number, tribe
 
    return {
       entityType: EntityType.slingTurret,
-      serverComponentParams: {
-         [ServerComponentType.transform]: createTransformComponentParams(hitboxes),
-         [ServerComponentType.health]: createHealthComponentParams(),
-         [ServerComponentType.statusEffect]: createStatusEffectComponentParams(),
-         [ServerComponentType.structure]: createStructureComponentParams(),
-         [ServerComponentType.tribe]: createTribeComponentParams(tribe),
-         [ServerComponentType.turret]: createTurretComponentParams(),
-         [ServerComponentType.aiHelper]: createAIHelperComponentParams(),
-         [ServerComponentType.slingTurret]: createSlingTurretComponentParams(),
+      serverComponentData: {
+         [ServerComponentType.transform]: createTransformComponentData(hitboxes),
+         [ServerComponentType.health]: createHealthComponentData(),
+         [ServerComponentType.statusEffect]: createStatusEffectComponentData(),
+         [ServerComponentType.structure]: createStructureComponentData(),
+         [ServerComponentType.tribe]: createTribeComponentData(tribe),
+         [ServerComponentType.turret]: createTurretComponentData(),
+         [ServerComponentType.aiHelper]: createAIHelperComponentData(),
+         [ServerComponentType.slingTurret]: createSlingTurretComponentData(),
       },
-      clientComponentParams: {}
+      clientComponentData: {}
    };
 }

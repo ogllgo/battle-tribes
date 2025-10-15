@@ -55,8 +55,8 @@ export function generateCaveEntrances(surfaceLayer: Layer): void {
       let originX = (originTileX + Math.random()) * Settings.TILE_SIZE;
       let originY = (originTileY + Math.random()) * Settings.TILE_SIZE;
       // if (first) {
-      //    originX = Settings.BOARD_UNITS * 0.5 + 600;
-      //    originY = Settings.BOARD_UNITS * 0.5;
+      //    originX = Settings.WORLD_UNITS * 0.5 + 600;
+      //    originY = Settings.WORLD_UNITS * 0.5;
       //    first = false;
       // } else {
       //    continue;

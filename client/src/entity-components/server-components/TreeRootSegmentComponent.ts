@@ -8,11 +8,11 @@ import { createWoodSpeckParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
-export interface TreeRootSegmentComponentParams {
+export interface TreeRootSegmentComponentData {
    readonly variant: number;
 }
 
@@ -22,36 +22,29 @@ export interface TreeRootSegmentComponent {
    readonly variant: number;
 }
 
-export const TreeRootSegmentComponentArray = new ServerComponentArray<TreeRootSegmentComponent, TreeRootSegmentComponentParams, IntermediateInfo>(ServerComponentType.treeRootSegment, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onDie: onDie,
-   onHit: onHit
-});
+export const TreeRootSegmentComponentArray = new ServerComponentArray<TreeRootSegmentComponent, TreeRootSegmentComponentData, IntermediateInfo>(ServerComponentType.treeRootSegment, true, createComponent, getMaxRenderParts, decodeData);
+TreeRootSegmentComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+TreeRootSegmentComponentArray.onDie = onDie;
+TreeRootSegmentComponentArray.onHit = onHit;
 
-function createParamsFromData(reader: PacketReader): TreeRootSegmentComponentParams {
+function decodeData(reader: PacketReader): TreeRootSegmentComponentData {
    const variant = reader.readNumber();
-   
    return {
       variant: variant
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
-   const treeRootSegmentComponentParams = entityParams.serverComponentParams[ServerComponentType.treeRootSegment]!;
+   const treeRootSegmentComponentData = entityComponentData.serverComponentData[ServerComponentType.treeRootSegment]!;
    
    const renderPart = new TexturedRenderPart(
       hitbox,
       0,
       0,
-      getTextureArrayIndex("entities/tree-root-segment/tree-root-segment-" + (treeRootSegmentComponentParams.variant + 1) + ".png")
+      getTextureArrayIndex("entities/tree-root-segment/tree-root-segment-" + (treeRootSegmentComponentData.variant + 1) + ".png")
    );
    if (Math.random() < 0.5) {
       renderPart.setFlipX(true);
@@ -61,22 +54,14 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    return {};
 }
 
-function createComponent(entityParams: EntityParams): TreeRootSegmentComponent {
+function createComponent(entityComponentData: EntityComponentData): TreeRootSegmentComponent {
    return {
-      variant: entityParams.serverComponentParams[ServerComponentType.treeRootSegment]!.variant
+      variant: entityComponentData.serverComponentData[ServerComponentType.treeRootSegment]!.variant
    };
 }
 
 function getMaxRenderParts(): number {
    return 1;
-}
-
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader): void {
-   padData(reader);
 }
 
 function onHit(entity: Entity, hitbox: Hitbox): void {

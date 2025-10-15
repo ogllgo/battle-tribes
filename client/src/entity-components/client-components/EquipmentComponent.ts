@@ -21,7 +21,7 @@ const enum ArmourPixelSize {
    __LENGTH
 }
 
-export interface EquipmentComponentParams {}
+export interface EquipmentComponentData {}
 
 export interface EquipmentComponent {
    armourRenderPart: TexturedRenderPart | null;
@@ -104,14 +104,11 @@ const getGloveTextureSource = (gloveType: ItemType): string => {
    return GLOVES_TEXTURE_SOURCE_RECORD[gloveType as GloveItemType];
 }
 
-export const EquipmentComponentArray = new ClientComponentArray<EquipmentComponent>(ClientComponentType.equipment, true, {
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onLoad: onLoad,
-   onTick: onTick
-});
+export const EquipmentComponentArray = new ClientComponentArray<EquipmentComponent>(ClientComponentType.equipment, true, createComponent, getMaxRenderParts);
+EquipmentComponentArray.onLoad = onLoad;
+EquipmentComponentArray.onTick = onTick;
 
-export function createEquipmentComponentParams(): EquipmentComponentParams {
+export function createEquipmentComponentData(): EquipmentComponentData {
    return {};
 }
 

@@ -45,7 +45,7 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const itemComponent = ItemComponentArray.getComponent(entity);
-   packet.addNumber(itemComponent.itemType);
+   packet.writeNumber(itemComponent.itemType);
 }
 
 export function itemEntityCanBePickedUp(itemEntity: Entity, entity: Entity): boolean {

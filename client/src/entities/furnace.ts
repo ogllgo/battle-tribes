@@ -4,19 +4,19 @@ import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../shared/src/collis
 import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType } from "../../../shared/src/entities";
 import { Point } from "../../../shared/src/utils";
-import { createCookingComponentParams } from "../entity-components/server-components/CookingComponent";
-import { createFurnaceComponentParams } from "../entity-components/server-components/FurnaceComponent";
-import { createHealthComponentParams } from "../entity-components/server-components/HealthComponent";
-import { createInventoryComponentParams } from "../entity-components/server-components/InventoryComponent";
-import { createStatusEffectComponentParams } from "../entity-components/server-components/StatusEffectComponent";
-import { createStructureComponentParams } from "../entity-components/server-components/StructureComponent";
-import { createTransformComponentParams } from "../entity-components/server-components/TransformComponent";
-import { createTribeComponentParams } from "../entity-components/server-components/TribeComponent";
+import { createCookingComponentData } from "../entity-components/server-components/CookingComponent";
+import { createFurnaceComponentData } from "../entity-components/server-components/FurnaceComponent";
+import { createHealthComponentData } from "../entity-components/server-components/HealthComponent";
+import { createInventoryComponentData } from "../entity-components/server-components/InventoryComponent";
+import { createStatusEffectComponentData } from "../entity-components/server-components/StatusEffectComponent";
+import { createStructureComponentData } from "../entity-components/server-components/StructureComponent";
+import { createTransformComponentData } from "../entity-components/server-components/TransformComponent";
+import { createTribeComponentData } from "../entity-components/server-components/TribeComponent";
 import { createHitboxQuick, Hitbox } from "../hitboxes";
 import { Tribe } from "../tribes";
-import { EntityParams } from "../world";
+import { EntityComponentData } from "../world";
 
-export function createFurnaceConfig(position: Point, rotation: number, tribe: Tribe): EntityParams {
+export function createFurnaceConfig(position: Point, rotation: number, tribe: Tribe): EntityComponentData {
    const hitboxes = new Array<Hitbox>();
    let hitboxLocalID = 0;
 
@@ -26,16 +26,16 @@ export function createFurnaceConfig(position: Point, rotation: number, tribe: Tr
 
    return {
       entityType: EntityType.furnace,
-      serverComponentParams: {
-         [ServerComponentType.transform]: createTransformComponentParams(hitboxes),
-         [ServerComponentType.health]: createHealthComponentParams(),
-         [ServerComponentType.statusEffect]: createStatusEffectComponentParams(),
-         [ServerComponentType.structure]: createStructureComponentParams(),
-         [ServerComponentType.tribe]: createTribeComponentParams(tribe),
-         [ServerComponentType.inventory]: createInventoryComponentParams(),
-         [ServerComponentType.cooking]: createCookingComponentParams(),
-         [ServerComponentType.furnace]: createFurnaceComponentParams(),
+      serverComponentData: {
+         [ServerComponentType.transform]: createTransformComponentData(hitboxes),
+         [ServerComponentType.health]: createHealthComponentData(),
+         [ServerComponentType.statusEffect]: createStatusEffectComponentData(),
+         [ServerComponentType.structure]: createStructureComponentData(),
+         [ServerComponentType.tribe]: createTribeComponentData(tribe),
+         [ServerComponentType.inventory]: createInventoryComponentData(),
+         [ServerComponentType.cooking]: createCookingComponentData(),
+         [ServerComponentType.furnace]: createFurnaceComponentData(),
       },
-      clientComponentParams: {}
+      clientComponentData: {}
    };
 }

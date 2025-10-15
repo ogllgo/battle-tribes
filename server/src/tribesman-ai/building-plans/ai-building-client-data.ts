@@ -124,9 +124,9 @@ export function getVisibleSafetyNodesData(playerClient: PlayerClient): ReadonlyA
    
 //    // @Cleanup: hardcoded
 //    const minChunkX = Math.max(Math.floor((planPosition.x - 800) / Settings.CHUNK_UNITS), 0);
-//    const maxChunkX = Math.min(Math.floor((planPosition.x + 800) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+//    const maxChunkX = Math.min(Math.floor((planPosition.x + 800) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
 //    const minChunkY = Math.max(Math.floor((planPosition.y - 800) / Settings.CHUNK_UNITS), 0);
-//    const maxChunkY = Math.min(Math.floor((planPosition.y + 800) / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+//    const maxChunkY = Math.min(Math.floor((planPosition.y + 800) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
 
 //    if (minChunkX <= chunkBounds[1] && maxChunkX >= chunkBounds[0] && minChunkY <= chunkBounds[3] && maxChunkY >= chunkBounds[2]) {
 //       buildingPlansData.push({
@@ -213,7 +213,7 @@ export function addTribeBuildingSafetyData(packet: Packet, playerClient: PlayerC
       }
    }
    
-   packet.addNumber(numRelevantBuildings);
+   packet.writeNumber(numRelevantBuildings);
    for (const virtualBuilding of virtualStructures) {
       if (!virtualStructureIsSentToPlayer(playerClient, virtualBuilding)) {
          continue;
@@ -231,12 +231,12 @@ export function addTribeBuildingSafetyData(packet: Packet, playerClient: PlayerC
       };
       getBuildingSafety(playerClient.tribe, virtualBuilding, safetyInfo);
 
-      packet.addNumber(virtualBuilding.position.x);
-      packet.addNumber(virtualBuilding.position.y);
-      packet.addNumber(safetyInfo.buildingMinSafetys[0]);
-      packet.addNumber(safetyInfo.buildingAverageSafetys[0]);
-      packet.addNumber(safetyInfo.buildingExtendedAverageSafetys[0]);
-      packet.addNumber(safetyInfo.buildingResultingSafetys[0]);
+      packet.writeNumber(virtualBuilding.position.x);
+      packet.writeNumber(virtualBuilding.position.y);
+      packet.writeNumber(safetyInfo.buildingMinSafetys[0]);
+      packet.writeNumber(safetyInfo.buildingAverageSafetys[0]);
+      packet.writeNumber(safetyInfo.buildingExtendedAverageSafetys[0]);
+      packet.writeNumber(safetyInfo.buildingResultingSafetys[0]);
    }
 }
 
@@ -342,10 +342,9 @@ export function getVisibleWallConnections(playerLayer: Layer, visibleTribes: Rea
 }
 
 const addBaseAssignmentData = (packet: Packet, assignment: AIPlanAssignment): void => {
-   packet.addNumber(assignment.plan.type);
-   packet.addNumber(assignment.assignedEntity !== null ? assignment.assignedEntity : 0);
-   packet.addBoolean(assignment.plan.isComplete);
-   packet.padOffset(3);
+   packet.writeNumber(assignment.plan.type);
+   packet.writeNumber(assignment.assignedEntity !== null ? assignment.assignedEntity : 0);
+   packet.writeBool(assignment.plan.isComplete);
 }
 const getBasePlanDataLength = (): number => {
    return 3 * Float32Array.BYTES_PER_ELEMENT;
@@ -353,52 +352,52 @@ const getBasePlanDataLength = (): number => {
 
 const addCraftRecipePlanData = (packet: Packet, plan: AICraftRecipePlan): void => {
    // @Speed
-   packet.addNumber(CRAFTING_RECIPES.indexOf(plan.recipe));
-   packet.addNumber(plan.productAmount);
+   packet.writeNumber(CRAFTING_RECIPES.indexOf(plan.recipe));
+   packet.writeNumber(plan.productAmount);
 }
 const getCraftRecipePlanDataLength = (): number => {
    return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 const addPlaceBuildingPlanData = (packet: Packet, plan: AIPlaceBuildingPlan): void => {
-   packet.addNumber(plan.virtualBuilding.entityType);
+   packet.writeNumber(plan.virtualBuilding.entityType);
 }
 const getPlaceBuildingPlanDataLength = (): number => {
    return 1 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 const addUpgradeBuildingPlanData = (packet: Packet, plan: AIUpgradeBuildingPlan): void => {
-   packet.addNumber(plan.blueprintType);
+   packet.writeNumber(plan.blueprintType);
 }
 const getUpgradeBuildingPlanDataLength = (): number => {
    return 1 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 const addTechStudyPlanData = (packet: Packet, plan: AITechStudyPlan): void => {
-   packet.addNumber(plan.tech.id);
+   packet.writeNumber(plan.tech.id);
 }
 const getTechStudyPlanDataLength = (): number => {
    return 1 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 const addTechItemPlanData = (packet: Packet, plan: AITechItemPlan): void => {
-   packet.addNumber(plan.tech.id);
-   packet.addNumber(plan.itemType);
+   packet.writeNumber(plan.tech.id);
+   packet.writeNumber(plan.itemType);
 }
 const getTechItemPlanDataLength = (): number => {
    return 2 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 const addTechCompletePlanData = (packet: Packet, plan: AITechCompletePlan): void => {
-   packet.addNumber(plan.tech.id);
+   packet.writeNumber(plan.tech.id);
 }
 const getTechCompletePlanDataLength = (): number => {
    return 1 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 const addGatherItemPlanData = (packet: Packet, plan: AIGatherItemPlan): void => {
-   packet.addNumber(plan.itemType);
-   packet.addNumber(plan.amount);
+   packet.writeNumber(plan.itemType);
+   packet.writeNumber(plan.amount);
 }
 const getGatherItemPlanDataLength = (): number => {
    return 2 * Float32Array.BYTES_PER_ELEMENT;
@@ -419,7 +418,7 @@ const addAssignmentData = (packet: Packet, assignment: AIPlanAssignment): void =
       case AIPlanType.gatherItem:      addGatherItemPlanData(packet, plan); break;
    }
 
-   packet.addNumber(assignment.children.length);
+   packet.writeNumber(assignment.children.length);
    for (const childAssignment of assignment.children) {
       addAssignmentData(packet, childAssignment);
    }
@@ -461,7 +460,7 @@ export function addTribeAssignmentData(packet: Packet, tribe: Tribe): void {
    }
 
    // Tribesman assignments
-   packet.addNumber(numEntitiesWithAIAssignmentComponent);
+   packet.writeNumber(numEntitiesWithAIAssignmentComponent);
    // @Incomplete: won't account for cogwalkers
    for (let i = 0; i < tribe.tribesmanIDs.length; i++) {
       const tribesman = tribe.tribesmanIDs[i];
@@ -469,7 +468,7 @@ export function addTribeAssignmentData(packet: Packet, tribe: Tribe): void {
       if (AIAssignmentComponentArray.hasComponent(tribesman)) {
          const aiAssignmentComponent = AIAssignmentComponentArray.getComponent(tribesman);
          if (aiAssignmentComponent.wholeAssignment !== null) {
-            packet.addNumber(tribesman);
+            packet.writeNumber(tribesman);
             addAssignmentData(packet, aiAssignmentComponent.wholeAssignment);
          }
       }

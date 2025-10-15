@@ -6,12 +6,11 @@ import { Settings } from "../../../../shared/src/settings";
 import { STATUS_EFFECT_MODIFIERS } from "../../../../shared/src/status-effects";
 import { TribesmanTitle } from "../../../../shared/src/titles";
 import { TribeType, TRIBE_INFO_RECORD } from "../../../../shared/src/tribes";
-import Board, { getElapsedTimeInSeconds } from "../../Board";
-import Camera from "../../Camera";
+import { getElapsedTimeInSeconds } from "../../Board";
 import Client from "../../networking/Client";
 import { sendStopItemUsePacket, createAttackPacket, sendItemDropPacket, sendItemUsePacket, sendStartItemUsePacket, sendSpectateEntityPacket, sendDismountCarrySlotPacket, sendSetMoveTargetPositionPacket, sendSelectRiderDepositLocationPacket } from "../../networking/packet-sending";
-import { createHealthComponentParams, HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
-import { createInventoryComponentParams, getInventory, InventoryComponentArray, updatePlayerHeldItem } from "../../entity-components/server-components/InventoryComponent";
+import { createHealthComponentData, HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
+import { createInventoryComponentData, getInventory, InventoryComponentArray, updatePlayerHeldItem } from "../../entity-components/server-components/InventoryComponent";
 import { getCurrentLimbState, getLimbByInventoryName, getLimbConfiguration, InventoryUseComponentArray, LimbInfo } from "../../entity-components/server-components/InventoryUseComponent";
 import { attemptEntitySelection, getHoveredEntityID, getSelectedEntityID } from "../../entity-selection";
 import { playBowFireSound } from "../../entity-tick-events";
@@ -20,43 +19,45 @@ import { addKeyListener, keyIsPressed } from "../../keyboard-input";
 import { closeCurrentMenu } from "../../menus";
 import { addGhostRenderInfo, removeGhostRenderInfo } from "../../rendering/webgl/entity-ghost-rendering";
 import { attemptToCompleteNode } from "../../research";
-import { playSound } from "../../sound";
+import { playHeadSound } from "../../sound";
 import { BackpackInventoryMenu_setIsVisible } from "./inventories/BackpackInventory";
 import Hotbar, { Hotbar_updateLeftThrownBattleaxeItemID, Hotbar_updateRightThrownBattleaxeItemID, Hotbar_setHotbarSelectedItemSlot } from "./inventories/Hotbar";
 import { CraftingMenu_setCraftingStation, CraftingMenu_setIsVisible } from "./menus/CraftingMenu";
-import { createTransformComponentParams, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
+import { createTransformComponentData, TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
 import { AttackVars, interpolateLimbState, copyLimbState, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, LimbConfiguration, QUIVER_PULL_LIMB_STATE, LimbState, BLOCKING_LIMB_STATE } from "../../../../shared/src/attack-patterns";
-import { createEntity, entityExists, EntityParams, EntityServerComponentParams, getCurrentLayer, getEntityLayer } from "../../world";
+import { createEntity, entityExists, EntityComponentData, getCurrentLayer, getEntityLayer } from "../../world";
 import { TribesmanComponentArray, tribesmanHasTitle } from "../../entity-components/server-components/TribesmanComponent";
-import { createStatusEffectComponentParams, StatusEffectComponentArray } from "../../entity-components/server-components/StatusEffectComponent";
+import { createStatusEffectComponentData, StatusEffectComponentArray } from "../../entity-components/server-components/StatusEffectComponent";
 import { EntityComponents, ServerComponentType, BuildingMaterial } from "../../../../shared/src/components";
 import { applyAccelerationFromGround, getHitboxVelocity, Hitbox } from "../../hitboxes";
-import { createBracingsComponentParams } from "../../entity-components/server-components/BracingsComponent";
-import { createBuildingMaterialComponentParams } from "../../entity-components/server-components/BuildingMaterialComponent";
-import { createStructureComponentParams } from "../../entity-components/server-components/StructureComponent";
-import { TribeComponentArray, createTribeComponentParams } from "../../entity-components/server-components/TribeComponent";
+import { createBracingsComponentData } from "../../entity-components/server-components/BracingsComponent";
+import { createBuildingMaterialComponentData } from "../../entity-components/server-components/BuildingMaterialComponent";
+import { createStructureComponentData } from "../../entity-components/server-components/StructureComponent";
+import { TribeComponentArray, createTribeComponentData } from "../../entity-components/server-components/TribeComponent";
 import { thingIsVisualRenderPart } from "../../render-parts/render-parts";
-import { createCookingComponentParams } from "../../entity-components/server-components/CookingComponent";
-import { createCampfireComponentParams } from "../../entity-components/server-components/CampfireComponent";
-import { createFurnaceComponentParams } from "../../entity-components/server-components/FurnaceComponent";
-import { createSpikesComponentParams } from "../../entity-components/server-components/SpikesComponent";
+import { createCookingComponentData } from "../../entity-components/server-components/CookingComponent";
+import { createCampfireComponentData } from "../../entity-components/server-components/CampfireComponent";
+import { createFurnaceComponentData } from "../../entity-components/server-components/FurnaceComponent";
+import { createSpikesComponentData } from "../../entity-components/server-components/SpikesComponent";
 import HeldItemSlot from "./HeldItemSlot";
-import { createFireTorchComponentParams } from "../../entity-components/server-components/FireTorchComponent";
-import { createSlurbTorchComponentParams } from "../../entity-components/server-components/SlurbTorchComponent";
-import { createBarrelComponentParams } from "../../entity-components/server-components/BarrelComponent";
+import { createFireTorchComponentData } from "../../entity-components/server-components/FireTorchComponent";
+import { createSlurbTorchComponentData } from "../../entity-components/server-components/SlurbTorchComponent";
+import { createBarrelComponentData } from "../../entity-components/server-components/BarrelComponent";
 import { playerTribe } from "../../tribes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { createResearchBenchComponentParams } from "../../entity-components/server-components/ResearchBenchComponent";
+import { createResearchBenchComponentData } from "../../entity-components/server-components/ResearchBenchComponent";
 import { GameInteractState } from "./GameScreen";
 import { BlockAttackComponentArray } from "../../entity-components/server-components/BlockAttackComponent";
 import { countItemTypesInInventory } from "../../inventory-manipulation";
 import SelectTargetCursorOverlay from "./SelectCarryTargetCursorOverlay";
 import { playerInstance } from "../../player";
 import { AnimalStaffCommandType, createControlCommandParticles } from "./AnimalStaffOptions";
-import  { getCursorWorldPos } from "../../Game";
+import  { currentSnapshot } from "../../game";
 import { calculateEntityPlaceInfo } from "../../structure-placement";
 import { assert, Point } from "../../../../shared/src/utils";
 import { getEntityClientComponentConfigs } from "../../entity-components/client-components";
+import { EntityServerComponentData } from "../../networking/packet-snapshots";
+import { cursorWorldPos } from "../../mouse";
 
 export interface ItemRestTime {
    remainingTimeTicks: number;
@@ -140,7 +141,7 @@ export function setShittyCarrier(entity: Entity): void {
    carrier = entity;
 }
 
-let playerMoveIntention = new Point(0, 0);
+const playerMoveIntention = new Point(0, 0);
 
 export function getPlayerMoveIntention(): Point {
    return playerMoveIntention;
@@ -332,7 +333,7 @@ export function updatePlayerItems(): void {
          limb.currentActionStartLimbState = startLimbState;
          limb.currentActionEndLimbState = BOW_DRAWING_CHARGE_START_LIMB_STATE;
 
-         playSound("quiver-pull.mp3", 0.4, 1, Camera.position.copy(), null);
+         playHeadSound("quiver-pull.mp3", 0.4, 1);
       }
 
       // if finished moving limb from quiver, start charging bow
@@ -358,7 +359,7 @@ export function updatePlayerItems(): void {
          otherLimb.currentActionStartLimbState = otherLimbStartState;
          otherLimb.currentActionEndLimbState = otherLimbStartState;
 
-         playSound("bow-charge.mp3", 0.4, 1, Camera.position.copy(), null);
+         playHeadSound("bow-charge.mp3", 0.4, 1);
       }
 
       // If finished resting after arrow release, return to default state
@@ -910,9 +911,6 @@ export function updatePlayerMovement(): void {
       case 15: moveDirection = null;          break;
    }
 
-   Camera.velocity.x = 0;
-   Camera.velocity.y = 0;
-
    if (moveDirection !== null) {
       playerMoveIntention.x = Math.sin(moveDirection);
       playerMoveIntention.y = Math.cos(moveDirection);
@@ -937,7 +935,7 @@ export function updatePlayerMovement(): void {
    
          acceleration *= getPlayerMoveSpeedMultiplier(moveDirection);
    
-         if (latencyGameState.lastPlantCollisionTicks >= Board.serverTicks - 1) {
+         if (latencyGameState.lastPlantCollisionTicks >= currentSnapshot.tick - 1) {
             acceleration *= 0.5;
          }
          
@@ -947,10 +945,6 @@ export function updatePlayerMovement(): void {
          const accelerationX = acceleration * Math.sin(moveDirection);
          const accelerationY = acceleration * Math.cos(moveDirection);
          applyAccelerationFromGround(playerInstance, playerHitbox, accelerationX, accelerationY);
-      } else {
-         const MOVE_SPEED = 500;
-         Camera.velocity.x = MOVE_SPEED * Math.sin(moveDirection);
-         Camera.velocity.y = MOVE_SPEED * Math.cos(moveDirection);
       }
    } else {
       playerMoveIntention.x = 0;
@@ -1094,7 +1088,7 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
             }
                
             limb.action = action;
-            limb.lastEatTicks = Board.serverTicks;
+            limb.lastEatTicks = currentSnapshot.tick;
 
             sendStartItemUsePacket();
             // @Incomplete
@@ -1102,25 +1096,23 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
             //    // @Cleanup
             //    const otherUseInfo = inventoryUseComponent.limbInfos[isOffhand ? 0 : 1];
             //    otherUseInfo.action = action;
-            //    otherUseInfo.lastEatTicks = Board.serverTicks;
+            //    otherUseInfo.lastEatTicks = currentSnapshot.tick;
             // }
          }
 
          break;
       }
       case "crossbow": {
-         const playerHitbox = transformComponent.hitboxes[0];
-         
          if (!definiteGameState.hotbarCrossbowLoadProgressRecord.hasOwnProperty(itemSlot) || definiteGameState.hotbarCrossbowLoadProgressRecord[itemSlot]! < 1) {
             // Start loading crossbow
             const limb = getLimbByInventoryName(inventoryUseComponent, itemInventoryName);
             limb.action = LimbAction.loadCrossbow;
-            limb.lastCrossbowLoadTicks = Board.serverTicks;
-            playSound("crossbow-load.mp3", 0.4, 1, playerHitbox.box.position, null);
+            limb.lastCrossbowLoadTicks = currentSnapshot.tick;
+            playHeadSound("crossbow-load.mp3", 0.4, 1);
          } else {
             // Fire crossbow
             sendItemUsePacket();
-            playSound("crossbow-fire.mp3", 0.4, 1, playerHitbox.box.position, null);
+            playHeadSound("crossbow-fire.mp3", 0.4, 1);
          }
          break;
       }
@@ -1175,7 +1167,7 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
          }
 
          limb.action = LimbAction.chargeBattleaxe;
-         limb.lastBattleaxeChargeTicks = Board.serverTicks;
+         limb.lastBattleaxeChargeTicks = currentSnapshot.tick;
          break;
       }
       case "glove":
@@ -1192,7 +1184,7 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
          
          if (placeInfo.isValid) {
             const limb = getLimbByInventoryName(inventoryUseComponent, itemInventoryName);
-            limb.lastAttackTicks = Board.serverTicks;
+            limb.lastAttackTicks = currentSnapshot.tick;
 
             sendItemUsePacket();
          }
@@ -1227,7 +1219,7 @@ const onItemEndUse = (item: Item, inventoryName: InventoryName): void => {
                sendItemUsePacket();
             } else {
                sendStopItemUsePacket();
-               playSound("error.mp3", 0.4, 1, Camera.position, null);
+               playHeadSound("error.mp3", 0.4, 1);
             }
          }
          break;
@@ -1389,9 +1381,9 @@ const tickItem = (itemType: ItemType): void => {
          
          const placeInfo = calculateEntityPlaceInfo(playerHitbox.box.position, playerHitbox.box.angle, entityType, layer);
 
-         const components = {} as EntityServerComponentParams;
+         const components = {} as EntityServerComponentData;
 
-         // @Hack @Cleanup: make the client and server use the some component params system
+         // @Hack @Cleanup: make the client and server use the some component data system
          const componentTypes = EntityComponents[entityType];
          for (let i = 0; i < componentTypes.length; i++) {
             const componentType = componentTypes[i];
@@ -1407,75 +1399,75 @@ const tickItem = (itemType: ItemType): void => {
                      staticHitboxes.push(hitbox);
                   }
 
-                  const transformComponentParams = createTransformComponentParams(
+                  const transformComponentData = createTransformComponentData(
                      hitboxes
                   );
 
-                  components[componentType] = transformComponentParams;
+                  components[componentType] = transformComponentData;
                   break;
                }
                case ServerComponentType.health: {
-                  const params = createHealthComponentParams();
-                  components[componentType] = params;
+                  const data = createHealthComponentData();
+                  components[componentType] = data;
                   break;
                }
                case ServerComponentType.statusEffect: {
-                  const params = createStatusEffectComponentParams();
-                  components[componentType] = params;
+                  const data = createStatusEffectComponentData();
+                  components[componentType] = data;
                   break;
                }
                case ServerComponentType.structure: {
-                  components[componentType] = createStructureComponentParams();
+                  components[componentType] = createStructureComponentData();
                   break;
                }
                case ServerComponentType.tribe: {
                   const playerTribeComponent = TribeComponentArray.getComponent(playerInstance!);
                   
-                  components[componentType] = createTribeComponentParams(playerTribe);
+                  components[componentType] = createTribeComponentData(playerTribe);
                   break;
                }
                case ServerComponentType.buildingMaterial: {
-                  components[componentType] = createBuildingMaterialComponentParams(BuildingMaterial.wood);
+                  components[componentType] = createBuildingMaterialComponentData(BuildingMaterial.wood);
                   break;
                }
                case ServerComponentType.bracings: {
-                  components[componentType] = createBracingsComponentParams();
+                  components[componentType] = createBracingsComponentData();
                   break;
                }
                case ServerComponentType.inventory: {
-                  components[componentType] = createInventoryComponentParams();
+                  components[componentType] = createInventoryComponentData();
                   break;
                }
                case ServerComponentType.cooking: {
-                  components[componentType] = createCookingComponentParams();
+                  components[componentType] = createCookingComponentData();
                   break;
                }
                case ServerComponentType.campfire: {
-                  components[componentType] = createCampfireComponentParams();
+                  components[componentType] = createCampfireComponentData();
                   break;
                }
                case ServerComponentType.furnace: {
-                  components[componentType] = createFurnaceComponentParams();
+                  components[componentType] = createFurnaceComponentData();
                   break;
                }
                case ServerComponentType.spikes: {
-                  components[componentType] = createSpikesComponentParams();
+                  components[componentType] = createSpikesComponentData();
                   break;
                }
                case ServerComponentType.fireTorch: {
-                  components[componentType] = createFireTorchComponentParams();
+                  components[componentType] = createFireTorchComponentData();
                   break;
                }
                case ServerComponentType.slurbTorch: {
-                  components[componentType] = createSlurbTorchComponentParams();
+                  components[componentType] = createSlurbTorchComponentData();
                   break;
                }
                case ServerComponentType.barrel: {
-                  components[componentType] = createBarrelComponentParams();
+                  components[componentType] = createBarrelComponentData();
                   break;
                }
                case ServerComponentType.researchBench: {
-                  components[componentType] = createResearchBenchComponentParams();
+                  components[componentType] = createResearchBenchComponentData();
                   break;
                }
                case ServerComponentType.scrappy: {
@@ -1567,17 +1559,17 @@ const tickItem = (itemType: ItemType): void => {
             }
          }
 
-         const entityParams: EntityParams = {
+         const entityComponentData: EntityComponentData = {
             entityType: entityType,
             // @Hack: cast
-            serverComponentParams: components as any,
+            serverComponentData: components as any,
             // @HACK
-            clientComponentParams: getEntityClientComponentConfigs(entityType)
+            clientComponentData: getEntityClientComponentConfigs(entityType)
          };
 
          // Create the entity
-         assert(entityParams.serverComponentParams[ServerComponentType.transform]!.hitboxes.length > 0);
-         const creationInfo = createEntity(0, entityParams);
+         assert(entityComponentData.serverComponentData[ServerComponentType.transform]!.hitboxes.length > 0);
+         const creationInfo = createEntity(0, entityComponentData);
 
          const renderInfo = creationInfo.renderInfo;
 
@@ -1604,10 +1596,10 @@ const tickItem = (itemType: ItemType): void => {
 
          // @Hack: Manually set the render info's position and rotation
          // @INCOMPLETE
-         // const transformComponentParams = components[ServerComponentType.transform]!;
-         // renderInfo.renderPosition.x = transformComponentParams.position.x;
-         // renderInfo.renderPosition.y = transformComponentParams.position.y;
-         // renderInfo.rotation = transformComponentParams.rotation;
+         // const transformComponentData = components[ServerComponentType.transform]!;
+         // renderInfo.renderPosition.x = transformComponentData.position.x;
+         // renderInfo.renderPosition.y = transformComponentData.position.y;
+         // renderInfo.rotation = transformComponentData.rotation;
 
          break;
       }
@@ -1672,7 +1664,6 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
             }
          }
 
-
          const restTime = offhandItemRestTimes.current[0];
          if (restTime.remainingTimeTicks > 0) {
             restTime.remainingTimeTicks--;
@@ -1710,7 +1701,7 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
                e.preventDefault();
             }
          } else if (props.gameInteractState === GameInteractState.selectRiderDepositLocation) {
-            sendSelectRiderDepositLocationPacket(getSelectedEntityID(), getCursorWorldPos());
+            sendSelectRiderDepositLocationPacket(getSelectedEntityID(), cursorWorldPos);
          } else {
             attemptAttack();
          }
@@ -1723,8 +1714,6 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
          }
 
          if (props.gameInteractState === GameInteractState.selectMoveTargetPosition) {
-            const cursorWorldPos = getCursorWorldPos();
-            
             sendSetMoveTargetPositionPacket(getSelectedEntityID(), cursorWorldPos.x, cursorWorldPos.y);
             props.setGameInteractState(GameInteractState.none);
             createControlCommandParticles(AnimalStaffCommandType.move);

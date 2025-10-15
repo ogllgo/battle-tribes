@@ -2,7 +2,6 @@ import { roundNum } from "battletribes-shared/utils";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import OPTIONS from "../../../options";
 import Board from "../../../Board";
-import Camera from "../../../Camera";
 import { TransformComponentArray } from "../../../entity-components/server-components/TransformComponent";
 import { sendDevSetViewedSpawnDistributionPacket, sendSpectateEntityPacket, sendToggleSimulationPacket } from "../../../networking/packet-sending";
 import { getCurrentLayer } from "../../../world";
@@ -11,7 +10,9 @@ import { playerInstance } from "../../../player";
 import { EntityType, NUM_ENTITY_TYPES } from "../../../../../shared/src/entities";
 import CLIENT_ENTITY_INFO_RECORD from "../../../client-entity-info";
 import { getNumLights } from "../../../lights";
-import { getNumBufferedPackets, getMeasuredServerTPS } from "../../../Game";
+import { getMeasuredServerTPS, currentSnapshot } from "../../../game";
+import { cameraZoom, setCameraZoom } from "../../../camera";
+import { PacketSnapshot } from "../../../networking/packet-snapshots";
 
 interface GameInfoDisplayProps {
    setGameInteractState(state: GameInteractState): void;
@@ -19,20 +20,21 @@ interface GameInfoDisplayProps {
 
 // @Cleanup: shouldn't be able to interact with the info display, all the interactable stuff should be in tabs
 
-export let updateDebugScreenCurrentTime: (time: number) => void = () => {};
-export let updateDebugScreenTicks: (time: number) => void = () => {};
+export let updateDebugScreenCurrentSnapshot: (snapshot: PacketSnapshot) => void = () => {};
 export let updateDebugScreen: () => void = () => {};
 export let updateDebugScreenRenderTime: (renderTime: number) => void = () => {};
 export let updateDebugScreenIsPaused: (isPaused: boolean) => void = () => {};
+export let GameInfoDisplay_setBufferSize: (size: number) => void = () => {};
 
 const GameInfoDisplay = (props: GameInfoDisplayProps) => {
    const rangeInputRef = useRef<HTMLInputElement | null>(null);
    const maxGreenSafetyInputRef = useRef<HTMLInputElement | null>(null);
    
    const [currentTime, setCurrentTime] = useState(0);
-   const [ticks, setTicks] = useState(Board.serverTicks);
-   const [zoom, setZoom] = useState(Camera.zoom);
+   const [ticks, setTicks] = useState(currentSnapshot.tick);
+   const [zoom, setZoom] = useState(cameraZoom);
    const [isPaused, setIsPaused] = useState(false);
+   const [bufferSize, setBufferSize] = useState(0);
 
    const [_, forceUpdate] = useReducer(x => x + 1, 0);
 
@@ -54,20 +56,16 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
    const [debugTethers, setDebugTethers] = useState(OPTIONS.debugTethers);
    
    useEffect(() => {
-      if (typeof Board.time !== "undefined") {
-         setCurrentTime(Board.time);
-      }
-
-      updateDebugScreenCurrentTime = (time: number): void => {
-         setCurrentTime(time);
-      }
-      updateDebugScreenTicks = (ticks: number): void => {
-         setTicks(ticks);
+      updateDebugScreenCurrentSnapshot = (snapshot: PacketSnapshot): void => {
+         setTicks(snapshot.tick);
+         setCurrentTime(snapshot.time);
       }
 
       updateDebugScreen = forceUpdate;
 
       updateDebugScreenIsPaused = setIsPaused;
+
+      GameInfoDisplay_setBufferSize = setBufferSize;
    }, []);
 
    const toggleNightvision = useCallback(() => {
@@ -166,9 +164,9 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
          return;
       }
 
-      const rangeInputVal = Number(rangeInputRef.current.value);
-      Camera.zoom = rangeInputVal;
-      setZoom(rangeInputVal);
+      const zoom = Number(rangeInputRef.current.value);
+      setCameraZoom(zoom);
+      setZoom(zoom);
    }
    
    const changeMaxGreenSafety = () => {
@@ -199,7 +197,7 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
       <p>Time: {currentTime.toFixed(2)}</p>
       <p>Ticks: {roundNum(ticks, 2)}</p>
       <p>Server TPS: {getMeasuredServerTPS().toFixed(2)}</p>
-      <p>Buffered packets: {getNumBufferedPackets()}</p>
+      <p>Buffer size: {bufferSize}</p>
 
       <button onClick={toggleSimulation}>{isPaused ? "Resume" : "Pause"} Simulation</button>
 
@@ -278,7 +276,7 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
       <ul className="area">
          <li>
             <label>
-               <input ref={rangeInputRef} type="range" name="zoom-input" defaultValue={Camera.zoom} min={1} max={2.25} step={0.25} onChange={changeZoom} />
+               <input ref={rangeInputRef} type="range" name="zoom-input" defaultValue={cameraZoom} min={1} max={2.5} step={0.1} onChange={changeZoom} />
                <br></br>Zoom ({zoom})
             </label>
          </li>

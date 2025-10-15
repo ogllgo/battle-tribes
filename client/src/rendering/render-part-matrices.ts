@@ -1,16 +1,19 @@
 import { EntityRenderInfo, updateEntityRenderInfoRenderData } from "../EntityRenderInfo";
 import { createIdentityMatrix, createTranslationMatrix, Matrix3x2, matrixMultiplyInPlace } from "./matrices";
 import { Settings } from "battletribes-shared/settings";
-import { RenderPartParent, RenderPart } from "../render-parts/render-parts";
+import { RenderPartParent, RenderPart, HitboxReference } from "../render-parts/render-parts";
 import { renderLayerIsChunkRendered, updateChunkRenderedEntity } from "./webgl/chunked-entity-rendering";
-import { getEntityRenderInfo, getEntityType } from "../world";
-import { getAngleDiff, Point, randAngle } from "../../../shared/src/utils";
+import { getEntityRenderInfo } from "../world";
+import { assert, getAngleDiff, lerp, Point, randAngle, slerp } from "../../../shared/src/utils";
 import { gl } from "../webgl";
 import { HealthComponentArray } from "../entity-components/server-components/HealthComponent";
 import { getHitboxVelocity, Hitbox } from "../hitboxes";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
-import { Entity, EntityType } from "../../../shared/src/entities";
+import { Entity } from "../../../shared/src/entities";
 import { playerInstance } from "../player";
+import { EntitySnapshot } from "../networking/packet-snapshots";
+import { currentSnapshot, nextSnapshot } from "../game";
+import { ServerComponentType } from "../../../shared/src/components";
 
 // @Cleanup: file name
 
@@ -165,19 +168,52 @@ const calculateAndOverrideRenderThingMatrix = (thing: RenderPart): void => {
    translateMatrix(matrix, tx, ty);
 }
 
+const getHitboxDataFromEntityData = (hitbox: Hitbox, entityData: EntitySnapshot): Hitbox => {
+   for (const data of entityData.serverComponentData[ServerComponentType.transform]!.hitboxes) {
+      if (data.localID === hitbox.localID) {
+         return data;
+      }
+   }
+   throw new Error();
+}
+
+const getHitboxData = (hitbox: Hitbox): [Hitbox, Hitbox] => {
+   const currentEntityData = currentSnapshot.entities.get(hitbox.entity);
+   assert(typeof currentEntityData !== "undefined");
+   const currentHitboxData = getHitboxDataFromEntityData(hitbox, currentEntityData);
+
+   const nextEntityData = nextSnapshot.entities.get(hitbox.entity);
+   const nextHitboxData = typeof nextEntityData !== "undefined" ? getHitboxDataFromEntityData(hitbox, nextEntityData) : currentHitboxData;
+
+   return [currentHitboxData, nextHitboxData];
+}
+
 const calculateHitboxMatrix = (hitbox: Hitbox, tickInterp: number): Matrix3x2 => {
+   // @HACK we know/calculated this previously when we had to find tickInterp...
+   let usesClientInterp = entityUsesClientInterp(hitbox.entity);
+   // @HACK cuz we sometimes create imaginary render parts e.g. to show selection outlines, they won't be in the snapshots!
+   if (typeof currentSnapshot.entities.get(hitbox.entity) === "undefined") {
+      usesClientInterp = true;
+   }
+   
+   // @HACK the optional shit
+   const [currentHitboxData, nextHitboxData] = !usesClientInterp ? getHitboxData(hitbox) : [undefined, undefined];
+   
    const matrix = createIdentityMatrix();
 
    const scale = hitbox.box.scale;
    overrideWithScaleMatrix(matrix, scale * (hitbox.box.flipX ? -1 : 1), scale);
 
    // Rotation
-   // we don't want the relative angular velocity here, we want to interpolate the ACTUAL angle not the local thing.
-   // @SQUEAM
-   // const angularVelocityTick = getAngleDiff(hitbox.previousAngle, hitbox.box.angle);
-   // @HACK? doing this check cuz it doesn't make sense for the player instance to have angular velocity cuz the angle is tightly controlled.
-   const angularVelocityTick = hitbox.entity === playerInstance ? 0 : getAngleDiff(hitbox.previousAngle, hitbox.box.angle);
-   const angle = hitbox.box.angle + (angularVelocityTick + hitbox.angularAcceleration * Settings.DT_S * Settings.DT_S) * tickInterp;
+   let angle: number;
+   if (usesClientInterp) {
+      // we don't want the relative angular velocity here, we want to interpolate the ACTUAL angle not the local thing.
+      // @HACK? doing this check cuz it doesn't make sense for the player instance to have angular velocity cuz the angle is tightly controlled.
+      const angularVelocityTick = hitbox.entity === playerInstance ? 0 : getAngleDiff(hitbox.previousAngle, hitbox.box.angle);
+      angle = hitbox.box.angle + (angularVelocityTick + hitbox.angularAcceleration * Settings.DT_S * Settings.DT_S) * tickInterp;
+   } else {
+      angle = slerp(currentHitboxData!.box.angle, nextHitboxData!.box.angle, tickInterp);
+   }
    rotateMatrix(matrix, angle);
    // overrideWithRotationMatrix(matrix, hitbox.box.angle);
    
@@ -188,9 +224,16 @@ const calculateHitboxMatrix = (hitbox: Hitbox, tickInterp: number): Matrix3x2 =>
    // scaleMatrix(matrix, scale, scale);
    
    // Translation
-   const velocity = getHitboxVelocity(hitbox);
-   const tx = hitbox.box.position.x + velocity.x * tickInterp * Settings.DT_S;
-   const ty = hitbox.box.position.y + velocity.y * tickInterp * Settings.DT_S;
+   let tx: number;
+   let ty: number;
+   if (usesClientInterp) {
+      const velocity = getHitboxVelocity(hitbox);
+      tx = hitbox.box.position.x + velocity.x * tickInterp * Settings.DT_S;
+      ty = hitbox.box.position.y + velocity.y * tickInterp * Settings.DT_S;
+   } else {
+      tx = lerp(currentHitboxData!.box.position.x, nextHitboxData!.box.position.x, tickInterp);
+      ty = lerp(currentHitboxData!.box.position.y, nextHitboxData!.box.position.y, tickInterp);
+   }
    translateMatrix(matrix, tx, ty);
 
    return matrix;
@@ -201,7 +244,7 @@ export function calculateHitboxRenderPosition(hitbox: Hitbox, tickInterp: number
    return getMatrixPosition(matrix);
 }
 
-export function renderParentIsHitbox(parent: RenderPartParent): parent is Hitbox {
+export function renderParentIsHitboxReference(parent: RenderPartParent): parent is HitboxReference {
    return parent !== null && typeof (parent as Hitbox).mass !== "undefined";
 }
 
@@ -219,10 +262,12 @@ const cleanRenderPartModelMatrix = (renderPart: RenderPart, tickInterp: number):
 
    let parentRotation: number;
    let parentModelMatrix: Readonly<Matrix3x2>;
-   if (renderParentIsHitbox(renderPart.parent)) {
+   if (renderParentIsHitboxReference(renderPart.parent)) {
+      assert(renderPart.parentHitbox !== null);
+      
       // @Speed? @Garbage: Should override
-      parentModelMatrix = calculateHitboxMatrix(renderPart.parent, tickInterp);
-      parentRotation = renderPart.parent.box.angle;
+      parentModelMatrix = calculateHitboxMatrix(renderPart.parentHitbox, tickInterp);
+      parentRotation = renderPart.parentHitbox.box.angle;
    } else {
       parentModelMatrix = renderPart.parent.modelMatrix;
       parentRotation = renderPart.parent.angle;
@@ -255,19 +300,22 @@ export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo, tickInterp: 
    renderInfo.renderPartsAreDirty = false;
 }
 
-export function getEntityTickInterp(entity: Entity, serverTickInterp: number, clientTickInterp: number): number {
-   // this happens sometimes for some reason
+export function entityUsesClientInterp(entity: Entity): boolean {
    if (!TransformComponentArray.hasComponent(entity)) {
-      return serverTickInterp;
+      return false;
    }
    
    const entityTransformComponent = TransformComponentArray.getComponent(entity);
    const entityHitbox = entityTransformComponent.hitboxes[0];
    const rootEntity = entityHitbox.rootEntity;
-   return rootEntity === playerInstance ? clientTickInterp : serverTickInterp;
+   return rootEntity === playerInstance;
 }
 
-export function updateRenderPartMatrices(serverTickInterp: number, clientTickInterp: number): void {
+export function getEntityTickInterp(entity: Entity, clientTickInterp: number, serverTickInterp: number): number {
+   return entityUsesClientInterp(entity) ? clientTickInterp : serverTickInterp;
+}
+
+export function updateRenderPartMatrices(clientTickInterp: number, serverTickInterp: number): void {
    // Do this before so that binding buffers during the loop doesn't mess up any previously bound vertex array.
    gl.bindVertexArray(null);
 
@@ -282,7 +330,7 @@ export function updateRenderPartMatrices(serverTickInterp: number, clientTickInt
    for (let i = 0; i < dirtyEntityRenderInfos.length; i++) {
       const renderInfo = dirtyEntityRenderInfos[i];
 
-      const tickInterp = getEntityTickInterp(renderInfo.entity, serverTickInterp, clientTickInterp);
+      const tickInterp = getEntityTickInterp(renderInfo.entity, clientTickInterp, serverTickInterp);
       cleanEntityRenderInfo(renderInfo, tickInterp);
    }
 

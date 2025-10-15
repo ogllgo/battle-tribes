@@ -338,7 +338,7 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const zombieComponent = ZombieComponentArray.getComponent(entity);
-   packet.addNumber(zombieComponent.zombieType);
+   packet.writeNumber(zombieComponent.zombieType);
 }
 
 function onHitboxCollision(hitbox: Hitbox, collidingHitbox: Hitbox, collisionPoint: Point): void {

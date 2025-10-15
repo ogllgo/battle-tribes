@@ -1,13 +1,12 @@
 import { Settings } from "battletribes-shared/settings";
 import { assert, Point, randInt } from "battletribes-shared/utils";
 import { TileType } from "battletribes-shared/tiles";
-import Camera from "./Camera";
 import { getCurrentLayer, getEntityLayer } from "./world";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { Entity } from "../../shared/src/entities";
 import Layer from "./Layer";
 import { Hitbox } from "./hitboxes";
-import { playerInstance } from "./player";
+import { cameraPosition, maxVisibleChunkX, maxVisibleChunkY, minVisibleChunkX, minVisibleChunkY } from "./camera";
 
 type SoundID = number;
 
@@ -352,7 +351,7 @@ export async function loadSoundEffects(): Promise<void> {
 
 const calculateSoundVolume = (volume: number, position: Point): number => {
    // Calculate final volume accounting for distance
-   let distanceFromPlayer = Camera.position.distanceTo(position);
+   let distanceFromPlayer = cameraPosition.distanceTo(position);
    distanceFromPlayer /= 150;
    if (distanceFromPlayer < 1) {
       distanceFromPlayer = 1;
@@ -394,11 +393,13 @@ export interface SoundInfo {
    readonly sound: Sound;
 }
 // @Speed: Garbage collection, unbox the source from a point
-export function playSound(filePath: string, volume: number, pitchMultiplier: number, source: Point, layer: Layer | null): SoundInfo | null {
+export function playSound(filePath: string, volume: number, pitchMultiplier: number, source: Point, layer: Layer): SoundInfo | null {
    // Only play sounds from the current layer
    if (layer !== null && layer !== getCurrentLayer()) {
       return null;
    }
+
+   assert(Number.isFinite(volume));
    
    const audioBuffer = audioBuffers[filePath];
    assert(typeof audioBuffer !== "undefined");
@@ -432,6 +433,12 @@ export function playSound(filePath: string, volume: number, pitchMultiplier: num
       trackSource: trackSource,
       sound: sound
    };
+}
+
+/** Plays a sound which is not embodied in the world and exists only to the playing player. */
+export function playHeadSound(filePath: string, volume: number, pitchMultiplier: number): SoundInfo | null {
+   // @HACK @HACK @HACK @BUG this isn't actually disembodied and absolute / attached to camera and if the player moves or changes layers it will decrease in volume D:
+   return playSound(filePath, volume, pitchMultiplier, cameraPosition.copy(), getCurrentLayer());
 }
 
 // @Cleanup: Make this return the sound info. and make it so that the sound info is guaranteed. so if it starts in wrong layer it still plays if it goes to correct layer
@@ -499,6 +506,8 @@ export function updateSounds(): void {
          removeSound(sound);
          i--;
       } else {
+         // @HACK to find out why this is crashing and idk why
+         assert(Number.isFinite(sound.volume));
          sound.gainNode.gain.value = calculateSoundVolume(sound.volume, sound.position);
       }
    }
@@ -512,10 +521,10 @@ export function playBuildingHitSound(entity: Entity, hitbox: Hitbox): void {
 export function playRiverSounds(): void {
    const layer = getCurrentLayer();
    
-   const minTileX = Camera.minVisibleChunkX * Settings.CHUNK_SIZE;
-   const maxTileX = (Camera.maxVisibleChunkX + 1) * Settings.CHUNK_SIZE - 1;
-   const minTileY = Camera.minVisibleChunkY * Settings.CHUNK_SIZE;
-   const maxTileY = (Camera.maxVisibleChunkY + 1) * Settings.CHUNK_SIZE - 1;
+   const minTileX = minVisibleChunkX * Settings.CHUNK_SIZE;
+   const maxTileX = (maxVisibleChunkX + 1) * Settings.CHUNK_SIZE - 1;
+   const minTileY = minVisibleChunkY * Settings.CHUNK_SIZE;
+   const maxTileY = (maxVisibleChunkY + 1) * Settings.CHUNK_SIZE - 1;
 
    for (let tileX = minTileX; tileX <= maxTileX; tileX++) {
       for (let tileY = minTileY; tileY <= maxTileY; tileY++) {

@@ -1,19 +1,13 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 
-export interface ThrowingProjectileComponentParams {}
+export interface ThrowingProjectileComponentData {}
 
 export interface ThrowingProjectileComponent {}
 
-export const ThrowingProjectileComponentArray = new ServerComponentArray<ThrowingProjectileComponent, ThrowingProjectileComponentParams, never>(ServerComponentType.throwingProjectile, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const ThrowingProjectileComponentArray = new ServerComponentArray<ThrowingProjectileComponent, ThrowingProjectileComponentData, never>(ServerComponentType.throwingProjectile, true, createComponent, getMaxRenderParts, decodeData);
 
-function createParamsFromData(): ThrowingProjectileComponentParams {
+function decodeData(): ThrowingProjectileComponentData {
    return {};
 }
 
@@ -24,7 +18,3 @@ function createComponent(): ThrowingProjectileComponent {
 function getMaxRenderParts(): number {
    return 0;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}

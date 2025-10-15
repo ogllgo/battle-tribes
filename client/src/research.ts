@@ -3,10 +3,9 @@ import { RESEARCH_ORB_AMOUNTS, RESEARCH_ORB_COMPLETE_TIME, getRandomResearchOrbS
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TribesmanTitle } from "battletribes-shared/titles";
-import Board from "./Board";
-import Game, { getCursorWorldPos } from "./Game";
+import { currentSnapshot } from "./game";
 import { getSelectedEntityID } from "./entity-selection";
-import { playSound } from "./sound";
+import { playHeadSound } from "./sound";
 import { createMagicParticle, createStarParticle } from "./particles";
 import { getRandomPositionInEntity, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { entityExists, getEntityType } from "./world";
@@ -14,7 +13,7 @@ import { InventoryUseComponentArray } from "./entity-components/server-component
 import { TribesmanComponentArray, tribesmanHasTitle } from "./entity-components/server-components/TribesmanComponent";
 import { sendStudyTechPacket } from "./networking/packet-sending";
 import { playerInstance } from "./player";
-import { Hitbox } from "./hitboxes";
+import { cursorWorldPos } from "./mouse";
 
 export interface ResearchOrb {
    /* X position of the node in the world */
@@ -105,15 +104,12 @@ const completeOrb = (): void => {
       createStarParticle(x, y);
    }
 
-   const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
-   const playerHitbox = playerTransformComponent.hitboxes[0];
-
-   playSound("orb-complete.mp3", 0.3, ORB_COMPLETE_SOUND_PITCHES[currentResearchOrb!.size], playerHitbox.box.position, null);
+   playHeadSound("orb-complete.mp3", 0.3, ORB_COMPLETE_SOUND_PITCHES[currentResearchOrb!.size]);
 
    // Make the player smack to the bench
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
    const useInfo = inventoryUseComponent.limbInfos[0];
-   useInfo.lastAttackTicks = Board.serverTicks;
+   useInfo.lastAttackTicks = currentSnapshot.tick;
    
    const selectedStructure = getSelectedEntityID();
    currentResearchOrb = generateResearchOrb(selectedStructure);
@@ -135,8 +131,6 @@ export function attemptToResearch(): void {
    if (currentResearchOrb === null) {
       return;
    }
-   
-   const cursorWorldPos = getCursorWorldPos();
    
    const nodeSize = RESEARCH_ORB_SIZES[currentResearchOrb.size];
 

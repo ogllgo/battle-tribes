@@ -1,8 +1,7 @@
 import { Settings } from "../../shared/src/settings";
 import { SubtileType } from "../../shared/src/tiles";
-import { customTickIntervalHasPassed, distance, lerp, Point, randAngle, randFloat, randInt } from "../../shared/src/utils";
+import { customTickIntervalHasPassed, lerp, Point, randAngle, randFloat, randInt } from "../../shared/src/utils";
 import Board from "./Board";
-import Camera from "./Camera";
 import { getSubtileX, getSubtileY } from "./Layer";
 import Particle from "./Particle";
 import { addMonocolourParticleToBufferContainer, addTexturedParticleToBufferContainer, ParticleRenderLayer } from "./rendering/webgl/particle-rendering";
@@ -56,7 +55,7 @@ export function setMinedSubtiles(subtiles: ReadonlyArray<MinedSubtile>): void {
    //       const x = subtileX * Settings.SUBTILE_SIZE;
    //       const y = subtileY * Settings.SUBTILE_SIZE;
 
-   //       const dist = distance(x, y, Camera.position.x, Camera.position.y);
+   //       const dist = distance(x, y, cameraPosition.x, cameraPosition.y);
    //       if (dist < minDist) {
    //          minDist = dist;
    //          closestSubtile = subtileIndex;

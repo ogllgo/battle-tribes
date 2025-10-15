@@ -6,7 +6,7 @@ import { createDirtParticle, createRockParticle, createRockSpeckParticle } from 
 import { playSound, playSoundOnHitbox, ROCK_DESTROY_SOUNDS, ROCK_HIT_SOUNDS } from "../../sound";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { PacketReader } from "battletribes-shared/packets";
-import { EntityParams, getEntityAgeTicks, getEntityLayer } from "../../world";
+import { EntityComponentData, getEntityAgeTicks, getEntityLayer } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
@@ -14,7 +14,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface TombstoneComponentParams {
+export interface TombstoneComponentData {
    readonly tombstoneType: number;
    readonly zombieSpawnProgress: number;
    readonly zombieSpawnX: number;
@@ -35,26 +35,20 @@ export interface TombstoneComponent {
 const HITBOX_WIDTH = 48;
 const HITBOX_HEIGHT = 88;
 
-export const TombstoneComponentArray = new ServerComponentArray<TombstoneComponent, TombstoneComponentParams, IntermediateInfo>(ServerComponentType.tombstone, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const TombstoneComponentArray = new ServerComponentArray<TombstoneComponent, TombstoneComponentData, IntermediateInfo>(ServerComponentType.tombstone, true, createComponent, getMaxRenderParts, decodeData);
+TombstoneComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+TombstoneComponentArray.onTick = onTick;
+TombstoneComponentArray.updateFromData = updateFromData;
+TombstoneComponentArray.onHit = onHit;
+TombstoneComponentArray.onDie = onDie;
 
-function createParamsFromData(reader: PacketReader): TombstoneComponentParams {
+function decodeData(reader: PacketReader): TombstoneComponentData {
    const tombstoneType = reader.readNumber();
    const zombieSpawnProgress = reader.readNumber();
    const zombieSpawnX = reader.readNumber();
    const zombieSpawnY = reader.readNumber();
 
-   const hasDeathInfo = reader.readBoolean();
-   reader.padOffset(3);
+   const hasDeathInfo = reader.readBool();
    
    let deathInfo: DeathInfo | null;
    if (hasDeathInfo) {
@@ -77,33 +71,32 @@ function createParamsFromData(reader: PacketReader): TombstoneComponentParams {
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
-   const tombstoneComponentParams = entityParams.serverComponentParams[ServerComponentType.tombstone]!;
+   const tombstoneComponentData = entityComponentData.serverComponentData[ServerComponentType.tombstone]!;
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,
          0,
-         getTextureArrayIndex(`entities/tombstone/tombstone${tombstoneComponentParams.tombstoneType + 1}.png`)
+         getTextureArrayIndex(`entities/tombstone/tombstone${tombstoneComponentData.tombstoneType + 1}.png`)
       )
    );
 
    return {};
 }
 
-function createComponent(entityParams: EntityParams): TombstoneComponent {
-   const tombstoneComponentParams = entityParams.serverComponentParams[ServerComponentType.tombstone]!;
-   
+function createComponent(entityComponentData: EntityComponentData): TombstoneComponent {
+   const tombstoneComponentData = entityComponentData.serverComponentData[ServerComponentType.tombstone]!;
    return {
-      tombstoneType:tombstoneComponentParams. tombstoneType,
-      zombieSpawnProgress:tombstoneComponentParams. zombieSpawnProgress,
-      zombieSpawnX:tombstoneComponentParams. zombieSpawnX,
-      zombieSpawnY:tombstoneComponentParams. zombieSpawnY,
-      deathInfo:tombstoneComponentParams. deathInfo
+      tombstoneType: tombstoneComponentData. tombstoneType,
+      zombieSpawnProgress: tombstoneComponentData. zombieSpawnProgress,
+      zombieSpawnX: tombstoneComponentData. zombieSpawnX,
+      zombieSpawnY: tombstoneComponentData. zombieSpawnY,
+      deathInfo: tombstoneComponentData. deathInfo
    };
 }
 
@@ -131,32 +124,12 @@ function onTick(entity: Entity): void {
    }
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT);
-
-   const hasDeathInfo = reader.readBoolean();
-   reader.padOffset(3);
-   if (hasDeathInfo) {
-      reader.padString();
-      reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-   }
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: TombstoneComponentData, entity: Entity): void {
    const tombstoneComponent = TombstoneComponentArray.getComponent(entity);
    
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-
-   tombstoneComponent.zombieSpawnProgress = reader.readNumber();
-   tombstoneComponent.zombieSpawnX = reader.readNumber();
-   tombstoneComponent.zombieSpawnY = reader.readNumber();
-
-   const hasDeathInfo = reader.readBoolean();
-   reader.padOffset(3);
-   if (hasDeathInfo) {
-      reader.padString();
-      reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-   }
+   tombstoneComponent.zombieSpawnProgress = data.zombieSpawnProgress;
+   tombstoneComponent.zombieSpawnX = data.zombieSpawnX;
+   tombstoneComponent.zombieSpawnY = data.zombieSpawnY;
 }
 
 function onHit(entity: Entity, hitbox: Hitbox): void {

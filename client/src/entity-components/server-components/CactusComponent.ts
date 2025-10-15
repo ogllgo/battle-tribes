@@ -4,13 +4,13 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { createCactusSpineParticle, createFlowerParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
-import { getHitboxByLocalID, TransformComponentArray } from "./TransformComponent";
+import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { assert, randAngle, randInt } from "../../../../shared/src/utils";
 import { playSoundOnHitbox } from "../../sound";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { getHitboxByLocalID } from "../../hitboxes";
 
 export interface CactusFlower {
    readonly parentHitboxLocalID: number;
@@ -21,7 +21,7 @@ export interface CactusFlower {
    readonly size: CactusFlowerSize;
 }
 
-export interface CactusComponentParams {
+export interface CactusComponentData {
    readonly flowers: Array<CactusFlower>;
 }
 
@@ -42,18 +42,12 @@ const getFlowerTextureSource = (type: number, size: CactusFlowerSize): string =>
    }
 }
 
-export const CactusComponentArray = new ServerComponentArray<CactusComponent, CactusComponentParams, IntermediateInfo>(ServerComponentType.cactus, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const CactusComponentArray = new ServerComponentArray<CactusComponent, CactusComponentData, IntermediateInfo>(ServerComponentType.cactus, true, createComponent, getMaxRenderParts, decodeData);
+CactusComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+CactusComponentArray.onHit = onHit;
+CactusComponentArray.onDie = onDie;
 
-function createParamsFromData(reader: PacketReader): CactusComponentParams {
+function decodeData(reader: PacketReader): CactusComponentData {
    const flowers = new Array<CactusFlower>();
    const numFlowers = reader.readNumber();
    for (let i = 0; i < numFlowers; i++) {
@@ -80,10 +74,10 @@ function createParamsFromData(reader: PacketReader): CactusComponentParams {
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
-      const hitbox = transformComponentParams.hitboxes[i];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   for (let i = 0; i < transformComponentData.hitboxes.length; i++) {
+      const hitbox = transformComponentData.hitboxes[i];
 
       const baseRenderPart = new TexturedRenderPart(
          hitbox,
@@ -95,9 +89,9 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    }
 
    // Flowers
-   const cactusComponentConfig = entityParams.serverComponentParams[ServerComponentType.cactus]!;
+   const cactusComponentConfig = entityComponentData.serverComponentData[ServerComponentType.cactus]!;
    for (const flower of cactusComponentConfig.flowers) {
-      const hitbox = getHitboxByLocalID(transformComponentParams.hitboxes, flower.parentHitboxLocalID);
+      const hitbox = getHitboxByLocalID(transformComponentData.hitboxes, flower.parentHitboxLocalID);
       assert(hitbox !== null);
       
       const renderPart = new TexturedRenderPart(
@@ -114,26 +108,17 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    return {};
 }
 
-function createComponent(entityParams: EntityParams): CactusComponent {
-   const cactusComponentConfig = entityParams.serverComponentParams[ServerComponentType.cactus]!;
+function createComponent(entityComponentData: EntityComponentData): CactusComponent {
+   const cactusComponentConfig = entityComponentData.serverComponentData[ServerComponentType.cactus]!;
    return {
       flowers: cactusComponentConfig.flowers
    };
 }
 
-function getMaxRenderParts(entityParams: EntityParams): number {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const cactusComponentConfig = entityParams.serverComponentParams[ServerComponentType.cactus]!;
-   return transformComponentParams.hitboxes.length + cactusComponentConfig.flowers.length;
-}
-
-function padData(reader: PacketReader): void {
-   const numFlowers = reader.readNumber();
-   reader.padOffset(6 * Float32Array.BYTES_PER_ELEMENT * numFlowers);
-}
-
-function updateFromData(reader: PacketReader): void {
-   padData(reader);
+function getMaxRenderParts(entityComponentData: EntityComponentData): number {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const cactusComponentConfig = entityComponentData.serverComponentData[ServerComponentType.cactus]!;
+   return transformComponentData.hitboxes.length + cactusComponentConfig.flowers.length;
 }
 
 function onHit(entity: Entity): void {

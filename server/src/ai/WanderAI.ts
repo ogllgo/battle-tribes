@@ -78,9 +78,9 @@ export default class WanderAI {
          const aiHelperComponent = AIHelperComponentArray.getComponent(entity);
          
          const minTileX = Math.max(Math.floor((entityHitbox.box.position.x - aiHelperComponent.visionRange) / Settings.TILE_SIZE), 0);
-         const maxTileX = Math.min(Math.floor((entityHitbox.box.position.x + aiHelperComponent.visionRange) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1);
+         const maxTileX = Math.min(Math.floor((entityHitbox.box.position.x + aiHelperComponent.visionRange) / Settings.TILE_SIZE), Settings.WORLD_SIZE_TILES - 1);
          const minTileY = Math.max(Math.floor((entityHitbox.box.position.y - aiHelperComponent.visionRange) / Settings.TILE_SIZE), 0);
-         const maxTileY = Math.min(Math.floor((entityHitbox.box.position.y + aiHelperComponent.visionRange) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1);
+         const maxTileY = Math.min(Math.floor((entityHitbox.box.position.y + aiHelperComponent.visionRange) / Settings.TILE_SIZE), Settings.WORLD_SIZE_TILES - 1);
          
          let attempts = 0;
          let x: number;

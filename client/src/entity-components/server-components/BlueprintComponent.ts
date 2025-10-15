@@ -8,7 +8,7 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
 import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityComponentData, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { BALLISTA_GEAR_X, BALLISTA_GEAR_Y, BALLISTA_AMMO_BOX_OFFSET_X, BALLISTA_AMMO_BOX_OFFSET_Y } from "../../utils";
 import { WARRIOR_HUT_SIZE } from "./HutComponent";
@@ -16,9 +16,9 @@ import { TribeComponentArray } from "./TribeComponent";
 import { playerTribe } from "../../tribes";
 import { Hitbox } from "../../hitboxes";
 
-export interface BlueprintComponentParams {
+export interface BlueprintComponentData {
    readonly blueprintType: BlueprintType;
-   readonly lastBlueprintProgress: number;
+   readonly blueprintProgress: number;
    readonly associatedEntityID: number;
 }
 
@@ -411,43 +411,38 @@ const createStoneBlueprintWorkParticleEffects = (originX: number, originY: numbe
    }
 }
 
-export const BlueprintComponentArray = new ServerComponentArray<BlueprintComponent, BlueprintComponentParams, never>(ServerComponentType.blueprint, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onLoad: onLoad,
-   onSpawn: onSpawn,
-   padData: padData,
-   updateFromData: updateFromData,
-   onDie: onDie
-});
+export const BlueprintComponentArray = new ServerComponentArray<BlueprintComponent, BlueprintComponentData, never>(ServerComponentType.blueprint, true, createComponent, getMaxRenderParts, decodeData);
+BlueprintComponentArray.onLoad = onLoad;
+BlueprintComponentArray.onSpawn = onSpawn;
+BlueprintComponentArray.updateFromData = updateFromData;
+BlueprintComponentArray.onDie = onDie;
 
-function createParamsFromData(reader: PacketReader): BlueprintComponentParams {
+function decodeData(reader: PacketReader): BlueprintComponentData {
    const blueprintType = reader.readNumber() as BlueprintType;
    const blueprintProgress = reader.readNumber();
    const associatedEntityID = reader.readNumber();
 
    return {
       blueprintType: blueprintType,
-      lastBlueprintProgress: blueprintProgress,
+      blueprintProgress: blueprintProgress,
       associatedEntityID: associatedEntityID
    };
 }
 
-function createComponent(entityParams: EntityParams): BlueprintComponent {
-   const blueprintComponentParams = entityParams.serverComponentParams[ServerComponentType.blueprint]!;
+function createComponent(entityComponentData: EntityComponentData): BlueprintComponent {
+   const blueprintComponentData = entityComponentData.serverComponentData[ServerComponentType.blueprint]!;
    
    return {
       partialRenderParts: [],
-      blueprintType: blueprintComponentParams.blueprintType,
-      lastBlueprintProgress: blueprintComponentParams.lastBlueprintProgress,
-      associatedEntityID: blueprintComponentParams.associatedEntityID
+      blueprintType: blueprintComponentData.blueprintType,
+      lastBlueprintProgress: blueprintComponentData.blueprintProgress,
+      associatedEntityID: blueprintComponentData.associatedEntityID
    };
 }
 
-function getMaxRenderParts(entityParams: EntityParams): number {
-   const blueprintComponentParams = entityParams.serverComponentParams[ServerComponentType.blueprint]!;
-   return 2 * BLUEPRINT_PROGRESS_TEXTURE_SOURCES[blueprintComponentParams.blueprintType].length;
+function getMaxRenderParts(entityComponentData: EntityComponentData): number {
+   const blueprintComponentData = entityComponentData.serverComponentData[ServerComponentType.blueprint]!;
+   return 2 * BLUEPRINT_PROGRESS_TEXTURE_SOURCES[blueprintComponentData.blueprintType].length;
 }
 
 const updatePartialTexture = (entity: Entity): void => {
@@ -560,10 +555,6 @@ function onSpawn(entity: Entity): void {
    playSoundOnHitbox("blueprint-place.mp3", 0.4, 1, entity, hitbox, false);
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
-}
-
 const countProgressTextures = (blueprintType: BlueprintType): number => {
    let numTextures = 0;
    const progressTextureInfoArray = BLUEPRINT_PROGRESS_TEXTURE_SOURCES[blueprintType];
@@ -596,12 +587,12 @@ const getCurrentBlueprintProgressTexture = (blueprintType: BlueprintType, bluepr
    return progressTextureInfoArray[progressTextureInfoArray.length - 1];
 }
 
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: BlueprintComponentData, entity: Entity): void {
    const blueprintComponent = BlueprintComponentArray.getComponent(entity);
    
-   blueprintComponent.blueprintType = reader.readNumber();
-   const blueprintProgress = reader.readNumber();
-   blueprintComponent.associatedEntityID = reader.readNumber();
+   blueprintComponent.blueprintType = data.blueprintType;
+   const blueprintProgress = data.blueprintProgress;
+   blueprintComponent.associatedEntityID = data.associatedEntityID;
 
    // @Speed: don't do always, only if the data changes!
    updatePartialTexture(entity);

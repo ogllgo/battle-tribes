@@ -6,7 +6,6 @@ import { Settings } from "../../../../shared/src/settings";
 import { getTamingSkill, TamingSkill, TamingSkillID } from "../../../../shared/src/taming";
 import { TribeType } from "../../../../shared/src/tribes";
 import { UtilVars } from "../../../../shared/src/utils";
-import Board from "../../Board";
 import { getPlayerSelectedItem } from "../../components/game/GameInteractableLayer";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { Hitbox } from "../../hitboxes";
@@ -14,7 +13,7 @@ import { RenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { playerTribe } from "../../tribes";
-import { EntityParams, getEntityRenderInfo, getEntityType } from "../../world";
+import { EntityComponentData, getEntityRenderInfo, getEntityType } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
@@ -22,12 +21,11 @@ interface TamingSkillLearning {
    readonly skill: TamingSkill;
    /** Indexes will be the same as the requirements on the skill */
    readonly requirementProgressArray: Array<number>;
-   lastUpdateTicks: number;
 }
 
-export interface TamingComponentParams {
+export interface TamingComponentData {
    readonly tamingTier: number;
-   readonly berriesEatenInTier: number;
+   readonly foodEatenInTier: number;
    readonly name: string;
    readonly acquiredSkills: Array<TamingSkill>;
    readonly skillLearningArray: Array<TamingSkillLearning>;
@@ -66,17 +64,12 @@ const TAMING_TIER_TEXTURE_SOURCES: Record<number, string> = {
 const TAMING_TIER_RENDER_PART_Z_INDEX = 19;
 const HALO_RENDER_PART_Z_INDEX = 20;
 
-export const TamingComponentArray = new ServerComponentArray<TamingComponent, TamingComponentParams, IntermediateInfo>(ServerComponentType.taming, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onTick: onTick
-});
+export const TamingComponentArray = new ServerComponentArray<TamingComponent, TamingComponentData, IntermediateInfo>(ServerComponentType.taming, true, createComponent, getMaxRenderParts, decodeData);
+TamingComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+TamingComponentArray.updateFromData = updateFromData;
+TamingComponentArray.onTick = onTick;
 
-function createParamsFromData(reader: PacketReader): TamingComponentParams {
+function decodeData(reader: PacketReader): TamingComponentData {
    const tamingTier = reader.readNumber();
    const berriesEatenInTier = reader.readNumber();
    const name = reader.readString();
@@ -103,21 +96,17 @@ function createParamsFromData(reader: PacketReader): TamingComponentParams {
       
       const skillLearning: TamingSkillLearning = {
          skill: skill,
-         requirementProgressArray: requirementProgressArray,
-         lastUpdateTicks: Board.serverTicks
+         requirementProgressArray: requirementProgressArray
       };
       skillLearningArray.push(skillLearning);
    }
    
-   const isAttacking = reader.readBoolean();
-   reader.padOffset(3);
-   
-   const isFollowing = reader.readBoolean();
-   reader.padOffset(3);
+   const isAttacking = reader.readBool();
+   const isFollowing = reader.readBool();
    
    return {
       tamingTier: tamingTier,
-      berriesEatenInTier: berriesEatenInTier,
+      foodEatenInTier: berriesEatenInTier,
       name: name,
       acquiredSkills: acquiredSkills,
       skillLearningArray: skillLearningArray,
@@ -168,12 +157,12 @@ const createTamingTierRenderPart = (tamingTier: number, parentHitbox: Hitbox): T
    return renderPart;
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
-   const tamingComponentParams = entityParams.serverComponentParams[ServerComponentType.taming]!;
-   const tamingTier = tamingComponentParams.tamingTier;
+   const tamingComponentData = entityComponentData.serverComponentData[ServerComponentType.taming]!;
+   const tamingTier = tamingComponentData.tamingTier;
 
    // @HACK @TEMPORARY: the entity intermediate info's render info is the wrong one to use for glurbs, sooo... we don't set it and let the updateFromData figure it out.
    const tamingTierRenderPart = null;
@@ -187,7 +176,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    
    // Attack halo
    let attackHalo: RenderPart | null;
-   // if (tamingComponentParams.isAttacking) {
+   // if (tamingComponentData.isAttacking) {
    //    // @Copynpaste
    //    const headRenderPart = renderInfo.getRenderThing("tamingComponent:head");
    //    attackHalo = createAttackHalo(headRenderPart);
@@ -199,7 +188,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    
    // Follow halo
    let followHalo: RenderPart | null;
-   // if (tamingComponentParams.isFollowing) {
+   // if (tamingComponentData.isFollowing) {
    //    const headRenderPart = renderInfo.getRenderThing("tamingComponent:head");
    //    followHalo = createFollowHalo(headRenderPart);
    //    renderInfo.attachRenderPart(followHalo);
@@ -215,17 +204,17 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    }
 }
 
-function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): TamingComponent {
-   const tamingComponentParams = entityParams.serverComponentParams[ServerComponentType.taming]!;
+function createComponent(entityComponentData: EntityComponentData, intermediateInfo: IntermediateInfo): TamingComponent {
+   const tamingComponentData = entityComponentData.serverComponentData[ServerComponentType.taming]!;
    return {
-      tamingTier: tamingComponentParams.tamingTier,
-      foodEatenInTier: tamingComponentParams.berriesEatenInTier,
-      name: tamingComponentParams.name,
-      acquiredSkills: tamingComponentParams.acquiredSkills,
-      skillLearningArray: tamingComponentParams.skillLearningArray,
+      tamingTier: tamingComponentData.tamingTier,
+      foodEatenInTier: tamingComponentData.foodEatenInTier,
+      name: tamingComponentData.name,
+      acquiredSkills: tamingComponentData.acquiredSkills,
+      skillLearningArray: tamingComponentData.skillLearningArray,
       tamingTierRenderPart: intermediateInfo.tamingTierRenderPart,
-      isAttacking: tamingComponentParams.isAttacking,
-      isFollowing: tamingComponentParams.isFollowing,
+      isAttacking: tamingComponentData.isAttacking,
+      isFollowing: tamingComponentData.isFollowing,
       attackHalo: intermediateInfo.attackHalo,
       followHalo: intermediateInfo.followHalo
    };
@@ -234,16 +223,6 @@ function createComponent(entityParams: EntityParams, intermediateInfo: Intermedi
 function getMaxRenderParts(): number {
    // @Hack: shoudl be lower
    return 5;
-}
-
-function padData(reader: PacketReader): void {
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-   reader.padString();
-
-   const numAcquiredSkills = reader.readNumber();
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT * numAcquiredSkills);
-
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 }
 
 /**
@@ -330,10 +309,10 @@ const getHeadRenderInfo = (entity: Entity): EntityRenderInfo => {
    return getEntityRenderInfo(entity);
 }
 
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: TamingComponentData, entity: Entity): void {
    const tamingComponent = TamingComponentArray.getComponent(entity);
 
-   const tamingTier = reader.readNumber();
+   const tamingTier = data.tamingTier;
    if (tamingTier !== tamingComponent.tamingTier) {
       if (tamingComponent.tamingTierRenderPart === null) {
           const hitbox = getHeadHitbox(entity);
@@ -347,64 +326,24 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    }
    tamingComponent.tamingTier = tamingTier;
    
-   tamingComponent.foodEatenInTier = reader.readNumber();
-   tamingComponent.name = reader.readString();
+   tamingComponent.foodEatenInTier = data.foodEatenInTier
+   tamingComponent.name = data.name;
 
-   const newNumAcquiredSkills = reader.readNumber();
-   for (let i = 0; i < newNumAcquiredSkills; i++) {
-      if (i < tamingComponent.acquiredSkills.length) {
-         reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-      } else {
-         const skillID = reader.readNumber() as TamingSkillID;
-         const skill = getTamingSkill(skillID);
-         tamingComponent.acquiredSkills.push(skill);
+   for (let i = 0; i < data.acquiredSkills.length; i++) {
+      if (i >= tamingComponent.acquiredSkills.length) {
+         const skillData = data.acquiredSkills[i];
+         tamingComponent.acquiredSkills.push(skillData);
       }
    }
 
-   // Update existing/new skill learnings
-   const numSkillLearnings = reader.readNumber();
-   for (let i = 0; i < numSkillLearnings; i++) {
-      const skillID = reader.readNumber() as TamingSkillID;
-      const skill = getTamingSkill(skillID);
-
-      const existingSkillLearning = getTamingSkillLearning(tamingComponent, skillID);
-      if (existingSkillLearning !== null) {
-         // Update requirement progress array
-         for (let i = 0; i < skill.requirements.length; i++) {
-            existingSkillLearning.requirementProgressArray[i] = reader.readNumber();
-         }
-
-         existingSkillLearning.lastUpdateTicks = Board.serverTicks;
-      } else {
-         const requirementProgressArray = new Array<number>();
-         for (let i = 0; i < skill.requirements.length; i++) {
-            const requirementProgress = reader.readNumber();
-            requirementProgressArray.push(requirementProgress);
-         }
-
-         const skillLearning: TamingSkillLearning = {
-            skill: skill,
-            requirementProgressArray: requirementProgressArray,
-            lastUpdateTicks: Board.serverTicks
-         };
-         tamingComponent.skillLearningArray.push(skillLearning);
-      }
+   // @SPEED @GARBAGE
+   tamingComponent.skillLearningArray.splice(0, tamingComponent.skillLearningArray.length)
+   for (const skillLearning of data.skillLearningArray) {
+      tamingComponent.skillLearningArray.push(skillLearning);
    }
 
-   // Remove old skill learnings
-   for (let i = 0; i < tamingComponent.skillLearningArray.length; i++) {
-      const skillLearning = tamingComponent.skillLearningArray[i];
-      if (skillLearning.lastUpdateTicks !== Board.serverTicks) {
-         tamingComponent.skillLearningArray.splice(i, 1);
-         i--;
-      }
-   }
-
-   tamingComponent.isAttacking = reader.readBoolean();
-   reader.padOffset(3);
-   
-   tamingComponent.isFollowing = reader.readBoolean();
-   reader.padOffset(3);
+   tamingComponent.isAttacking = data.isAttacking;
+   tamingComponent.isFollowing = data.isFollowing;
    
    // @Copynpaste
    if (tamingComponent.isAttacking) {

@@ -497,7 +497,7 @@ export default class Tribe {
    }
 
    private removeTileFromArea(tileX: number, tileY: number): void {
-      const tileIndex = tileY * Settings.BOARD_DIMENSIONS + tileX;
+      const tileIndex = tileY * Settings.WORLD_SIZE_TILES + tileX;
       
       if (!this.area.hasOwnProperty(tileIndex)) {
          return;
@@ -510,7 +510,7 @@ export default class Tribe {
 
       const chunkX = Math.floor(tileX / Settings.CHUNK_SIZE);
       const chunkY = Math.floor(tileY / Settings.CHUNK_SIZE);
-      const chunkIndex = chunkY * Settings.BOARD_SIZE + chunkX;
+      const chunkIndex = chunkY * Settings.WORLD_SIZE_CHUNKS + chunkX;
       if (!this.chunkArea.hasOwnProperty(chunkIndex)) {
          return;
       } else {
@@ -536,7 +536,7 @@ export default class Tribe {
 
       const chunkX = Math.floor(tileX / Settings.CHUNK_SIZE);
       const chunkY = Math.floor(tileY / Settings.CHUNK_SIZE);
-      const chunkIndex = chunkY * Settings.BOARD_SIZE + chunkX;
+      const chunkIndex = chunkY * Settings.WORLD_SIZE_CHUNKS + chunkX;
       if (!this.chunkArea.hasOwnProperty(chunkIndex)) {
          const chunk = layer.getChunk(chunkX, chunkY);
          this.chunkArea[chunkIndex] = {
@@ -724,68 +724,65 @@ export function getExtendedTribeDataLength(tribe: Tribe): number {
 }
 
 const addTribeData = (packet: Packet, tribe: Tribe): void => {
-   packet.addString(tribe.name);
-   packet.addNumber(tribe.id);
-   packet.addNumber(tribe.tribeType);
+   packet.writeString(tribe.name);
+   packet.writeNumber(tribe.id);
+   packet.writeNumber(tribe.tribeType);
 }
 
 export function addShortTribeData(packet: Packet, tribe: Tribe): void {
-   packet.addBoolean(false);
-   packet.padOffset(3);
+   packet.writeBool(false);
    addTribeData(packet, tribe);
 }
 
 export function addExtendedTribeData(packet: Packet, tribe: Tribe): void {
-   packet.addBoolean(true);
-   packet.padOffset(3);
+   packet.writeBool(true);
    addTribeData(packet, tribe);
    
-   packet.addBoolean(tribe.totem !== null);
-   packet.padOffset(3);
-   packet.addNumber(tribe.getNumHuts());
-   packet.addNumber(tribe.tribesmanCap);
+   packet.writeBool(tribe.totem !== null);
+   packet.writeNumber(tribe.getNumHuts());
+   packet.writeNumber(tribe.tribesmanCap);
 
    const area = tribe.getArea();
-   packet.addNumber(area.length);
+   packet.writeNumber(area.length);
    for (const tileIndex of area) {
       const tileX = getTileX(tileIndex);
       const tileY = getTileY(tileIndex);
-      packet.addNumber(tileX);
-      packet.addNumber(tileY);
+      packet.writeNumber(tileX);
+      packet.writeNumber(tileY);
    }
 
-   packet.addNumber(tribe.selectedTechID !== null ? tribe.selectedTechID : -1);
+   packet.writeNumber(tribe.selectedTechID !== null ? tribe.selectedTechID : -1);
 
-   packet.addNumber(tribe.unlockedTechs.length);
+   packet.writeNumber(tribe.unlockedTechs.length);
    for (const tech of tribe.unlockedTechs) {
-      packet.addNumber(tech.id);
+      packet.writeNumber(tech.id);
    }
 
    // Tech tree unlock progress
    const unlockProgressEntries = Object.entries(tribe.techTreeUnlockProgress).map(([a, b]) => [Number(a), b]) as Array<[number, TechUnlockProgress]>;
-   packet.addNumber(unlockProgressEntries.length);
+   packet.writeNumber(unlockProgressEntries.length);
    for (const [techID, unlockProgress] of unlockProgressEntries) {
-      packet.addNumber(techID);
+      packet.writeNumber(techID);
 
       const itemRequirementEntries = Object.entries(unlockProgress.itemProgress).map(([a, b]) => [Number(a), b]) as Array<[ItemType, number]>;
-      packet.addNumber(itemRequirementEntries.length);
+      packet.writeNumber(itemRequirementEntries.length);
       for (const [itemType, amount] of itemRequirementEntries) {
-         packet.addNumber(itemType);
-         packet.addNumber(amount);
+         packet.writeNumber(itemType);
+         packet.writeNumber(amount);
       }
       
-      packet.addNumber(unlockProgress.studyProgress);
+      packet.writeNumber(unlockProgress.studyProgress);
    }
 
    // Tribesmen
-   packet.addNumber(tribe.tribesmanIDs.length);
+   packet.writeNumber(tribe.tribesmanIDs.length);
    for (const tribesman of tribe.tribesmanIDs) {
       // ID
-      packet.addNumber(tribesman);
+      packet.writeNumber(tribesman);
       // Entity type
-      packet.addNumber(getEntityType(tribesman));
+      packet.writeNumber(getEntityType(tribesman));
       // Name
       const tribeMemberComponent = TribeMemberComponentArray.getComponent(tribesman);
-      packet.addString(tribeMemberComponent.name);
+      packet.writeString(tribeMemberComponent.name);
    }
 }

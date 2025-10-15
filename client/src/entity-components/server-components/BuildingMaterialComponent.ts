@@ -2,10 +2,10 @@ import { BuildingMaterial, ServerComponentType } from "battletribes-shared/compo
 import { Entity, EntityType } from "battletribes-shared/entities";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
-import { EntityParams, getEntityRenderInfo, getEntityType } from "../../world";
+import { EntityComponentData, getEntityRenderInfo, getEntityType } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 
-export interface BuildingMaterialComponentParams {
+export interface BuildingMaterialComponentData {
    readonly material: BuildingMaterial;
 }
 
@@ -35,32 +35,25 @@ const getMaterialTextureSources = (entityType: EntityType): ReadonlyArray<string
    }
 }
 
-export const BuildingMaterialComponentArray = new ServerComponentArray<BuildingMaterialComponent, BuildingMaterialComponentParams, never>(ServerComponentType.buildingMaterial, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const BuildingMaterialComponentArray = new ServerComponentArray<BuildingMaterialComponent, BuildingMaterialComponentData, never>(ServerComponentType.buildingMaterial, true, createComponent, getMaxRenderParts, decodeData);
+BuildingMaterialComponentArray.updateFromData = updateFromData;
 
-const fillBuildingMaterialComponentParams = (material: BuildingMaterial): BuildingMaterialComponentParams => {
+export function createBuildingMaterialComponentData(material: BuildingMaterial): BuildingMaterialComponentData {
    return {
       material: material
    };
 }
 
-export function createBuildingMaterialComponentParams(material: BuildingMaterial): BuildingMaterialComponentParams {
-   return fillBuildingMaterialComponentParams(material);
-}
-
-function createParamsFromData(reader: PacketReader): BuildingMaterialComponentParams {
+function decodeData(reader: PacketReader): BuildingMaterialComponentData {
    const material = reader.readNumber();
-   return fillBuildingMaterialComponentParams(material);
+   return {
+      material: material
+   };
 }
 
-function createComponent(entityParams: EntityParams): BuildingMaterialComponent {
+function createComponent(entityComponentData: EntityComponentData): BuildingMaterialComponent {
    return {
-      material: entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!.material
+      material: entityComponentData.serverComponentData[ServerComponentType.buildingMaterial]!.material
    };
 }
 
@@ -68,14 +61,10 @@ function getMaxRenderParts(): number {
    return 0;
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: BuildingMaterialComponentData, entity: Entity): void {
    const buildingMaterialComponent = BuildingMaterialComponentArray.getComponent(entity);
    
-   const material = reader.readNumber();
+   const material = data.material;
    
    if (material !== buildingMaterialComponent.material) {
       const renderInfo = getEntityRenderInfo(entity);

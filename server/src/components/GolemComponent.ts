@@ -269,11 +269,9 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const golemComponent = GolemComponentArray.getComponent(entity);
-
-   packet.addNumber(golemComponent.wakeTimerTicks / GOLEM_WAKE_TIME_TICKS);
-   packet.addNumber(getGameTicks() - golemComponent.lastWakeTicks);
-   packet.addBoolean(golemComponent.wakeTimerTicks === GOLEM_WAKE_TIME_TICKS);
-   packet.padOffset(3);
+   packet.writeNumber(golemComponent.wakeTimerTicks / GOLEM_WAKE_TIME_TICKS);
+   packet.writeNumber(getGameTicks() - golemComponent.lastWakeTicks);
+   packet.writeBool(golemComponent.wakeTimerTicks === GOLEM_WAKE_TIME_TICKS);
 }
 
 function onTakeDamage(golem: Entity, _hitHitbox: Hitbox, attackingEntity: Entity | null, _damageSource: DamageSource, damageTaken: number): void {

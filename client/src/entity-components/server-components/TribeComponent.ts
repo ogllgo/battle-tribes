@@ -10,10 +10,9 @@ import ServerComponentArray from "../ServerComponentArray";
 import { Entity } from "../../../../shared/src/entities";
 import { Tribe, tribeExists } from "../../tribes";
 import { playerInstance } from "../../player";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 
-export interface TribeComponentParams {
+export interface TribeComponentData {
    readonly tribeID: number;
    readonly tribeType: TribeType;
 }
@@ -23,42 +22,36 @@ export interface TribeComponent {
    tribeType: TribeType;
 }
 
-export const TribeComponentArray = new ServerComponentArray<TribeComponent, TribeComponentParams, never>(ServerComponentType.tribe, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   updatePlayerFromData: updatePlayerFromData
-});
+export const TribeComponentArray = new ServerComponentArray<TribeComponent, TribeComponentData, never>(ServerComponentType.tribe, true, createComponent, getMaxRenderParts, decodeData);
+TribeComponentArray.updateFromData = updateFromData;
+TribeComponentArray.updatePlayerFromData = updatePlayerFromData;
 
-const fillTribeComponentParams = (tribeID: number, tribeType: TribeType): TribeComponentParams => {
+export function createTribeComponentData(tribe: Tribe): TribeComponentData {
    return {
-      tribeID: tribeID,
-      tribeType: tribeType
+      tribeID: tribe.id,
+      tribeType: tribe.tribeType
    };
 }
 
-export function createTribeComponentParams(tribe: Tribe): TribeComponentParams {
-   return fillTribeComponentParams(tribe.id, tribe.tribeType);
-}
-
-function createParamsFromData(reader: PacketReader): TribeComponentParams {
+function decodeData(reader: PacketReader): TribeComponentData {
    const tribeID = reader.readNumber();
    if (!tribeExists(tribeID)) {
       console.warn("In creating tribe component from data, no tribe with id '" + tribeID + "' exists!");
    }
    const tribeType = reader.readNumber() as TribeType;
    
-   return fillTribeComponentParams(tribeID, tribeType);
+   return {
+      tribeID: tribeID,
+      tribeType: tribeType
+   };
 }
 
-function createComponent(entityParams: EntityParams): TribeComponent {
-   const tribeComponentParams = entityParams.serverComponentParams[ServerComponentType.tribe]!;
+function createComponent(entityComponentData: EntityComponentData): TribeComponent {
+   const tribeComponentData = entityComponentData.serverComponentData[ServerComponentType.tribe]!;
 
    return {
-      tribeID: tribeComponentParams.tribeID,
-      tribeType: tribeComponentParams.tribeType
+      tribeID: tribeComponentData.tribeID,
+      tribeType: tribeComponentData.tribeType
    };
 }
 
@@ -66,15 +59,11 @@ function getMaxRenderParts(): number {
    return 0;
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: TribeComponentData, entity: Entity): void {
    const tribeComponent = TribeComponentArray.getComponent(entity);
    
-   const tribeID = reader.readNumber();
-   const tribeType = reader.readNumber();
+   const tribeID = data.tribeID;
+   const tribeType = data.tribeType;
    
    // Tribesman conversion
    if (tribeID !== tribeComponent.tribeID && TribesmanComponentArray.hasComponent(entity)) {
@@ -103,6 +92,6 @@ function updateFromData(reader: PacketReader, entity: Entity): void {
    tribeComponent.tribeType = tribeType;
 }
 
-function updatePlayerFromData(reader: PacketReader): void {
-   updateFromData(reader, playerInstance!);
+function updatePlayerFromData(data: TribeComponentData): void {
+   updateFromData(data, playerInstance!);
 }

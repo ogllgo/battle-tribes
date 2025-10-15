@@ -59,10 +59,10 @@ const getTileWanderTargets = (itemEntity: Entity): Array<TileIndex> => {
    
    const aiHelperComponent = AIHelperComponentArray.getComponent(itemEntity);
 
-   const minTileX = Math.max(Math.min(Math.floor((hitbox.box.position.x - aiHelperComponent.visionRange) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1), 0);
-   const maxTileX = Math.max(Math.min(Math.floor((hitbox.box.position.x + aiHelperComponent.visionRange) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1), 0);
-   const minTileY = Math.max(Math.min(Math.floor((hitbox.box.position.y - aiHelperComponent.visionRange) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1), 0);
-   const maxTileY = Math.max(Math.min(Math.floor((hitbox.box.position.y + aiHelperComponent.visionRange) / Settings.TILE_SIZE), Settings.BOARD_DIMENSIONS - 1), 0);
+   const minTileX = Math.max(Math.min(Math.floor((hitbox.box.position.x - aiHelperComponent.visionRange) / Settings.TILE_SIZE), Settings.WORLD_SIZE_TILES - 1), 0);
+   const maxTileX = Math.max(Math.min(Math.floor((hitbox.box.position.x + aiHelperComponent.visionRange) / Settings.TILE_SIZE), Settings.WORLD_SIZE_TILES - 1), 0);
+   const minTileY = Math.max(Math.min(Math.floor((hitbox.box.position.y - aiHelperComponent.visionRange) / Settings.TILE_SIZE), Settings.WORLD_SIZE_TILES - 1), 0);
+   const maxTileY = Math.max(Math.min(Math.floor((hitbox.box.position.y + aiHelperComponent.visionRange) / Settings.TILE_SIZE), Settings.WORLD_SIZE_TILES - 1), 0);
 
    const wanderTargets = new Array<TileIndex>();
    for (let tileX = minTileX; tileX <= maxTileX; tileX++) {

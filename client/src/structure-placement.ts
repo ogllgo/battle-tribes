@@ -12,7 +12,7 @@ import { Hitbox } from "./hitboxes";
 import { ItemComponentArray } from "./entity-components/server-components/ItemComponent";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import Layer from "./Layer";
-import { EntityParams, getEntityType } from "./world";
+import { EntityComponentData, getEntityType } from "./world";
 import { playerTribe } from "./tribes";
 import { createWallConfig } from "./entities/wall";
 import { createFloorSpikesConfig, createWallSpikesConfig } from "./entities/spikes";
@@ -103,9 +103,9 @@ export function createStructureConnection(connectingEntity: Entity, relativeOffs
    };
 }
 
-export function createStructureConfig(entityType: EntityType, position: Point, rotation: number): EntityParams {
+export function createStructureConfig(entityType: EntityType, position: Point, rotation: number): EntityComponentData {
    const tribe = playerTribe;
-   let config: EntityParams;
+   let config: EntityComponentData;
    switch (entityType) {
       case EntityType.wall: config = createWallConfig(position, rotation, tribe, BuildingMaterial.wood); break;
       case EntityType.door: config = createDoorConfig(position, rotation, tribe, BuildingMaterial.wood); break;
@@ -212,10 +212,10 @@ const structureIntersectsWithBuildingBlockingTiles = (layer: Layer, hitboxes: Re
 // }
 
 // const collectSnapAxes = (desiredPlacePosition: Point, desiredPlaceRotation: number, placingEntityType: EntityType, layer: Layer): ReadonlyArray<SnapAxis> => {
-//    const entityParams = createStructureConfig(placingEntityType, desiredPlacePosition.copy(), desiredPlaceRotation);
-//    const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+//    const entityPaarams = createStructureConfig(placingEntityType, desiredPlacePosition.copy(), desiredPlaceRotation);
+//    const transformComponentPaarams = entityPaarams.serverComponentPaarams[ServerComponentType.transform]!;
 
-//    const placingEntityHitboxes = transformComponentParams.children.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>;
+//    const placingEntityHitboxes = transformComponentPaarams.children.filter(child => entityChildIsHitbox(child)) as Array<Hitbox>;
 
 //    const snapAxes = new Array<SnapAxis>();
    
@@ -283,16 +283,16 @@ const calculateRegularPlacePosition = (placeOrigin: Point, placingEntityRotation
    }
    
    // @SUPAHACK!!!!
-   const entityParams = createStructureConfig(entityType, new Point(0, 0), 0);
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+   const entityComponentData = createStructureConfig(entityType, new Point(0, 0), 0);
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
 
    let entityMinX = Number.MAX_SAFE_INTEGER;
    let entityMaxX = Number.MIN_SAFE_INTEGER;
    let entityMinY = Number.MAX_SAFE_INTEGER;
    let entityMaxY = Number.MIN_SAFE_INTEGER;
    
-   for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
-      const hitbox = transformComponentParams.hitboxes[i];
+   for (let i = 0; i < transformComponentData.hitboxes.length; i++) {
+      const hitbox = transformComponentData.hitboxes[i];
       const box = hitbox.box;
 
       const minX = box.calculateBoundsMinX();
@@ -340,9 +340,9 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
    const connectingEntityType = getEntityType(connectingEntity);
    
    // @SUPAHACK!!!!
-   const entityParams = createStructureConfig(entityType, new Point(0, 0), 0);
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const placingEntityHitboxes = transformComponentParams.hitboxes;
+   const entityComponentData = createStructureConfig(entityType, new Point(0, 0), 0);
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const placingEntityHitboxes = transformComponentData.hitboxes;
    const snapOrigin = getStructureSnapOrigin(connectingEntity);
    
    const snapPositions = new Array<SnapCandidate>();
@@ -431,9 +431,9 @@ const getSnapCandidatesOffConnectingEntity = (connectingEntity: Entity, desiredP
             }
 
             // @SUPAHACK!!!!
-            const entityParams = createStructureConfig(entityType, position, placingEntityAngle);
-            const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-            const hitboxes = transformComponentParams.hitboxes;
+            const entityComponentData = createStructureConfig(entityType, position, placingEntityAngle);
+            const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+            const hitboxes = transformComponentData.hitboxes;
             
             // Don't add the position if it would be colliding with the connecting entity
             let isValid = true;
@@ -726,9 +726,9 @@ const getBracingsPlaceInfo = (regularPlacePosition: Point, layer: Layer): Struct
    const rotation = closestTileCornerSubtileY === secondClosestTileCornerSubtileY ? Math.PI / 2 : 0;
    
    // @SUPAHACK!!!!
-   const entityParams = createStructureConfig(EntityType.bracings, position, rotation);
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitboxes = transformComponentParams.hitboxes;
+   const entityComponentData = createStructureConfig(EntityType.bracings, position, rotation);
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitboxes = transformComponentData.hitboxes;
    
    if (structureIntersectsWithBuildingBlockingTiles(layer, hitboxes)) {
       isValid = false;
@@ -756,9 +756,9 @@ const calculatePlaceInfo = (desiredPlacePosition: Point, desiredPlaceAngle: numb
    const placeInfos = groupTransforms(snapCandidates, entityType, layer);
    if (placeInfos.length === 0) {
       // @SUPAHACK!!!!
-      const entityParams = createStructureConfig(entityType, desiredPlacePosition.copy(), desiredPlaceAngle);
-      const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-      const hitboxes = transformComponentParams.hitboxes;
+      const entityComponentData = createStructureConfig(entityType, desiredPlacePosition.copy(), desiredPlaceAngle);
+      const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+      const hitboxes = transformComponentData.hitboxes;
 
       // If no connections are found, use the regular place position
       return {

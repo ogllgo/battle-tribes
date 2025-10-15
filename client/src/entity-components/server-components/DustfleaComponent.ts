@@ -1,9 +1,8 @@
-import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { Entity } from "../../../../shared/src/entities";
 import { playSoundOnHitbox } from "../../sound";
@@ -11,30 +10,24 @@ import { TransformComponentArray } from "./TransformComponent";
 import { randFloat } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface DustfleaComponentParams {}
+export interface DustfleaComponentData {}
 
 interface IntermediateInfo {}
 
 export interface DustfleaComponent {}
 
-export const DustfleaComponentArray = new ServerComponentArray<DustfleaComponent, DustfleaComponentParams, IntermediateInfo>(ServerComponentType.dustflea, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const DustfleaComponentArray = new ServerComponentArray<DustfleaComponent, DustfleaComponentData, IntermediateInfo>(ServerComponentType.dustflea, true, createComponent, getMaxRenderParts, decodeData);
+DustfleaComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+DustfleaComponentArray.onHit = onHit;
+DustfleaComponentArray.onDie = onDie;
 
-function createParamsFromData(): DustfleaComponentParams {
+function decodeData(): DustfleaComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -56,10 +49,6 @@ function getMaxRenderParts(): number {
    return 1;
 }
    
-function padData(reader: PacketReader): void {}
-
-function updateFromData(reader: PacketReader): void {}
-
 function onHit(dustflea: Entity, hitbox: Hitbox): void {
    playSoundOnHitbox("dustflea-hit.mp3", 0.4, randFloat(0.9, 1.1), dustflea, hitbox, false);
 }

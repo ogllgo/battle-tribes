@@ -15,6 +15,7 @@ import { TribesmanAIComponentArray } from "./entity-components/server-components
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { getEntityAgeTicks, getEntityRenderInfo } from "./world";
 import { Hitbox } from "./hitboxes";
+import { currentSnapshot } from "./game";
 
 enum CustomItemState {
    usingMedicine,
@@ -183,7 +184,7 @@ const getCustomItemRenderPartOpacity = (entity: Entity, state: CustomItemState):
          
          const useInfo = ITEM_INFO_RECORD[ItemType.herbal_medicine] as ConsumableItemInfo;
 
-         const ticksSpentUsingMedicine = Board.serverTicks - lastEatTicks;
+         const ticksSpentUsingMedicine = currentSnapshot.tick - lastEatTicks;
          const useProgress = ticksSpentUsingMedicine / secondsToTicks(useInfo.consumeTime);
          return 1 - useProgress;
       }

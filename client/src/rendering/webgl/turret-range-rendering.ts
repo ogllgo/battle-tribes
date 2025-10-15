@@ -1,7 +1,6 @@
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { createWebGLProgram, gl } from "../../webgl";
 import { getHoveredEntityID } from "../../entity-selection";
-import Camera from "../../Camera";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { ItemType, ITEM_INFO_RECORD, PlaceableItemType } from "battletribes-shared/items/items";
 import { getPlayerSelectedItem } from "../../components/game/GameInteractableLayer";
@@ -148,7 +147,7 @@ const getRenderingInfo = (): TurretRangeRenderingInfo | null => {
 
       const layer = getEntityLayer(playerInstance!);
       const structureType = ITEM_INFO_RECORD[playerSelectedItem.type as PlaceableItemType].entityType;
-      const placeInfo = calculateEntityPlaceInfo(Camera.position, playerHitbox.box.angle, structureType, layer);
+      const placeInfo = calculateEntityPlaceInfo(playerHitbox.box.position, playerHitbox.box.angle, structureType, layer);
 
       return {
          x: placeInfo.position.x,

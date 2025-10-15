@@ -3,15 +3,14 @@ import { Entity } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
 import { customTickIntervalHasPassed } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { Hitbox } from "../../hitboxes";
 import { createPaperParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams, getEntityAgeTicks } from "../../world";
+import { EntityComponentData, getEntityAgeTicks } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray, getRandomPositionInEntity } from "./TransformComponent";
 
-export interface ResearchBenchComponentParams {
+export interface ResearchBenchComponentData {
    readonly isOccupied: boolean;
 }
 
@@ -21,36 +20,27 @@ export interface ResearchBenchComponent {
    isOccupied: boolean;
 }
 
-export const ResearchBenchComponentArray = new ServerComponentArray<ResearchBenchComponent, ResearchBenchComponentParams, IntermediateInfo>(ServerComponentType.researchBench, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const ResearchBenchComponentArray = new ServerComponentArray<ResearchBenchComponent, ResearchBenchComponentData, IntermediateInfo>(ServerComponentType.researchBench, true, createComponent, getMaxRenderParts, decodeData);
+ResearchBenchComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+ResearchBenchComponentArray.onTick = onTick;
+ResearchBenchComponentArray.updateFromData = updateFromData;
 
-const fillParams = (isOccupied: boolean): ResearchBenchComponentParams => {
+export function createResearchBenchComponentData(): ResearchBenchComponentData {
+   return {
+      isOccupied: false
+   };
+}
+
+function decodeData(reader: PacketReader): ResearchBenchComponentData {
+   const isOccupied = reader.readBool();
    return {
       isOccupied: isOccupied
    };
 }
 
-export function createResearchBenchComponentParams(): ResearchBenchComponentParams {
-   return fillParams(false);
-}
-
-function createParamsFromData(reader: PacketReader): ResearchBenchComponentParams {
-   const isOccupied = reader.readBoolean();
-   reader.padOffset(3);
-
-   return fillParams(isOccupied);
-}
-
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -64,9 +54,9 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    return {};
 }
 
-function createComponent(entityParams: EntityParams): ResearchBenchComponent {
+function createComponent(entityComponentData: EntityComponentData): ResearchBenchComponent {
    return {
-      isOccupied: entityParams.serverComponentParams[ServerComponentType.researchBench]!.isOccupied
+      isOccupied: entityComponentData.serverComponentData[ServerComponentType.researchBench]!.isOccupied
    };
 }
 
@@ -83,12 +73,7 @@ function onTick(entity: Entity): void {
    }
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: ResearchBenchComponentData, entity: Entity): void {
    const researchBenchComponent = ResearchBenchComponentArray.getComponent(entity);
-   researchBenchComponent.isOccupied = reader.readBoolean();
-   reader.padOffset(3);
+   researchBenchComponent.isOccupied = data.isOccupied;
 }

@@ -1,7 +1,7 @@
 import { ServerComponentType } from "battletribes-shared/components";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityComponentData, getEntityRenderInfo } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { Entity } from "../../../../shared/src/entities";
 import { RenderPart } from "../../render-parts/render-parts";
@@ -11,7 +11,7 @@ import { Hitbox } from "../../hitboxes";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface FenceComponentParams {}
+export interface FenceComponentData {}
 
 interface IntermediateInfo {
    readonly connectingRenderParts: Partial<Record<Entity, RenderPart>>;
@@ -22,25 +22,15 @@ export interface FenceComponent {
    readonly connectingRenderParts: Partial<Record<Entity, RenderPart>>;
 }
 
-export const FenceComponentArray = new ServerComponentArray<FenceComponent, FenceComponentParams, IntermediateInfo>(ServerComponentType.fence, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const FenceComponentArray = new ServerComponentArray<FenceComponent, FenceComponentData, IntermediateInfo>(ServerComponentType.fence, true, createComponent, getMaxRenderParts, decodeData);
+FenceComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
-const fillParams = (): FenceComponentParams => {
+export function createFenceComponentData(): FenceComponentData {
    return {};
 }
 
-export function createFenceComponentParams(): FenceComponentParams {
-   return fillParams();
-}
-
-function createParamsFromData(): FenceComponentParams {
-   return fillParams();
+function decodeData(): FenceComponentData {
+   return {};
 }
 
 const createConnectingRenderPart = (connection: StructureConnection, parentHitbox: Hitbox): RenderPart => {
@@ -88,8 +78,8 @@ const createConnectingRenderPart = (connection: StructureConnection, parentHitbo
    return renderPart;
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponent = entityComponentData.serverComponentData[ServerComponentType.transform]!;
    const hitbox = transformComponent.hitboxes[0];
    
    renderInfo.attachRenderPart(
@@ -104,8 +94,8 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    const connectingRenderParts: Record<Entity, RenderPart> = {};
 
    // Create initial connecting render parts
-   const structureComponentParams = entityParams.serverComponentParams[ServerComponentType.structure]!;
-   for (const connection of structureComponentParams.connections) {
+   const structureComponentData = entityComponentData.serverComponentData[ServerComponentType.structure]!;
+   for (const connection of structureComponentData.connections) {
       const renderPart = createConnectingRenderPart(connection, hitbox);
       renderInfo.attachRenderPart(renderPart);
       connectingRenderParts[connection.entity] = renderPart;
@@ -116,7 +106,7 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    };
 }
 
-function createComponent(_entityParams: EntityParams, intermediateInfo: IntermediateInfo): FenceComponent {
+function createComponent(_entityComponentData: EntityComponentData, intermediateInfo: IntermediateInfo): FenceComponent {
    return {
       connectingRenderParts: intermediateInfo.connectingRenderParts
    };
@@ -126,10 +116,6 @@ function getMaxRenderParts(): number {
    // Fence node plus 4 connections
    return 5;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}
 
 export function addFenceConnection(fence: Entity, connection: StructureConnection): void {
    const transformComponent = TransformComponentArray.getComponent(fence);

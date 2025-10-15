@@ -18,7 +18,7 @@ import { StructureComponentArray } from "../../../entity-components/server-compo
 import { getTileLocalBiome } from "../../../local-biomes";
 import { getHitboxVelocity } from "../../../hitboxes";
 import { SnobeComponentArray } from "../../../entity-components/server-components/SnobeComponent";
-import { getCursorWorldPos } from "../../../Game";
+import { cursorWorldPos } from "../../../mouse";
 
 export let updateDebugInfoTile: (tile: Tile | null) => void = () => {};
 
@@ -198,8 +198,6 @@ const DebugInfo = () => {
       }
    }, []);
 
-   const cursorWorldPos = getCursorWorldPos();
-   
    return <div id="debug-info">
       <p>Looking at pos <span className="highlight">{cursorWorldPos.x.toFixed(0)}</span> <span className="highlight">{cursorWorldPos.y.toFixed(0)}</span></p>
       

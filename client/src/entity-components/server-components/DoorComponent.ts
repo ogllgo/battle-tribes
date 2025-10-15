@@ -8,12 +8,12 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { DOOR_TEXTURE_SOURCES } from "./BuildingMaterialComponent";
 import { createLightWoodSpeckParticle, createWoodShardParticle } from "../../particles";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { randAngle } from "../../../../shared/src/utils";
 
-export interface DoorComponentParams {
+export interface DoorComponentData {
    readonly toggleType: DoorToggleType;
    readonly openProgress: number;
 }
@@ -25,45 +25,39 @@ export interface DoorComponent {
    openProgress: number;
 }
 
-export const DoorComponentArray = new ServerComponentArray<DoorComponent, DoorComponentParams, IntermediateInfo>(ServerComponentType.door, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const DoorComponentArray = new ServerComponentArray<DoorComponent, DoorComponentData, IntermediateInfo>(ServerComponentType.door, true, createComponent, getMaxRenderParts, decodeData);
+DoorComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+DoorComponentArray.updateFromData = updateFromData;
+DoorComponentArray.onHit = onHit;
+DoorComponentArray.onDie = onDie;
 
-const fillParams = (toggleType: DoorToggleType, openProgress: number): DoorComponentParams => {
+export function createDoorComponentData(): DoorComponentData {
+   return {
+      toggleType: DoorToggleType.none,
+      openProgress: 0
+   };
+}
+
+function decodeData(reader: PacketReader): DoorComponentData {
+   const toggleType = reader.readNumber();
+   const openProgress = reader.readNumber();
    return {
       toggleType: toggleType,
       openProgress: openProgress
    };
 }
 
-export function createDoorComponentParams(): DoorComponentParams {
-   return fillParams(DoorToggleType.none, 0);
-}
-
-function createParamsFromData(reader: PacketReader): DoorComponentParams {
-   const toggleType = reader.readNumber();
-   const openProgress = reader.readNumber();
-   return fillParams(toggleType, openProgress);
-}
-
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
-   const buildingMaterialComponentParams = entityParams.serverComponentParams[ServerComponentType.buildingMaterial]!;
+   const buildingMaterialComponentData = entityComponentData.serverComponentData[ServerComponentType.buildingMaterial]!;
 
    const renderPart = new TexturedRenderPart(
       hitbox,
       0,
       0,
-      getTextureArrayIndex(DOOR_TEXTURE_SOURCES[buildingMaterialComponentParams.material])
+      getTextureArrayIndex(DOOR_TEXTURE_SOURCES[buildingMaterialComponentData.material])
    );
    renderPart.addTag("buildingMaterialComponent:material");
 
@@ -72,12 +66,12 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    return {};
 }
 
-function createComponent(entityParams: EntityParams): DoorComponent {
-   const doorComponentParams = entityParams.serverComponentParams[ServerComponentType.door]!;
+function createComponent(entityComponentData: EntityComponentData): DoorComponent {
+   const doorComponentData = entityComponentData.serverComponentData[ServerComponentType.door]!;
    
    return {
-      toggleType: doorComponentParams.toggleType,
-      openProgress: doorComponentParams.openProgress
+      toggleType: doorComponentData.toggleType,
+      openProgress: doorComponentData.openProgress
    };
 }
 
@@ -85,16 +79,12 @@ function getMaxRenderParts(): number {
    return 1;
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: DoorComponentData, entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.hitboxes[0];
    
-   const toggleType = reader.readNumber();
-   const openProgress = reader.readNumber();
+   const toggleType = data.toggleType;
+   const openProgress = data.openProgress;
    
    const doorComponent = DoorComponentArray.getComponent(entity);
    if (toggleType === DoorToggleType.open && doorComponent.toggleType === DoorToggleType.none) {

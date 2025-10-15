@@ -418,25 +418,6 @@ export const EntityComponents = {
 
 export type EntityComponentTypes<T extends EntityType> = typeof EntityComponents[T];
 
-interface BaseComponentData {
-   readonly componentType: ServerComponentType;
-}
-
-/* AI Helper Component */
-export interface AIHelperComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.aiHelper;
-   readonly visionRange: number;
-}
-
-/* Berry Bush Component */
-
-export interface BerryBushComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.berryBush;
-   readonly numBerries: number;
-}
-
-/* Blueprint Component */
-
 export enum BlueprintType {
    stoneWall,
    woodenDoor,
@@ -458,197 +439,6 @@ export enum BlueprintType {
    scrappy,
    cogwalker
 }
-
-export interface BlueprintComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.blueprint;
-   readonly blueprintType: BlueprintType;
-   readonly buildProgress: number;
-   readonly associatedEntityID: number;
-}
-
-/* Boulder Component */
-
-export interface BoulderComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.boulder;
-   readonly boulderType: number;
-}
-
-/* Cooking Component */
-
-export interface CookingComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.cooking;
-   readonly heatingProgress: number;
-   readonly isCooking: boolean;
-}
-
-/* Cow Component */
-
-export interface CowComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.cow;
-   readonly species: CowSpecies;
-   readonly grazeProgress: number;
-}
-
-/* Door Component */
-
-export interface DoorComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.door;
-   readonly toggleType: DoorToggleType;
-   readonly openProgress: number;
-}
-
-/* Fish Component */
-
-export interface FishComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.fish;
-   readonly colour: FishColour;
-}
-
-/* Golem Component */
-
-export interface GolemComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.golem;
-   readonly wakeProgress: number;
-   readonly ticksAwake: number;
-   readonly isAwake: boolean;
-}
-
-/* Health Component */
-
-export interface HealthComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.health;
-   readonly health: number;
-   readonly maxHealth: number;
-}
-
-/* Hut Component */
-
-export interface HutComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.hut;
-   readonly lastDoorSwingTicks: number;
-   readonly isRecalling: boolean;
-}
-
-// @Cleanup: don't send these
-
-/* Ice Shard Component */
-
-export interface IceShardComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.iceShard;
-}
-
-/* Ice Spikes Component */
-
-export interface IceSpikesComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.iceSpikes;
-}
-
-/* Inventory Component */
-
-export interface InventoryComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.inventory;
-   readonly inventories: Partial<Record<InventoryName, Inventory>>;
-}
-
-/* Item Component */
-
-export interface ItemComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.item;
-   readonly itemType: ItemType;
-}
-
-/* Pebblum Component */
-
-export interface PebblumComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.pebblum;
-}
-
-/* Player Component */
-
-export interface PlayerComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.player;
-   readonly username: string;
-}
-
-/* Slime Component */
-
-export interface SlimeComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.slime;
-   readonly size: SlimeSize;
-   readonly eyeRotation: number;
-   readonly orbSizes: ReadonlyArray<SlimeSize>;
-   readonly anger: number;
-   readonly spitChargeProgress: number;
-}
-
-/* Slime Spit Component */
-
-export interface SlimeSpitComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.slimeSpit;
-   readonly size: number;
-}
-
-/* Slimewisp Component */
-
-export interface SlimewispComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.slimewisp;
-}
-
-/* Status Effect Component */
-
-export interface StatusEffectComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.statusEffect;
-   readonly statusEffects: Array<StatusEffectData>;
-}
-
-// @Cleanup: remove
-/* Throwing Projectile Component */
-
-export interface ThrowingProjectileComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.throwingProjectile;
-}
-
-/* Tombstone Component */
-
-export interface TombstoneComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.tombstone;
-   readonly tombstoneType: number;
-   readonly zombieSpawnProgress: number;
-   readonly zombieSpawnX: number;
-   readonly zombieSpawnY: number;
-   readonly deathInfo: DeathInfo | null;
-}
-
-/* Totem Banner Component */
-
-export interface TotemBannerComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.totemBanner;
-   readonly banners: Array<TribeTotemBanner>;
-}
-
-/* Tree Component */
-
-export interface TreeComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.tree;
-   readonly treeSize: TreeSize;
-}
-
-/* Tribe Component */
-
-export interface TribeComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.tribe;
-   readonly tribeID: number;
-}
-
-/* Tribe Member Component */
-
-export interface TribeMemberComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.tribeMember;
-   readonly warPaintType: number | null;
-   readonly titles: ReadonlyArray<TitleGenerationInfo>;
-}
-
-/* Tribesman Component */
 
 export enum TribesmanAIType {
    escaping,
@@ -672,19 +462,6 @@ export enum TribesmanAIType {
    moveToBiome
 }
 
-export interface TribesmanAIComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.tribesmanAI;
-   // @Cleanup: just send a string.
-   readonly name: number;
-   readonly untitledDescriptor: number;
-   readonly currentAIType: TribesmanAIType;
-   readonly relationsWithPlayer: number;
-
-   readonly craftingProgress: number;
-   readonly craftingItemType: ItemType;
-}
-
-/* Turret Component */
 
 // @Robustness
 export type TurretEntityType = EntityType.slingTurret | EntityType.ballista;
@@ -695,44 +472,6 @@ export const TURRET_AMMO_TYPES: Record<TurretEntityType, ReadonlyArray<TurretAmm
    [EntityType.ballista]: [ItemType.wood, ItemType.rock, ItemType.slimeball, ItemType.frostcicle]
 };
 
-/* Yeti Component */
-
-export interface YetiComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.yeti;
-   readonly attackProgress: number;
-}
-
-/* Zombie Component */
-
-export interface ZombieComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.zombie;
-   readonly zombieType: number;
-}
-
-/* Ammo Box Component */
-
-export interface AmmoBoxComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.ammoBox;
-   readonly ammoType: TurretAmmoType;
-   readonly ammoRemaining: number;
-}
-
-/* Research Bench Component */
-
-export interface ResearchBenchComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.researchBench;
-   readonly isOccupied: boolean;
-}
-
-/* Spikes Component */
-
-export interface SpikesComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.spikes;
-   readonly isCovered: boolean;
-}
-
-/* Tunnel Component */
-
 export const enum TunnelDoorSide {
    top = 0b01,
    bottom = 0b10
@@ -740,32 +479,15 @@ export const enum TunnelDoorSide {
 
 export type TunnelDoorSides = TunnelDoorSide.top | TunnelDoorSide.bottom;
 
-export interface TunnelComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.tunnel;
-   /** 1st bit = door at top, 2nd bit = door at bottom */
-   readonly doorBitset: TunnelDoorSides;
-   readonly topDoorOpenProgress: number;
-   readonly bottomDoorOpenProgress: number;
-}
-
-/* Building Material Component Data */
-
 export enum BuildingMaterial {
    wood,
    stone
-}
-
-export interface BuildingMaterialComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.buildingMaterial;
-   readonly material: BuildingMaterial;
 }
 
 export const MATERIAL_TO_ITEM_MAP: Record<BuildingMaterial, ItemType> = {
    [BuildingMaterial.wood]: ItemType.wood,
    [BuildingMaterial.stone]: ItemType.rock
 };
-
-/* Tribe Warrior Component Data */
 
 export interface ScarInfo {
    readonly offsetX: number;
@@ -774,70 +496,12 @@ export interface ScarInfo {
    readonly type: number;
 }
 
-export interface TribeWarriorComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.tribeWarrior;
-   readonly scars: ReadonlyArray<ScarInfo>;
-}
-
-/* Healing Totem Component Data */
-
 export interface HealingTotemTargetData {
    readonly entityID: number;
    readonly x: number;
    readonly y: number;
    readonly ticksHealed: number;
 }
-
-export interface HealingTotemComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.healingTotem;
-   readonly healingTargetsData: ReadonlyArray<HealingTotemTargetData>;
-}
-
-/* Structure Component Data */
-
-export interface StructureComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.structure;
-   readonly hasActiveBlueprint: boolean;
-   readonly connectedSidesBitset: number;
-}
-
-/* Fence Component Data */
-
-export interface FenceComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.fence;
-}
-
-/* Fence Gate Component Data */
-
-export interface FenceGateComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.fenceGate;
-   readonly toggleType: DoorToggleType;
-   readonly openProgress: number;
-}
-
-/* Crafting Station Component Data */
-
-export interface CraftingStationComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.craftingStation;
-   readonly craftingStation: CraftingStation;
-}
-
-/* Projectile Component Data */
-
-export interface ProjectileComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.projectile;
-}
-
-/* Layered Rod Component Data */
-
-export interface LayeredRodComponentData extends BaseComponentData {
-   readonly componentType: ServerComponentType.layeredRod;
-   readonly numLayers: number;
-   readonly bend: [number, number];
-   readonly colour: Colour;
-}
-
-/* Decoration Component Data */
 
 export enum DecorationType {
    pebble,

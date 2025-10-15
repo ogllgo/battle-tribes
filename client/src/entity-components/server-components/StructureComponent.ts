@@ -1,15 +1,14 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import { PacketReader } from "../../../../shared/src/packets";
-import { Hitbox } from "../../hitboxes";
 import { playSoundOnHitbox } from "../../sound";
 import { createStructureConnection, StructureConnection } from "../../structure-placement";
-import { EntityParams, getEntityType } from "../../world";
+import { EntityComponentData, getEntityType } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { addFenceConnection, FenceComponentArray, removeFenceConnection } from "./FenceComponent";
 import { TransformComponentArray } from "./TransformComponent";
 
-export interface StructureComponentParams {
+export interface StructureComponentData {
    readonly hasActiveBlueprint: boolean;
    readonly connections: Array<StructureConnection>;
 }
@@ -19,29 +18,19 @@ export interface StructureComponent {
    readonly connections: Array<StructureConnection>;
 }
 
-export const StructureComponentArray = new ServerComponentArray<StructureComponent, StructureComponentParams, never>(ServerComponentType.structure, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onSpawn: onSpawn,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const StructureComponentArray = new ServerComponentArray<StructureComponent, StructureComponentData, never>(ServerComponentType.structure, true, createComponent, getMaxRenderParts, decodeData);
+StructureComponentArray.onSpawn = onSpawn;
+StructureComponentArray.updateFromData = updateFromData;
 
-const fillStructureComponentParams = (hasActiveBlueprint: boolean, connections: Array<StructureConnection>): StructureComponentParams => {
+export function createStructureComponentData(): StructureComponentData {
    return {
-      hasActiveBlueprint: hasActiveBlueprint,
-      connections: connections
+      hasActiveBlueprint: false,
+      connections: []
    };
 }
 
-export function createStructureComponentParams(): StructureComponentParams {
-   return fillStructureComponentParams(false, []);
-}
-
-function createParamsFromData(reader: PacketReader): StructureComponentParams {
-   const hasActiveBlueprint = reader.readBoolean();
-   reader.padOffset(3);
+function decodeData(reader: PacketReader): StructureComponentData {
+   const hasActiveBlueprint = reader.readBool();
 
    const connections = new Array<StructureConnection>();
    const numConnections = reader.readNumber();
@@ -53,15 +42,18 @@ function createParamsFromData(reader: PacketReader): StructureComponentParams {
       connections.push(connection);
    }
 
-   return fillStructureComponentParams(hasActiveBlueprint, connections);
+   return {
+      hasActiveBlueprint: hasActiveBlueprint,
+      connections: connections
+   };
 }
 
-function createComponent(entityParams: EntityParams): StructureComponent {
-   const structureComponentParams = entityParams.serverComponentParams[ServerComponentType.structure]!;
+function createComponent(entityComponentData: EntityComponentData): StructureComponent {
+   const structureComponentData = entityComponentData.serverComponentData[ServerComponentType.structure]!;
    
    return {
-      hasActiveBlueprint: structureComponentParams.hasActiveBlueprint,
-      connections: structureComponentParams.connections
+      hasActiveBlueprint: structureComponentData.hasActiveBlueprint,
+      connections: structureComponentData.connections
    };
 }
 
@@ -111,13 +103,6 @@ function onSpawn(entity: Entity): void {
    }
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-
-   const numConnections = reader.readNumber();
-   reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT * numConnections);
-}
-
 function addConnection(entity: Entity, structureComponent: StructureComponent, connection: StructureConnection): void {
    structureComponent.connections.push(connection);
 
@@ -135,17 +120,16 @@ function removeConnection(entity: Entity, structureComponent: StructureComponent
 }
 
 // @Garbage
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: StructureComponentData, entity: Entity): void {
    const structureComponent = StructureComponentArray.getComponent(entity);
 
-   structureComponent.hasActiveBlueprint = reader.readBoolean();
-   reader.padOffset(3);
+   structureComponent.hasActiveBlueprint = data.hasActiveBlueprint;
 
    const newConnectedEntities = new Array<Entity>();
-   const numConnections = reader.readNumber();
-   for (let i = 0; i < numConnections; i++) {
-      const connectedEntity = reader.readNumber();
-      const relativeOffsetDirection = reader.readNumber();
+   for (let i = 0; i < data.connections.length; i++) {
+      const connectionData = data.connections[i];
+      const connectedEntity = connectionData.entity;
+      const relativeOffsetDirection = connectionData.relativeOffsetDirection;
 
       newConnectedEntities.push(connectedEntity);
 

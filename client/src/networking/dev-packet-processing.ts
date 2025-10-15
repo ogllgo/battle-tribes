@@ -52,10 +52,8 @@ export function readPacketDevData(reader: PacketReader): void {
       for (let i = 0; i < numVisibleSafetyNodes; i++) {
          const index = reader.readNumber();
          const safety = reader.readNumber();
-         const isOccupied = reader.readBoolean();
-         reader.padOffset(3);
-         const isContained = reader.readBoolean();
-         reader.padOffset(3);
+         const isOccupied = reader.readBool();
+         const isContained = reader.readBool();
 
          const safetyNodeData: SafetyNodeData = {
             index: index,
@@ -92,8 +90,7 @@ export function readPacketDevData(reader: PacketReader): void {
 
    readLocalBiomes(reader);
 
-   const hasSpawnDistribution = reader.readBoolean();
-   reader.padOffset(3);
+   const hasSpawnDistribution = reader.readBool();
    if (hasSpawnDistribution) {
       const chunkWeights = new Array<SpawnDistributionBlock>();
       

@@ -21,5 +21,5 @@ function getDataLength(): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const craftingStationComponent = CraftingStationComponentArray.getComponent(entity);
 
-   packet.addNumber(craftingStationComponent.craftingStation);
+   packet.writeNumber(craftingStationComponent.craftingStation);
 }

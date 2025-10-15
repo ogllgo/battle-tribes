@@ -7,18 +7,17 @@ import { ItemType } from "battletribes-shared/items/items";
 import { VisualRenderPart } from "../../render-parts/render-parts";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { PacketReader } from "battletribes-shared/packets";
-import { EntityParams, getEntityRenderInfo, getEntityType } from "../../world";
+import { EntityComponentData, getEntityRenderInfo, getEntityType } from "../../world";
 import { AmmoBoxComponentArray } from "./AmmoBoxComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
-import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
 // @Cleanup: can make this a whole lot better by having the projectile not be a render part, but the actual projectile pre-created, and then just un-carried from the turret once fired.
 
 type TurretType = EntityType.slingTurret | EntityType.ballista;
 
-export interface TurretComponentParams {
+export interface TurretComponentData {
    readonly aimDirection: number;
    readonly chargeProgress: number;
    readonly reloadProgress: number;
@@ -139,15 +138,21 @@ const getProjectileZIndex = (entityType: TurretType): number => {
    }
 }
 
-export const TurretComponentArray = new ServerComponentArray<TurretComponent, TurretComponentParams, never>(ServerComponentType.turret, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const TurretComponentArray = new ServerComponentArray<TurretComponent, TurretComponentData, never>(ServerComponentType.turret, true, createComponent, getMaxRenderParts, decodeData);
+TurretComponentArray.updateFromData = updateFromData;
 
-const fillParams = (aimDirection: number, chargeProgress: number, reloadProgress: number): TurretComponentParams => {
+export function createTurretComponentData(): TurretComponentData {
+   return {
+      aimDirection: 0,
+      chargeProgress: 0,
+      reloadProgress: 0
+   };
+}
+
+function decodeData(reader: PacketReader): TurretComponentData {
+   const aimDirection = reader.readNumber();
+   const chargeProgress = reader.readNumber();
+   const reloadProgress = reader.readNumber();
    return {
       aimDirection: aimDirection,
       chargeProgress: chargeProgress,
@@ -155,21 +160,9 @@ const fillParams = (aimDirection: number, chargeProgress: number, reloadProgress
    };
 }
 
-export function createTurretComponentParams(): TurretComponentParams {
-   return fillParams(0, 0, 0);
-}
-
-function createParamsFromData(reader: PacketReader): TurretComponentParams {
-   const aimDirection = reader.readNumber();
-   const chargeProgress = reader.readNumber();
-   const reloadProgress = reader.readNumber();
-
-   return fillParams(aimDirection, chargeProgress, reloadProgress);
-}
-
-function createComponent(entityParams: EntityParams, _: never, renderInfo: EntityRenderInfo): TurretComponent {
+function createComponent(entityComponentData: EntityComponentData, _: never, renderInfo: EntityRenderInfo): TurretComponent {
    return {
-      chargeProgress: entityParams.serverComponentParams[ServerComponentType.turret]!.chargeProgress,
+      chargeProgress: entityComponentData.serverComponentData[ServerComponentType.turret]!.chargeProgress,
       aimingRenderPart: renderInfo.getRenderThing("turretComponent:aiming") as TexturedRenderPart,
       pivotingRenderPart: renderInfo.getRenderThing("turretComponent:pivoting") as VisualRenderPart,
       gearRenderParts: renderInfo.getRenderThings("turretComponent:gear") as Array<VisualRenderPart>,
@@ -252,16 +245,12 @@ const updateProjectileRenderPart = (turretComponent: TurretComponent, entity: En
    }
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: TurretComponentData, entity: Entity): void {
    const turretComponent = TurretComponentArray.getComponent(entity);
    
-   const aimDirection = reader.readNumber();
-   const chargeProgress = reader.readNumber();
-   const reloadProgress = reader.readNumber();
+   const aimDirection = data.aimDirection;
+   const chargeProgress = data.chargeProgress;
+   const reloadProgress = data.reloadProgress;
    
    if (chargeProgress < turretComponent.chargeProgress) {
       playFireSound(entity);

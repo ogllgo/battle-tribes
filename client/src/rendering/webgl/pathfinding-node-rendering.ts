@@ -1,5 +1,5 @@
 import { createWebGLProgram, gl } from "../../webgl";
-import Game from "../../Game";
+import Game from "../../game";
 import OPTIONS from "../../options";
 import { PathfindingSettings } from "battletribes-shared/settings";
 import { angle } from "battletribes-shared/utils";

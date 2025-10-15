@@ -10,11 +10,11 @@ import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle, LEAF_SPE
 import { playSoundOnHitbox } from "../../sound";
 import { TREE_HIT_SOUNDS, TREE_DESTROY_SOUNDS } from "./TreeComponent";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface TreePlantedComponentParams {
+export interface TreePlantedComponentData {
    readonly growthProgress: number;
 }
 
@@ -29,34 +29,29 @@ export interface TreePlantedComponent {
 
 const TEXTURE_SOURCES = ["entities/plant/tree-sapling-1.png", "entities/plant/tree-sapling-2.png", "entities/plant/tree-sapling-3.png", "entities/plant/tree-sapling-4.png", "entities/plant/tree-sapling-5.png", "entities/plant/tree-sapling-6.png", "entities/plant/tree-sapling-7.png", "entities/plant/tree-sapling-8.png", "entities/plant/tree-sapling-9.png", "entities/plant/tree-sapling-10.png", "entities/plant/tree-sapling-11.png"];
 
-export const TreePlantedComponentArray = new ServerComponentArray<TreePlantedComponent, TreePlantedComponentParams, IntermediateInfo>(ServerComponentType.treePlanted, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const TreePlantedComponentArray = new ServerComponentArray<TreePlantedComponent, TreePlantedComponentData, IntermediateInfo>(ServerComponentType.treePlanted, true, createComponent, getMaxRenderParts, decodeData);
+TreePlantedComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+TreePlantedComponentArray.updateFromData = updateFromData;
+TreePlantedComponentArray.onHit = onHit;
+TreePlantedComponentArray.onDie = onDie;
 
 const getTextureSource = (growthProgress: number): string => {
    const idx = Math.floor(growthProgress * (TEXTURE_SOURCES.length - 1))
    return TEXTURE_SOURCES[idx];
 }
 
-function createParamsFromData(reader: PacketReader): TreePlantedComponentParams {
+function decodeData(reader: PacketReader): TreePlantedComponentData {
    const growthProgress = reader.readNumber();
    return {
       growthProgress: growthProgress
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponent = entityComponentData.serverComponentData[ServerComponentType.transform]!;
    const hitbox = transformComponent.hitboxes[0];
 
-   const growthProgress = entityParams.serverComponentParams[ServerComponentType.treePlanted]!.growthProgress;
+   const growthProgress = entityComponentData.serverComponentData[ServerComponentType.treePlanted]!.growthProgress;
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -71,8 +66,8 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    };
 }
 
-function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): TreePlantedComponent {
-   const growthProgress = entityParams.serverComponentParams[ServerComponentType.treePlanted]!.growthProgress;
+function createComponent(entityComponentData: EntityComponentData, intermediateInfo: IntermediateInfo): TreePlantedComponent {
+   const growthProgress = entityComponentData.serverComponentData[ServerComponentType.treePlanted]!.growthProgress;
    return {
       growthProgress: growthProgress,
       renderPart: intermediateInfo.renderPart
@@ -83,14 +78,9 @@ function getMaxRenderParts(): number {
    return 1;
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: TreePlantedComponentData, entity: Entity): void {
    const treePlantedComponent = TreePlantedComponentArray.getComponent(entity);
-   
-   treePlantedComponent.growthProgress = reader.readNumber();
+   treePlantedComponent.growthProgress = data.growthProgress;
    treePlantedComponent.renderPart.switchTextureSource(getTextureSource(treePlantedComponent.growthProgress));
 }
 

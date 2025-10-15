@@ -1,7 +1,7 @@
 import { EntityType } from "../../shared/src/entities";
 import { PacketReader } from "../../shared/src/packets";
 import { assert, TileIndex } from "../../shared/src/utils";
-import Board from "./Board";
+import { currentSnapshot } from "./game";
 
 interface LocalEntityCensusInfo {
    count: number;
@@ -42,7 +42,7 @@ const readLocalBiome = (reader: PacketReader): LocalBiome => {
    return {
       tiles: tiles,
       entityCensus: entityCensus,
-      lastUpdateTicks: Board.serverTicks
+      lastUpdateTicks: currentSnapshot.tick
    };
 }
 
@@ -84,7 +84,7 @@ const updateLocalBiomeFromData = (reader: PacketReader, localBiome: LocalBiome):
       }
    }
 
-   localBiome.lastUpdateTicks = Board.serverTicks;
+   localBiome.lastUpdateTicks = currentSnapshot.tick;
 }
 
 export function readLocalBiomes(reader: PacketReader): void {
@@ -104,7 +104,7 @@ export function readLocalBiomes(reader: PacketReader): void {
 
    for (const pair of visibleLocalBiomes) {
       const localBiome = pair[1];
-      if (localBiome.lastUpdateTicks !== Board.serverTicks) {
+      if (localBiome.lastUpdateTicks !== currentSnapshot.tick) {
          const id = pair[0];
          visibleLocalBiomes.delete(id);
       }

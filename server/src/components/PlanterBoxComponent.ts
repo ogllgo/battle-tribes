@@ -65,9 +65,8 @@ function addDataToComponent(packet: Packet, entity: Entity): void {
       }
    }
 
-   packet.addNumber(plantedEntityType);
-   packet.addBoolean(planterBoxComponent.remainingFertiliserTicks > 0);
-   packet.padOffset(3);
+   packet.writeNumber(plantedEntityType);
+   packet.writeBool(planterBoxComponent.remainingFertiliserTicks > 0);
 }
 
 export function placePlantInPlanterBox(planterBox: Entity, plantedEntityType: PlantedEntityType): void {

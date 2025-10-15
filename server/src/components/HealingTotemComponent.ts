@@ -122,7 +122,7 @@ function getDataLength(entity: Entity): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const healingTotemComponent = HealingTotemComponentArray.getComponent(entity);
 
-   packet.addNumber(healingTotemComponent.healTargetIDs.length);
+   packet.writeNumber(healingTotemComponent.healTargetIDs.length);
    for (let i = 0; i < healingTotemComponent.healTargetIDs.length; i++) {
       const healTarget = healingTotemComponent.healTargetIDs[i];
       const ticksHealed = healingTotemComponent.healTargetsTicksHealed[i];
@@ -130,9 +130,9 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
       const transformComponent = TransformComponentArray.getComponent(healTarget);
       const hitbox = transformComponent.hitboxes[0];
 
-      packet.addNumber(healTarget);
-      packet.addNumber(hitbox.box.position.x);
-      packet.addNumber(hitbox.box.position.y);
-      packet.addNumber(ticksHealed);
+      packet.writeNumber(healTarget);
+      packet.writeNumber(hitbox.box.position.x);
+      packet.writeNumber(hitbox.box.position.y);
+      packet.writeNumber(ticksHealed);
    }
 }

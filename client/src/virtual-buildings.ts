@@ -3,32 +3,33 @@ import { EntityComponents, ServerComponentType, BuildingMaterial } from "../../s
 import { PacketReader } from "../../shared/src/packets";
 import { StructureType } from "../../shared/src/structures";
 import { distance, Point } from "../../shared/src/utils";
-import Board from "./Board";
-import { createHitbox, createHitboxQuick } from "./hitboxes";
-import { createBarrelComponentParams } from "./entity-components/server-components/BarrelComponent";
-import { createBracingsComponentParams } from "./entity-components/server-components/BracingsComponent";
-import { createBuildingMaterialComponentParams } from "./entity-components/server-components/BuildingMaterialComponent";
-import { createCampfireComponentParams } from "./entity-components/server-components/CampfireComponent";
-import { createCookingComponentParams } from "./entity-components/server-components/CookingComponent";
-import { createFireTorchComponentParams } from "./entity-components/server-components/FireTorchComponent";
-import { createFurnaceComponentParams } from "./entity-components/server-components/FurnaceComponent";
-import { createHealthComponentParams } from "./entity-components/server-components/HealthComponent";
-import { createInventoryComponentParams } from "./entity-components/server-components/InventoryComponent";
-import { createSlurbTorchComponentParams } from "./entity-components/server-components/SlurbTorchComponent";
-import { createSpikesComponentParams } from "./entity-components/server-components/SpikesComponent";
-import { createStatusEffectComponentParams } from "./entity-components/server-components/StatusEffectComponent";
-import { createStructureComponentParams } from "./entity-components/server-components/StructureComponent";
-import { createTransformComponentParams } from "./entity-components/server-components/TransformComponent";
-import { createTribeComponentParams } from "./entity-components/server-components/TribeComponent";
+import { createHitboxQuick } from "./hitboxes";
+import { createBracingsComponentData } from "./entity-components/server-components/BracingsComponent";
+import { createBuildingMaterialComponentData } from "./entity-components/server-components/BuildingMaterialComponent";
+import { createCampfireComponentData } from "./entity-components/server-components/CampfireComponent";
+import { createCookingComponentData } from "./entity-components/server-components/CookingComponent";
+import { createFireTorchComponentData } from "./entity-components/server-components/FireTorchComponent";
+import { createFurnaceComponentData } from "./entity-components/server-components/FurnaceComponent";
+import { createHealthComponentData } from "./entity-components/server-components/HealthComponent";
+import { createInventoryComponentData } from "./entity-components/server-components/InventoryComponent";
+import { createSlurbTorchComponentData } from "./entity-components/server-components/SlurbTorchComponent";
+import { createSpikesComponentData } from "./entity-components/server-components/SpikesComponent";
+import { createStatusEffectComponentData } from "./entity-components/server-components/StatusEffectComponent";
+import { createStructureComponentData } from "./entity-components/server-components/StructureComponent";
+import { createTransformComponentData } from "./entity-components/server-components/TransformComponent";
+import { createTribeComponentData } from "./entity-components/server-components/TribeComponent";
 import { EntityRenderInfo, updateEntityRenderInfoRenderData } from "./EntityRenderInfo";
-import Game, { getCursorWorldPos } from "./Game";
+import { currentSnapshot } from "./game";
 import Layer from "./Layer";
 import { thingIsVisualRenderPart } from "./render-parts/render-parts";
 import { removeGhostRenderInfo } from "./rendering/webgl/entity-ghost-rendering";
 import { playerTribe } from "./tribes";
-import { createEntity, EntityParams, EntityServerComponentParams, layers } from "./world";
+import { createEntity, EntityComponentData, layers } from "./world";
 import { padBoxData, readBoxFromData } from "./networking/packet-hitboxes";
 import { Box, HitboxCollisionType } from "../../shared/src/boxes/boxes";
+import { createBarrelComponentData } from "./entity-components/server-components/BarrelComponent";
+import { EntityServerComponentData } from "./networking/packet-snapshots";
+import { cursorWorldPos } from "./mouse";
 
 export interface VirtualBuilding {
    readonly entityType: StructureType;
@@ -81,81 +82,81 @@ const readVirtualBuildingFromData = (reader: PacketReader, virtualBuildingID: nu
 
    // @Copynpaste @Hack
 
-   const components = {} as EntityServerComponentParams;
+   const components: EntityServerComponentData = {};
 
-   // @Hack @Cleanup: make the client and server use the some component params system
+   // @Hack @Cleanup: make the client and server use the some component data system
    const componentTypes = EntityComponents[entityType];
    for (let i = 0; i < componentTypes.length; i++) {
       const componentType = componentTypes[i];
 
       switch (componentType) {
          case ServerComponentType.transform: {
-            const transformComponentParams = createTransformComponentParams(
+            const transformComponentData = createTransformComponentData(
                // @HACK
                boxes.map(box => {
                   return createHitboxQuick(0, null, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
                }),
             );
 
-            components[componentType] = transformComponentParams;
+            components[componentType] = transformComponentData;
             break;
          }
          case ServerComponentType.health: {
-            const params = createHealthComponentParams();
-            components[componentType] = params;
+            const data = createHealthComponentData();
+            components[componentType] = data;
             break;
          }
          case ServerComponentType.statusEffect: {
-            const params = createStatusEffectComponentParams();
-            components[componentType] = params;
+            const data = createStatusEffectComponentData();
+            components[componentType] = data;
             break;
          }
          case ServerComponentType.structure: {
-            components[componentType] = createStructureComponentParams();
+            components[componentType] = createStructureComponentData();
             break;
          }
          case ServerComponentType.tribe: {
-            components[componentType] = createTribeComponentParams(playerTribe);
+            components[componentType] = createTribeComponentData(playerTribe);
             break;
          }
          case ServerComponentType.buildingMaterial: {
-            components[componentType] = createBuildingMaterialComponentParams(BuildingMaterial.wood);
+            components[componentType] = createBuildingMaterialComponentData(BuildingMaterial.wood);
             break;
          }
          case ServerComponentType.bracings: {
-            components[componentType] = createBracingsComponentParams();
+            components[componentType] = createBracingsComponentData();
             break;
          }
          case ServerComponentType.inventory: {
-            components[componentType] = createInventoryComponentParams();
+            components[componentType] = createInventoryComponentData();
             break;
          }
          case ServerComponentType.cooking: {
-            components[componentType] = createCookingComponentParams();
+            components[componentType] = createCookingComponentData();
             break;
          }
          case ServerComponentType.campfire: {
-            components[componentType] = createCampfireComponentParams();
+            components[componentType] = createCampfireComponentData();
             break;
          }
          case ServerComponentType.furnace: {
-            components[componentType] = createFurnaceComponentParams();
+            components[componentType] = createFurnaceComponentData();
             break;
          }
          case ServerComponentType.spikes: {
-            components[componentType] = createSpikesComponentParams();
+            components[componentType] = createSpikesComponentData();
             break;
          }
          case ServerComponentType.fireTorch: {
-            components[componentType] = createFireTorchComponentParams();
+            components[componentType] = createFireTorchComponentData();
             break;
          }
          case ServerComponentType.slurbTorch: {
-            components[componentType] = createSlurbTorchComponentParams();
+            components[componentType] = createSlurbTorchComponentData();
             break;
          }
          case ServerComponentType.barrel: {
-            components[componentType] = createBarrelComponentParams();
+            components[componentType] = createBarrelComponentData();
             break;
          }
          case ServerComponentType.researchBench: {
@@ -183,15 +184,15 @@ const readVirtualBuildingFromData = (reader: PacketReader, virtualBuildingID: nu
       }
    }
 
-   const entityParams: EntityParams = {
+   const entityComponentData: EntityComponentData = {
       entityType: entityType,
-      serverComponentParams: components,
+      serverComponentData: components,
       // @Incomplete
-      clientComponentParams: {}
+      clientComponentData: {}
    };
 
    // Create the entity
-   const creationInfo = createEntity(0, entityParams);
+   const creationInfo = createEntity(0, entityComponentData);
 
    const renderInfo = creationInfo.renderInfo;
 
@@ -205,10 +206,10 @@ const readVirtualBuildingFromData = (reader: PacketReader, virtualBuildingID: nu
 
    // @Hack: Manually set the render info's position and rotation
    // @INCOMPLETE
-   // const transformComponentParams = components[ServerComponentType.transform]!;
-   // renderInfo.renderPosition.x = transformComponentParams.position.x;
-   // renderInfo.renderPosition.y = transformComponentParams.position.y;
-   // renderInfo.rotation = transformComponentParams.rotation;
+   // const transformComponentData = components[ServerComponentType.transform]!;
+   // renderInfo.renderPosition.x = transformComponentData.position.x;
+   // renderInfo.renderPosition.y = transformComponentData.position.y;
+   // renderInfo.rotation = transformComponentData.rotation;
    updateEntityRenderInfoRenderData(renderInfo);
 
    return {
@@ -223,9 +224,7 @@ const readVirtualBuildingFromData = (reader: PacketReader, virtualBuildingID: nu
 }
 
 export function readGhostVirtualBuildings(reader: PacketReader): void {
-   while (reader.readBoolean()) {
-      reader.padOffset(3);
-
+   while (reader.readBool()) {
       const virtualBuildingID = reader.readNumber();
 
       const existingGhostBuildingPlan = ghostBuildingPlans.get(virtualBuildingID);
@@ -239,7 +238,7 @@ export function readGhostVirtualBuildings(reader: PacketReader): void {
             reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
          }
 
-         existingGhostBuildingPlan.lastUpdateTicks = Board.serverTicks;
+         existingGhostBuildingPlan.lastUpdateTicks = currentSnapshot.tick;
       } else {
          const virtualBuilding = readVirtualBuildingFromData(reader, virtualBuildingID);
    
@@ -261,17 +260,14 @@ export function readGhostVirtualBuildings(reader: PacketReader): void {
          const ghostBuildingPlan: GhostBuildingPlan = {
             virtualBuilding: virtualBuilding,
             virtualBuildingsMap: virtualBuildingSafetySimulationMap,
-            lastUpdateTicks: Board.serverTicks
+            lastUpdateTicks: currentSnapshot.tick
          };
          ghostBuildingPlans.set(virtualBuilding.id, ghostBuildingPlan);
       }
    }
-   reader.padOffset(3);
 }
 
 export function getVisibleBuildingPlan(): GhostBuildingPlan | null {
-   const cursorWorldPos = getCursorWorldPos();
-   
    let closestGhostBuildingPlan: GhostBuildingPlan | undefined;
    let minDist = 64;
    for (const pair of ghostBuildingPlans) {
@@ -294,7 +290,7 @@ export function getVisibleBuildingPlan(): GhostBuildingPlan | null {
 export function pruneGhostBuildingPlans(): void {
    for (const pair of ghostBuildingPlans) {
       const ghostBuildingInfo = pair[1];
-      if (ghostBuildingInfo.lastUpdateTicks !== Board.serverTicks) {
+      if (ghostBuildingInfo.lastUpdateTicks !== currentSnapshot.tick) {
          removeGhostRenderInfo(ghostBuildingInfo.virtualBuilding.renderInfo);
          ghostBuildingPlans.delete(pair[0]);
       }

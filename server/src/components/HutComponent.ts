@@ -19,8 +19,6 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const hutComponent = HutComponentArray.getComponent(entity);
-
-   packet.addNumber(hutComponent.lastDoorSwingTicks);
-   packet.addBoolean(hutComponent.isRecalling);
-   packet.padOffset(3)
+   packet.writeNumber(hutComponent.lastDoorSwingTicks);
+   packet.writeBool(hutComponent.isRecalling);
 }

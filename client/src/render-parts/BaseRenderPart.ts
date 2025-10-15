@@ -1,7 +1,8 @@
 import { Point } from "battletribes-shared/utils";
 import { createIdentityMatrix } from "../rendering/matrices";
 import { RenderPartParent, RenderPart } from "./render-parts";
-import Board from "../Board";
+import { currentSnapshot } from "../game";
+import { Hitbox } from "../hitboxes";
 
 let idCounter = 0;
 
@@ -10,7 +11,7 @@ export default abstract class BaseRenderPart {
    public readonly id = idCounter++;
 
    /** The point in time when the render part was created */
-   private creationTicks = Board.serverTicks;
+   private creationTicks = currentSnapshot.tick;
    
    /** Estimated position of the object during the current frame */
    public renderPosition = new Point(-1, -1);
@@ -32,6 +33,8 @@ export default abstract class BaseRenderPart {
 
    public readonly children = new Array<RenderPart>();
    public readonly parent: RenderPartParent;
+   // @HACK
+   public parentHitbox: Hitbox | null = null;
 
    // Needed for the tree-like update system regardless of whether the thing will be rendered to the screen
    public readonly modelMatrix = createIdentityMatrix();
@@ -64,6 +67,6 @@ export default abstract class BaseRenderPart {
    }
 
    public getAge(): number {
-      return Board.serverTicks - this.creationTicks;
+      return currentSnapshot.tick - this.creationTicks;
    }
 }

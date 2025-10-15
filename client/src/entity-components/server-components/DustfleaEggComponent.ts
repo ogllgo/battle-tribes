@@ -2,29 +2,22 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { randAngle } from "../../../../shared/src/utils";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface DustfleaEggComponentParams {}
+export interface DustfleaEggComponentData {}
 
 interface IntermediateInfo {}
 
 export interface DustfleaEggComponent {}
 
-export const DustfleaEggComponentArray = new ServerComponentArray<DustfleaEggComponent, DustfleaEggComponentParams, IntermediateInfo>(ServerComponentType.dustfleaEgg, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const DustfleaEggComponentArray = new ServerComponentArray<DustfleaEggComponent, DustfleaEggComponentData, IntermediateInfo>(ServerComponentType.dustfleaEgg, true, createComponent, getMaxRenderParts, decodeData);
+DustfleaEggComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -46,12 +39,12 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    return {};
 }
 
-export function createDustfleaEggComponentParams(): DustfleaEggComponentParams {
+export function createDustfleaEggComponentData(): DustfleaEggComponentData {
    return {};
 }
 
-function createParamsFromData(): DustfleaEggComponentParams {
-   return createDustfleaEggComponentParams();
+function decodeData(): DustfleaEggComponentData {
+   return createDustfleaEggComponentData();
 }
 
 function createComponent(): DustfleaEggComponent {
@@ -61,7 +54,3 @@ function createComponent(): DustfleaEggComponent {
 function getMaxRenderParts(): number {
    return 2;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}

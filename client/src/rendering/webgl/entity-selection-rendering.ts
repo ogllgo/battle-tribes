@@ -2,7 +2,7 @@ import { createWebGLProgram, gl, windowWidth, windowHeight, createTexture } from
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { cleanupEntityRendering, renderEntity, setupEntityRendering } from "./entity-rendering";
 import { cleanEntityRenderInfo, getRenderPartRenderPosition, translateEntityRenderParts } from "../render-part-matrices";
-import { gameFramebuffer } from "../../Game";
+import { gameFramebuffer } from "../../game";
 import { EntityRenderInfo, updateEntityRenderInfoRenderData } from "../../EntityRenderInfo";
 
 let renderProgram: WebGLProgram;

@@ -77,30 +77,27 @@ function getDataLength(entity: Entity): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const tamingComponent = TamingComponentArray.getComponent(entity);
-   packet.addNumber(tamingComponent.tamingTier);
-   packet.addNumber(tamingComponent.foodEatenInTier);
-   packet.addString(tamingComponent.name);
+   packet.writeNumber(tamingComponent.tamingTier);
+   packet.writeNumber(tamingComponent.foodEatenInTier);
+   packet.writeString(tamingComponent.name);
 
    // Acquired skills
-   packet.addNumber(tamingComponent.acquiredSkills.length);
+   packet.writeNumber(tamingComponent.acquiredSkills.length);
    for (const skill of tamingComponent.acquiredSkills) {
-      packet.addNumber(skill.id);
+      packet.writeNumber(skill.id);
    }
 
    // Skill learnings
-   packet.addNumber(tamingComponent.skillLearningArray.length);
+   packet.writeNumber(tamingComponent.skillLearningArray.length);
    for (const skillLearning of tamingComponent.skillLearningArray) {
-      packet.addNumber(skillLearning.skill.id);
+      packet.writeNumber(skillLearning.skill.id);
       for (const requirementProgress of skillLearning.requirementProgressArray) {
-         packet.addNumber(requirementProgress);
+         packet.writeNumber(requirementProgress);
       }
    }
 
-   packet.addBoolean(entityExists(tamingComponent.attackTarget));
-   packet.padOffset(3);
-   
-   packet.addBoolean(entityExists(tamingComponent.followTarget));
-   packet.padOffset(3);
+   packet.writeBool(entityExists(tamingComponent.attackTarget));
+   packet.writeBool(entityExists(tamingComponent.followTarget));
 }
 
 export function getTamingSkillLearning(tamingComponent: TamingComponent, skillID: TamingSkillID): TamingSkillLearning | null {

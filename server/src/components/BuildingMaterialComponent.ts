@@ -36,5 +36,5 @@ function getDataLength(): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const buildingMaterialComponent = BuildingMaterialComponentArray.getComponent(entity);
 
-   packet.addNumber(buildingMaterialComponent.material);
+   packet.writeNumber(buildingMaterialComponent.material);
 }

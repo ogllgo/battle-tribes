@@ -13,7 +13,7 @@ import { positionIsInWorld } from "../../../shared/src/utils";
 export const RENDER_CHUNK_SIZE = 8;
 export const RENDER_CHUNK_UNITS = RENDER_CHUNK_SIZE * Settings.TILE_SIZE;
 
-export const WORLD_RENDER_CHUNK_SIZE = Settings.BOARD_DIMENSIONS / RENDER_CHUNK_SIZE;
+export const WORLD_RENDER_CHUNK_SIZE = Settings.WORLD_SIZE_TILES / RENDER_CHUNK_SIZE;
 
 export const RENDER_CHUNK_EDGE_GENERATION = Math.ceil(Settings.EDGE_GENERATION_DISTANCE / RENDER_CHUNK_SIZE);
 
@@ -169,8 +169,8 @@ export function createRenderChunks(layer: Layer, waterRocks: ReadonlyArray<Water
 }
 
 export function updateRenderChunkFromTileUpdate(tileIndex: number, layer: Layer): void {
-   const tileX = tileIndex % Settings.BOARD_DIMENSIONS;
-   const tileY = Math.floor(tileIndex / Settings.BOARD_DIMENSIONS);
+   const tileX = tileIndex % Settings.WORLD_SIZE_TILES;
+   const tileY = Math.floor(tileIndex / Settings.WORLD_SIZE_TILES);
    
    const renderChunkX = Math.floor(tileX / RENDER_CHUNK_SIZE);
    const renderChunkY = Math.floor(tileY / RENDER_CHUNK_SIZE);
@@ -188,8 +188,8 @@ export function getRenderChunkMinTileX(renderChunkX: number): number {
 
 export function getRenderChunkMaxTileX(renderChunkX: number): number {
    let tileMaxX = (renderChunkX + 1) * RENDER_CHUNK_SIZE - 1;
-   if (tileMaxX > Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) {
-      tileMaxX = Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE;
+   if (tileMaxX > Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE) {
+      tileMaxX = Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE;
    }
    return tileMaxX;
 }
@@ -204,8 +204,8 @@ export function getRenderChunkMinTileY(renderChunkY: number): number {
 
 export function getRenderChunkMaxTileY(renderChunkY: number): number {
    let tileMaxY = (renderChunkY + 1) * RENDER_CHUNK_SIZE - 1;
-   if (tileMaxY > Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE) {
-      tileMaxY = Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE;
+   if (tileMaxY > Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE) {
+      tileMaxY = Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE;
    }
    return tileMaxY;
 }

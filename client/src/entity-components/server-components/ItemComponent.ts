@@ -8,11 +8,10 @@ import ServerComponentArray from "../ServerComponentArray";
 import CLIENT_ITEM_INFO_RECORD from "../../client-item-info";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface ItemComponentParams {
+export interface ItemComponentData {
    readonly itemType: ItemType;
 }
 
@@ -22,43 +21,37 @@ export interface ItemComponent {
    readonly itemType: ItemType;
 }
 
-export const ItemComponentArray = new ServerComponentArray<ItemComponent, ItemComponentParams, IntermediateInfo>(ServerComponentType.item, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const ItemComponentArray = new ServerComponentArray<ItemComponent, ItemComponentData, IntermediateInfo>(ServerComponentType.item, true, createComponent, getMaxRenderParts, decodeData);
+ItemComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+ItemComponentArray.onTick = onTick;
 
-function createParamsFromData(reader: PacketReader): ItemComponentParams {
+function decodeData(reader: PacketReader): ItemComponentData {
    const itemType = reader.readNumber();
    return {
       itemType: itemType
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
-   const itemComponentParams = entityParams.serverComponentParams[ServerComponentType.item]!;
+   const itemComponentData = entityComponentData.serverComponentData[ServerComponentType.item]!;
       
    const renderPart = new TexturedRenderPart(
       hitbox,
       0,
       0,
-      getTextureArrayIndex(CLIENT_ITEM_INFO_RECORD[itemComponentParams.itemType].entityTextureSource)
+      getTextureArrayIndex(CLIENT_ITEM_INFO_RECORD[itemComponentData.itemType].entityTextureSource)
    )
    renderInfo.attachRenderPart(renderPart);
 
    return {};
 }
 
-function createComponent(entityParams: EntityParams): ItemComponent {
+function createComponent(entityComponentData: EntityComponentData): ItemComponent {
    return {
-      itemType: entityParams.serverComponentParams[ServerComponentType.item]!.itemType
+      itemType: entityComponentData.serverComponentData[ServerComponentType.item]!.itemType
    };
 }
 
@@ -75,12 +68,4 @@ function onTick(entity: Entity): void {
       const hitbox = transformComponent.hitboxes[0];
       createDeepFrostHeartBloodParticles(hitbox.box.position.x, hitbox.box.position.y, 0, 0);
    }
-}
-   
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
 }

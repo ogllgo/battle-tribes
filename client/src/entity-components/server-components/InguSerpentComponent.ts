@@ -10,31 +10,25 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { addMonocolourParticleToBufferContainer, ParticleColour, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
 const ICE_SPECK_COLOUR: ParticleColour = [140/255, 143/255, 207/255];
 const SIZE = 80;
 
-export interface InguSerpentComponentParams {}
+export interface InguSerpentComponentData {}
 
 interface IntermediateInfo {}
 
 export interface InguSerpentComponent {}
 
-export const InguSerpentComponentArray = new ServerComponentArray<InguSerpentComponent, InguSerpentComponentParams, IntermediateInfo>(ServerComponentType.inguSerpent, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const InguSerpentComponentArray = new ServerComponentArray<InguSerpentComponent, InguSerpentComponentData, IntermediateInfo>(ServerComponentType.inguSerpent, true, createComponent, getMaxRenderParts, decodeData);
+InguSerpentComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+InguSerpentComponentArray.onHit = onHit;
+InguSerpentComponentArray.onDie = onDie;
 
-function createParamsFromData(): InguSerpentComponentParams {
+function decodeData(): InguSerpentComponentData {
    return {};
 }
 
@@ -72,10 +66,10 @@ const createIceSpeckProjectile = (hitbox: Hitbox): void => {
    Board.highMonocolourParticles.push(particle);
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
 
-   for (const hitbox of transformComponentParams.hitboxes) {
+   for (const hitbox of transformComponentData.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.INGU_SERPENT_HEAD)) {
          const renderPart = new TexturedRenderPart(
             hitbox,
@@ -125,10 +119,6 @@ function createComponent(): InguSerpentComponent {
 function getMaxRenderParts(): number {
    return 4;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}
 
 function onHit(serpent: Entity, hitbox: Hitbox): void {
    // Create ice particles on hit

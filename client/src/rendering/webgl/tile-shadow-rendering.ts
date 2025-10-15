@@ -1,10 +1,10 @@
 import { Settings } from "battletribes-shared/settings";
-import Camera from "../../Camera";
 import { createWebGLProgram, gl } from "../../webgl";
 import { RenderChunkTileShadowInfo, getRenderChunkTileShadowInfo, getRenderChunkMaxTileX, getRenderChunkMaxTileY, getRenderChunkMinTileX, getRenderChunkMinTileY } from "../render-chunks";
 import { UBOBindingIndex, bindUBOToProgram } from "../ubos";
 import Layer, { subtileIsInWorld, tileIsWithinEdge } from "../../Layer";
 import { TileType } from "../../../../shared/src/tiles";
+import { minVisibleRenderChunkX, maxVisibleRenderChunkX, minVisibleRenderChunkY, maxVisibleRenderChunkY } from "../../camera";
 
 export const enum TileShadowType {
    dropdownShadow,
@@ -459,8 +459,8 @@ export function renderTileShadows(layer: Layer, tileShadowType: TileShadowType):
    gl.enable(gl.BLEND);
    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-   for (let renderChunkX = Camera.minVisibleRenderChunkX; renderChunkX <= Camera.maxVisibleRenderChunkX; renderChunkX++) {
-      for (let renderChunkY = Camera.minVisibleRenderChunkY; renderChunkY <= Camera.maxVisibleRenderChunkY; renderChunkY++) {
+   for (let renderChunkX = minVisibleRenderChunkX; renderChunkX <= maxVisibleRenderChunkX; renderChunkX++) {
+      for (let renderChunkY = minVisibleRenderChunkY; renderChunkY <= maxVisibleRenderChunkY; renderChunkY++) {
          const ambientOcclusionInfo = getRenderChunkTileShadowInfo(layer, renderChunkX, renderChunkY, tileShadowType);
          if (ambientOcclusionInfo === null) {
             continue;

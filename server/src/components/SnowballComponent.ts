@@ -102,5 +102,5 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const snowballComponent = SnowballComponentArray.getComponent(entity);
-   packet.addNumber(snowballComponent.size);
+   packet.writeNumber(snowballComponent.size);
 }

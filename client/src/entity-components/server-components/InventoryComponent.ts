@@ -1,4 +1,4 @@
-import { InventoryComponentData, ServerComponentType } from "../../../../shared/src/components";
+import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity, LimbAction } from "../../../../shared/src/entities";
 import { InventoryName, Item, ITEM_TYPE_RECORD, Inventory, ItemType } from "../../../../shared/src/items/items";
 import { PacketReader } from "../../../../shared/src/packets";
@@ -6,11 +6,11 @@ import { getPlayerSelectedItemSlot, onItemDeselect, onItemSelect } from "../../c
 import { BackpackInventoryMenu_update } from "../../components/game/inventories/BackpackInventory";
 import { Hotbar_update } from "../../components/game/inventories/Hotbar";
 import { playerInstance } from "../../player";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { LimbInfo, InventoryUseComponentArray, inventoryUseComponentHasLimbInfo, getLimbByInventoryName } from "./InventoryUseComponent";
 
-export interface InventoryComponentParams {
+export interface InventoryComponentData {
    readonly inventories: Partial<Record<InventoryName, Inventory>>;
 }
 
@@ -186,26 +186,17 @@ export function getInventory(inventoryComponent: InventoryComponent, inventoryNa
    return inventoryComponent.inventoryRecord[inventoryName] || null;
 }
 
-export const InventoryComponentArray = new ServerComponentArray<InventoryComponent, InventoryComponentParams, never>(ServerComponentType.inventory, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   updatePlayerFromData: updatePlayerFromData
-});
+export const InventoryComponentArray = new ServerComponentArray<InventoryComponent, InventoryComponentData, never>(ServerComponentType.inventory, true, createComponent, getMaxRenderParts, decodeData);
+InventoryComponentArray.updateFromData = updateFromData;
+InventoryComponentArray.updatePlayerFromData = updatePlayerFromData;
 
-const fillParams = (inventories: Partial<Record<InventoryName, Inventory>>): InventoryComponentParams => {
+export function createInventoryComponentData(): InventoryComponentData {
    return {
-      inventories: inventories
+      inventories: {}
    };
 }
 
-export function createInventoryComponentParams(): InventoryComponentParams {
-   return fillParams({});
-}
-
-function createParamsFromData(reader: PacketReader): InventoryComponentParams {
+function decodeData(reader: PacketReader): InventoryComponentData {
    const inventories: Partial<Record<InventoryName, Inventory>> = {};
    const numInventories = reader.readNumber();
    for (let i = 0; i < numInventories; i++) {
@@ -213,15 +204,17 @@ function createParamsFromData(reader: PacketReader): InventoryComponentParams {
       inventories[inventory.name] = inventory;
    }
 
-   return fillParams(inventories);
+   return {
+      inventories: inventories
+   };
 }
 
-function createComponent(entityParams: EntityParams): InventoryComponent {
-   const inventoryComponentParams = entityParams.serverComponentParams[ServerComponentType.inventory]!;
+function createComponent(entityComponentData: EntityComponentData): InventoryComponent {
+   const inventoryComponentData = entityComponentData.serverComponentData[ServerComponentType.inventory]!;
    
    return {
-      inventoryRecord: inventoryComponentParams.inventories,
-      inventories: Object.values(inventoryComponentParams.inventories)
+      inventoryRecord: inventoryComponentData.inventories,
+      inventories: Object.values(inventoryComponentData.inventories)
    };
 }
 
@@ -229,19 +222,7 @@ function getMaxRenderParts(): number {
    return 0;
 }
 
-function updateInventories(inventoryComponent: InventoryComponent, reader: PacketReader, isPlayer: boolean): void {
-   // @Temporary @Speed: garbage collection
-   const inventories: Partial<Record<InventoryName, Inventory>> = {};
-   const numInventories = reader.readNumber();
-   for (let i = 0; i < numInventories; i++) {
-      const inventory = readInventory(reader);
-      inventories[inventory.name] = inventory;
-   }
-   const data: InventoryComponentData = {
-      componentType: ServerComponentType.inventory,
-      inventories: inventories
-   };
-   
+function updateInventories(inventoryComponent: InventoryComponent, data: InventoryComponentData, isPlayer: boolean): void {
    // @Speed: Garbage collection
    // Add new inventories
    for (const inventoryNameKey of Object.keys(data.inventories)) {
@@ -277,22 +258,12 @@ function updateInventories(inventoryComponent: InventoryComponent, reader: Packe
    }
 }
 
-function padData(reader: PacketReader): void {
-   // @Temporary @Garbage
-   const inventories: Partial<Record<InventoryName, Inventory>> = {};
-   const numInventories = reader.readNumber();
-   for (let i = 0; i < numInventories; i++) {
-      const inventory = readInventory(reader);
-      inventories[inventory.name] = inventory;
-   }
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: InventoryComponentData, entity: Entity): void {
    const inventoryComponent = InventoryComponentArray.getComponent(entity);
-   updateInventories(inventoryComponent, reader, false);
+   updateInventories(inventoryComponent, data, false);
 }
 
-function updatePlayerFromData(reader: PacketReader): void {
+function updatePlayerFromData(data: InventoryComponentData): void {
    const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
-   updateInventories(inventoryComponent, reader, true);
+   updateInventories(inventoryComponent, data, true);
 }

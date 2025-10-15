@@ -10,8 +10,8 @@ export const layers = [surfaceLayer, undergroundLayer];
 // @Location
 export function addLayerBuildingBlockingTiles(layer: Layer): void {
    // Initially find all tiles below a dropdown tile
-   for (let tileX = 0; tileX < Settings.BOARD_DIMENSIONS; tileX++) {
-      for (let tileY = 0; tileY < Settings.BOARD_DIMENSIONS; tileY++) {
+   for (let tileX = 0; tileX < Settings.WORLD_SIZE_TILES; tileX++) {
+      for (let tileY = 0; tileY < Settings.WORLD_SIZE_TILES; tileY++) {
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
          if (surfaceLayer.getTileType(tileIndex) === TileType.dropdown) {
             layer.buildingBlockingTiles.add(tileIndex);

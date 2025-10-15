@@ -80,8 +80,8 @@ const isValidGrassPosition = (layer: Layer, x: number, y: number): boolean => {
 export function generateGrassStrands(): void {
    // @Speed
    // @Incomplete: generate in edges
-   for (let tileX = 0; tileX < Settings.BOARD_DIMENSIONS; tileX++) {
-      for (let tileY = 0; tileY < Settings.BOARD_DIMENSIONS; tileY++) {
+   for (let tileX = 0; tileX < Settings.WORLD_SIZE_TILES; tileX++) {
+      for (let tileY = 0; tileY < Settings.WORLD_SIZE_TILES; tileY++) {
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
          const tileType = surfaceLayer.getTileType(tileIndex);
          if (tileType !== TileType.grass && tileType !== TileType.sandyDirt && tileType !== TileType.sandyDirtDark) {

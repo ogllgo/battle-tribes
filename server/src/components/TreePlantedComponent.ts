@@ -41,5 +41,5 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    const treePlantedComponent = TreePlantedComponentArray.getComponent(entity);
 
    const growthProgress = treePlantedComponent.plantGrowthTicks / Vars.GROWTH_TIME_TICKS;
-   packet.addNumber(growthProgress);
+   packet.writeNumber(growthProgress);
 }

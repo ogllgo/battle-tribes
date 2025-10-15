@@ -2,12 +2,11 @@ import { BlueprintType, BuildingMaterial } from "battletribes-shared/components"
 import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { deselectSelectedEntity, getSelectedEntityID } from "../../entity-selection";
-import Camera from "../../Camera";
 import Client from "../../networking/Client";
 import { GhostInfo, GhostType, PARTIAL_OPACITY } from "../../rendering/webgl/entity-ghost-rendering";
 import { getItemTypeImage } from "../../client-item-info";
 import { countItemTypesInInventory } from "../../inventory-manipulation";
-import { playSound } from "../../sound";
+import { playHeadSound } from "../../sound";
 import { InventoryName, ITEM_TYPE_RECORD, ItemType } from "battletribes-shared/items/items";
 import { addMenuCloseFunction } from "../../menus";
 import { getInventory, InventoryComponentArray } from "../../entity-components/server-components/InventoryComponent";
@@ -24,7 +23,7 @@ import { TransformComponentArray } from "../../entity-components/server-componen
 import { sendModifyBuildingPacket, sendPlaceBlueprintPacket } from "../../networking/packet-sending";
 import { playerTribe } from "../../tribes";
 import { playerInstance } from "../../player";
-import { Hitbox } from "../../hitboxes";
+import { worldToScreenPos } from "../../camera";
 
 /*
 // @Incomplete
@@ -465,10 +464,9 @@ const BuildMenu = () => {
          const transformComponent = TransformComponentArray.getComponent(building);
          const hitbox = transformComponent.hitboxes[0];
 
-         const screenX = Camera.calculateXScreenPos(hitbox.box.position.x);
-         const screenY = Camera.calculateYScreenPos(hitbox.box.position.y);
-         setX(screenX);
-         setY(screenY);
+         const screenPos = worldToScreenPos(hitbox.box.position);
+         setX(screenPos.x);
+         setY(screenPos.y);
       }
    }, []);
 
@@ -549,9 +547,7 @@ const BuildMenu = () => {
             }
    
             if (count < cost.amount) {
-               const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
-               const playerHitbox = playerTransformComponent.hitboxes[0];
-               playSound("error.mp3", 0.4, 1, playerHitbox.box.position, null);
+               playHeadSound("error.mp3", 0.4, 1);
                return;
             }
          }

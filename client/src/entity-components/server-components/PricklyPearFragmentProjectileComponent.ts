@@ -3,7 +3,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { Entity } from "../../../../shared/src/entities";
 import { randAngle, randFloat } from "../../../../shared/src/utils";
@@ -12,7 +12,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import { playSoundOnHitbox } from "../../sound";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface PricklyPearFragmentProjectileComponentParams {
+export interface PricklyPearFragmentProjectileComponentData {
    readonly variant: number;
 }
 
@@ -20,35 +20,29 @@ interface IntermediateInfo {}
 
 export interface PricklyPearFragmentProjectileComponent {}
 
-export const PricklyPearFragmentProjectileComponentArray = new ServerComponentArray<PricklyPearFragmentProjectileComponent, PricklyPearFragmentProjectileComponentParams, IntermediateInfo>(ServerComponentType.pricklyPearFragmentProjectile, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onDie: onDie
-});
+export const PricklyPearFragmentProjectileComponentArray = new ServerComponentArray<PricklyPearFragmentProjectileComponent, PricklyPearFragmentProjectileComponentData, IntermediateInfo>(ServerComponentType.pricklyPearFragmentProjectile, true, createComponent, getMaxRenderParts, decodeData);
+PricklyPearFragmentProjectileComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+PricklyPearFragmentProjectileComponentArray.onDie = onDie;
 
-function createParamsFromData(reader: PacketReader): PricklyPearFragmentProjectileComponentParams {
+function decodeData(reader: PacketReader): PricklyPearFragmentProjectileComponentData {
    const variant = reader.readNumber();
    return {
       variant: variant
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
-   const pricklyPearFragmentProjectileComponentParams = entityParams.serverComponentParams[ServerComponentType.pricklyPearFragmentProjectile]!;
+   const pricklyPearFragmentProjectileComponentData = entityComponentData.serverComponentData[ServerComponentType.pricklyPearFragmentProjectile]!;
 
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,
          0,
-         getTextureArrayIndex("entities/prickly-pear-fragment-projectile/fragment-" + (pricklyPearFragmentProjectileComponentParams.variant + 1) + ".png")
+         getTextureArrayIndex("entities/prickly-pear-fragment-projectile/fragment-" + (pricklyPearFragmentProjectileComponentData.variant + 1) + ".png")
       )
    );
 
@@ -63,14 +57,6 @@ function getMaxRenderParts(): number {
    return 1;
 }
    
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader): void {
-   padData(reader);
-}
-
 function onDie(fragment: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(fragment);
    const hitbox = transformComponent.hitboxes[0];

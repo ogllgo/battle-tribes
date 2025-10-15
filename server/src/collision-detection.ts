@@ -179,7 +179,7 @@ export function resolveEntityCollisions(layer: Layer): void {
       const pushingChunks = layer.collisionGroupChunks[pushingGroup];
       const pushedChunks = layer.collisionGroupChunks[pushedGroup];
       
-      for (let chunkIdx = 0; chunkIdx < Settings.BOARD_SIZE * Settings.BOARD_SIZE; chunkIdx++) {
+      for (let chunkIdx = 0; chunkIdx < Settings.WORLD_SIZE_CHUNKS * Settings.WORLD_SIZE_CHUNKS; chunkIdx++) {
          const pushingChunk = pushingChunks[chunkIdx];
          const pushedChunk = pushedChunks[chunkIdx];
 
@@ -283,20 +283,20 @@ export function getBoxesCollidingEntities(layer: Layer, boxes: ReadonlyArray<Box
       if (minX < 0) {
          minX = 0;
       }
-      if (maxX >= Settings.BOARD_UNITS) {
-         maxX = Settings.BOARD_UNITS - 1;
+      if (maxX >= Settings.WORLD_UNITS) {
+         maxX = Settings.WORLD_UNITS - 1;
       }
       if (minY < 0) {
          minY = 0;
       }
-      if (maxY >= Settings.BOARD_UNITS) {
-         maxY = Settings.BOARD_UNITS - 1;
+      if (maxY >= Settings.WORLD_UNITS) {
+         maxY = Settings.WORLD_UNITS - 1;
       }
       
       const minChunkX = Math.max(Math.floor(minX / Settings.CHUNK_UNITS), 0);
-      const maxChunkX = Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+      const maxChunkX = Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
       const minChunkY = Math.max(Math.floor(minY / Settings.CHUNK_UNITS), 0);
-      const maxChunkY = Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+      const maxChunkY = Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
       
       for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
          for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
@@ -337,20 +337,20 @@ export function getHitboxesCollidingEntities(layer: Layer, hitboxes: ReadonlyArr
       if (minX < 0) {
          minX = 0;
       }
-      if (maxX >= Settings.BOARD_UNITS) {
-         maxX = Settings.BOARD_UNITS - 1;
+      if (maxX >= Settings.WORLD_UNITS) {
+         maxX = Settings.WORLD_UNITS - 1;
       }
       if (minY < 0) {
          minY = 0;
       }
-      if (maxY >= Settings.BOARD_UNITS) {
-         maxY = Settings.BOARD_UNITS - 1;
+      if (maxY >= Settings.WORLD_UNITS) {
+         maxY = Settings.WORLD_UNITS - 1;
       }
       
       const minChunkX = Math.max(Math.floor(minX / Settings.CHUNK_UNITS), 0);
-      const maxChunkX = Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+      const maxChunkX = Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
       const minChunkY = Math.max(Math.floor(minY / Settings.CHUNK_UNITS), 0);
-      const maxChunkY = Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1);
+      const maxChunkY = Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
       
       for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
          for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {

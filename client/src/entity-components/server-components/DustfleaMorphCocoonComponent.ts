@@ -3,8 +3,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { PacketReader } from "../../../../shared/src/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
@@ -14,7 +13,7 @@ import { createCocoonAmbientParticle, createCocoonFragmentParticle } from "../..
 import { playSoundOnHitbox } from "../../sound";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface DustfleaMorphCocoonComponentParams {
+export interface DustfleaMorphCocoonComponentData {
    readonly stage: number;
 }
 
@@ -27,33 +26,40 @@ export interface DustfleaMorphCocoonComponent {
    readonly renderPart: TexturedRenderPart;
 }
 
-export const DustfleaMorphCocoonComponentArray = new ServerComponentArray<DustfleaMorphCocoonComponent, DustfleaMorphCocoonComponentParams, IntermediateInfo>(ServerComponentType.dustfleaMorphCocoon, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie,
-   onTick: onTick
-});
+export const DustfleaMorphCocoonComponentArray = new ServerComponentArray<DustfleaMorphCocoonComponent, DustfleaMorphCocoonComponentData, IntermediateInfo>(ServerComponentType.dustfleaMorphCocoon, true, createComponent, getMaxRenderParts, decodeData);
+DustfleaMorphCocoonComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+DustfleaMorphCocoonComponentArray.updateFromData = updateFromData;
+DustfleaMorphCocoonComponentArray.onHit = onHit;
+DustfleaMorphCocoonComponentArray.onDie = onDie;
+DustfleaMorphCocoonComponentArray.onTick = onTick;
 
 const getTextureSource = (stage: number): string => {
    return "entities/dustflea-morph-cocoon/stage-" + stage + ".png";
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+export function createDustfleaMorphCocoonComponentData(stage: number): DustfleaMorphCocoonComponentData {
+   return {
+      stage: stage
+   };
+}
 
-   const dustfleaMorphCocoonComponentParams = entityParams.serverComponentParams[ServerComponentType.dustfleaMorphCocoon]!;
+function decodeData(reader: PacketReader): DustfleaMorphCocoonComponentData {
+   const stage = reader.readNumber();
+   
+   return createDustfleaMorphCocoonComponentData(stage);
+}
+
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
+
+   const dustfleaMorphCocoonComponentData = entityComponentData.serverComponentData[ServerComponentType.dustfleaMorphCocoon]!;
    
    const renderPart = new TexturedRenderPart(
       hitbox,
       0,
       0,
-      getTextureArrayIndex(getTextureSource(dustfleaMorphCocoonComponentParams.stage))
+      getTextureArrayIndex(getTextureSource(dustfleaMorphCocoonComponentData.stage))
    );
    renderInfo.attachRenderPart(renderPart);
 
@@ -62,23 +68,11 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    };
 }
 
-export function createDustfleaMorphCocoonComponentParams(stage: number): DustfleaMorphCocoonComponentParams {
-   return {
-      stage: stage
-   };
-}
-
-function createParamsFromData(reader: PacketReader): DustfleaMorphCocoonComponentParams {
-   const stage = reader.readNumber();
-   
-   return createDustfleaMorphCocoonComponentParams(stage);
-}
-
-function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): DustfleaMorphCocoonComponent {
-   const dustfleaMorphCocoonComponentParams = entityParams.serverComponentParams[ServerComponentType.dustfleaMorphCocoon]!;
+function createComponent(entityComponentData: EntityComponentData, intermediateInfo: IntermediateInfo): DustfleaMorphCocoonComponent {
+   const dustfleaMorphCocoonComponentData = entityComponentData.serverComponentData[ServerComponentType.dustfleaMorphCocoon]!;
 
    return {
-      stage: dustfleaMorphCocoonComponentParams.stage,
+      stage: dustfleaMorphCocoonComponentData.stage,
       renderPart: intermediateInfo.renderPart,
    };
 }
@@ -101,14 +95,10 @@ function onTick(cocoon: Entity): void {
    }
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: DustfleaMorphCocoonComponentData, entity: Entity): void {
    const dustfleaMorphComponent = DustfleaMorphCocoonComponentArray.getComponent(entity);
 
-   const stage = reader.readNumber();
+   const stage = data.stage;
 
    if (stage !== dustfleaMorphComponent.stage) {
       dustfleaMorphComponent.renderPart.switchTextureSource(getTextureSource(stage));

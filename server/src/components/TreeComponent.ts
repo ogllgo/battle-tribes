@@ -44,5 +44,5 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const treeComponent = TreeComponentArray.getComponent(entity);
-   packet.addNumber(treeComponent.treeSize);
+   packet.writeNumber(treeComponent.treeSize);
 }

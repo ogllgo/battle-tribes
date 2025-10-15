@@ -74,7 +74,7 @@ export function handlePlayerDisconnect(playerClient: PlayerClient): void {
 
 export function generatePlayerSpawnPosition(tribeType: TribeType): Point {
    // @Temporary @Squeam
-   return new Point(Settings.BOARD_UNITS * 0.5, Settings.BOARD_UNITS * 0.5);
+   return new Point(Settings.WORLD_UNITS * 0.5, Settings.WORLD_UNITS * 0.5);
    
    const tribeInfo = TRIBE_INFO_RECORD[tribeType];
    for (let numAttempts = 0; numAttempts < 50; numAttempts++) {
@@ -91,7 +91,7 @@ export function generatePlayerSpawnPosition(tribeType: TribeType): Point {
       const x = (tileX + Math.random()) * Settings.TILE_SIZE;
       const y = (tileY + Math.random()) * Settings.TILE_SIZE;
 
-      if (x < PLAYER_SPAWN_POSITION_PADDING || x >= Settings.BOARD_UNITS - PLAYER_SPAWN_POSITION_PADDING || y < PLAYER_SPAWN_POSITION_PADDING || y >= Settings.BOARD_UNITS - PLAYER_SPAWN_POSITION_PADDING) {
+      if (x < PLAYER_SPAWN_POSITION_PADDING || x >= Settings.WORLD_UNITS - PLAYER_SPAWN_POSITION_PADDING || y < PLAYER_SPAWN_POSITION_PADDING || y >= Settings.WORLD_UNITS - PLAYER_SPAWN_POSITION_PADDING) {
          continue;
       }
 
@@ -99,8 +99,8 @@ export function generatePlayerSpawnPosition(tribeType: TribeType): Point {
    }
    
    // If all else fails, just pick a random position
-   const x = randInt(PLAYER_SPAWN_POSITION_PADDING, Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - PLAYER_SPAWN_POSITION_PADDING);
-   const y = randInt(PLAYER_SPAWN_POSITION_PADDING, Settings.BOARD_DIMENSIONS * Settings.TILE_SIZE - PLAYER_SPAWN_POSITION_PADDING);
+   const x = randInt(PLAYER_SPAWN_POSITION_PADDING, Settings.WORLD_SIZE_TILES * Settings.TILE_SIZE - PLAYER_SPAWN_POSITION_PADDING);
+   const y = randInt(PLAYER_SPAWN_POSITION_PADDING, Settings.WORLD_SIZE_TILES * Settings.TILE_SIZE - PLAYER_SPAWN_POSITION_PADDING);
    return new Point(x, y);
 }
 
@@ -320,7 +320,7 @@ export function addPlayerClient(playerClient: PlayerClient, layer: Layer, spawnP
    });
 
    socket.on("dev_create_tribe", (): void => {
-      new Tribe(TribeType.plainspeople, true, new Point(Settings.BOARD_UNITS * 0.5, Settings.BOARD_UNITS * 0.5));
+      new Tribe(TribeType.plainspeople, true, new Point(Settings.WORLD_UNITS * 0.5, Settings.WORLD_UNITS * 0.5));
    });
 
    socket.on("dev_change_tribe_type", (tribeID: number, newTribeType: TribeType): void => {
@@ -368,10 +368,10 @@ const getPlayersViewingEntity = (entity: Entity): ReadonlyArray<PlayerClient> =>
 }
 
 const getPlayersViewingPosition = (minX: number, maxX: number, minY: number, maxY: number): ReadonlyArray<PlayerClient> => {
-   const minChunkX = Math.max(Math.min(Math.floor(minX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-   const maxChunkX = Math.max(Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-   const minChunkY = Math.max(Math.min(Math.floor(minY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
-   const maxChunkY = Math.max(Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.BOARD_SIZE - 1), 0);
+   const minChunkX = Math.max(Math.min(Math.floor(minX / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const maxChunkX = Math.max(Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const minChunkY = Math.max(Math.min(Math.floor(minY / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const maxChunkY = Math.max(Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
 
    const viewingPlayerClients = new Array<PlayerClient>();
    // @Speed: will probs become a major source of slowness with 50+ players

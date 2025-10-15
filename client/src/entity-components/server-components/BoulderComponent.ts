@@ -9,11 +9,12 @@ import { createRockParticle, createRockSpeckParticle } from "../../particles";
 import { ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { ROCK_HIT_SOUNDS, ROCK_DESTROY_SOUNDS, playSoundOnHitbox } from "../../sound";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import CircularBox from "../../../../shared/src/boxes/CircularBox";
 
-export interface BoulderComponentParams {
+export interface BoulderComponentData {
    readonly boulderType: number;
 }
 
@@ -23,52 +24,44 @@ export interface BoulderComponent {
    readonly boulderType: number;
 }
 
-const RADIUS = 40;
-
 const TEXTURE_SOURCES = [
    "entities/boulder/boulder1.png",
    "entities/boulder/boulder2.png"
 ];
 
-export const BoulderComponentArray = new ServerComponentArray<BoulderComponent, BoulderComponentParams, IntermediateInfo>(ServerComponentType.boulder, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const BoulderComponentArray = new ServerComponentArray<BoulderComponent, BoulderComponentData, IntermediateInfo>(ServerComponentType.boulder, true, createComponent, getMaxRenderParts, decodeData);
+BoulderComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+BoulderComponentArray.onHit = onHit;
+BoulderComponentArray.onDie = onDie;
 
-function createParamsFromData(reader: PacketReader): BoulderComponentParams {
+function decodeData(reader: PacketReader): BoulderComponentData {
    const boulderType = reader.readNumber();
    return {
       boulderType: boulderType
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
-   const boulderComponentParams = entityParams.serverComponentParams[ServerComponentType.boulder]!;
+   const boulderComponentData = entityComponentData.serverComponentData[ServerComponentType.boulder]!;
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,
          0,
-         getTextureArrayIndex(TEXTURE_SOURCES[boulderComponentParams.boulderType])
+         getTextureArrayIndex(TEXTURE_SOURCES[boulderComponentData.boulderType])
       )
    );
 
    return {};
 }
 
-function createComponent(entityParams: EntityParams): BoulderComponent {
+function createComponent(entityComponentData: EntityComponentData): BoulderComponent {
    return {
-      boulderType: entityParams.serverComponentParams[ServerComponentType.boulder]!.boulderType
+      boulderType: entityComponentData.serverComponentData[ServerComponentType.boulder]!.boulderType
    };
 }
 
@@ -76,20 +69,14 @@ function getMaxRenderParts(): number {
    return 1;
 }
 
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
 function onHit(entity: Entity, hitbox: Hitbox): void {
+   const radius = (hitbox.box as CircularBox).radius;
+   
    for (let i = 0; i < 2; i++) {
       let moveDirection = randAngle();
 
-      const spawnPositionX = hitbox.box.position.x + RADIUS * Math.sin(moveDirection);
-      const spawnPositionY = hitbox.box.position.y + RADIUS * Math.cos(moveDirection);
+      const spawnPositionX = hitbox.box.position.x + radius * Math.sin(moveDirection);
+      const spawnPositionY = hitbox.box.position.y + radius * Math.cos(moveDirection);
 
       moveDirection += randFloat(-1, 1);
 
@@ -97,7 +84,7 @@ function onHit(entity: Entity, hitbox: Hitbox): void {
    }
 
    for (let i = 0; i < 5; i++) {
-      createRockSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, RADIUS, 0, 0, ParticleRenderLayer.low);
+      createRockSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, radius, 0, 0, ParticleRenderLayer.low);
    }
 
    playSoundOnHitbox(randItem(ROCK_HIT_SOUNDS), 0.3, 1, entity, hitbox, false);
@@ -106,9 +93,10 @@ function onHit(entity: Entity, hitbox: Hitbox): void {
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.hitboxes[0];
+   const radius = (hitbox.box as CircularBox).radius;
 
    for (let i = 0; i < 5; i++) {
-      const spawnOffsetMagnitude = RADIUS * Math.random();
+      const spawnOffsetMagnitude = radius * Math.random();
       const spawnOffsetDirection = randAngle();
       const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
       const spawnPositionY = hitbox.box.position.y + spawnOffsetMagnitude * Math.cos(spawnOffsetDirection);
@@ -117,7 +105,7 @@ function onDie(entity: Entity): void {
    }
 
    for (let i = 0; i < 5; i++) {
-      createRockSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, RADIUS, 0, 0, ParticleRenderLayer.low);
+      createRockSpeckParticle(hitbox.box.position.x, hitbox.box.position.y, radius, 0, 0, ParticleRenderLayer.low);
    }
 
    playSoundOnHitbox(randItem(ROCK_DESTROY_SOUNDS), 0.4, 1, entity, hitbox, false);

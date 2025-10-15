@@ -1,31 +1,27 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 
-export interface FrostshaperComponentParams {}
+export interface FrostshaperComponentData {}
 
 interface IntermediateInfo {}
 
 export interface FrostshaperComponent {}
 
-export const FrostshaperComponentArray = new ClientComponentArray<FrostshaperComponent, IntermediateInfo>(ClientComponentType.frostshaper, true, {
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts
-});
+export const FrostshaperComponentArray = new ClientComponentArray<FrostshaperComponent, IntermediateInfo>(ClientComponentType.frostshaper, true, createComponent, getMaxRenderParts);
+FrostshaperComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
-export function createFrostshaperComponentParams(): FrostshaperComponentParams {
+export function createFrostshaperComponentData(): FrostshaperComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
    renderInfo.attachRenderPart(
       new TexturedRenderPart(

@@ -47,5 +47,5 @@ function getDataLength(entity: Entity): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const playerComponent = PlayerComponentArray.getComponent(entity);
-   packet.addString(playerComponent.client.username);
+   packet.writeString(playerComponent.client.username);
 }

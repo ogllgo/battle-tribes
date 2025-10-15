@@ -1,35 +1,32 @@
 import { ServerComponentType } from "../../../../shared/src/components";
 import { Entity } from "../../../../shared/src/entities";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { getHitboxVelocity, Hitbox } from "../../hitboxes";
+import { getHitboxVelocity } from "../../hitboxes";
 import { createArrowDestroyParticle } from "../../particles";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { ClientComponentType } from "../client-component-types";
 import ClientComponentArray from "../ClientComponentArray";
 import { TransformComponentArray } from "../server-components/TransformComponent";
 
-export interface BallistaWoodenBoltComponentParams {}
+export interface BallistaWoodenBoltComponentData {}
 
 interface IntermediateInfo {}
 
 export interface BallistaWoodenBoltComponent {}
 
-export const BallistaWoodenBoltComponentArray = new ClientComponentArray<BallistaWoodenBoltComponent, IntermediateInfo>(ClientComponentType.ballistaWoodenBolt, true, {
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onDie: onDie
-});
+export const BallistaWoodenBoltComponentArray = new ClientComponentArray<BallistaWoodenBoltComponent, IntermediateInfo>(ClientComponentType.ballistaWoodenBolt, true, createComponent, getMaxRenderParts);
+BallistaWoodenBoltComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+BallistaWoodenBoltComponentArray.onDie = onDie;
 
-export function createBallistaWoodenBoltComponentParams(): BallistaWoodenBoltComponentParams {
+export function createBallistaWoodenBoltComponentData(): BallistaWoodenBoltComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(

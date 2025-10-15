@@ -1,21 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
 import { Entity } from "../../../../shared/src/entities";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
-import Camera from "../../Camera";
 import { sendAnimalStaffFollowCommandPacket } from "../../networking/packet-sending";
 import { deselectSelectedEntity } from "../../entity-selection";
 import { InventoryUseComponentArray } from "../../entity-components/server-components/InventoryUseComponent";
-import { entityExists, getCurrentLayer } from "../../world";
+import { entityExists } from "../../world";
 import { createAnimalStaffCommandParticle } from "../../particles";
 import { getMatrixPosition } from "../../rendering/render-part-matrices";
 import { createTranslationMatrix, matrixMultiplyInPlace } from "../../rendering/matrices";
-import { playSound } from "../../sound";
+import { playHeadSound } from "../../sound";
 import { GameInteractState } from "./GameScreen";
 import { playerInstance } from "../../player";
 import { hasTamingSkill, TamingComponentArray } from "../../entity-components/server-components/TamingComponent";
 import { setShittyCarrier } from "./GameInteractableLayer";
 import { TamingSkillID } from "../../../../shared/src/taming";
 import { RideableComponentArray } from "../../entity-components/server-components/RideableComponent";
+import { worldToScreenPos } from "../../camera";
 
 export const enum AnimalStaffCommandType {
    follow,
@@ -102,8 +102,7 @@ export function createControlCommandParticles(commandType: AnimalStaffCommandTyp
          break;
       }
    }
-   // @Bug: isn't attached to camera
-   playSound(soundFile, 1.3, 1, Camera.position.copy(), getCurrentLayer());
+   playHeadSound(soundFile, 1.3, 1);
 }
 
 const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
@@ -118,10 +117,9 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
       const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.hitboxes[0];
 
-      const screenX = Camera.calculateXScreenPos(hitbox.box.position.x);
-      const screenY = Camera.calculateYScreenPos(hitbox.box.position.y);
-      setX(screenX);
-      setY(screenY);
+      const screenPos = worldToScreenPos(hitbox.box.position);
+      setX(screenPos.x);
+      setY(screenPos.y);
 
       const tamingComponent = TamingComponentArray.getComponent(entity);
       setFollowOptionIsSelected(tamingComponent.isFollowing);

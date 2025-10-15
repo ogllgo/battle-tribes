@@ -1,7 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App, { AppState } from './components/App';
+import App from './components/App';
 import { createPlayerInputListeners } from './components/game/GameInteractableLayer';
+import { toggleSettingsMenu } from './components/game/GameScreen';
+import Game from './game';
 
 import "./css/index.css";
 import "./css/main-menu.css";
@@ -60,11 +62,18 @@ const renderApp = (Component: React.FC) => {
 
 renderApp(App);
 
+window.addEventListener("load", () => {
+   createPlayerInputListeners();
+});
+window.addEventListener("keydown", (e: KeyboardEvent) => {
+   if (e.key === "Escape" && Game.isRunning) {
+      toggleSettingsMenu();
+   }
+});
+
+// Mouse movement handled in mouse.ts
+
 // Enable Hot Module Replacement (HMR)
 if (module.hot) {
    module.hot.accept();
 }
-
-window.addEventListener("load", () => {
-   createPlayerInputListeners();
-});

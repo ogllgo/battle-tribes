@@ -5,32 +5,25 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { updateLimb_TEMP } from "./InventoryUseComponent";
 import { LimbConfiguration } from "../../../../shared/src/attack-patterns";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface ScrappyComponentParams {}
+export interface ScrappyComponentData {}
 
 interface IntermediateInfo {}
 
 export interface ScrappyComponent {}
 
-export const ScrappyComponentArray = new ServerComponentArray<ScrappyComponent, ScrappyComponentParams, IntermediateInfo>(ServerComponentType.scrappy, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const ScrappyComponentArray = new ServerComponentArray<ScrappyComponent, ScrappyComponentData, IntermediateInfo>(ServerComponentType.scrappy, true, createComponent, getMaxRenderParts, decodeData);
+ScrappyComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
-function createParamsFromData(): ScrappyComponentParams {
+function decodeData(): ScrappyComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -74,7 +67,3 @@ function createComponent(): ScrappyComponent {
 function getMaxRenderParts(): number {
    return 3;
 }
-
-function padData(): void {}
-   
-function updateFromData(): void {}

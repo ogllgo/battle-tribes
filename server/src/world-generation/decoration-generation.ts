@@ -32,11 +32,11 @@ const generateRiversideDecorations = (): void => {
    
    // @Incomplete: generate everywhere
 
-   const numAttempts = Vars.RIVERSIDE_DECORATION_SPAWN_ATTEMPT_DENSITY_PER_TILE * Settings.BOARD_DIMENSIONS * Settings.BOARD_DIMENSIONS;
+   const numAttempts = Vars.RIVERSIDE_DECORATION_SPAWN_ATTEMPT_DENSITY_PER_TILE * Settings.WORLD_SIZE_TILES * Settings.WORLD_SIZE_TILES;
    
    for (let i = 0; i < numAttempts; i++) {
-      const x = Settings.BOARD_UNITS * Math.random();
-      const y = Settings.BOARD_UNITS * Math.random();
+      const x = Settings.WORLD_UNITS * Math.random();
+      const y = Settings.WORLD_UNITS * Math.random();
 
       const tileX = Math.floor(x / Settings.TILE_SIZE);
       const tileY = Math.floor(y / Settings.TILE_SIZE);
@@ -160,8 +160,8 @@ export function generateDecorations(): void {
       return null;
    }
 
-   for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
-      for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.BOARD_DIMENSIONS + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
+   for (let tileX = -Settings.EDGE_GENERATION_DISTANCE; tileX < Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE; tileX++) {
+      for (let tileY = -Settings.EDGE_GENERATION_DISTANCE; tileY < Settings.WORLD_SIZE_TILES + Settings.EDGE_GENERATION_DISTANCE; tileY++) {
          const tileIndex = getTileIndexIncludingEdges(tileX, tileY);
          
          const generationInfo = getDecorationGenerationInfo(tileIndex);

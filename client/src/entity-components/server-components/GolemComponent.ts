@@ -13,7 +13,7 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { TransformComponentArray } from "./TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { getHitboxVelocity, Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
@@ -25,8 +25,10 @@ enum GolemRockSize {
    tiny
 }
 
-export interface GolemComponentParams {
+export interface GolemComponentData {
    readonly wakeProgress: number;
+   readonly ticksAwake: number;
+   readonly isAwake: boolean;
 }
 
 interface IntermediateInfo {
@@ -99,36 +101,37 @@ const getZIndex = (size: GolemRockSize): number => {
    }
 }
 
-export const GolemComponentArray = new ServerComponentArray<GolemComponent, GolemComponentParams, IntermediateInfo>(ServerComponentType.golem, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit
-});
+export const GolemComponentArray = new ServerComponentArray<GolemComponent, GolemComponentData, IntermediateInfo>(ServerComponentType.golem, true, createComponent, getMaxRenderParts, decodeData);
+GolemComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+GolemComponentArray.onTick = onTick;
+GolemComponentArray.updateFromData = updateFromData;
+GolemComponentArray.onHit = onHit;
 
-function createParamsFromData(reader: PacketReader): GolemComponentParams {
+function decodeData(reader: PacketReader): GolemComponentData {
    const wakeProgress = reader.readNumber();
+
+   const ticksAwake = reader.readNumber();
    reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
 
+   const isAwake = reader.readBool();
+
    return {
-      wakeProgress: wakeProgress
+      wakeProgress: wakeProgress,
+      ticksAwake: ticksAwake,
+      isAwake: isAwake
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
    
    const rockRenderParts = new Array<VisualRenderPart>();
    const eyeRenderParts = new Array<VisualRenderPart>();
    const eyeLights = new Array<Light>();
    
    // Add new rocks
-   for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
-      const hitbox = transformComponentParams.hitboxes[i];
+   for (let i = 0; i < transformComponentData.hitboxes.length; i++) {
+      const hitbox = transformComponentData.hitboxes[i];
 
       const box = hitbox.box as CircularBox;
       const size = getHitboxSize(box);
@@ -167,20 +170,20 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    };
 }
 
-function createComponent(entityParams: EntityParams, intermediateInfo: IntermediateInfo): GolemComponent {
+function createComponent(entityComponentData: EntityComponentData, intermediateInfo: IntermediateInfo): GolemComponent {
    return {
-      wakeProgress: entityParams.serverComponentParams[ServerComponentType.golem]!.wakeProgress,
+      wakeProgress: entityComponentData.serverComponentData[ServerComponentType.golem]!.wakeProgress,
       rockRenderParts: intermediateInfo.rockRenderParts,
       eyeRenderParts: intermediateInfo.eyeRenderParts,
       eyeLights: intermediateInfo.eyeLights
    };
 }
 
-function getMaxRenderParts(entityParams: EntityParams): number {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+function getMaxRenderParts(entityComponentData: EntityComponentData): number {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
    
    let maxRenderParts = 0;
-   for (const hitbox of transformComponentParams.hitboxes) {
+   for (const hitbox of transformComponentData.hitboxes) {
       
       maxRenderParts++;
 
@@ -227,17 +230,12 @@ function onTick(entity: Entity): void {
    }
 }
    
-function padData(reader: PacketReader): void {
-   reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: GolemComponentData, entity: Entity): void {
    const golemComponent = GolemComponentArray.getComponent(entity);
    
-   const wakeProgress = reader.readNumber();
-   const ticksAwake = reader.readNumber();
-   const isAwake = reader.readBoolean();
-   reader.padOffset(3);
+   const wakeProgress = data.wakeProgress;
+   const ticksAwake = data.ticksAwake;
+   const isAwake = data.isAwake;
 
    const transformComponent = TransformComponentArray.getComponent(entity);
    

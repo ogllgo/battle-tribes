@@ -1,7 +1,7 @@
 import { Settings } from "battletribes-shared/settings";
-import Camera from "../../Camera";
 import { createWebGLProgram, gl } from "../../webgl";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
+import { minVisibleChunkX, maxVisibleChunkX, minVisibleChunkY, maxVisibleChunkY } from "../../camera";
 
 let program: WebGLProgram;
 let buffer: WebGLBuffer;
@@ -77,15 +77,15 @@ export function createWorldBorderShaders(): void {
 export function renderWorldBorder(): void {
    const BORDER_WIDTH = 16;
 
-   const minChunkXPos = Camera.minVisibleChunkX * Settings.CHUNK_UNITS;
-   const maxChunkXPos = (Camera.maxVisibleChunkX + 1) * Settings.CHUNK_UNITS;
-   const minChunkYPos = Camera.minVisibleChunkY * Settings.CHUNK_UNITS;
-   const maxChunkYPos = (Camera.maxVisibleChunkY + 1) * Settings.CHUNK_UNITS;
+   const minChunkXPos = minVisibleChunkX * Settings.CHUNK_UNITS;
+   const maxChunkXPos = (maxVisibleChunkX + 1) * Settings.CHUNK_UNITS;
+   const minChunkYPos = minVisibleChunkY * Settings.CHUNK_UNITS;
+   const maxChunkYPos = (maxVisibleChunkY + 1) * Settings.CHUNK_UNITS;
 
-   const leftBorderIsVisible = Camera.minVisibleChunkX === 0;
-   const rightBorderIsVisible = Camera.maxVisibleChunkX === Settings.BOARD_SIZE - 1;
-   const bottomBorderIsVisible = Camera.minVisibleChunkY === 0;
-   const topBorderIsVisible = Camera.maxVisibleChunkY === Settings.BOARD_SIZE - 1;
+   const leftBorderIsVisible = minVisibleChunkX === 0;
+   const rightBorderIsVisible = maxVisibleChunkX === Settings.WORLD_SIZE_CHUNKS - 1;
+   const bottomBorderIsVisible = minVisibleChunkY === 0;
+   const topBorderIsVisible = maxVisibleChunkY === Settings.WORLD_SIZE_CHUNKS - 1;
 
    let numVisibleBorders = 0;
    if (leftBorderIsVisible) {

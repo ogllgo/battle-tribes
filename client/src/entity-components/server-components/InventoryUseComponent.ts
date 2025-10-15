@@ -16,8 +16,7 @@ import { PacketReader } from "battletribes-shared/packets";
 import { Hotbar_updateRightThrownBattleaxeItemID } from "../../components/game/inventories/Hotbar";
 import { createZeroedLimbState, LimbConfiguration, LimbState, SHIELD_BASH_PUSHED_LIMB_STATE, SHIELD_BASH_WIND_UP_LIMB_STATE, SHIELD_BLOCKING_LIMB_STATE, RESTING_LIMB_STATES, SPEAR_CHARGED_LIMB_STATE, interpolateLimbState, copyLimbState } from "battletribes-shared/attack-patterns";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
-import { playSound } from "../../sound";
-import { EntityParams, getEntityRenderInfo } from "../../world";
+import { EntityComponentData, getEntityRenderInfo } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import { Light, removeLight } from "../../lights";
@@ -25,6 +24,7 @@ import { getRenderPartRenderPosition } from "../../rendering/render-part-matrice
 import { getHumanoidRadius } from "./TribesmanComponent";
 import { playerInstance } from "../../player";
 import { getHitboxVelocity } from "../../hitboxes";
+import { currentSnapshot, tickIntervalHasPassed } from "../../game";
 
 export interface LimbInfo {
    selectedItemSlot: number;
@@ -62,9 +62,15 @@ export interface LimbInfo {
    animationTicksElapsed: number;
 
    torchLight: Light | null;
+
+   // @HACK fo da blocking effects which will be clean up into serverside based thing l@r anyways.
+   lastBlockTick: number;
+   blockPositionX: number;
+   blockPositionY: number;
+   blockType: BlockType;
 }
 
-export interface InventoryUseComponentParams {
+export interface InventoryUseComponentData {
    readonly limbInfos: Array<LimbInfo>;
 }
 
@@ -326,7 +332,11 @@ const createZeroedLimbInfo = (inventoryName: InventoryName): LimbInfo => {
       animationEndOffset: new Point(-1, -1),
       animationDurationTicks: 0,
       animationTicksElapsed: 0,
-      torchLight: null
+      torchLight: null,
+      lastBlockTick: 0,
+      blockPositionX: 0,
+      blockPositionY: 0,
+      blockType: 0
    };
 }
 
@@ -553,18 +563,13 @@ export function getLimbConfiguration(inventoryUseComponent: InventoryUseComponen
    }
 }
 
-export const InventoryUseComponentArray = new ServerComponentArray<InventoryUseComponent, InventoryUseComponentParams, never>(ServerComponentType.inventoryUse, true, {
-   createParamsFromData: createParamsFromData,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onLoad: onLoad,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData,
-   updatePlayerFromData: updatePlayerFromData
-});
+export const InventoryUseComponentArray = new ServerComponentArray<InventoryUseComponent, InventoryUseComponentData, never>(ServerComponentType.inventoryUse, true, createComponent, getMaxRenderParts, decodeData);
+InventoryUseComponentArray.onLoad = onLoad;
+InventoryUseComponentArray.onTick = onTick;
+InventoryUseComponentArray.updateFromData = updateFromData;
+InventoryUseComponentArray.updatePlayerFromData = updatePlayerFromData;
 
-function createParamsFromData(reader: PacketReader): InventoryUseComponentParams {
+function decodeData(reader: PacketReader): InventoryUseComponentData {
    const limbInfos = new Array<LimbInfo>();
 
    const numUseInfos = reader.readNumber();
@@ -582,9 +587,9 @@ function createParamsFromData(reader: PacketReader): InventoryUseComponentParams
    };
 }
 
-function createComponent(entityParams: EntityParams): InventoryUseComponent {
+function createComponent(entityComponentData: EntityComponentData): InventoryUseComponent {
    return {
-      limbInfos: entityParams.serverComponentParams[ServerComponentType.inventoryUse]!.limbInfos,
+      limbInfos: entityComponentData.serverComponentData[ServerComponentType.inventoryUse]!.limbInfos,
       limbAttachPoints: [],
       limbRenderParts: [],
       activeItemRenderParts: [],
@@ -595,11 +600,11 @@ function createComponent(entityParams: EntityParams): InventoryUseComponent {
    };
 }
 
-function getMaxRenderParts(entityParams: EntityParams): number {
+function getMaxRenderParts(entityComponentData: EntityComponentData): number {
    // Each limb can hold an active item render part
-   const inventoryUseComponentParams = entityParams.serverComponentParams[ServerComponentType.inventoryUse]!;
+   const inventoryUseComponentData = entityComponentData.serverComponentData[ServerComponentType.inventoryUse]!;
    // (@Hack: plus one arrow render part)
-   return inventoryUseComponentParams.limbInfos.length + 1;
+   return inventoryUseComponentData.limbInfos.length + 1;
 }
 
 function onLoad(entity: Entity): void {
@@ -654,7 +659,7 @@ function onTick(entity: Entity): void {
             }
             
             // Ember particles
-            if (Board.tickIntervalHasPassed(0.08)) {
+            if (tickIntervalHasPassed(0.08)) {
                const renderPosition = getRenderPartRenderPosition(activeItemRenderPart);
                let spawnPositionX = renderPosition.x;
                let spawnPositionY = renderPosition.y;
@@ -670,7 +675,7 @@ function onTick(entity: Entity): void {
             }
 
             // Smoke particles
-            if (Board.tickIntervalHasPassed(0.18)) {
+            if (tickIntervalHasPassed(0.18)) {
                const renderPosition = getRenderPartRenderPosition(activeItemRenderPart);
 
                const spawnOffsetMagnitude = 5 * Math.random();
@@ -689,7 +694,7 @@ function onTick(entity: Entity): void {
                break;
             }
 
-            if (Board.tickIntervalHasPassed(0.4)) {
+            if (tickIntervalHasPassed(0.4)) {
                const renderPosition = getRenderPartRenderPosition(activeItemRenderPart);
                let spawnPositionX = renderPosition.x;
                let spawnPositionY = renderPosition.y;
@@ -705,7 +710,7 @@ function onTick(entity: Entity): void {
       }
 
       // @Incomplete: If eating multiple foods at once, shouldn't be on the same tick interval
-      if (Board.tickIntervalHasPassed(0.25) && limbInfo.action === LimbAction.eat && ITEM_TYPE_RECORD[limbInfo.heldItemType] === "healing") {
+      if (tickIntervalHasPassed(0.25) && limbInfo.action === LimbAction.eat && ITEM_TYPE_RECORD[limbInfo.heldItemType] === "healing") {
          // Create food eating particles
          for (let i = 0; i < 3; i++) {
             let spawnPositionX = hitbox.box.position.x + 37 * Math.sin(hitbox.box.angle);
@@ -949,7 +954,7 @@ const updateLimbTorch = (limb: LimbInfo, heldItemRenderPart: RenderPart, entity:
             limb.torchLight.b = lightB;
          }
 
-         if (Board.tickIntervalHasPassed(0.15) && heldItemType === ItemType.fireTorch) {
+         if (tickIntervalHasPassed(0.15) && heldItemType === ItemType.fireTorch) {
             // limb.torchLight.radius = lightRadius + randFloat(-7, 7);
          }
          
@@ -1448,25 +1453,9 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
    // updateActiveItemRenderPart(inventoryUseComponent, limbIdx, limbInfo, heldItem, shouldShowActiveItemRenderPart);
 }
 
-function padData(reader: PacketReader): void {
-   const numUseInfos = reader.readNumber();
-   for (let i = 0; i < numUseInfos; i++) {
-      reader.padOffset(3 * Float32Array.BYTES_PER_ELEMENT);
-
-      const numSpearWindupCooldowns = reader.readNumber();
-      reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT * numSpearWindupCooldowns);
-      
-      // @Speed
-      readCrossbowLoadProgressRecord(reader);
-
-      reader.padOffset(21 * Float32Array.BYTES_PER_ELEMENT);
-      // Limb states
-      reader.padOffset(2 * 5 * Float32Array.BYTES_PER_ELEMENT);
-   }
-}
-
 const playBlockEffects = (x: number, y: number, blockType: BlockType): void => {
-   playSound(blockType === BlockType.shieldBlock ? "shield-block.mp3" : "block.mp3", blockType === BlockType.toolBlock ? 0.8 : 0.5, 1, new Point(x, y), null);
+   // @HACK @Incomplete removed this cuz cant access the layer in start. aaaaaaaa
+   // playSound(blockType === BlockType.shieldBlock ? "shield-block.mp3" : "block.mp3", blockType === BlockType.toolBlock ? 0.8 : 0.5, 1, new Point(x, y), layer);
    
    for (let i = 0; i < 8; i++) {
       const offsetMagnitude = randFloat(0, 18);
@@ -1555,47 +1544,36 @@ const updateLimbInfoFromData = (limbInfo: LimbInfo, reader: PacketReader): void 
       limbInfo.animationStartOffset.x = -1;
    }
 
-   if (lastBlockTick === Board.serverTicks) {
-      playBlockEffects(blockPositionX, blockPositionY, blockType);
-   }
+   limbInfo.lastBlockTick = lastBlockTick;
+   limbInfo.blockPositionX = blockPositionX;
+   limbInfo.blockPositionY = blockPositionY;
+   limbInfo.blockType = blockType;
 }
 
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: InventoryUseComponentData, entity: Entity): void {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
-   
-   const numUseInfos = reader.readNumber();
-   for (let i = 0; i < numUseInfos; i++) {
-      const usedInventoryName = reader.readNumber() as InventoryName;
 
-      let limbInfo: LimbInfo;
-      if (i >= inventoryUseComponent.limbInfos.length) {
-         // New limb info
-         limbInfo = createZeroedLimbInfo(usedInventoryName);
-         inventoryUseComponent.limbInfos.push(limbInfo);
-      } else {
-         // Existing limb info
-         limbInfo = inventoryUseComponent.limbInfos[i];
+   inventoryUseComponent.limbInfos.splice(0, inventoryUseComponent.limbInfos.length);
+   for (let i = 0; i < data.limbInfos.length; i++) {
+      const limbInfo = data.limbInfos[i];
 
-         if (limbInfo.inventoryName !== usedInventoryName) {
-            console.log("Limb info i=" + i);
-            console.log("Client inventory name: " + limbInfo.inventoryName);
-            console.log("Server used inventory name: " + usedInventoryName);
-            throw new Error();
-         }
-      }
-
-      updateLimbInfoFromData(limbInfo, reader);
-      
+      inventoryUseComponent.limbInfos.push(limbInfo);
       updateLimb(inventoryUseComponent, entity, i, limbInfo);
+
+      if (limbInfo.lastBlockTick === currentSnapshot.tick) {
+         playBlockEffects(limbInfo.blockPositionX, limbInfo.blockPositionY, limbInfo.blockType);
+      }
    }
 }
 
-function updatePlayerFromData(reader: PacketReader): void {
+// BAGUETTE
+
+function updatePlayerFromData(data: InventoryUseComponentData): void {
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
    
-   const numUseInfos = reader.readNumber();
-   for (let i = 0; i < numUseInfos; i++) {
-      const usedInventoryName = reader.readNumber() as InventoryName;
+   for (let i = 0; i < data.limbInfos.length; i++) {
+      const limbInfoData = data.limbInfos[i];
+      const usedInventoryName = limbInfoData.inventoryName;
 
       let limbInfo: LimbInfo;
       if (i >= inventoryUseComponent.limbInfos.length) {
@@ -1611,37 +1589,16 @@ function updatePlayerFromData(reader: PacketReader): void {
          }
       }
 
-      reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-
-      const numSpearWindupCooldowns = reader.readNumber();
-      reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT * numSpearWindupCooldowns);
-
-      // @Speed
-      readCrossbowLoadProgressRecord(reader);
-
-      reader.padOffset(9 * Float32Array.BYTES_PER_ELEMENT);
-      const thrownBattleaxeItemID = reader.readNumber();
-      reader.padOffset(6 * Float32Array.BYTES_PER_ELEMENT);
-
-      limbInfo.blockAttack = reader.readNumber();
+      limbInfo.blockAttack = limbInfoData.blockAttack;
       
-      // @Copynpaste
-      const lastBlockTick = reader.readNumber();
-      const blockPositionX = reader.readNumber();
-      const blockPositionY = reader.readNumber();
-      const blockType = reader.readNumber();
-
-      // Limb states
-      reader.padOffset(2 * 5 * Float32Array.BYTES_PER_ELEMENT);
-
-      // @Copynpaste
-      if (lastBlockTick === Board.serverTicks) {
-         playBlockEffects(blockPositionX, blockPositionY, blockType);
-      }
+      // @INCOMPLETE no worky it brokey
+      // if (limbInfoData.lastBlockTick === currentSnapshot.tick) {
+      //    playBlockEffects(blockPositionX, blockPositionY, blockType);
+      // }
 
       if (limbInfo.inventoryName === InventoryName.hotbar) {
-         limbInfo.thrownBattleaxeItemID = thrownBattleaxeItemID;
-         Hotbar_updateRightThrownBattleaxeItemID(thrownBattleaxeItemID);
+         limbInfo.thrownBattleaxeItemID = limbInfoData.thrownBattleaxeItemID;
+         Hotbar_updateRightThrownBattleaxeItemID(limbInfoData.thrownBattleaxeItemID);
       }
 
       updateLimb(inventoryUseComponent, playerInstance!, i, limbInfo);

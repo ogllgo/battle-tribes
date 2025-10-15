@@ -228,7 +228,7 @@ function getDataLength(): number {
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const blueprintComponent = BlueprintComponentArray.getComponent(entity);
 
-   packet.addNumber(blueprintComponent.blueprintType);
-   packet.addNumber(blueprintComponent.workProgress / STRUCTURE_WORK_REQUIRED[blueprintComponent.blueprintType]);
-   packet.addNumber(blueprintComponent.associatedEntityID);
+   packet.writeNumber(blueprintComponent.blueprintType);
+   packet.writeNumber(blueprintComponent.workProgress / STRUCTURE_WORK_REQUIRED[blueprintComponent.blueprintType]);
+   packet.writeNumber(blueprintComponent.associatedEntityID);
 }

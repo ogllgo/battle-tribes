@@ -4,10 +4,9 @@ import { ItemType } from "../../shared/src/items/items";
 import { PacketReader } from "../../shared/src/packets";
 import { getTechByID, Tech, TechID, TechTreeUnlockProgress } from "../../shared/src/techs";
 import { TribeType } from "../../shared/src/tribes";
-import Camera from "./Camera";
 import { updateTechTree } from "./components/game/tech-tree/TechTree";
 import { TechInfocard_setSelectedTech } from "./components/game/TechInfocard";
-import { playSound } from "./sound";
+import { playHeadSound } from "./sound";
 
 export interface TribesmanInfo {
    readonly entity: Entity;
@@ -44,8 +43,7 @@ export function tribeHasExtendedInfo(tribe: Tribe): tribe is ExtendedTribe {
 export function updatePlayerTribe(tribe: ExtendedTribe): void {
    // @Hack: the check for undefined
    if (typeof playerTribe !== "undefined" && tribe.unlockedTechs.length > playerTribe.unlockedTechs.length) {
-      // @Incomplete: attach to camera so it doesn't decrease in loudness. Or make 'global sounds'
-      playSound("research.mp3", 0.4, 1, Camera.position, null);
+      playHeadSound("research.mp3", 0.4, 1);
    }
 
    playerTribe = tribe;
@@ -89,8 +87,7 @@ export function readExtendedTribeData(reader: PacketReader): ExtendedTribe {
    const tribeID = reader.readNumber();
    const tribeType = reader.readNumber();
 
-   const hasTotem = reader.readBoolean();
-   reader.padOffset(3);
+   const hasTotem = reader.readBool();
    const numHuts = reader.readNumber();
    const tribesmanCap = reader.readNumber();
 

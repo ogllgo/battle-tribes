@@ -89,7 +89,6 @@ export function alignLengthBytes(lengthBytes: number): number {
    return lengthBytes;
 }
 
-// @Cleanup: change 'add' to 'write'
 export class Packet extends BasePacketObject {
    public readonly buffer: ArrayBuffer;
    private readonly floatView: Float32Array;
@@ -102,10 +101,10 @@ export class Packet extends BasePacketObject {
       this.floatView = new Float32Array(this.buffer);
       this.uint8View = new Uint8Array(this.buffer);
 
-      this.addNumber(packetType);
+      this.writeNumber(packetType);
    }
 
-   public addNumber(number: number): void {
+   public writeNumber(number: number): void {
       if (isNaN(number)) {
          throw new Error("Tried to write NaN to a packet.");
       }
@@ -123,7 +122,7 @@ export class Packet extends BasePacketObject {
       this.currentByteOffset += 4;
    }
 
-   public addString(str: string): void {
+   public writeString(str: string): void {
       if (this.currentByteOffset >= this.buffer.byteLength) {
          throw new Error("Exceeded length of buffer");
       }
@@ -131,25 +130,28 @@ export class Packet extends BasePacketObject {
       const encodedUsername = new TextEncoder().encode(str);
 
       // Write the length of the string
-      this.addNumber(str.length);
+      this.writeNumber(str.length);
       
       new Uint8Array(this.buffer).set(encodedUsername, this.currentByteOffset);
       
       this.currentByteOffset += alignLengthBytes(encodedUsername.byteLength);
    }
 
-   public addBoolean(boolean: boolean): void {
+   public writeBool(boolean: boolean): void {
       if (this.currentByteOffset >= this.buffer.byteLength) {
          throw new Error("Exceeded length of buffer");
       }
 
       this.uint8View[this.currentByteOffset] = boolean ? 1 : 0;
       this.currentByteOffset++;
+      
+      // @Bandwidth
+      this.padOffset(3);
    }
 
-   public addPoint(point: Point): void {
-      this.addNumber(point.x);
-      this.addNumber(point.y);
+   public writePoint(point: Point): void {
+      this.writeNumber(point.x);
+      this.writeNumber(point.y);
    }
 }
 
@@ -212,10 +214,12 @@ export class PacketReader extends BasePacketObject {
       this.readString();
    }
 
-   // @Cleanup: rename to readbool
-   public readBoolean(): boolean {
+   public readBool(): boolean {
       const boolean = this.uint8View[this.currentByteOffset];
       this.currentByteOffset++;
+
+      // @Bandwidth
+      this.padOffset(3);
 
       if (boolean === 1) {
          return true;

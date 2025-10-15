@@ -4,45 +4,34 @@ import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { Entity } from "../../../../shared/src/entities";
 import { randAngle, randFloat } from "../../../../shared/src/utils";
-import Board from "../../Board";
 import { createSmokeParticle, createEmberParticle } from "../../particles";
 import { CookingComponentArray } from "./CookingComponent";
 import { TransformComponentArray } from "./TransformComponent";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { tickIntervalHasPassed } from "../../game";
 
-export interface CampfireComponentParams {}
+export interface CampfireComponentData {}
 
 interface IntermediateInfo {}
 
 export interface CampfireComponent {}
 
-export const CampfireComponentArray = new ServerComponentArray<CampfireComponent, CampfireComponentParams, IntermediateInfo>(ServerComponentType.campfire, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const CampfireComponentArray = new ServerComponentArray<CampfireComponent, CampfireComponentData, IntermediateInfo>(ServerComponentType.campfire, true, createComponent, getMaxRenderParts, decodeData);
+CampfireComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+CampfireComponentArray.onTick = onTick;
 
-const fillParams = (): CampfireComponentParams => {
+export function createCampfireComponentData(): CampfireComponentData {
    return {};
 }
 
-export function createCampfireComponentParams(): CampfireComponentParams {
-   return fillParams();
+function decodeData(): CampfireComponentData {
+   return {};
 }
 
-function createParamsFromData(): CampfireComponentParams {
-   return fillParams();
-}
-
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -71,7 +60,7 @@ function onTick(entity: Entity): void {
       const hitbox = transformComponent.hitboxes[0];
 
       // Smoke particles
-      if (Board.tickIntervalHasPassed(0.17)) {
+      if (tickIntervalHasPassed(0.17)) {
          const spawnOffsetMagnitude = 20 * Math.random();
          const spawnOffsetDirection = randAngle();
          const spawnPositionX = hitbox.box.position.x + spawnOffsetMagnitude * Math.sin(spawnOffsetDirection);
@@ -80,7 +69,7 @@ function onTick(entity: Entity): void {
       }
 
       // Ember particles
-      if (Board.tickIntervalHasPassed(0.05)) {
+      if (tickIntervalHasPassed(0.05)) {
          let spawnPositionX = hitbox.box.position.x;
          let spawnPositionY = hitbox.box.position.y;
 
@@ -93,7 +82,3 @@ function onTick(entity: Entity): void {
       }
    }
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}

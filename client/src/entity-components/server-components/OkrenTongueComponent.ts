@@ -3,36 +3,30 @@ import ServerComponentArray from "../ServerComponentArray";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 
-export interface OkrenTongueComponentParams {}
+export interface OkrenTongueComponentData {}
 
 interface IntermediateInfo {}
 
 export interface OkrenTongueComponent {}
 
-export const OkrenTongueComponentArray = new ServerComponentArray<OkrenTongueComponent, OkrenTongueComponentParams, IntermediateInfo>(ServerComponentType.okrenTongue, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const OkrenTongueComponentArray = new ServerComponentArray<OkrenTongueComponent, OkrenTongueComponentData, IntermediateInfo>(ServerComponentType.okrenTongue, true, createComponent, getMaxRenderParts, decodeData);
+OkrenTongueComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
-export function createOkrenTongueComponentParams(): OkrenTongueComponentParams {
+export function createOkrenTongueComponentData(): OkrenTongueComponentData {
    return {};
 }
 
-function createParamsFromData(): OkrenTongueComponentParams {
-   return createOkrenTongueComponentParams();
+function decodeData(): OkrenTongueComponentData {
+   return createOkrenTongueComponentData();
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
 
-   for (const hitbox of transformComponentParams.hitboxes) {
+   for (const hitbox of transformComponentData.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.OKREN_TONGUE_SEGMENT_MIDDLE)) {
          const renderPart = new TexturedRenderPart(
             hitbox,
@@ -63,7 +57,3 @@ function getMaxRenderParts(): number {
    // @HACK cuz tehre isn't a limit!!
    return 100;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}

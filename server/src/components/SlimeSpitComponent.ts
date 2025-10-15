@@ -47,7 +47,7 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const slimeSpitComponent = SlimeSpitComponentArray.getComponent(entity);
-   packet.addNumber(slimeSpitComponent.size);
+   packet.writeNumber(slimeSpitComponent.size);
 }
 
 function preRemove(spit: Entity): void {

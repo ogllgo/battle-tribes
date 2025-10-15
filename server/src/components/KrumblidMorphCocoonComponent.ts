@@ -75,5 +75,5 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const krumblidMorphCocoonComponent = KrumblidMorphCocoonComponentArray.getComponent(entity);
-   packet.addNumber(krumblidMorphCocoonComponent.stage);
+   packet.writeNumber(krumblidMorphCocoonComponent.stage);
 }

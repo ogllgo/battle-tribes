@@ -5,7 +5,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { HitFlags } from "../../../../shared/src/client-server-types";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { randFloat, randItem, randInt, Point, randAngle } from "../../../../shared/src/utils";
 import { createLeafParticle, LeafParticleSize, createLeafSpeckParticle, LEAF_SPECK_COLOUR_LOW, LEAF_SPECK_COLOUR_HIGH, createWoodSpeckParticle } from "../../particles";
@@ -15,30 +15,24 @@ import { TREE_HIT_SOUNDS, TREE_DESTROY_SOUNDS } from "./TreeComponent";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface PalmTreeComponentParams {}
+export interface PalmTreeComponentData {}
 
 interface IntermediateInfo {}
 
 export interface PalmTreeComponent {}
 
-export const PalmTreeComponentArray = new ServerComponentArray<PalmTreeComponent, PalmTreeComponentParams, IntermediateInfo>(ServerComponentType.palmTree, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const PalmTreeComponentArray = new ServerComponentArray<PalmTreeComponent, PalmTreeComponentData, IntermediateInfo>(ServerComponentType.palmTree, true, createComponent, getMaxRenderParts, decodeData);
+PalmTreeComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+PalmTreeComponentArray.onHit = onHit;
+PalmTreeComponentArray.onDie = onDie;
 
-function createParamsFromData(): PalmTreeComponentParams {
+function decodeData(): PalmTreeComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
 
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -60,10 +54,6 @@ function getMaxRenderParts(): number {
    return 1;
 }
    
-function padData(reader: PacketReader): void {}
-
-function updateFromData(reader: PacketReader): void {}
-
 function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point, hitFlags: number): void {
       const radius = (hitbox.box as CircularBox).radius;
    

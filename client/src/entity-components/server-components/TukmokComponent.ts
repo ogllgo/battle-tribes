@@ -8,36 +8,30 @@ import { createBloodPoolParticle, createBloodParticle, BloodParticleSize, create
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
-export interface TukmokComponentParams {}
+export interface TukmokComponentData {}
 
 interface IntermediateInfo {}
 
 export interface TukmokComponent {}
 
-export const TukmokComponentArray = new ServerComponentArray<TukmokComponent, TukmokComponentParams, IntermediateInfo>(ServerComponentType.tukmok, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const TukmokComponentArray = new ServerComponentArray<TukmokComponent, TukmokComponentData, IntermediateInfo>(ServerComponentType.tukmok, true, createComponent, getMaxRenderParts, decodeData);
+TukmokComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+TukmokComponentArray.onHit = onHit;
+TukmokComponentArray.onDie = onDie;
 
-function createParamsFromData(): TukmokComponentParams {
+function decodeData(): TukmokComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
 
-   for (let i = 0; i < transformComponentParams.hitboxes.length; i++) {
-      const hitbox = transformComponentParams.hitboxes[i];
+   for (let i = 0; i < transformComponentData.hitboxes.length; i++) {
+      const hitbox = transformComponentData.hitboxes[i];
       
       if (hitbox.flags.includes(HitboxFlag.TUKMOK_BODY)) {
          renderInfo.attachRenderPart(
@@ -99,10 +93,6 @@ function getMaxRenderParts(): number {
    // @HACK cuz we can't access the num segments constant defined in the server
    return 2 + 11;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}
 
 function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
    playSoundOnHitbox("tukmok-hit-flesh-" + randInt(1, 4) + ".mp3", randFloat(0.8, 1), randFloat(0.9, 1.1), entity, hitbox, false);

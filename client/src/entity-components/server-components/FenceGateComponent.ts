@@ -2,35 +2,29 @@ import { ServerComponentType } from "battletribes-shared/components";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 
-export interface FenceGateComponentParams {}
+export interface FenceGateComponentData {}
 
 interface IntermediateInfo {}
 
 export interface FenceGateComponent {}
 
-export const FenceGateComponentArray = new ServerComponentArray<FenceGateComponent, FenceGateComponentParams, IntermediateInfo>(ServerComponentType.fenceGate, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const FenceGateComponentArray = new ServerComponentArray<FenceGateComponent, FenceGateComponentData, IntermediateInfo>(ServerComponentType.fenceGate, true, createComponent, getMaxRenderParts, decodeData);
+FenceGateComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
-export function createFenceGateComponentParams(): FenceGateComponentParams {
+export function createFenceGateComponentData(): FenceGateComponentData {
    return {};
 }
 
-function createParamsFromData(): FenceGateComponentParams {
+function decodeData(): FenceGateComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponent = entityParams.serverComponentParams[ServerComponentType.transform]!;
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponent = entityComponentData.serverComponentData[ServerComponentType.transform]!;
    
    for (const hitbox of transformComponent.hitboxes) {
       if (hitbox.flags.includes(HitboxFlag.FENCE_GATE_DOOR)) {
@@ -64,7 +58,3 @@ function createComponent(): FenceGateComponent {
 function getMaxRenderParts(): number {
    return 3;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}

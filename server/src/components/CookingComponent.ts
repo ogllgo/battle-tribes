@@ -157,8 +157,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    const cookingComponent = CookingComponentArray.getComponent(entity);
 
    // Heating progress
-   packet.addNumber(cookingComponent.currentRecipe !== null ? cookingComponent.heatingTimer / cookingComponent.currentRecipe.cookTime : -1);
+   packet.writeNumber(cookingComponent.currentRecipe !== null ? cookingComponent.heatingTimer / cookingComponent.currentRecipe.cookTime : -1);
    // Is cooking
-   packet.addBoolean(cookingComponent.remainingHeatSeconds > 0);
-   packet.padOffset(3);
+   packet.writeBool(cookingComponent.remainingHeatSeconds > 0);
 }

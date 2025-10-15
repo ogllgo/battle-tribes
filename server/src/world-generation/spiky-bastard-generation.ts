@@ -15,12 +15,12 @@ const enum Vars {
 export function generateSpikyBastards(undergroundLayer: Layer): void {
    // @Incomplete: generate in edges
 
-   const numBastards = Math.ceil(Settings.BOARD_DIMENSIONS * Settings.BOARD_DIMENSIONS * Vars.GENERATION_DENSITY);
-   const noise = generatePerlinNoise(Settings.FULL_BOARD_DIMENSIONS, Settings.FULL_BOARD_DIMENSIONS, 8);
+   const numBastards = Math.ceil(Settings.WORLD_SIZE_TILES * Settings.WORLD_SIZE_TILES * Vars.GENERATION_DENSITY);
+   const noise = generatePerlinNoise(Settings.FULL_WORLD_SIZE_TILES, Settings.FULL_WORLD_SIZE_TILES, 8);
    
    for (let i = 0; i < numBastards; i++) {
-      const attachedSubtileX = Math.floor(Settings.BOARD_DIMENSIONS * 4 * Math.random());
-      const attachedSubtileY = Math.floor(Settings.BOARD_DIMENSIONS * 4 * Math.random());
+      const attachedSubtileX = Math.floor(Settings.WORLD_SIZE_TILES * 4 * Math.random());
+      const attachedSubtileY = Math.floor(Settings.WORLD_SIZE_TILES * 4 * Math.random());
 
       // Make sure the bastard will be attached to a wall
       const attachedSubtileIndex = getSubtileIndex(attachedSubtileX, attachedSubtileY);

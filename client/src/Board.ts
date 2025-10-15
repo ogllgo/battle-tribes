@@ -6,6 +6,7 @@ import ObjectBufferContainer from "./rendering/ObjectBufferContainer";
 import { tempFloat32ArrayLength1 } from "./webgl";
 import { RenderPart } from "./render-parts/render-parts";
 import { getComponentArrays } from "./entity-components/ComponentArray";
+import { currentSnapshot } from "./game";
 
 export interface EntityHitboxInfo {
    readonly vertexPositions: readonly [Point, Point, Point, Point];
@@ -19,9 +20,6 @@ interface TickCallback {
 
 // @CLEANUP: "Board" is weird...
 abstract class Board {
-   public static serverTicks: number;
-   public static time: number;
-
    public static renderPartRecord: Record<number, RenderPart> = {};
 
    // @Cleanup This is too messy. Perhaps combine all into one
@@ -49,14 +47,6 @@ abstract class Board {
             this.tickCallbacks.splice(i, 1);
          }
       }
-   }
-
-   public static tickIntervalHasPassed(intervalSeconds: number): boolean {
-      const ticksPerInterval = intervalSeconds * Settings.TICK_RATE;
-      
-      const previousCheck = (Board.serverTicks - 1) / ticksPerInterval;
-      const check = Board.serverTicks / ticksPerInterval;
-      return Math.floor(previousCheck) !== Math.floor(check);
    }
 
    private static updateParticleArray(particles: Array<Particle>, bufferContainer: ObjectBufferContainer): void {
@@ -121,8 +111,8 @@ abstract class Board {
    /** Updates the client's copy of the tiles array to match any tile updates that have occurred */
    // public static loadTileUpdates(tileUpdates: ReadonlyArray<ServerTileUpdateData>): void {
    //    for (const update of tileUpdates) {
-   //       const tileX = update.tileIndex % Settings.BOARD_DIMENSIONS;
-   //       const tileY = Math.floor(update.tileIndex / Settings.BOARD_DIMENSIONS);
+   //       const tileX = update.tileIndex % Settings.WORLD_SIZE_TILES;
+   //       const tileY = Math.floor(update.tileIndex / Settings.WORLD_SIZE_TILES);
          
    //       let tile = this.getTile(tileX, tileY);
    //       tile.type = update.type;
@@ -134,7 +124,7 @@ abstract class Board {
 export default Board;
 
 export function getSecondsSinceTickTimestamp(ticks: number): number {
-   const ticksSince = Board.serverTicks - ticks;
+   const ticksSince = currentSnapshot.tick - ticks;
    let secondsSince = ticksSince * Settings.DT_S;
 
    return secondsSince;
@@ -148,8 +138,6 @@ export function getElapsedTimeInSeconds(elapsedTicks: number): number {
 
 if (module.hot) {
    module.hot.dispose(data => {
-      data.serverTicks = Board.serverTicks;
-      data.time = Board.time;
       data.renderPartRecord = Board.renderPartRecord;
       data.lowMonocolourParticles = Board.lowMonocolourParticles;
       data.lowTexturedParticles = Board.lowTexturedParticles;
@@ -159,8 +147,6 @@ if (module.hot) {
    });
 
    if (module.hot.data) {
-      Board.serverTicks = module.hot.data.serverTicks;
-      Board.time = module.hot.data.time;
       Board.renderPartRecord = module.hot.data.renderPartRecord;
       Board.lowMonocolourParticles = module.hot.data.lowMonocolourParticles;
       Board.lowTexturedParticles = module.hot.data.lowTexturedParticles;

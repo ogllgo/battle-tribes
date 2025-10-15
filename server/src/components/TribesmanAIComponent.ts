@@ -204,11 +204,11 @@ function addDataToPacket(packet: Packet, entity: Entity, player: Entity | null):
       craftingItemType = 0;
    }
 
-   packet.addNumber(tribesmanComponent.currentAIType);
+   packet.writeNumber(tribesmanComponent.currentAIType);
    const relationsWithPlayer = player !== null && typeof tribesmanComponent.tribesmanRelations[player] !== "undefined" ? tribesmanComponent.tribesmanRelations[player]! : 0;
-   packet.addNumber(relationsWithPlayer);
-   packet.addNumber(craftingItemType);
-   packet.addNumber(craftingProgress);
+   packet.writeNumber(relationsWithPlayer);
+   packet.writeNumber(craftingItemType);
+   packet.writeNumber(craftingProgress);
 }
 
 const adjustTribesmanRelations = (tribesmanID: number, otherTribesmanID: number, adjustment: number): void => {

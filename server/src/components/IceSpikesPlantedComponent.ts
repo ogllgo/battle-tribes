@@ -47,7 +47,7 @@ function addDataToPacket(packet: Packet, entity: Entity): void {
    const iceSpikesPlantedComponent = IceSpikesPlantedComponentArray.getComponent(entity);
 
    const growthProgress = iceSpikesPlantedComponent.plantGrowthTicks / Vars.GROWTH_TIME_TICKS;
-   packet.addNumber(growthProgress);
+   packet.writeNumber(growthProgress);
 }
 
 function preRemove(entity: Entity): void {

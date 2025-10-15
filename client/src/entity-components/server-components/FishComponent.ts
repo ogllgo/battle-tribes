@@ -3,18 +3,18 @@ import { Entity, FishColour } from "battletribes-shared/entities";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { TileType } from "battletribes-shared/tiles";
-import Board from "../../Board";
 import { BloodParticleSize, createBloodParticle, createBloodParticleFountain, createWaterSplashParticle } from "../../particles";
-import { EntityParams, getEntityLayer } from "../../world";
-import { getHitboxTile, TransformComponentArray } from "./TransformComponent";
+import { EntityComponentData } from "../../world";
+import { TransformComponentArray } from "./TransformComponent";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { playSoundOnHitbox } from "../../sound";
-import { Hitbox } from "../../hitboxes";
+import { getHitboxTile, Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { tickIntervalHasPassed } from "../../game";
 
-export interface FishComponentParams {
+export interface FishComponentData {
    readonly colour: FishColour;
 }
 
@@ -32,46 +32,40 @@ const TEXTURE_SOURCES: Record<FishColour, string> = {
    [FishColour.lime]: "entities/fish/fish-lime.png"
 };
 
-export const FishComponentArray = new ServerComponentArray<FishComponent, FishComponentParams, IntermediateInfo>(ServerComponentType.fish, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const FishComponentArray = new ServerComponentArray<FishComponent, FishComponentData, IntermediateInfo>(ServerComponentType.fish, true, createComponent, getMaxRenderParts, decodeData);
+FishComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+FishComponentArray.onTick = onTick;
+FishComponentArray.onHit = onHit;
+FishComponentArray.onDie = onDie;
 
-function createParamsFromData(reader: PacketReader): FishComponentParams {
+function decodeData(reader: PacketReader): FishComponentData {
    const colour = reader.readNumber();
    return {
       colour: colour
    };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
-   const fishComponentParams = entityParams.serverComponentParams[ServerComponentType.fish]!;
+   const fishComponentData = entityComponentData.serverComponentData[ServerComponentType.fish]!;
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
          hitbox,
          0,
          0,
-         getTextureArrayIndex(TEXTURE_SOURCES[fishComponentParams.colour])
+         getTextureArrayIndex(TEXTURE_SOURCES[fishComponentData.colour])
       )
    );
 
    return {};
 }
 
-function createComponent(entityParams: EntityParams): FishComponent {
+function createComponent(entityComponentData: EntityComponentData): FishComponent {
    return {
-      colour: entityParams.serverComponentParams[ServerComponentType.fish]!.colour,
+      colour: entityComponentData.serverComponentData[ServerComponentType.fish]!.colour,
       waterOpacityMultiplier: randFloat(0.6, 1)
    };
 }
@@ -83,10 +77,9 @@ function getMaxRenderParts(): number {
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    const hitbox = transformComponent.hitboxes[0];
-   const layer = getEntityLayer(entity);
    
-   const tile = getHitboxTile(layer, hitbox);
-   if (tile.type !== TileType.water && Board.tickIntervalHasPassed(0.4)) {
+   const tile = getHitboxTile(hitbox);
+   if (tile.type !== TileType.water && tickIntervalHasPassed(0.4)) {
       for (let i = 0; i < 8; i++) {
          const spawnOffsetDirection = randAngle();
          const spawnPositionX = hitbox.box.position.x + 8 * Math.sin(spawnOffsetDirection);
@@ -97,14 +90,6 @@ function onTick(entity: Entity): void {
    }
 }
    
-function padData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
-function updateFromData(reader: PacketReader): void {
-   reader.padOffset(Float32Array.BYTES_PER_ELEMENT);
-}
-
 function onHit(entity: Entity, hitbox: Hitbox): void {
    // Blood particles
    for (let i = 0; i < 5; i++) {

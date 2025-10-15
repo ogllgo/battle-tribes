@@ -5,32 +5,25 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import RenderAttachPoint from "../../render-parts/RenderAttachPoint";
 import { LimbConfiguration } from "../../../../shared/src/attack-patterns";
 import { updateLimb_TEMP } from "./InventoryUseComponent";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface CogwalkerComponentParams {}
+export interface CogwalkerComponentData {}
 
 interface IntermediateInfo {}
 
 export interface CogwalkerComponent {}
 
-export const CogwalkerComponentArray = new ServerComponentArray<CogwalkerComponent, CogwalkerComponentParams, IntermediateInfo>(ServerComponentType.cogwalker, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const CogwalkerComponentArray = new ServerComponentArray<CogwalkerComponent, CogwalkerComponentData, IntermediateInfo>(ServerComponentType.cogwalker, true, createComponent, getMaxRenderParts, decodeData);
+CogwalkerComponentArray.populateIntermediateInfo = populateIntermediateInfo;
 
-function createParamsFromData(): CogwalkerComponentParams {
+function decodeData(): CogwalkerComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -79,7 +72,3 @@ function createComponent(): CogwalkerComponent {
 function getMaxRenderParts(): number {
    return 3;
 }
-
-function padData(): void {}
-   
-function updateFromData(): void {}

@@ -19,5 +19,5 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const tundraRockComponent = TundraRockComponentArray.getComponent(entity);
-   packet.addNumber(tundraRockComponent.variant);
+   packet.writeNumber(tundraRockComponent.variant);
 }

@@ -6,34 +6,28 @@ import { Hitbox } from "../../hitboxes";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { playSoundOnHitbox } from "../../sound";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
+import { EntityComponentData } from "../../world";
 import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
-export interface DesertBushLivelyComponentParams {}
+export interface DesertBushLivelyComponentData {}
 
 interface IntermediateInfo {}
 
 export interface DesertBushLivelyComponent {}
 
-export const DesertBushLivelyComponentArray = new ServerComponentArray<DesertBushLivelyComponent, DesertBushLivelyComponentParams, IntermediateInfo>(ServerComponentType.desertBushLively, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   padData: padData,
-   updateFromData: updateFromData,
-   onHit: onHit,
-   onDie: onDie
-});
+export const DesertBushLivelyComponentArray = new ServerComponentArray<DesertBushLivelyComponent, DesertBushLivelyComponentData, IntermediateInfo>(ServerComponentType.desertBushLively, true, createComponent, getMaxRenderParts, decodeData);
+DesertBushLivelyComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+DesertBushLivelyComponentArray.onHit = onHit;
+DesertBushLivelyComponentArray.onDie = onDie;
 
-function createParamsFromData(): DesertBushLivelyComponentParams {
+function decodeData(): DesertBushLivelyComponentData {
    return {};
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    const renderPart = new TexturedRenderPart(
       hitbox,
@@ -58,10 +52,6 @@ function createComponent(): DesertBushLivelyComponent {
 function getMaxRenderParts(): number {
    return 1;
 }
-
-function padData(): void {}
-
-function updateFromData(): void {}
 
 function onHit(entity: Entity, hitbox: Hitbox): void {
    playSoundOnHitbox("desert-plant-hit.mp3", randFloat(0.375, 0.425), randFloat(0.85, 1.15), entity, hitbox, false);

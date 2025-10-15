@@ -1,5 +1,5 @@
 import { Settings } from "../../../../shared/src/settings";
-import Camera from "../../Camera";
+import { minVisibleX, maxVisibleX, minVisibleY, maxVisibleY } from "../../camera";
 import { getTileIndexIncludingEdges } from "../../Layer";
 import { createWebGLProgram, gl } from "../../webgl";
 import { getCurrentLayer } from "../../world";
@@ -79,10 +79,10 @@ export function renderBuildingBlockingTiles(): void {
 
    const layer = getCurrentLayer();
    
-   const minVisibleTileX = Math.floor(Camera.minVisibleX / Settings.TILE_SIZE);
-   const maxVisibleTileX = Math.floor(Camera.maxVisibleX / Settings.TILE_SIZE);
-   const minVisibleTileY = Math.floor(Camera.minVisibleY / Settings.TILE_SIZE);
-   const maxVisibleTileY = Math.floor(Camera.maxVisibleY / Settings.TILE_SIZE);
+   const minVisibleTileX = Math.floor(minVisibleX / Settings.TILE_SIZE);
+   const maxVisibleTileX = Math.floor(maxVisibleX / Settings.TILE_SIZE);
+   const minVisibleTileY = Math.floor(minVisibleY / Settings.TILE_SIZE);
+   const maxVisibleTileY = Math.floor(maxVisibleY / Settings.TILE_SIZE);
    
    const vertices = new Array<number>();
    for (let tileX = minVisibleTileX; tileX <= maxVisibleTileX; tileX++) {

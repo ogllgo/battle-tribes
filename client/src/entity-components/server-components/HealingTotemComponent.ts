@@ -9,11 +9,10 @@ import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import TexturedRenderPart from "../../render-parts/TexturedRenderPart";
 import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
-import { EntityParams } from "../../world";
-import { Hitbox } from "../../hitboxes";
+import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
 
-export interface HealingTotemComponentParams {
+export interface HealingTotemComponentData {
    readonly healingTargetsData: ReadonlyArray<HealingTotemTargetData>;
 }
 
@@ -30,27 +29,18 @@ export interface HealingTotemComponent {
 const EYE_LIGHTS_TRANSFORM_TICKS = Math.floor(0.5 * Settings.DT_S);
 const BASELINE_EYE_LIGHT_INTENSITY = 0.5;
 
-export const HealingTotemComponentArray = new ServerComponentArray<HealingTotemComponent, HealingTotemComponentParams, IntermediateInfo>(ServerComponentType.healingTotem, true, {
-   createParamsFromData: createParamsFromData,
-   populateIntermediateInfo: populateIntermediateInfo,
-   createComponent: createComponent,
-   getMaxRenderParts: getMaxRenderParts,
-   onTick: onTick,
-   padData: padData,
-   updateFromData: updateFromData
-});
+export const HealingTotemComponentArray = new ServerComponentArray<HealingTotemComponent, HealingTotemComponentData, IntermediateInfo>(ServerComponentType.healingTotem, true, createComponent, getMaxRenderParts, decodeData);
+HealingTotemComponentArray.populateIntermediateInfo = populateIntermediateInfo;
+HealingTotemComponentArray.onTick = onTick;
+HealingTotemComponentArray.updateFromData = updateFromData;
 
-const fillParams = (healTargets: Array<HealingTotemTargetData>): HealingTotemComponentParams => {
+export function createHealingTotemComponentData(): HealingTotemComponentData {
    return {
-      healingTargetsData: healTargets
+      healingTargetsData: []
    };
 }
 
-export function createHealingTotemComponentParams(): HealingTotemComponentParams {
-   return fillParams([]);
-}
-
-function createParamsFromData(reader: PacketReader): HealingTotemComponentParams {
+function decodeData(reader: PacketReader): HealingTotemComponentData {
    const healTargets = new Array<HealingTotemTargetData>();
    const numTargets = reader.readNumber();
    for (let i = 0; i < numTargets; i++) {
@@ -67,12 +57,14 @@ function createParamsFromData(reader: PacketReader): HealingTotemComponentParams
       });
    }
    
-   return fillParams(healTargets);
+   return {
+      healingTargetsData: healTargets
+   };
 }
 
-function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: EntityParams): IntermediateInfo {
-   const transformComponentParams = entityParams.serverComponentParams[ServerComponentType.transform]!;
-   const hitbox = transformComponentParams.hitboxes[0];
+function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityComponentData: EntityComponentData): IntermediateInfo {
+   const transformComponentData = entityComponentData.serverComponentData[ServerComponentType.transform]!;
+   const hitbox = transformComponentData.hitboxes[0];
    
    renderInfo.attachRenderPart(
       new TexturedRenderPart(
@@ -86,9 +78,9 @@ function populateIntermediateInfo(renderInfo: EntityRenderInfo, entityParams: En
    return {};
 }
 
-function createComponent(entityParams: EntityParams): HealingTotemComponent {
+function createComponent(entityComponentData: EntityComponentData): HealingTotemComponent {
    return {
-      healingTargetsData: entityParams.serverComponentParams[ServerComponentType.healingTotem]!.healingTargetsData,
+      healingTargetsData: entityComponentData.serverComponentData[ServerComponentType.healingTotem]!.healingTargetsData,
       ticksSpentHealing: 0,
       eyeLights: []
    };
@@ -186,30 +178,7 @@ function onTick(entity: Entity): void {
    }
 }
 
-function padData(reader: PacketReader): void {
-   const numTargets = reader.readNumber();
-   reader.padOffset(4 * Float32Array.BYTES_PER_ELEMENT * numTargets);
-}
-
-function updateFromData(reader: PacketReader, entity: Entity): void {
+function updateFromData(data: HealingTotemComponentData, entity: Entity): void {
    const healingTotemComponent = HealingTotemComponentArray.getComponent(entity);
-   
-   // @Garbage
-   const healTargets = new Array<HealingTotemTargetData>();
-   const numTargets = reader.readNumber();
-   for (let i = 0; i < numTargets; i++) {
-      const healTargetID = reader.readNumber();
-      const x = reader.readNumber();
-      const y = reader.readNumber();
-      const ticksHealed = reader.readNumber();
-
-      healTargets.push({
-         entityID: healTargetID,
-         x: x,
-         y: y,
-         ticksHealed: ticksHealed
-      });
-   }
-   
-   healingTotemComponent.healingTargetsData = healTargets;
+   healingTotemComponent.healingTargetsData = data.healingTargetsData;
 }

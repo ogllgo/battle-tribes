@@ -270,9 +270,8 @@ function getDataLength(): number {
 
 function addDataToPacket(packet: Packet, snobe: Entity): void {
    const snobeComponent = SnobeComponentArray.getComponent(snobe);
-   packet.addBoolean(snobeComponent.isDigging);
-   packet.padOffset(3);
+   packet.writeBool(snobeComponent.isDigging);
 
    const diggingProgress = snobeComponent.isDigging ? Math.min(snobeComponent.ticksSpentDigging / DIG_TIME_TICKS, 1) : 0;
-   packet.addNumber(diggingProgress);
+   packet.writeNumber(diggingProgress);
 }
