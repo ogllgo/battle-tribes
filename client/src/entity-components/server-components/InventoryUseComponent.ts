@@ -556,11 +556,15 @@ export function getLimbByInventoryName(inventoryUseComponent: InventoryUseCompon
 }
 
 export function getLimbConfiguration(inventoryUseComponent: InventoryUseComponent): LimbConfiguration {
-   switch (inventoryUseComponent.limbInfos.length) {
-      case 1: return LimbConfiguration.singleHanded;
-      case 2: return LimbConfiguration.twoHanded;
-      default: throw new Error();
-   }
+   // @HACK cuz there's a weird hack where it thinks enemy players have 1 limb??
+   return LimbConfiguration.twoHanded;
+   
+   
+   // switch (inventoryUseComponent.limbInfos.length) {
+   //    case 1: return LimbConfiguration.singleHanded;
+   //    case 2: return LimbConfiguration.twoHanded;
+   //    default: throw new Error();
+   // }
 }
 
 export const InventoryUseComponentArray = new ServerComponentArray<InventoryUseComponent, InventoryUseComponentData, never>(ServerComponentType.inventoryUse, true, createComponent, getMaxRenderParts, decodeData);
@@ -1164,9 +1168,6 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
          break;
       }
       case LimbAction.none: {
-         if (entity !== playerInstance) {
-            console.log(entity, getCurrentLimbState(limb));
-         }
          setThingToState(getHumanoidRadius(entity), attachPoint, RESTING_LIMB_STATES[limbConfiguration]);
          resetThing(limbRenderPart);
          updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);

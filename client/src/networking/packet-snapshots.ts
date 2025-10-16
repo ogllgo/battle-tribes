@@ -219,7 +219,11 @@ export function decodeSnapshotFromGameDataPacket(reader: PacketReader): PacketSn
       enemyTribeData.push(tribeData);
    }
 
-   const playerInstance = reader.readNumber();
+   let playerInstance: Entity | null = reader.readNumber();
+   if (playerInstance === 0) {
+      playerInstance = null;
+   }
+   
    const cameraSubject = reader.readNumber() as Entity;
 
    const lightData = readLightsFromData(reader);

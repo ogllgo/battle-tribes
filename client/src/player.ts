@@ -30,10 +30,11 @@ const onPlayerDeath = (): void => {
 }
 
 export function setPlayerInstance(newPlayerInstance: Entity | null): void {
-   if (playerInstance === null && newPlayerInstance !== null) {
+   const previousPlayerInstance = playerInstance;
+   playerInstance = newPlayerInstance;
+   if (previousPlayerInstance === null && newPlayerInstance !== null) {
       onPlayerRespawn();
-   } else if (playerInstance !== null && newPlayerInstance === null) {
+   } else if (previousPlayerInstance !== null && newPlayerInstance === null) {
       onPlayerDeath();
    }
-   playerInstance = newPlayerInstance;
 }
