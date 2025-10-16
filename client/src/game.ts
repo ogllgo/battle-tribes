@@ -238,7 +238,8 @@ const runFrame = (frameStartTime: number): void => {
       // @Cleanup kinda unclear at a glance
       nextSnapshot = (snapshotBuffer[snapshotBuffer.indexOf(currentSnapshot) + 1]) || currentSnapshot;
 
-      const serverTickInterp = (renderTick - currentSnapshot.tick) / (nextSnapshot.tick - currentSnapshot.tick);
+      const snapshotTickDiff = nextSnapshot.tick - currentSnapshot.tick;
+      const serverTickInterp = snapshotTickDiff > 0 ? (renderTick - currentSnapshot.tick) / snapshotTickDiff : 0;
    
       // send player packets to server
       playerPacketAccumulator += deltaTick;

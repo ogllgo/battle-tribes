@@ -1164,6 +1164,9 @@ const updateLimb = (inventoryUseComponent: InventoryUseComponent, entity: Entity
          break;
       }
       case LimbAction.none: {
+         if (entity !== playerInstance) {
+            console.log(entity, getCurrentLimbState(limb));
+         }
          setThingToState(getHumanoidRadius(entity), attachPoint, RESTING_LIMB_STATES[limbConfiguration]);
          resetThing(limbRenderPart);
          updateHeldItemRenderPartForAttack(inventoryUseComponent, entity, limbIdx, heldItemType);

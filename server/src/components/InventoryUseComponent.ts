@@ -16,7 +16,7 @@ import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { createBlockAttackConfig } from "../entities/block-attack";
 import { createEntity, destroyEntity, entityExists, getEntityLayer } from "../world";
 import { createSwingAttackConfig } from "../entities/swing-attack";
-import { applyKnockback, Hitbox } from "../hitboxes";
+import { applyKnockback } from "../hitboxes";
 import { EntityTickEvent, EntityTickEventType } from "../../../shared/src/entity-events";
 
 // @Cleanup: Make into class Limb with getHeldItem method
@@ -373,9 +373,14 @@ function onTick(entity: Entity): void {
                const heldItem = getHeldItem(limb);
                const heldItemAttackInfo = getItemAttackInfo(heldItem !== null ? heldItem.type : null);
 
+               const limbConfiguration = getLimbConfiguration(inventoryUseComponent);
+
                limb.action = LimbAction.none;
                limb.currentActionElapsedTicks = 0;
                limb.currentActionDurationTicks = heldItemAttackInfo.attackTimings.restTimeTicks;
+               limb.currentActionStartLimbState = copyLimbState(RESTING_LIMB_STATES[limbConfiguration]);
+               limb.currentActionEndLimbState = copyLimbState(RESTING_LIMB_STATES[limbConfiguration]);
+               console.log("done!!",getCurrentLimbState(limb));
                break;
             }
             case LimbAction.returnBlockToRest: {
