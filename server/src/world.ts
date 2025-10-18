@@ -46,7 +46,9 @@ const entityJoinBuffer = new Array<EntityJoinInfo>();
 const entityRemoveBuffer = new Array<Entity>();
 
 // We skip 0 as that is reserved as a no-entity marker
-let entityIDCounter: Entity = 1;
+// We skip 1 also as that is reserved client-side for its ghost spectator entity.
+// - @Cleanup: Would be nice if this didn't have to be the case, and we only had to reserve 0 and not 1.
+let entityIDCounter: Entity = 2;
 
 // @Hack @Cleanup ?@Speed
 const getComponentTypes = (componentConfig: EntityConfig): ReadonlyArray<ServerComponentType> => {

@@ -21,10 +21,6 @@ export const cameraPosition = new Point(0, 0);
 export let cameraZoom = 1.4;
 // export let cameraZoom = 1;
 
-// @HACK: this garbage is used in spectator mode
-const lastTickPosition = new Point(0, 0);
-const velocity = new Point(0, 0);
-
 export let minVisibleX = 0;
 export let maxVisibleX = 0;
 export let minVisibleY = 0;
@@ -103,15 +99,6 @@ export function setCameraPosition(x: number, y: number): void {
 }
 
 export function refreshCameraPosition(clientTickInterp: number, serverTickInterp: number): void {
-   // @CLEANUP with the ghost rework this shouldn't exist, it should just use the same movement shenanigans with a fake player.
-   if (isSpectating) {
-      // this.position.x = this.lastTickPosition.x + this.velocity.x * Settings.DT_S * frameProgress;
-      // this.position.y = this.lastTickPosition.y + this.velocity.y * Settings.DT_S * frameProgress;
-      cameraPosition.x = lastTickPosition.x;
-      cameraPosition.y = lastTickPosition.y;
-      return;
-   }
-
    if (cameraSubjectHitbox === null) {
       return;
    }
