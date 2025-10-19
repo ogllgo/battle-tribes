@@ -3,17 +3,16 @@ import PlayerClient from "./PlayerClient";
 import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { BowItemInfo, ConsumableItemCategory, ConsumableItemInfo, getItemAttackInfo, InventoryName, ITEM_INFO_RECORD, ITEM_TYPE_RECORD, ItemType } from "battletribes-shared/items/items";
 import { TribeType } from "battletribes-shared/tribes";
-import WebSocket from "ws";
 import Layer from "../Layer";
 import { getCurrentLimbState, getHeldItem, InventoryUseComponentArray, setLimbActions } from "../components/InventoryUseComponent";
 import { PlayerComponentArray } from "../components/PlayerComponent";
 import { changeEntityLayer, TransformComponentArray } from "../components/TransformComponent";
-import { TribeComponentArray } from "../components/TribeComponent";
+import { recruitTribesman, TribeComponentArray } from "../components/TribeComponent";
 import { startChargingSpear, startChargingBattleaxe, createPlayerConfig, modifyBuilding, startChargingBow } from "../entities/tribes/player";
 import { placeBlueprint, throwItem, useItem } from "../entities/tribes/tribe-member";
 import { beginSwing } from "../entities/tribes/limb-use";
 import { InventoryComponentArray, getInventory, addItemToInventory, addItemToSlot, consumeItemFromSlot, consumeItemTypeFromInventory, craftRecipe, inventoryComponentCanAffordRecipe, addItem } from "../components/InventoryComponent";
-import { BlueprintType } from "battletribes-shared/components";
+import { BlueprintType, BuildingMaterial, MATERIAL_TO_ITEM_MAP } from "battletribes-shared/components";
 import { Point, randAngle } from "battletribes-shared/utils";
 import { generatePlayerSpawnPosition, getPlayerClients, registerDirtyEntity, registerPlayerDroppedItemPickup } from "./player-clients";
 import { createItem } from "../items";
@@ -27,7 +26,7 @@ import { surfaceLayer, undergroundLayer } from "../layers";
 import { TileType } from "../../../shared/src/tiles";
 import { toggleDoor } from "../components/DoorComponent";
 import { toggleFenceGateDoor } from "../components/FenceGateComponent";
-import { attemptToOccupyResearchBench } from "../components/ResearchBenchComponent";
+import { attemptToOccupyResearchBench, deoccupyResearchBench } from "../components/ResearchBenchComponent";
 import { toggleTunnelDoor } from "../components/TunnelComponent";
 import { Tech, TechID, getTechByID } from "../../../shared/src/techs";
 import { CowComponentArray } from "../components/CowComponent";
@@ -40,9 +39,26 @@ import { getHitboxTile, getHitboxVelocity, setHitboxAngle, setHitboxAngularVeloc
 import { FloorSignComponentArray } from "../components/FloorSignComponent";
 import { BLOCKING_LIMB_STATE, copyLimbState, SHIELD_BLOCKING_LIMB_STATE } from "../../../shared/src/attack-patterns";
 import { updateBox } from "../../../shared/src/boxes/boxes";
+import { BuildingMaterialComponentArray } from "../components/BuildingMaterialComponent";
+import { createItemsOverEntity } from "../entities/item-entity";
+import { TribesmanAIComponentArray } from "../components/TribesmanAIComponent";
+import { TribesmanTitle } from "../../../shared/src/titles";
+import { acceptTitleOffer, forceAddTitle, rejectTitleOffer, removeTitle } from "../components/TribesmanComponent";
+import Tribe from "../Tribe";
+import { Settings } from "../../../shared/src/settings";
 
 // @Cleanup: Messy as fuck
 export function processPlayerDataPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   // @HACK to get spectator view updating
+   if (playerClient.isSpectating) {
+      const positionX = reader.readNumber();
+      const positionY = reader.readNumber();
+
+      playerClient.updatePosition(positionX, positionY);
+
+      return;
+   }
+   
    const player = playerClient.instance;
    if (!entityExists(player)) {
       return;
@@ -725,7 +741,6 @@ export function receiveSelectRiderDepositLocation(reader: PacketReader): void {
    }
 
    const depositLocation = reader.readPoint();
-   console.log(depositLocation);
 }
 
 export function processDismountCarrySlotPacket(playerClient: PlayerClient): void {
@@ -944,5 +959,123 @@ export function receiveChatMessagePacket(reader: PacketReader, playerClient: Pla
 
    for (const playerClient of getPlayerClients()) {
       playerClient.socket.send(packet.buffer);
+   }
+}
+
+export function processForceUnlockTechPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   if (!entityExists(playerClient.instance)) {
+      return;
+   }
+
+   const techID: TechID = reader.readNumber();
+
+   playerClient.tribe.forceUnlockTech(getTechByID(techID));
+}
+
+export function processDeconstructBuildingPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   const structure: Entity = reader.readNumber();
+   if (!entityExists(structure)) {
+      return;
+   }
+
+   // Deconstruct
+   destroyEntity(structure);
+
+   if (BuildingMaterialComponentArray.hasComponent(structure)) {
+      const materialComponent = BuildingMaterialComponentArray.getComponent(structure);
+      
+      if (getEntityType(structure) === EntityType.wall && materialComponent.material === BuildingMaterial.wood) {
+         createItemsOverEntity(structure, ItemType.wooden_wall, 1);
+         return;
+      }
+      
+      const materialItemType = MATERIAL_TO_ITEM_MAP[materialComponent.material];
+      createItemsOverEntity(structure, materialItemType, 5);
+   }
+}
+
+export function processStructureUninteractPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   if (!entityExists(playerClient.instance)) {
+      return;
+   }
+
+   const structure: Entity = reader.readNumber();
+   if (!entityExists(structure)) {
+      return;
+   }
+
+   switch (getEntityType(structure)) {
+      case EntityType.researchBench: {
+         deoccupyResearchBench(structure, playerClient.instance);
+         break;
+      }
+   }
+}
+
+export function processRecruitTribesmanPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   if (!entityExists(playerClient.instance)) {
+      return;
+   }
+
+   const tribesman: Entity = reader.readNumber();
+   if (!entityExists(tribesman)) {
+      return;
+   }
+
+   const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
+   const relation = tribesmanComponent.tribesmanRelations[playerClient.instance];
+   if (typeof relation !== "undefined" && relation >= 50) {
+      const tribeComponent = TribeComponentArray.getComponent(playerClient.instance);
+      
+      recruitTribesman(tribesman, tribeComponent.tribe);
+   }
+}
+
+export function processRespondToTitleOfferPacket(playerClient: PlayerClient, reader: PacketReader): void {
+   if (!entityExists(playerClient.instance)) {
+      return;
+   }
+
+   const title: TribesmanTitle = reader.readNumber();
+   const isAccepted = reader.readBool();
+   
+   if (isAccepted) {
+      acceptTitleOffer(playerClient.instance, title);
+   } else {
+      rejectTitleOffer(playerClient.instance, title);
+   }
+}
+
+export function processDevGiveTitlePacket(playerClient: PlayerClient, reader: PacketReader): void {
+   const player = playerClient.instance;
+   if (!entityExists(player)) {
+      return;
+   }
+
+   const title: TribesmanTitle = reader.readNumber();
+   forceAddTitle(player, title);
+}
+
+export function processDevRemoveTitlePacket(playerClient: PlayerClient, reader: PacketReader): void {
+   const player = playerClient.instance;
+   if (!entityExists(player)) {
+      return;
+   }
+
+   const title: TribesmanTitle = reader.readNumber();
+   removeTitle(player, title);
+}
+
+export function processDevCreateTribePacket(): void {
+   new Tribe(TribeType.plainspeople, true, new Point(Settings.WORLD_UNITS * 0.5, Settings.WORLD_UNITS * 0.5));
+}
+
+export function processDevChangeTribeTypePacket(reader: PacketReader): void {
+   const tribeID = reader.readNumber();
+   const newTribeType: TribeType = reader.readNumber();
+   
+   const tribe = getTribe(tribeID);
+   if (tribe !== null) {
+      tribe.tribeType = newTribeType;
    }
 }

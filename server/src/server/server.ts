@@ -13,7 +13,7 @@ import { createGameDataPacket, createSyncDataPacket, createSyncPacket } from "./
 import PlayerClient, { PlayerClientVars } from "./PlayerClient";
 import { addPlayerClient, generatePlayerSpawnPosition, getPlayerClients, handlePlayerDisconnect, resetDirtyEntities } from "./player-clients";
 import { createPlayerConfig } from "../entities/tribes/player";
-import { processAcquireTamingSkillPacket, processAnimalStaffFollowCommandPacket, processAscendPacket, processCompleteTamingTierPacket, processDevGiveItemPacket, processDevSetViewedSpawnDistribution, processDismountCarrySlotPacket, processEntitySummonPacket, processForceAcquireTamingSkillPacket, processForceCompleteTamingTierPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processModifyBuildingPacket, processMountCarrySlotPacket, processPickUpEntityPacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRenameAnimalPacket, processRespawnPacket, processSelectTechPacket, processSetAttackTargetPacket, processSetAutogiveBaseResourcesPacket, processSetCarryTargetPacket, processSetMoveTargetPositionPacket, processSetSignMessagePacket, processSetSpectatingPositionPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processTechStudyPacket, processTechUnlockPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket, receiveChatMessagePacket, receiveSelectRiderDepositLocation } from "./packet-receiving";
+import { processAcquireTamingSkillPacket, processAnimalStaffFollowCommandPacket, processAscendPacket, processCompleteTamingTierPacket, processDevChangeTribeTypePacket, processDevCreateTribePacket, processDevGiveItemPacket, processDevGiveTitlePacket, processDevRemoveTitlePacket, processDevSetViewedSpawnDistribution, processDismountCarrySlotPacket, processEntitySummonPacket, processForceAcquireTamingSkillPacket, processForceCompleteTamingTierPacket, processForceUnlockTechPacket, processItemDropPacket, processItemPickupPacket, processItemReleasePacket, processModifyBuildingPacket, processMountCarrySlotPacket, processPickUpEntityPacket, processPlaceBlueprintPacket, processPlayerAttackPacket, processPlayerCraftingPacket, processPlayerDataPacket, processRecruitTribesmanPacket, processRenameAnimalPacket, processRespawnPacket, processRespondToTitleOfferPacket, processSelectTechPacket, processSetAttackTargetPacket, processSetAutogiveBaseResourcesPacket, processSetCarryTargetPacket, processSetMoveTargetPositionPacket, processSetSignMessagePacket, processSetSpectatingPositionPacket, processSpectateEntityPacket, processStartItemUsePacket, processStopItemUsePacket, processStructureInteractPacket, processStructureUninteractPacket, processTechStudyPacket, processTechUnlockPacket, processToggleSimulationPacket, processTPToEntityPacket, processUseItemPacket, receiveChatMessagePacket, receiveSelectRiderDepositLocation } from "./packet-receiving";
 import { CowSpecies, Entity } from "battletribes-shared/entities";
 import { SpikesComponentArray } from "../components/SpikesComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
@@ -168,7 +168,7 @@ class GameServer {
       forceMaxGrowAllIceSpikes();
       console.log("ice spikes",performance.now() - _SHITTYCUMMERY)
       _SHITTYCUMMERY = performance.now();
-      // generateGrassStrands();
+      generateGrassStrands();
       console.log("grass",performance.now() - _SHITTYCUMMERY)
       _SHITTYCUMMERY = performance.now();
       // generateDecorations();
@@ -223,7 +223,7 @@ class GameServer {
                // @Temporary @Incomplete
                const isDev = true;
 
-               playerClient = new PlayerClient(socket, tribe, layer, screenWidth, screenHeight, spawnPosition, 0, username, isDev);
+               playerClient = new PlayerClient(socket, tribe, layer, screenWidth, screenHeight, spawnPosition, 0, username, isSpectating, isDev);
    
                if (!isSpectating) {
                   const config = createPlayerConfig(spawnPosition, 0, tribe, playerClient);
@@ -253,7 +253,7 @@ class GameServer {
                   break;
                }
                case PacketType.activate: {
-                  playerClient.clientIsActive = true;
+                  playerClient.isActive = true;
                   break;
                }
                case PacketType.syncRequest: {
@@ -428,6 +428,38 @@ class GameServer {
                   receiveChatMessagePacket(reader, playerClient);
                   break;
                }
+               case PacketType.forceUnlockTech: {
+                  processForceUnlockTechPacket(playerClient, reader);
+                  break;
+               }
+               case PacketType.structureUninteract: {
+                  processStructureUninteractPacket(playerClient, reader);
+                  break;
+               }
+               case PacketType.recruitTribesman: {
+                  processRecruitTribesmanPacket(playerClient, reader);
+                  break;
+               }
+               case PacketType.respondToTitleOffer: {
+                  processRespondToTitleOfferPacket(playerClient, reader);
+                  break;
+               }
+               case PacketType.devGiveTitle: {
+                  processDevGiveTitlePacket(playerClient, reader);
+                  break;
+               }
+               case PacketType.devRemoveTitle: {
+                  processDevRemoveTitlePacket(playerClient, reader);
+                  break;
+               }
+               case PacketType.devCreateTribe: {
+                  processDevCreateTribePacket();
+                  break;
+               }
+               case PacketType.devChangeTribeType: {
+                  processDevChangeTribeTypePacket(reader);
+                  break;
+               }
                default: {
                   console.log("Unknown packet type: " + packetType);
                }
@@ -511,7 +543,7 @@ class GameServer {
       const playerClients = getPlayerClients();
       for (let i = 0; i < playerClients.length; i++) {
          const playerClient = playerClients[i];
-         if (!playerClient.clientIsActive) {
+         if (!playerClient.isActive) {
             continue;
          }
 

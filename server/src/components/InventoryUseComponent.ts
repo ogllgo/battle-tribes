@@ -380,7 +380,6 @@ function onTick(entity: Entity): void {
                limb.currentActionDurationTicks = heldItemAttackInfo.attackTimings.restTimeTicks;
                limb.currentActionStartLimbState = copyLimbState(RESTING_LIMB_STATES[limbConfiguration]);
                limb.currentActionEndLimbState = copyLimbState(RESTING_LIMB_STATES[limbConfiguration]);
-               console.log("done!!",getCurrentLimbState(limb));
                break;
             }
             case LimbAction.returnBlockToRest: {

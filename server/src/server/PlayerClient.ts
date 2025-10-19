@@ -28,13 +28,15 @@ class PlayerClient {
    public readonly socket: WebSocket;
    public readonly tribe: Tribe;
    public readonly isDev: boolean;
-
+   
    /** The player's entity */
    public instance: Entity;
    /** The entity currently being viewed by the player. Typically the player instance. */
    public cameraSubject: Entity;
-   public clientIsActive = false;
-
+   public isActive = false;
+   
+   public isSpectating: boolean;
+   
    // When the player is dead, we need to remember where their final position is so they can receive updates while dead
    public lastViewedPositionX: number;
    public lastViewedPositionY: number;
@@ -73,7 +75,7 @@ class PlayerClient {
 
    public viewedSpawnDistribution = -1;
 
-   constructor(socket: WebSocket, tribe: Tribe, layer: Layer, screenWidth: number, screenHeight: number, playerPosition: Point, instance: Entity, username: string, isDev: boolean) {
+   constructor(socket: WebSocket, tribe: Tribe, layer: Layer, screenWidth: number, screenHeight: number, playerPosition: Point, instance: Entity, username: string, isSpectating: boolean, isDev: boolean) {
       this.socket = socket;
       this.tribe = tribe;
       this.lastLayer = layer;
@@ -83,6 +85,7 @@ class PlayerClient {
       this.screenHeight = screenHeight;
       this.instance = instance;
       this.cameraSubject = instance;
+      this.isSpectating = isSpectating;
       this.username = username;
       this.isDev = isDev;
 

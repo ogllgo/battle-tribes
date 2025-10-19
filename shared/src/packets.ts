@@ -27,6 +27,7 @@ export const enum PacketType {
    devSetDebugEntity,
    ascend,
    structureInteract,
+   structureUninteract,
    unlockTech,
    selectTech,
    studyTech,
@@ -43,16 +44,24 @@ export const enum PacketType {
    setSignMessage,
    renameAnimal,
    chatMessage,
+   deconstructBuilding,
+   recruitTribesman,
+   respondToTitleOffer,
    // @Hack
    setSpectatingPosition,
    forceCompleteTamingTier, // ((DEV))
    acquireTamingSkill,
    forceAcquireTamingSkill, // ((DEV))
+   forceUnlockTech, // ((DEV))
    devGiveItem, // ((DEV))
    devTPToEntity, // ((DEV))
    devSpectateEntity, // ((DEV))
    devSetAutogiveBaseResource, // ((DEV))
    devSetViewedSpawnDistribution, // ((DEV))
+   devGiveTitle, // ((DEV))
+   devRemoveTitle, // ((DEV))
+   devCreateTribe, // ((DEV))
+   devChangeTribeType, // ((DEV))
    // -----------------
    // SERVER-TO-CLIENT
    // -----------------

@@ -112,73 +112,6 @@ const processCommandPacket = (playerClient: PlayerClient, command: string): void
    registerCommand(command, playerClient.instance);
 }
 
-const processTechForceUnlock = (playerClient: PlayerClient, techID: TechID): void => {
-   if (!entityExists(playerClient.instance)) {
-      return;
-   }
-
-   playerClient.tribe.forceUnlockTech(getTechByID(techID));
-}
-
-const processDeconstructPacket = (playerClient: PlayerClient, structure: Entity): void => {
-   if (!entityExists(structure)) {
-      return;
-   }
-
-   // Deconstruct
-   destroyEntity(structure);
-
-   if (BuildingMaterialComponentArray.hasComponent(structure)) {
-      const materialComponent = BuildingMaterialComponentArray.getComponent(structure);
-      
-      if (getEntityType(structure) === EntityType.wall && materialComponent.material === BuildingMaterial.wood) {
-         createItemsOverEntity(structure, ItemType.wooden_wall, 1);
-         return;
-      }
-      
-      const materialItemType = MATERIAL_TO_ITEM_MAP[materialComponent.material];
-      createItemsOverEntity(structure, materialItemType, 5);
-   }
-}
-
-const processStructureUninteractPacket = (playerClient: PlayerClient, structure: Entity): void => {
-   if (!entityExists(playerClient.instance) || !entityExists(playerClient.instance)) {
-      return;
-   }
-
-   switch (getEntityType(structure)) {
-      case EntityType.researchBench: {
-         deoccupyResearchBench(structure, playerClient.instance);
-         break;
-      }
-   }
-}
-
-const processRecruitTribesmanPacket = (playerClient: PlayerClient, tribesman: Entity): void => {
-   if (!entityExists(playerClient.instance) || !entityExists(tribesman)) {
-      return;
-   }
-
-   const tribesmanComponent = TribesmanAIComponentArray.getComponent(tribesman);
-   const relation = tribesmanComponent.tribesmanRelations[playerClient.instance];
-   if (typeof relation !== "undefined" && relation >= 50) {
-      const tribeComponent = TribeComponentArray.getComponent(playerClient.instance);
-      
-      recruitTribesman(tribesman, tribeComponent.tribe);
-   }
-}
-const processRespondToTitleOfferPacket = (playerClient: PlayerClient, title: TribesmanTitle, isAccepted: boolean): void => {
-   if (!entityExists(playerClient.instance)) {
-      return;
-   }
-   
-   if (isAccepted) {
-      acceptTitleOffer(playerClient.instance, title);
-   } else {
-      rejectTitleOffer(playerClient.instance, title);
-   }
-}
-
 const devGiveItem = (playerClient: PlayerClient, itemType: ItemType, amount: number): void => {
    const player = playerClient.instance;
    if (!entityExists(player)) {
@@ -237,24 +170,6 @@ const devSummonEntity = (playerClient: PlayerClient, summonPacket: EntitySummonP
    // createEntityFromConfig(config, getEntityLayer(playerClient.instance), 0);
 }
 
-const devGiveTitle = (playerClient: PlayerClient, title: TribesmanTitle): void => {
-   const player = playerClient.instance;
-   if (!entityExists(player)) {
-      return;
-   }
-
-   forceAddTitle(player, title);
-}
-
-const devRemoveTitle = (playerClient: PlayerClient, title: TribesmanTitle): void => {
-   const player = playerClient.instance;
-   if (!entityExists(player)) {
-      return;
-   }
-
-   removeTitle(player, title);
-}
-
 export function addPlayerClient(playerClient: PlayerClient, layer: Layer, spawnPosition: Point): void {
    playerClients.push(playerClient);
 
@@ -264,31 +179,11 @@ export function addPlayerClient(playerClient: PlayerClient, layer: Layer, spawnP
    socket.send(initialGameDataPacket);
 
    socket.on("deactivate", () => {
-      playerClient.clientIsActive = false;
+      playerClient.isActive = false;
    });
 
    socket.on("command", (command: string) => {
       processCommandPacket(playerClient, command);
-   });
-
-   socket.on("force_unlock_tech", (techID: TechID): void => {
-      processTechForceUnlock(playerClient, techID);
-   });
-
-   socket.on("deconstruct_building", (structureID: number): void => {
-      processDeconstructPacket(playerClient, structureID);
-   });
-
-   socket.on("structure_uninteract", (structureID: number): void => {
-      processStructureUninteractPacket(playerClient, structureID);
-   });
-
-   socket.on("recruit_tribesman", (tribesmanID: number): void => {
-      processRecruitTribesmanPacket(playerClient, tribesmanID);
-   });
-
-   socket.on("respond_to_title_offer", (title: TribesmanTitle, isAccepted: boolean): void => {
-      processRespondToTitleOfferPacket(playerClient, title, isAccepted);
    });
 
    socket.on("dev_pause_simulation", (): void => {
@@ -309,25 +204,6 @@ export function addPlayerClient(playerClient: PlayerClient, layer: Layer, spawnP
 
    socket.on("dev_summon_entity", (summonPacket: EntitySummonPacket): void => {
       devSummonEntity(playerClient, summonPacket);
-   });
-
-   socket.on("dev_give_title", (title: TribesmanTitle): void => {
-      devGiveTitle(playerClient, title);
-   });
-
-   socket.on("dev_remove_title", (title: TribesmanTitle): void => {
-      devRemoveTitle(playerClient, title);
-   });
-
-   socket.on("dev_create_tribe", (): void => {
-      new Tribe(TribeType.plainspeople, true, new Point(Settings.WORLD_UNITS * 0.5, Settings.WORLD_UNITS * 0.5));
-   });
-
-   socket.on("dev_change_tribe_type", (tribeID: number, newTribeType: TribeType): void => {
-      const tribe = getTribe(tribeID);
-      if (tribe !== null) {
-         tribe.tribeType = newTribeType;
-      }
    });
 }
 
@@ -360,7 +236,7 @@ const getPlayersViewingEntity = (entity: Entity): ReadonlyArray<PlayerClient> =>
    // @Speed: will probs become a major source of slowness with 50+ players
    for (let i = 0; i < playerClients.length; i++) {
       const playerClient = playerClients[i];
-      if (playerClient.clientIsActive && playerClient.visibleEntities.has(entity)) {
+      if (playerClient.isActive && playerClient.visibleEntities.has(entity)) {
          viewingPlayerClients.push(playerClient);
       }
    }
@@ -377,7 +253,7 @@ const getPlayersViewingPosition = (minX: number, maxX: number, minY: number, max
    // @Speed: will probs become a major source of slowness with 50+ players
    for (let i = 0; i < playerClients.length; i++) {
       const playerClient = playerClients[i];
-      if (!playerClient.clientIsActive) {
+      if (!playerClient.isActive) {
          continue;
       }
       if (minChunkX <= playerClient.maxVisibleChunkX && maxChunkX >= playerClient.minVisibleChunkX && minChunkY <= playerClient.maxVisibleChunkY && maxChunkY >= playerClient.minVisibleChunkY) {
