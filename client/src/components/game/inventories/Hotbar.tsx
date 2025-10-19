@@ -6,6 +6,7 @@ import InventoryContainer from "./InventoryContainer";
 import { getHotbarSelectedItemSlot, ItemRestTime } from "../GameInteractableLayer";
 import { playerTribe } from "../../../tribes";
 import { playerInstance } from "../../../player";
+import { InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 
 export let Hotbar_update: () => void = () => {};
 
@@ -49,27 +50,29 @@ const Hotbar = (props: HotbarProps) => {
       }
    }, []);
 
-   const playerID = playerInstance !== null ? playerInstance : undefined;
+   if (playerInstance === null || !InventoryComponentArray.hasComponent(playerInstance)) {
+      return null;
+   }
 
    return <div id="hotbar">
       <div className="flex-container">
          <EmptyItemSlot className="hidden" />
          <EmptyItemSlot className="hidden" />
          <div className={"inventory" + (playerTribe.tribeType !== TribeType.barbarians ? " hidden" : "")}>
-            <InventoryContainer entityID={playerID} inventory={props.offhand} itemRestTimes={props.offhandItemRestTimes} />
+            <InventoryContainer entityID={playerInstance} inventory={props.offhand} itemRestTimes={props.offhandItemRestTimes} />
          </div>
       </div>
       <div className="middle">
          <div className="inventory">
             {/* @Hack */}
-            <InventoryContainer entityID={playerID} inventory={props.hotbar} itemRestTimes={props.hotbarItemRestTimes} selectedItemSlot={getHotbarSelectedItemSlot()} />
+            <InventoryContainer entityID={playerInstance} inventory={props.hotbar} itemRestTimes={props.hotbarItemRestTimes} selectedItemSlot={getHotbarSelectedItemSlot()} />
          </div>
       </div>
       <div className="flex-container">
          <div className="inventory">
-            <InventoryContainer entityID={playerID} inventory={props.backpackSlot} />
-            <InventoryContainer entityID={playerID} inventory={props.armourSlot} />
-            <InventoryContainer entityID={playerID} inventory={props.gloveSlot} />
+            <InventoryContainer entityID={playerInstance} inventory={props.backpackSlot} />
+            <InventoryContainer entityID={playerInstance} inventory={props.armourSlot} />
+            <InventoryContainer entityID={playerInstance} inventory={props.gloveSlot} />
          </div>
       </div>
    </div>;

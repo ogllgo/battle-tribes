@@ -1,11 +1,11 @@
-import { rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { distance, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
-import { SafetyNodeData, WallSideNodeData } from "battletribes-shared/ai-building-types";
+import { BuildingPlanData, SafetyNodeData, TribeWallData, WallSideNodeData } from "battletribes-shared/ai-building-types";
 import { createWebGLProgram, gl } from "../../webgl";
 import OPTIONS from "../../options";
-import { getVisibleWalls } from "../../networking/Client";
 import { getHoveredEntityID } from "../../entity-selection";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
+import { cursorWorldPos } from "../../mouse";
 
 const OCCUPIED_NODE_THICKNESS = 3;
 const OCCUPIED_NODE_FREE_THICKNESS = 4.5;
@@ -22,9 +22,32 @@ let program: WebGLProgram;
 
 let safetyNodes: ReadonlyArray<SafetyNodeData> = [];
 
+let visibleWalls: ReadonlyArray<TribeWallData> = [];
+let buildingPlans: ReadonlyArray<BuildingPlanData> = [];
+
 export function setVisibleSafetyNodes(newSafetyNodes: ReadonlyArray<SafetyNodeData>): void {
    // @Speed: Garbage collection
    safetyNodes = newSafetyNodes;
+}
+
+export function getVisibleBuildingPlans(): ReadonlyArray<BuildingPlanData> {
+   return buildingPlans;
+}
+
+export function getHoveredBuildingPlan(): BuildingPlanData | null {
+   let minDist = 64;
+   let closestPlanToCursor: BuildingPlanData | null = null;
+   for (let i = 0; i < buildingPlans.length; i++) {
+      const plan = buildingPlans[i];
+      
+      const cursorDist = distance(plan.x, plan.y, cursorWorldPos.x, cursorWorldPos.y);
+      if (cursorDist < minDist) {
+         minDist = cursorDist;
+         closestPlanToCursor = plan;
+      }
+   }
+
+   return closestPlanToCursor;
 }
 
 export function createSafetyNodeShaders(): void {
@@ -76,8 +99,6 @@ const getHighlightedNodes = (): ReadonlyArray<WallSideNodeData> => {
    if (hoveredEntityID === -1) {
       return [];
    }
-
-   const visibleWalls = getVisibleWalls();
 
    const highlightedNodes = new Array<WallSideNodeData>();
    for (const wallData of visibleWalls) {

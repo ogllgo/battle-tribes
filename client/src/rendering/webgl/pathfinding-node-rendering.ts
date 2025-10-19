@@ -1,5 +1,4 @@
 import { createWebGLProgram, gl } from "../../webgl";
-import Game from "../../game";
 import OPTIONS from "../../options";
 import { PathfindingSettings } from "battletribes-shared/settings";
 import { angle } from "battletribes-shared/utils";
@@ -8,7 +7,7 @@ import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { nerdVisionIsVisible } from "../../components/game/dev/NerdVision";
 import { entityExists } from "../../world";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
-import { Hitbox } from "../../hitboxes";
+import { getEntityDebugData } from "../render";
 
 enum NodeType {
    occupied,
@@ -144,12 +143,12 @@ const addConnector = (vertices: Array<number>, startX: number, startY: number, e
 }
 
 const renderConnectors = (pathData: PathData): void => {
-   const debugEntity = Game.getEntityDebugData()!.entityID;
+   const debugEntity = getEntityDebugData()!.entityID;
    if (!entityExists(debugEntity)) {
       return;
    }
 
-   const transformComponent = TransformComponentArray.getComponent(debugEntity);
+   const transformComponent = TransformComponentArray.getComponent(debugEntity)!;
    const entityHitbox = transformComponent.hitboxes[0];
    
    const vertices = new Array<number>();
@@ -260,7 +259,7 @@ const addNodeData = (vertexData: Float32Array, segmentIdx: number, node: Pathfin
 }
 
 export function renderPathfindingNodes(): void {
-   const entityDebugData = Game.getEntityDebugData();
+   const entityDebugData = getEntityDebugData();
    
    if (nerdVisionIsVisible() && entityDebugData !== null && typeof entityDebugData.pathData !== "undefined") {
       renderConnectors(entityDebugData.pathData);

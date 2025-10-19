@@ -11,7 +11,7 @@ import { calculateRenderDepthFromLayer, getEntityRenderLayer } from "./render-la
 import { ClientComponentType } from "./entity-components/client-component-types";
 import { ClientComponentData } from "./entity-components/client-components";
 import { removeEntitySounds } from "./sound";
-import { currentSnapshot } from "./game";
+import { currentSnapshot } from "./client";
 
 export const layers = new Array<Layer>();
 
@@ -45,7 +45,7 @@ export function getCurrentLayer(): Layer {
 
 export function getEntityAgeTicks(entity: Entity): number {
    if (typeof entitySpawnTicks[entity] === "undefined") {
-      throw new Error();
+      throw new Error("Entity " + entity + " doesn't exist");
    }
    return currentSnapshot.tick - entitySpawnTicks[entity]!;
 }
@@ -53,7 +53,7 @@ export function getEntityAgeTicks(entity: Entity): number {
 export function getEntityLayer(entity: Entity): Layer {
    const layer = entityLayers[entity];
    if (typeof layer === "undefined") {
-      throw new Error();
+      throw new Error("Entity " + entity + " doesn't exist");
    }
    return layer;
 }
@@ -78,7 +78,7 @@ export function entityExists(entity: Entity): boolean {
    return typeof entityLayers[entity] !== "undefined";
 }
 
-export function registerBasicEntityInfo(entity: Entity, entityType: EntityType, spawnTicks: number, layer: Layer, renderInfo: EntityRenderInfo, componentTypes: ReadonlyArray<ServerComponentType>): void {
+const registerBasicEntityInfo = (entity: Entity, entityType: EntityType, spawnTicks: number, layer: Layer, renderInfo: EntityRenderInfo, componentTypes: ReadonlyArray<ServerComponentType>): void => {
    entityTypes[entity] = entityType;
    entitySpawnTicks[entity] = spawnTicks;
    entityLayers[entity] = layer;
@@ -101,6 +101,7 @@ export interface EntityComponentData {
 // @Location
 /** Entity creation info, populated with all the data which comprises a full entity. */
 export interface EntityCreationInfo {
+   readonly entity: Entity;
    readonly entityComponentData: EntityComponentData;
    componentIntermediateInfoRecord: Partial<Record<number, object>>;
    readonly renderInfo: EntityRenderInfo;
@@ -150,7 +151,7 @@ const getMaxNumRenderParts = (entityComponentData: EntityComponentData): number 
 
 // @Cleanup: remove the need to pass in Entity
 /** Creates and populates all the things which make up an entity and returns them. It is then up to the caller as for what to do with these things */
-export function createEntity(entity: Entity, entityComponentData: EntityComponentData): EntityCreationInfo {
+export function createEntityCreationInfo(entity: Entity, entityComponentData: EntityComponentData): EntityCreationInfo {
    const maxNumRenderParts = getMaxNumRenderParts(entityComponentData);
    const renderLayer = getEntityRenderLayer(entityComponentData.entityType, entityComponentData);
    const renderHeight = calculateRenderDepthFromLayer(renderLayer, entityComponentData);
@@ -171,13 +172,16 @@ export function createEntity(entity: Entity, entityComponentData: EntityComponen
    registerDirtyRenderInfo(renderInfo);
 
    return {
+      entity: entity,
       entityComponentData: entityComponentData,
       componentIntermediateInfoRecord: componentIntermediateInfoRecord,
       renderInfo: renderInfo
    };
 }
 
-export function addEntityToWorld(entity: Entity, spawnTicks: number, layer: Layer, creationInfo: EntityCreationInfo): void {
+export function addEntityToWorld(spawnTicks: number, layer: Layer, creationInfo: EntityCreationInfo): void {
+   const entity = creationInfo.entity;
+   
    const componentArrays = getEntityComponentArrays(creationInfo.entityComponentData);
 
    for (const componentArray of componentArrays) {
@@ -270,7 +274,7 @@ export function removeEntity(entity: Entity, isDeath: boolean): void {
 }
 
 export function changeEntityLayer(entity: Entity, newLayer: Layer): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
    const previousLayer = getEntityLayer(entity);
 
    const renderInfo = getEntityRenderInfo(entity);

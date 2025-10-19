@@ -21,7 +21,7 @@ import { addTexturedParticleToBufferContainer, ParticleRenderLayer } from "../..
 import { playSoundOnHitbox } from "../../sound";
 import { resolveWallCollisions } from "../../collision";
 import { keyIsPressed } from "../../keyboard-input";
-import { currentSnapshot } from "../../game";
+import { currentSnapshot } from "../../client";
 
 export interface TransformComponentData {
    readonly collisionBit: CollisionBit;
@@ -204,7 +204,7 @@ const cleanHitboxIncludingChildrenTransform = (hitbox: Hitbox): void => {
 }
 
 export function cleanEntityTransform(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
    
    for (const rootHitbox of transformComponent.rootHitboxes) {
       cleanHitboxIncludingChildrenTransform(rootHitbox);
@@ -275,7 +275,7 @@ const applyHitboxKinematics = (transformComponent: TransformComponent, entity: E
    if (entityIsInRiver(transformComponent, entity)) {
       const flowDirection = layer.getRiverFlowDirection(tile.x, tile.y);
       if (flowDirection > 0) {
-         applyAccelerationFromGround(entity, hitbox, 240 * Settings.DT_S * Math.sin(flowDirection - 1), 240 * Settings.DT_S * Math.cos(flowDirection - 1));
+         applyAccelerationFromGround(hitbox, 240 * Settings.DT_S * Math.sin(flowDirection - 1), 240 * Settings.DT_S * Math.cos(flowDirection - 1));
       }
    }
 
@@ -416,7 +416,7 @@ const applyHitboxTethers = (hitbox: Hitbox): void => {
 }
 const tickHitboxPhysics = (hitbox: Hitbox): void => {
    // @CLEANUP
-   const transformComponent = TransformComponentArray.getComponent(hitbox.entity);
+   const transformComponent = TransformComponentArray.getComponent(hitbox.entity)!;
 
    // @Hackish We don't update the player's angular physics cuz it's handled entirely by the updatePlayerRotation function.
    if (hitbox.entity !== playerInstance) {
@@ -494,7 +494,7 @@ function onLoad(entity: Entity): void {
 }
 
 function onTick(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
    const hitbox = transformComponent.hitboxes[0];
 
    // Water droplet particles
@@ -538,7 +538,7 @@ function onTick(entity: Entity): void {
 }
 
 function onUpdate(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
    if (transformComponent.boundingAreaMinX < 0 || transformComponent.boundingAreaMaxX >= Settings.WORLD_UNITS || transformComponent.boundingAreaMinY < 0 || transformComponent.boundingAreaMaxY >= Settings.WORLD_UNITS) {
       // @BUG @HACK: This warning should not be a thing. This can occur if I mistakenly set the player spawn position to be outside of the world, then this runs on the player.
       
@@ -575,7 +575,7 @@ function onUpdate(entity: Entity): void {
 }
 
 function onRemove(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
    for (const chunk of transformComponent.chunks) {
       chunk.removeEntity(entity);
    }
@@ -584,7 +584,7 @@ function onRemove(entity: Entity): void {
 function updateFromData(data: TransformComponentData, entity: Entity): void {
    // @SPEED: What we could do is explicitly send which hitboxes have been created, and removed, from the server. (When using carmack networking)
    
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
    
    // @HACK @SPEED? (actually this might be ok just if we do the optimisation which only sends components which were updated, not all of em at once)
    const renderInfo = getEntityRenderInfo(entity);
@@ -636,7 +636,7 @@ function updatePlayerFromData(data: TransformComponentData, isInitialData: boole
       return;
    }
 
-   const transformComponent = TransformComponentArray.getComponent(playerInstance!);
+   const transformComponent = TransformComponentArray.getComponent(playerInstance!)!;
    for (const hitboxData of data.hitboxes) {
       const hitbox = transformComponent.hitboxMap.get(hitboxData.localID);
       assert(typeof hitbox !== "undefined");
@@ -741,7 +741,7 @@ export function entityIsVisibleToCamera(entity: Entity): boolean {
 
    // If on a different layer, the entity must be below a dropdown tile
    
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
 
    const minTileX = Math.floor(transformComponent.boundingAreaMinX / Settings.TILE_SIZE);
    const maxTileX = Math.floor(transformComponent.boundingAreaMaxX / Settings.TILE_SIZE);

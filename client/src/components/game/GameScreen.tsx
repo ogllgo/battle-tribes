@@ -125,34 +125,23 @@ const GameScreen = (props: GameScreenProps) => {
       GameScreen_update = (): void => {
          // @Copynpaste throughout all of this
 
-         let entityHotbar: Inventory | null;
-         let entityOffhand: Inventory | null;
-         let entityHeldItemSlot: Inventory | null;
-         let entityCraftingOutputSlot: Inventory | null;
-         let entityBackpack: Inventory | null;
-         let entityBackpackSlot: Inventory | null;
-         let entityArmourSlot: Inventory | null;
-         let entityGloveSlot: Inventory | null;
-         if (playerInstance !== null) {
-            const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
-            entityHotbar = getInventory(inventoryComponent, InventoryName.hotbar);
-            entityOffhand = getInventory(inventoryComponent, InventoryName.offhand);
-            entityHeldItemSlot = getInventory(inventoryComponent, InventoryName.heldItemSlot);
-            entityCraftingOutputSlot = getInventory(inventoryComponent, InventoryName.craftingOutputSlot);
-            entityBackpack = getInventory(inventoryComponent, InventoryName.backpack);
-            entityBackpackSlot = getInventory(inventoryComponent, InventoryName.backpackSlot);
-            entityArmourSlot = getInventory(inventoryComponent, InventoryName.armourSlot);
-            entityGloveSlot = getInventory(inventoryComponent, InventoryName.gloveSlot);
-         } else {
-            entityHotbar = cloneEmptyInventory(hotbar);
-            entityOffhand = cloneEmptyInventory(offhand);
-            entityHeldItemSlot = cloneEmptyInventory(heldItemSlot);
-            entityCraftingOutputSlot = cloneEmptyInventory(craftingOutputSlot);
-            entityBackpack = cloneEmptyInventory(backpack);
-            entityBackpackSlot = cloneEmptyInventory(backpackSlot);
-            entityArmourSlot = cloneEmptyInventory(armourSlot);
-            entityGloveSlot = cloneEmptyInventory(gloveSlot);
+         if (playerInstance === null) {
+            return;
          }
+
+         const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
+         if (inventoryComponent === null) {
+            return;
+         }
+
+         const entityHotbar = getInventory(inventoryComponent, InventoryName.hotbar);
+         const entityOffhand = getInventory(inventoryComponent, InventoryName.offhand);
+         const entityHeldItemSlot = getInventory(inventoryComponent, InventoryName.heldItemSlot);
+         const entityCraftingOutputSlot = getInventory(inventoryComponent, InventoryName.craftingOutputSlot);
+         const entityBackpack = getInventory(inventoryComponent, InventoryName.backpack);
+         const entityBackpackSlot = getInventory(inventoryComponent, InventoryName.backpackSlot);
+         const entityArmourSlot = getInventory(inventoryComponent, InventoryName.armourSlot);
+         const entityGloveSlot = getInventory(inventoryComponent, InventoryName.gloveSlot);
             
          if (entityHotbar !== null && inventoriesAreDifferent(hotbar, entityHotbar)) {
             setHotbar(copyInventory(entityHotbar));
@@ -180,18 +169,18 @@ const GameScreen = (props: GameScreenProps) => {
          }
 
          // @Cleanup wtf is this why is this here
-         if (playerInstance !== null) {
-            let canAscendLayer = false;
-            if (getCurrentLayer() === undergroundLayer) {
-               const transformComponent = TransformComponentArray.getComponent(playerInstance);
+         let canAscendLayer = false;
+         if (getCurrentLayer() === undergroundLayer) {
+            const transformComponent = TransformComponentArray.getComponent(playerInstance);
+            if (transformComponent !== null) {
                const hitbox = transformComponent.hitboxes[0];
                const tileAbove = getHitboxTile(hitbox);
                if (tileAbove.type === TileType.dropdown) {
                   canAscendLayer = true;
                }
             }
-            setCanAscendLayer(canAscendLayer);
          }
+         setCanAscendLayer(canAscendLayer);
       }
    }, [hotbar, offhand, heldItemSlot, craftingOutputSlot, backpack, backpackSlot, armourSlot, gloveSlot]);
 

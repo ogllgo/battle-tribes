@@ -24,7 +24,7 @@ import { getRenderPartRenderPosition } from "../../rendering/render-part-matrice
 import { getHumanoidRadius } from "./TribesmanComponent";
 import { playerInstance } from "../../player";
 import { getHitboxVelocity } from "../../hitboxes";
-import { currentSnapshot, tickIntervalHasPassed } from "../../game";
+import { currentSnapshot, tickIntervalHasPassed } from "../../client";
 
 export interface LimbInfo {
    selectedItemSlot: number;
@@ -614,6 +614,9 @@ function getMaxRenderParts(entityComponentData: EntityComponentData): number {
 function onLoad(entity: Entity): void {
    const renderInfo = getEntityRenderInfo(entity);
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
+   if (inventoryUseComponent === null) {
+      return;
+   }
 
    const numExpectedLimbs = inventoryUseComponent.limbInfos.length;
    
@@ -636,15 +639,15 @@ function onLoad(entity: Entity): void {
 }
 
 function onTick(entity: Entity): void {
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity)!;
    // @Cleanup: move to separate function
-   const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
    for (let limbIdx = 0; limbIdx < inventoryUseComponent.limbInfos.length; limbIdx++) {
       const limbInfo = inventoryUseComponent.limbInfos[limbIdx];
       if (limbInfo.heldItemType === null) {
          continue;
       }
 
-      const transformComponent = TransformComponentArray.getComponent(entity);
+      const transformComponent = TransformComponentArray.getComponent(entity)!;
       const hitbox = transformComponent.hitboxes[0];
       const velocity = getHitboxVelocity(hitbox);
 
@@ -1555,7 +1558,7 @@ const updateLimbInfoFromData = (limbInfo: LimbInfo, reader: PacketReader): void 
 }
 
 function updateFromData(data: InventoryUseComponentData, entity: Entity): void {
-   const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity)!;
 
    inventoryUseComponent.limbInfos.splice(0, inventoryUseComponent.limbInfos.length);
    for (let i = 0; i < data.limbInfos.length; i++) {
@@ -1573,7 +1576,7 @@ function updateFromData(data: InventoryUseComponentData, entity: Entity): void {
 // BAGUETTE
 
 function updatePlayerFromData(data: InventoryUseComponentData): void {
-   const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!)!;
    
    for (let i = 0; i < data.limbInfos.length; i++) {
       const limbInfoData = data.limbInfos[i];

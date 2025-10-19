@@ -9,7 +9,7 @@ import { CookingComponentArray } from "./CookingComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { tickIntervalHasPassed } from "../../game";
+import { tickIntervalHasPassed } from "../../client";
 
 export interface CampfireComponentData {}
 
@@ -55,8 +55,16 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const cookingComponent = CookingComponentArray.getComponent(entity);
+   if (cookingComponent === null) {
+      return;
+   }
+   
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent === null) {
+      return;
+   }
+   
    if (cookingComponent.isCooking) {
-      const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.hitboxes[0];
 
       // Smoke particles

@@ -1,7 +1,6 @@
 import { clamp, distance, lerp, Point } from "battletribes-shared/utils";
 import { useEffect, useState } from "react";
 import { getHoveredEntityID } from "../../entity-selection";
-import { latencyGameState } from "../../game-state/game-states";
 import { BuildMenu_isOpen } from "./BuildMenu";
 import { HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
 import { TribeComponentArray } from "../../entity-components/server-components/TribeComponent";
@@ -9,8 +8,8 @@ import { TransformComponentArray } from "../../entity-components/server-componen
 import { Entity } from "../../../../shared/src/entities";
 import { playerTribe } from "../../tribes";
 import { playerInstance } from "../../player";
-import { Hitbox } from "../../hitboxes";
 import { worldToScreenPos } from "../../camera";
+import { playerIsPlacingEntity } from "./GameInteractableLayer";
 
 const Y_OFFSET = -50;
 
@@ -47,6 +46,9 @@ const HealthInspector = () => {
    }
    
    const healthComponent = HealthComponentArray.getComponent(entity);
+   if (healthComponent === null) {
+      return null;
+   }
    
    return <div id="health-inspector" style={{left: x + "px", bottom: y + "px", opacity: opacity}}>
       {/* <div className="health-slider" style={{width: (health / healthComponent.maxHealth) * 100 + "%"}}></div> */}
@@ -59,7 +61,7 @@ const HealthInspector = () => {
 export default HealthInspector;
 
 export function updateInspectHealthBar(): void {
-   if (playerInstance === null || latencyGameState.playerIsPlacingEntity || BuildMenu_isOpen()) {
+   if (playerInstance === null || playerIsPlacingEntity() || BuildMenu_isOpen()) {
       InspectHealthBar_setEntity(null);
       return;
    }
@@ -76,18 +78,28 @@ export function updateInspectHealthBar(): void {
    }
 
    // Only show health for friendly tribe buildings/tribesman
-   if (!TribeComponentArray.hasComponent(hoveredEntity) || TribeComponentArray.getComponent(hoveredEntity).tribeID !== playerTribe.id) {
+   const tribeComponent = TribeComponentArray.getComponent(hoveredEntity);
+   if (tribeComponent === null || tribeComponent.tribeID !== playerTribe.id) {
+      InspectHealthBar_setEntity(null);
+      return;
+   }
+
+   const transformComponent = TransformComponentArray.getComponent(hoveredEntity);
+   if (transformComponent === null) {
+      InspectHealthBar_setEntity(null);
+      return;
+   }
+   
+   const healthComponent = HealthComponentArray.getComponent(hoveredEntity);
+   if (healthComponent === null) {
       InspectHealthBar_setEntity(null);
       return;
    }
 
    InspectHealthBar_setEntity(hoveredEntity);
-
-   const transformComponent = TransformComponentArray.getComponent(hoveredEntity);
-   const hitbox = transformComponent.hitboxes[0];
    
-   const healthComponent = HealthComponentArray.getComponent(hoveredEntity);
    InspectHealthBar_setHealth(healthComponent.health);
+   const hitbox = transformComponent.hitboxes[0];
 
    // @INCOMPLETE @Bug: do render position !
    const barX = hitbox.box.position.x;

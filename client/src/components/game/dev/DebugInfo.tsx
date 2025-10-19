@@ -79,6 +79,10 @@ interface EntityDebugInfoProps {
 }
 const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent === null) {
+      return;
+   }
+
    const hitbox = transformComponent.hitboxes[0];
 
    const displayX = roundNum(hitbox.box.position.x, 0);
@@ -103,6 +107,11 @@ const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
       return newItems;
    }, [] as Array<JSX.Element | string>);
 
+   const healthComponent = HealthComponentArray.getComponent(entity);
+   const inventoryComponent = InventoryComponentArray.getComponent(entity);
+   const structureComponent = StructureComponentArray.getComponent(entity);
+   const snobeComponent = SnobeComponentArray.getComponent(entity);
+
    return <>
       <div className="title">{CLIENT_ENTITY_INFO_RECORD[getEntityType(entity)].name}<span className="id">#{entity}</span></div>
       
@@ -120,17 +129,13 @@ const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
 
       <p>Bounds: {transformComponent.boundingAreaMinX.toFixed(0)}, {transformComponent.boundingAreaMaxX.toFixed(0)}, {transformComponent.boundingAreaMinY.toFixed(0)}, {transformComponent.boundingAreaMaxY.toFixed(0)}</p>
 
-      {HealthComponentArray.hasComponent(entity) ? (() => {
-         const healthComponent = HealthComponentArray.getComponent(entity);
-
+      {healthComponent !== null ? (() => {
          return <>
             <p>Health: <span className="highlight">{healthComponent.health}/{healthComponent.maxHealth}</span></p>
          </>;
       })() : undefined}
 
-      {InventoryComponentArray.hasComponent(entity) ? (() => {
-         const inventoryComponent = InventoryComponentArray.getComponent(entity);
-
+      {inventoryComponent !== null ? (() => {
          return <>
             {inventoryComponent.inventories.map((inventory, i) => {
                return <div key={i}>
@@ -142,9 +147,7 @@ const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
          </>;
       })() : undefined}
 
-      {StructureComponentArray.hasComponent(entity) ? (() => {
-         const structureComponent = StructureComponentArray.getComponent(entity);
-
+      {structureComponent !== null ? (() => {
          return <>
             <p>Connected to:</p>
             <ul>
@@ -155,9 +158,7 @@ const EntityDebugInfo = ({ entity, debugData }: EntityDebugInfoProps) => {
          </>;
       })() : undefined}
 
-      {SnobeComponentArray.hasComponent(entity) ? (() => {
-         const snobeComponent = SnobeComponentArray.getComponent(entity);
-
+      {snobeComponent !== null ? (() => {
          return <>
             <p>Is digging:{snobeComponent.isDigging ? "true" : "false"}</p>
             <p>Digging progress:{snobeComponent.diggingProgress.toFixed(2)}</p>

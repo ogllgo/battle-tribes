@@ -1,6 +1,6 @@
 import { TRIBESMAN_TITLE_RECORD, TribesmanTitle } from "battletribes-shared/titles";
-import Client from "../../../networking/Client";
 import { CLIENT_TITLE_INFO_RECORD } from "../../../client-title-info";
+import { sendRespondToTitleOfferPacket } from "../../../networking/packet-sending";
 
 interface TribesmanTitleInfocardProps {
    readonly titleOffer: TribesmanTitle;
@@ -8,10 +8,10 @@ interface TribesmanTitleInfocardProps {
 
 const TribesmanTitleInfocard = (props: TribesmanTitleInfocardProps) => {
    const accept = (): void => {
-      Client.respondToTitleOffer(props.titleOffer, true);
+      sendRespondToTitleOfferPacket(props.titleOffer, true);
    }
    const reject = (): void => {
-      Client.respondToTitleOffer(props.titleOffer, false);
+      sendRespondToTitleOfferPacket(props.titleOffer, false);
    }
    
    const titleInfo = TRIBESMAN_TITLE_RECORD[props.titleOffer];

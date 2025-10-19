@@ -1,7 +1,6 @@
 import { COMMANDS, CommandPermissions, CommandSpecifications, commandIsValid, parseCommand } from "battletribes-shared/commands";
 import { useEffect, useRef, useState } from "react";
 import { isDev } from "../../../utils";
-import Client from "../../../networking/Client";
 import { setTerminalButtonOpened } from "./TerminalButton";
 
 /** All lines output by the terminal */
@@ -126,7 +125,8 @@ const Terminal = ({ startingIsVisible }: TerminalParams) => {
          if (command.split(" ")[0] === "clear") {
             terminalLines = [];
          } else {
-            Client.sendCommand(command);
+            // @Incomplete
+            // Client.sendCommand(command);
          }
       } else {
          const errorMessage = getCommandErrorMessage(command);

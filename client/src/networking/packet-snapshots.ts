@@ -4,12 +4,12 @@ import { PacketReader } from "../../../shared/src/packets";
 import { setCameraSubject } from "../camera";
 import { updateDebugScreenCurrentSnapshot, updateDebugScreenIsPaused } from "../components/game/dev/GameInfoDisplay";
 import { getComponentArrays, getServerComponentArray } from "../entity-components/ComponentArray";
-import { setCurrentSnapshot } from "../game";
+import { setCurrentSnapshot } from "../client";
 import Layer from "../Layer";
 import { playerInstance, setPlayerInstance } from "../player";
 import { playHeadSound, playSound } from "../sound";
 import { ExtendedTribe, readExtendedTribeData, readShortTribeData, Tribe, tribes, updatePlayerTribe } from "../tribes";
-import { addEntityToWorld, changeEntityLayer, createEntity, EntityComponentData, entityExists, getCurrentLayer, getEntityComponentTypes, getEntityLayer, getEntityRenderInfo, getEntityType, layers, removeEntity, setCurrentLayer } from "../world";
+import { addEntityToWorld, changeEntityLayer, createEntityCreationInfo, EntityComponentData, entityExists, getCurrentLayer, getEntityComponentTypes, getEntityLayer, getEntityRenderInfo, getEntityType, layers, removeEntity, setCurrentLayer } from "../world";
 import { ClientComponentData, getEntityClientComponentConfigs } from "../entity-components/client-components";
 import { TribesTab_refresh } from "../components/game/dev/tabs/TribesTab";
 import { ServerComponentData } from "../entity-components/components";
@@ -412,8 +412,8 @@ export function createEntityFromData(entity: Entity, data: EntitySnapshot): void
       clientComponentData: data.clientComponentData
    };
    
-   const entityCreationInfo = createEntity(entity, entityComponentData);
-   addEntityToWorld(entity, data.spawnTicks, data.layer, entityCreationInfo);
+   const entityCreationInfo = createEntityCreationInfo(entity, entityComponentData);
+   addEntityToWorld(data.spawnTicks, data.layer, entityCreationInfo);
 }
 
 const updateEntityFromData = (entity: Entity, data: EntitySnapshot): void => {
@@ -521,7 +521,7 @@ export function updateGameToSnapshot(snapshot: PacketSnapshot): void {
          if (hit.attackEffectiveness === AttackEffectiveness.stopped) {
             // Register stopped hit
                      
-            const transformComponent = TransformComponentArray.getComponent(hit.entity);
+            const transformComponent = TransformComponentArray.getComponent(hit.entity)!;
             const hitbox = transformComponent.hitboxes[0];
             for (let i = 0; i < 6; i++) {
                const position = hitbox.box.position.offset(randFloat(0, 6), randAngle());
@@ -530,7 +530,7 @@ export function updateGameToSnapshot(snapshot: PacketSnapshot): void {
          } else {
             // Register hit
 
-            const transformComponent = TransformComponentArray.getComponent(hit.entity);
+            const transformComponent = TransformComponentArray.getComponent(hit.entity)!;
 
             // If the entity is hit by a flesh sword, create slime puddles
             if (hit.flags & HitFlags.HIT_BY_FLESH_SWORD) {
@@ -566,7 +566,7 @@ export function updateGameToSnapshot(snapshot: PacketSnapshot): void {
 
    for (const knockbackData of snapshot.playerKnockbacks) {
       if (playerInstance !== null) {
-         const transformComponent = TransformComponentArray.getComponent(playerInstance);
+         const transformComponent = TransformComponentArray.getComponent(playerInstance)!;
          const playerHitbox = transformComponent.hitboxes[0];
 
          const previousVelocity = getHitboxVelocity(playerHitbox);
@@ -590,7 +590,7 @@ export function updateGameToSnapshot(snapshot: PacketSnapshot): void {
       }
 
       if (entityExists(healedEntity)) {
-         const transformComponent = TransformComponentArray.getComponent(healedEntity);
+         const transformComponent = TransformComponentArray.getComponent(healedEntity)!;
    
          // Create healing particles depending on the amount the entity was healed
          let remainingHealing = healAmount;

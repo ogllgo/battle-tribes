@@ -2,7 +2,6 @@ import { TECHS, TechID, Tech, getTechByID, getTechRequiredForItem } from "battle
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { addKeyListener } from "../../../keyboard-input";
 import CLIENT_ITEM_INFO_RECORD, { getItemTypeImage } from "../../../client-item-info";
-import Client from "../../../networking/Client";
 import { setTechTreeX, setTechTreeY, setTechTreeZoom, techIsDirectlyAccessible } from "../../../rendering/webgl/tech-tree-rendering";
 import OPTIONS from "../../../options";
 import { countItemTypesInInventory } from "../../../inventory-manipulation";
@@ -15,7 +14,7 @@ import { InventoryName } from "battletribes-shared/items/items";
 import { addMenuCloseFunction } from "../../../menus";
 import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
 import { playerTribe } from "../../../tribes";
-import { sendSelectTechPacket, sendUnlockTechPacket } from "../../../networking/packet-sending";
+import { sendForceUnlockTechPacket, sendSelectTechPacket, sendUnlockTechPacket } from "../../../networking/packet-sending";
 import { playerInstance } from "../../../player";
 
 const boundsScale = 16;
@@ -108,10 +107,18 @@ const TechTooltip = ({ tech, techPositionX, techPositionY, zoom }: TechTooltipPr
          <div className="container">
             <ul>
                {tech.researchItemRequirements.getEntries().map((entry, i) => {
+                  if (playerInstance === null) {
+                     return;
+                  }
+                  
                   const itemType = entry.itemType;
                   const itemAmount = entry.count;
                   
-                  const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
+                  const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
+                  if (inventoryComponent === null) {
+                     return;
+                  }
+                  
                   const hotbar = getInventory(inventoryComponent, InventoryName.hotbar)!;
                   
                   const itemProgress = (playerTribe.techTreeUnlockProgress[tech.id]?.itemProgress.hasOwnProperty(itemType)) ? playerTribe.techTreeUnlockProgress[tech.id]!.itemProgress[itemType] : 0;
@@ -148,7 +155,15 @@ const TechTooltip = ({ tech, techPositionX, techPositionY, zoom }: TechTooltipPr
 
 /** Gets a tally of all the items which we predict will be researched when clicking */
 const getResearchedItems = (techInfo: Tech): ItemTally2 => {
-   const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
+   if (playerInstance === null) {
+      return new ItemTally2();
+   }
+   
+   const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
+   if (inventoryComponent === null) {
+      return new ItemTally2();
+   }
+   
    const hotbar = getInventory(inventoryComponent, InventoryName.hotbar)!;
    
    const availableItemsTally = new ItemTally2();
@@ -214,7 +229,7 @@ const TechNode = ({ tech, positionX, positionY, zoom }: TechNodeProps) => {
 
    const onClick = (e: MouseEvent): void => {
       if (e.shiftKey) {
-         Client.sendForceUnlockTech(tech.id);
+         sendForceUnlockTechPacket(tech.id);
       } else if (!isUnlocked) {
          researchTech(tech);
 

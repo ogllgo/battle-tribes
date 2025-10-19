@@ -1,7 +1,7 @@
 import { EntityType } from "../../shared/src/entities";
 import { PacketReader } from "../../shared/src/packets";
 import { assert, TileIndex } from "../../shared/src/utils";
-import { currentSnapshot } from "./game";
+import { currentSnapshot } from "./client";
 
 interface LocalEntityCensusInfo {
    count: number;

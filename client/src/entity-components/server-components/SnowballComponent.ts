@@ -14,7 +14,7 @@ import { EntityComponentData } from "../../world";
 import { getHitboxVelocity, Hitbox } from "../../hitboxes";
 import CircularBox from "../../../../shared/src/boxes/CircularBox";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { tickIntervalHasPassed } from "../../game";
+import { tickIntervalHasPassed } from "../../client";
 
 export interface SnowballComponentData {
    readonly size: number;
@@ -64,7 +64,7 @@ function getMaxRenderParts(): number {
 }
 
 function onTick(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
    const hitbox = transformComponent.hitboxes[0];
    const velocity = getHitboxVelocity(hitbox);
    if (velocity.magnitude() > 50) {
@@ -119,7 +119,7 @@ function onHit(entity: Entity, hitbox: Hitbox): void {
 }
 
 function onDie(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
    const hitbox = transformComponent.hitboxes[0];
 
    // Create a bunch of snow particles throughout the snowball

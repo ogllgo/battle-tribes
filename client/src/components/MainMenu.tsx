@@ -1,7 +1,7 @@
 import { TribeType } from "battletribes-shared/tribes";
 import { useRef } from "react";
 import { createAudioContext } from "../sound";
-import { AppState } from "./App";
+import { App_setState, AppState } from "./App";
 
 const enum Vars {
    MAX_USERNAME_CHARS = 48
@@ -20,7 +20,6 @@ interface MainMenuProps {
    readonly usernameRef: React.MutableRefObject<string>;
    readonly tribeTypeRef: React.MutableRefObject<TribeType>;
    readonly isSpectatingRef: React.MutableRefObject<boolean>;
-   setAppState(appState: AppState): void;
 }
 const MainMenu = (props: MainMenuProps) => {
    const nameInputBoxRef = useRef<HTMLInputElement | null>(null);
@@ -73,7 +72,7 @@ const MainMenu = (props: MainMenuProps) => {
       props.usernameRef.current = username;
       props.tribeTypeRef.current = tribeType;
       props.isSpectatingRef.current = isSpectating;
-      props.setAppState(AppState.loading);
+      App_setState(AppState.loading);
    }
 
    // When the name is entered

@@ -6,7 +6,7 @@ import Board from "./Board";
 import { TransformComponent, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { BlockType } from "../../shared/src/components";
 import { getHitboxVelocity, Hitbox } from "./hitboxes";
-import { tickIntervalHasPassed } from "./game";
+import { tickIntervalHasPassed } from "./client";
 
 // @Cleanup: Standardise all these functions to just take the stuff necessary to create them, then have the places which call them modify the returned particle
 
@@ -68,7 +68,7 @@ const BLOOD_FOUNTAIN_RAY_COUNT = 5;
 
 export function createBloodParticleFountain(entity: Entity, interval: number, speedMultiplier: number): void {
    const offset = randAngle();
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
    const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 4; i++) {
@@ -128,7 +128,7 @@ export function createLeafParticle(spawnPositionX: number, spawnPositionY: numbe
 export function createFootprintParticle(entity: Entity, isLeftFootprint: boolean, footstepOffset: number, size: number, lifetime: number): void {
    const footstepAngleOffset = isLeftFootprint ? Math.PI : 0;
 
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
    const hitbox = transformComponent.hitboxes[0];
    
    const velocity = getHitboxVelocity(hitbox);
@@ -1680,7 +1680,7 @@ const POISON_COLOUR_LOW = [34/255, 12/255, 0];
 const POISON_COLOUR_HIGH = [77/255, 173/255, 38/255];
 
 export function createPoisonParticle(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
    const hitbox = transformComponent.hitboxes[0];
 
    // Calculate spawn position

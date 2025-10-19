@@ -13,7 +13,7 @@ import ServerComponentArray from "../ServerComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { currentSnapshot } from "../../game";
+import { currentSnapshot } from "../../client";
 
 type HutType = EntityType.workerHut | EntityType.warriorHut;
 

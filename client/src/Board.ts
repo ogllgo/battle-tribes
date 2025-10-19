@@ -4,9 +4,8 @@ import Particle from "./Particle";
 import { highMonocolourBufferContainer, highTexturedBufferContainer, lowMonocolourBufferContainer, lowTexturedBufferContainer } from "./rendering/webgl/particle-rendering";
 import ObjectBufferContainer from "./rendering/ObjectBufferContainer";
 import { tempFloat32ArrayLength1 } from "./webgl";
-import { RenderPart } from "./render-parts/render-parts";
 import { getComponentArrays } from "./entity-components/ComponentArray";
-import { currentSnapshot } from "./game";
+import { currentSnapshot } from "./client";
 
 export interface EntityHitboxInfo {
    readonly vertexPositions: readonly [Point, Point, Point, Point];
@@ -20,8 +19,6 @@ interface TickCallback {
 
 // @CLEANUP: "Board" is weird...
 abstract class Board {
-   public static renderPartRecord: Record<number, RenderPart> = {};
-
    // @Cleanup This is too messy. Perhaps combine all into one
    // public static readonly particles = new Array<Particle>();
    public static lowMonocolourParticles = new Array<Particle>();
@@ -138,7 +135,6 @@ export function getElapsedTimeInSeconds(elapsedTicks: number): number {
 
 if (module.hot) {
    module.hot.dispose(data => {
-      data.renderPartRecord = Board.renderPartRecord;
       data.lowMonocolourParticles = Board.lowMonocolourParticles;
       data.lowTexturedParticles = Board.lowTexturedParticles;
       data.highMonocolourParticles = Board.highMonocolourParticles;
@@ -147,7 +143,6 @@ if (module.hot) {
    });
 
    if (module.hot.data) {
-      Board.renderPartRecord = module.hot.data.renderPartRecord;
       Board.lowMonocolourParticles = module.hot.data.lowMonocolourParticles;
       Board.lowTexturedParticles = module.hot.data.lowTexturedParticles;
       Board.highMonocolourParticles = module.hot.data.highMonocolourParticles;

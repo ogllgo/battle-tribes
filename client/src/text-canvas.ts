@@ -356,7 +356,7 @@ const renderNames = (tickInterp: number): void => {
 
       const tribeMemberComponent = TribeMemberComponentArray.components[i];
 
-      const transformComponent = TransformComponentArray.getComponent(entity);
+      const transformComponent = TransformComponentArray.getComponent(entity)!;
       const hitbox = transformComponent.hitboxes[0];
       const hitboxRenderPosition = calculateHitboxRenderPosition(hitbox, tickInterp);
       
@@ -372,7 +372,7 @@ const renderNames = (tickInterp: number): void => {
       const tamingComponent = TamingComponentArray.components[i];
       const name = tamingComponent.name;
       if (name !== "") {
-         const transformComponent = TransformComponentArray.getComponent(entity);
+         const transformComponent = TransformComponentArray.getComponent(entity)!;
          const hitbox = transformComponent.hitboxes[1];
          const hitboxRenderPosition = calculateHitboxRenderPosition(hitbox, tickInterp);
          
@@ -383,12 +383,12 @@ const renderNames = (tickInterp: number): void => {
    // @CLeanup: these aren't names!!
    // Floor signs
    for (const entity of FloorSignComponentArray.entities) {
-      const floorSignComponent = FloorSignComponentArray.getComponent(entity);
+      const floorSignComponent = FloorSignComponentArray.getComponent(entity)!;
       if (floorSignComponent.message === "") {
          continue;
       }
       
-      const transformComponent = TransformComponentArray.getComponent(entity);
+      const transformComponent = TransformComponentArray.getComponent(entity)!;
       const hitbox = transformComponent.hitboxes[0];
       const hitboxRenderPosition = calculateHitboxRenderPosition(hitbox, tickInterp);
 

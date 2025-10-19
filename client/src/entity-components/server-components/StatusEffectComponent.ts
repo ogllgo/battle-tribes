@@ -16,7 +16,7 @@ import { EntityComponentData, getEntityRenderInfo } from "../../world";
 import { ComponentTint, createComponentTint } from "../../EntityRenderInfo";
 import { playerInstance } from "../../player";
 import { getHitboxVelocity } from "../../hitboxes";
-import { tickIntervalHasPassed } from "../../game";
+import { tickIntervalHasPassed } from "../../client";
 
 export interface StatusEffectComponentData {
    readonly statusEffects: Array<StatusEffectData>;
@@ -97,10 +97,10 @@ function getMaxRenderParts(): number {
 }
 
 function onTick(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
    const hitbox = transformComponent.hitboxes[0];
    
-   const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
+   const statusEffectComponent = StatusEffectComponentArray.getComponent(entity)!;
    
    const poisonStatusEffect = getStatusEffect(statusEffectComponent, StatusEffect.poisoned);
    if (poisonStatusEffect !== null) {
@@ -285,7 +285,7 @@ function onTick(entity: Entity): void {
 }
 
 function updateFromData(data: StatusEffectComponentData, entity: Entity): void {
-   const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
+   const statusEffectComponent = StatusEffectComponentArray.getComponent(entity)!;
 
    const previousHasFreezing = hasStatusEffect(statusEffectComponent, StatusEffect.freezing);
    
@@ -293,7 +293,7 @@ function updateFromData(data: StatusEffectComponentData, entity: Entity): void {
       if (!hasStatusEffect(statusEffectComponent, statusEffectData.type)) {
          switch (statusEffectData.type) {
             case StatusEffect.freezing: {
-               const transformComponent = TransformComponentArray.getComponent(entity);
+               const transformComponent = TransformComponentArray.getComponent(entity)!;
                const hitbox = transformComponent.hitboxes[0];
                playSoundOnHitbox("freezing.mp3", 0.4, 1, entity, hitbox, false);
                break;
@@ -317,7 +317,7 @@ function updatePlayerFromData(data: StatusEffectComponentData): void {
 }
 
 function calculateTint(entity: Entity): ComponentTint {
-   const statusEffectComponent = StatusEffectComponentArray.getComponent(entity);
+   const statusEffectComponent = StatusEffectComponentArray.getComponent(entity)!;
    if (hasStatusEffect(statusEffectComponent, StatusEffect.freezing)) {
       return createComponentTint(-0.15, 0, 0.5);
    } else {

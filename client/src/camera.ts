@@ -9,8 +9,7 @@ import { Entity } from "../../shared/src/entities";
 import { calculateHitboxRenderPosition, getEntityTickInterp } from "./rendering/render-part-matrices";
 import { Hitbox } from "./hitboxes";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
-
-let isSpectating = false;
+import { isSpectating } from "./player";
 
 let cameraSubjectHitbox: Hitbox | null = null;
 
@@ -18,8 +17,8 @@ export const cameraPosition = new Point(0, 0);
 
 /** Larger = zoomed in, smaller = zoomed out */
 // @INCOMPLETE @HACK rn i have to fiddle around with this manually, make it be calcualted automatically before public testing
-export let cameraZoom = 1.4;
-// export let cameraZoom = 1;
+// export let cameraZoom = 1.4;
+export let cameraZoom = 1;
 
 export let minVisibleX = 0;
 export let maxVisibleX = 0;
@@ -77,13 +76,20 @@ export function setCameraZoom(zoom: number): void {
 }
 
 export function setCameraSubject(cameraSubject: Entity): void {
-   if (entityExists(cameraSubject)) {
-      const transformComponent = TransformComponentArray.getComponent(cameraSubject);
+   // @Hack? done for both playerInstance and cameraSubject
+   // If the player is spectating with a client-only entity, don't kill them!
+   if (isSpectating && !entityExists(cameraSubject)) {
+      return;
+   }
+   
+   const transformComponent = TransformComponentArray.getComponent(cameraSubject);
+   if (transformComponent !== null) {
       const hitbox = transformComponent.hitboxes[0];
       cameraSubjectHitbox = hitbox;
-   } else {
-      cameraSubjectHitbox = null;
+      return;
    }
+
+   cameraSubjectHitbox = null;
 }
 
 export function getCameraSubject(): Entity | null {

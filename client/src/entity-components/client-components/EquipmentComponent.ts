@@ -12,6 +12,7 @@ import { TribeComponentArray } from "../server-components/TribeComponent";
 import { registerTextureSource } from "../../texture-atlases/texture-sources";
 import { TransformComponentArray } from "../server-components/TransformComponent";
 import { Hitbox } from "../../hitboxes";
+import { assert } from "../../../../shared/src/utils";
 
 const enum ArmourPixelSize {
    _12x12,
@@ -125,7 +126,7 @@ function getMaxRenderParts(): number {
 }
 
 function onLoad(entity: Entity): void {
-   const equipmentComponent = EquipmentComponentArray.getComponent(entity);
+   const equipmentComponent = EquipmentComponentArray.getComponent(entity)!;
    updateArmourRenderPart(equipmentComponent, entity);
    updateGloveRenderParts(equipmentComponent, entity);
 }
@@ -133,16 +134,20 @@ function onLoad(entity: Entity): void {
 /** Updates the current armour render part based on the entity's inventory component */
 const updateArmourRenderPart = (equipmentComponent: EquipmentComponent, entity: Entity): void => {
    const inventoryComponent = InventoryComponentArray.getComponent(entity);
+   assert(inventoryComponent !== null);
+   
    const armourInventory = getInventory(inventoryComponent, InventoryName.armourSlot)!;
    
    const armour = armourInventory.itemSlots[1];
    if (typeof armour !== "undefined") {
       const entityType = getEntityType(entity);
       const tribeComponent = TribeComponentArray.getComponent(entity);
+      assert(tribeComponent !== null);
       const textureSource = getArmourTextureSource(entityType, tribeComponent.tribeType, armour.type as ArmourItemType);
       
       if (equipmentComponent.armourRenderPart === null) {
          const transformComponent = TransformComponentArray.getComponent(entity);
+         assert(transformComponent !== null);
          const hitbox = transformComponent.hitboxes[0] as Hitbox;
          
          equipmentComponent.armourRenderPart = new TexturedRenderPart(
@@ -167,11 +172,13 @@ const updateArmourRenderPart = (equipmentComponent: EquipmentComponent, entity: 
 // @Cleanup: Copy and paste from armour
 const updateGloveRenderParts = (equipmentComponent: EquipmentComponent, entity: Entity): void => {
    const inventoryComponent = InventoryComponentArray.getComponent(entity);
+   assert(inventoryComponent !== null);
    const gloveInventory = getInventory(inventoryComponent, InventoryName.gloveSlot)!;
    
    const glove = gloveInventory.itemSlots[1];
    if (typeof glove !== "undefined") {
       const inventoryUseComponent = InventoryUseComponentArray.getComponent(entity);
+      assert(inventoryUseComponent !== null);
 
       if (equipmentComponent.gloveRenderParts.length === 0) {
          for (let limbIdx = 0; limbIdx < inventoryUseComponent.limbInfos.length; limbIdx++) {
@@ -201,7 +208,7 @@ const updateGloveRenderParts = (equipmentComponent: EquipmentComponent, entity: 
 }
 
 function onTick(entity: Entity): void {
-   const equipmentComponent = EquipmentComponentArray.getComponent(entity);
+   const equipmentComponent = EquipmentComponentArray.getComponent(entity)!;
    updateArmourRenderPart(equipmentComponent, entity);
    updateGloveRenderParts(equipmentComponent, entity);
 }

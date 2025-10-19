@@ -19,7 +19,7 @@ export function createWallConfig(position: Point, rotation: number, tribe: Tribe
    let hitboxLocalID = 0;
 
    const box = new RectangularBox(position, new Point(0, 0), rotation, 64, 64);
-   const hitbox = createHitboxQuick(hitboxLocalID++, null, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = createHitboxQuick(0, hitboxLocalID++, null, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitboxes.push(hitbox);
 
    return {

@@ -13,7 +13,7 @@ import { PacketReader } from "../../shared/src/packets";
 import { readBoxFromData } from "./networking/packet-hitboxes";
 import CircularBox from "../../shared/src/boxes/CircularBox";
 import RectangularBox from "../../shared/src/boxes/RectangularBox";
-import { currentSnapshot } from "./game";
+import { currentSnapshot } from "./client";
 
 export interface HitboxTether {
    readonly originBox: Box;
@@ -130,12 +130,11 @@ export function createHitbox(localID: number, entity: Entity, rootEntity: Entity
    };
 }
 
-export function createHitboxQuick(localID: number, parent: Hitbox | null, box: Box, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
+export function createHitboxQuick(entity: Entity, localID: number, parent: Hitbox | null, box: Box, mass: number, collisionType: HitboxCollisionType, collisionBit: CollisionBit, collisionMask: number, flags: ReadonlyArray<HitboxFlag>): Hitbox {
    return {
       localID: localID,
-      // @HACK @INCOMPLETE (? maybe not)
-      entity: 0,
-      rootEntity: 0,
+      entity: entity,
+      rootEntity: entity,
       parent: parent,
       isPartOfParent: true,
       isStatic: false,
@@ -152,7 +151,7 @@ export function createHitboxQuick(localID: number, parent: Hitbox | null, box: B
       collisionBit: collisionBit,
       collisionMask: collisionMask,
       flags: flags,
-      lastUpdateTicks: currentSnapshot.tick
+      lastUpdateTicks: 0
    };
 }
 
@@ -230,10 +229,10 @@ export function createHitboxFromData(data: Hitbox): Hitbox {
 
 // @Hack this is a lil bit of a hack
 export function findEntityHitbox(entity: Entity, localID: number): Hitbox | null {
-   if (!TransformComponentArray.hasComponent(entity)) {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent === null) {
       return null;
    }
-   const transformComponent = TransformComponentArray.getComponent(entity);
    return getHitboxByLocalID(transformComponent.hitboxes, localID);
 }
 
@@ -375,14 +374,14 @@ export function translateHitbox(hitbox: Hitbox, translationX: number, translatio
 }
 
 // @Cleanup: Passing in hitbox really isn't the best, ideally hitbox should self-contain all the necessary info... but is that really good? + memory efficient?
-export function applyAccelerationFromGround(entity: Entity, hitbox: Hitbox, accelerationX: number, accelerationY: number): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+export function applyAccelerationFromGround(hitbox: Hitbox, accelerationX: number, accelerationY: number): void {
+   const transformComponent = TransformComponentArray.getComponent(hitbox.entity)!;
 
    const tile = getHitboxTile(hitbox);
    const tilePhysicsInfo = TILE_PHYSICS_INFO_RECORD[tile.type];
       
    let tileMoveSpeedMultiplier = tilePhysicsInfo.moveSpeedMultiplier;
-   if (transformComponent.ignoredTileSpeedMultipliers.includes(tile.type) || (tile.type === TileType.water && !entityIsInRiver(transformComponent, entity))) {
+   if (transformComponent.ignoredTileSpeedMultipliers.includes(tile.type) || (tile.type === TileType.water && !entityIsInRiver(transformComponent, hitbox.entity))) {
       tileMoveSpeedMultiplier = 1;
    }
    

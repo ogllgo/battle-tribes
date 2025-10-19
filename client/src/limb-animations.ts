@@ -15,7 +15,7 @@ import { TribesmanAIComponentArray } from "./entity-components/server-components
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { getEntityAgeTicks, getEntityRenderInfo } from "./world";
 import { Hitbox } from "./hitboxes";
-import { currentSnapshot } from "./game";
+import { currentSnapshot } from "./client";
 
 enum CustomItemState {
    usingMedicine,

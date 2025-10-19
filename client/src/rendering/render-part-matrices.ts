@@ -12,7 +12,7 @@ import { TransformComponentArray } from "../entity-components/server-components/
 import { Entity } from "../../../shared/src/entities";
 import { playerInstance } from "../player";
 import { EntitySnapshot } from "../networking/packet-snapshots";
-import { currentSnapshot, nextSnapshot } from "../game";
+import { currentSnapshot, nextSnapshot } from "../client";
 import { ServerComponentType } from "../../../shared/src/components";
 
 // @Cleanup: file name
@@ -301,12 +301,12 @@ export function cleanEntityRenderInfo(renderInfo: EntityRenderInfo, tickInterp: 
 }
 
 export function entityUsesClientInterp(entity: Entity): boolean {
-   if (!TransformComponentArray.hasComponent(entity)) {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent === null) {
       return false;
    }
    
-   const entityTransformComponent = TransformComponentArray.getComponent(entity);
-   const entityHitbox = entityTransformComponent.hitboxes[0];
+   const entityHitbox = transformComponent.hitboxes[0];
    const rootEntity = entityHitbox.rootEntity;
    return rootEntity === playerInstance;
 }

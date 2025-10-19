@@ -1,6 +1,5 @@
 import { assert } from "battletribes-shared/utils";
 import { Entity, EntityTypeString } from "battletribes-shared/entities";
-import Board from "./Board";
 import { RenderPartOverlayGroup } from "./rendering/webgl/overlay-rendering";
 import { removeRenderable } from "./rendering/render-loop";
 import { RenderPart } from "./render-parts/render-parts";
@@ -140,8 +139,6 @@ export class EntityRenderInfo {
       } else {
          renderPart.parent.children.push(renderPart);
       }
-      
-      Board.renderPartRecord[renderPart.id] = renderPart;
 
       registerDirtyRenderInfo(this);
    }
@@ -153,8 +150,6 @@ export class EntityRenderInfo {
          console.warn("Tried to remove when already removed!");
          return;
       }
-      
-      delete Board.renderPartRecord[renderPart.id];
       
       // Remove from the root array
       this.renderPartsByZIndex.splice(this.renderPartsByZIndex.indexOf(renderPart), 1);

@@ -60,14 +60,14 @@ function getMaxRenderParts(): number {
 }
 
 function updateFromData(data: TribeComponentData, entity: Entity): void {
-   const tribeComponent = TribeComponentArray.getComponent(entity);
+   const tribeComponent = TribeComponentArray.getComponent(entity)!;
    
    const tribeID = data.tribeID;
    const tribeType = data.tribeType;
    
    // Tribesman conversion
    if (tribeID !== tribeComponent.tribeID && TribesmanComponentArray.hasComponent(entity)) {
-      const transformComponent = TransformComponentArray.getComponent(entity);
+      const transformComponent = TransformComponentArray.getComponent(entity)!;
       const hitbox = transformComponent.hitboxes[0];
 
       playSoundOnHitbox("conversion.mp3", 0.4, 1, entity, hitbox, false);

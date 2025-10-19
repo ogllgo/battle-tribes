@@ -1,6 +1,5 @@
 import { Settings } from "battletribes-shared/settings";
 import CLIENT_SETTINGS from "./client-settings";
-import Game from "./game";
 import { updateDebugInfoEntity, updateDebugInfoTile } from "./components/game/dev/DebugInfo";
 import { isDev } from "./utils";
 import { Tile } from "./Tile";
@@ -11,6 +10,7 @@ import { getCurrentLayer } from "./world";
 import { Entity } from "../../shared/src/entities";
 import { Point } from "../../shared/src/utils";
 import { cameraZoom, screenToWorldPos, worldToScreenPos } from "./camera";
+import { getEntityDebugData } from "./rendering/render";
 
 export const cursorScreenPos = new Point(0, 0);
 export const cursorWorldPos = new Point(0, 0);
@@ -55,7 +55,7 @@ export function getMouseTargetEntity(): Entity | null {
       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
          const chunk = layer.getChunk(chunkX, chunkY);
          for (const entity of chunk.nonGrassEntities) {
-            const transformComponent = TransformComponentArray.getComponent(entity);
+            const transformComponent = TransformComponentArray.getComponent(entity)!;
             // @Hack
             const hitbox = transformComponent.hitboxes[0];
             
@@ -91,13 +91,13 @@ export function renderCursorTooltip(): void {
 
    // Update the cursor tooltip
    // @Hack
-   const transformComponent = TransformComponentArray.getComponent(targetEntity);
+   const transformComponent = TransformComponentArray.getComponent(targetEntity)!;
    const hitbox = transformComponent.hitboxes[0];
 
    // @Incomplete: doesn't account for render position
    const entityScreenPos = worldToScreenPos(hitbox.box.position);
 
-   const debugData = Game.getEntityDebugData();
+   const debugData = getEntityDebugData();
    if (debugData === null || targetEntity === debugData.entityID) {
       updateCursorTooltip(debugData, entityScreenPos.x, entityScreenPos.y);
    }

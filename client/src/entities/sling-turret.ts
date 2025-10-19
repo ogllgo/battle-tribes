@@ -21,7 +21,7 @@ export function createSlingTurretConfig(position: Point, rotation: number, tribe
    let hitboxLocalID = 0;
 
    const box = new CircularBox(position, new Point(0, 0), rotation, 40);
-   const hitbox = createHitboxQuick(hitboxLocalID++, null, box, 1.5, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = createHitboxQuick(0, hitboxLocalID++, null, box, 1.5, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitboxes.push(hitbox);
 
    return {

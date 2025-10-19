@@ -137,8 +137,12 @@ export abstract class ComponentArray<
       }
    }
 
-   public getComponent(entity: Entity): T {
-      return this.components[this.entityToIndexMap[entity]!];
+   public getComponent(entity: Entity): T | null {
+      const idx = this.entityToIndexMap[entity];
+      if (typeof idx === "undefined") {
+         return null;
+      }
+      return this.components[idx];
    }
 
    public hasComponent(entity: Entity): boolean {

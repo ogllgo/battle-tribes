@@ -1,6 +1,6 @@
 import { LightLevelNode } from "../../shared/src/light-levels";
 import { PacketReader } from "../../shared/src/packets";
-import { currentSnapshot } from "./game";
+import { currentSnapshot } from "./client";
 import { getLightLevelRenderingChunkIndex, LightLevelBGUpdateInfo, updateLightLevelRenderingChunks } from "./rendering/webgl/light-levels-bg-rendering";
 
 interface LightLevelNodeInfo {

@@ -101,7 +101,7 @@ function getMaxRenderParts(): number {
 }
 
 function onTick(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
    const hitbox = transformComponent.hitboxes[0];
    
    // @Sync should be a server event
@@ -129,7 +129,7 @@ function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
 }
 
 function onDie(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
    const hitbox = transformComponent.hitboxes[0];
 
    createBloodPoolParticle(hitbox.box.position.x, hitbox.box.position.y, 20);

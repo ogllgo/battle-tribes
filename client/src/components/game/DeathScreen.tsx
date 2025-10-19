@@ -1,9 +1,8 @@
 import { randItem } from "battletribes-shared/utils";
 import { useEffect, useState } from "react";
-import Client from "../../networking/Client";
-import Game from "../../game";
 import { AppState } from "../App";
 import { sendRespawnPacket } from "../../networking/packet-sending";
+import { quitGame } from "../../client";
 
 const enum Vars {
    RESPAWN_TIME_SECONDS = 8
@@ -27,13 +26,6 @@ const DeathScreen = (props: DeathScreenProps) => {
    const randomiseTip = (): void => {
       const newTip = randItem(DEATH_TIPS);
       setTip(newTip);
-   }
-
-   // @Speed: Garbage collection
-   const quitGame = (): void => {
-      props.setAppState(AppState.mainMenu);
-      Game.stop();
-      Client.disconnect();
    }
 
    useEffect(() => {

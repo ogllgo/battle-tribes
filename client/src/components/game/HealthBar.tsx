@@ -2,6 +2,8 @@ import { TRIBE_INFO_RECORD } from "battletribes-shared/tribes";
 import { useEffect, useRef, useState } from "react";
 import HealthIcon from "../../images/miscellaneous/health.png";
 import { playerTribe } from "../../tribes";
+import { HealthComponentArray } from "../../entity-components/server-components/HealthComponent";
+import { playerInstance } from "../../player";
 
 export let updateHealthBar: (newHealth: number) => void = () => {};
 
@@ -43,6 +45,10 @@ const HealthBar = (props: HealthBarProps) => {
          }
       }
    }, [health]);
+
+   if (playerInstance === null || !HealthComponentArray.hasComponent(playerInstance)) {
+      return null;
+   }
 
    const displayHealth = Math.round((health + Number.EPSILON) * 100) / 100;
 

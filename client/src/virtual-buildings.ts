@@ -19,12 +19,12 @@ import { createStructureComponentData } from "./entity-components/server-compone
 import { createTransformComponentData } from "./entity-components/server-components/TransformComponent";
 import { createTribeComponentData } from "./entity-components/server-components/TribeComponent";
 import { EntityRenderInfo, updateEntityRenderInfoRenderData } from "./EntityRenderInfo";
-import { currentSnapshot } from "./game";
+import { currentSnapshot } from "./client";
 import Layer from "./Layer";
 import { thingIsVisualRenderPart } from "./render-parts/render-parts";
 import { removeGhostRenderInfo } from "./rendering/webgl/entity-ghost-rendering";
 import { playerTribe } from "./tribes";
-import { createEntity, EntityComponentData, layers } from "./world";
+import { createEntityCreationInfo, EntityComponentData, layers } from "./world";
 import { padBoxData, readBoxFromData } from "./networking/packet-hitboxes";
 import { Box, HitboxCollisionType } from "../../shared/src/boxes/boxes";
 import { createBarrelComponentData } from "./entity-components/server-components/BarrelComponent";
@@ -94,7 +94,7 @@ const readVirtualBuildingFromData = (reader: PacketReader, virtualBuildingID: nu
             const transformComponentData = createTransformComponentData(
                // @HACK
                boxes.map(box => {
-                  return createHitboxQuick(0, null, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
+                  return createHitboxQuick(0, 0, null, box, 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, [])
                }),
             );
 
@@ -192,7 +192,7 @@ const readVirtualBuildingFromData = (reader: PacketReader, virtualBuildingID: nu
    };
 
    // Create the entity
-   const creationInfo = createEntity(0, entityComponentData);
+   const creationInfo = createEntityCreationInfo(0, entityComponentData);
 
    const renderInfo = creationInfo.renderInfo;
 

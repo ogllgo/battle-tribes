@@ -1,7 +1,6 @@
 import { useReducer, useEffect } from "react";
 import { playerInstance } from "../../player";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
-import { entityExists } from "../../world";
 import { CowComponentArray } from "../../entity-components/server-components/CowComponent";
 
 const MAX_STAMINA = 15;
@@ -20,17 +19,21 @@ const CowStaminaBar = () => {
    }
 
    const playerTransformComponent = TransformComponentArray.getComponent(playerInstance);
+   if (playerTransformComponent === null) {
+      return;
+   }
+
    const playerHitbox = playerTransformComponent.hitboxes[0];
    const rootEntity = playerHitbox.rootEntity;
    if (rootEntity === playerInstance) {
       return;
    }
 
-   if (!CowComponentArray.hasComponent(rootEntity)) {
+   const cowComponent = CowComponentArray.getComponent(rootEntity);
+   if (cowComponent === null) {
       return;
    }
 
-   const cowComponent = CowComponentArray.getComponent(rootEntity);
    const stamina = cowComponent.stamina;
    
    return <div id="cow-stamina-bar">

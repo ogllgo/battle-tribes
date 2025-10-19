@@ -1,11 +1,9 @@
-import { TribeType } from "battletribes-shared/tribes";
 import { useEffect, useRef, useState } from "react";
-import Client from "../networking/Client";
-import Game, { receiveInitialPacket } from "../game";
-import { AppState } from "./App";
-import { definiteGameState } from "../game-state/game-states";
+import { App_setState, AppState } from "./App";
 
 // @Cleanup: This file does too much logic on its own. It should really only have UI/loading state
+
+export let LoadingScreen_setStatus: (status: LoadingScreenStatus) => void = () => {};
 
 export const enum LoadingScreenStatus {
    establishingConnection,
@@ -14,19 +12,12 @@ export const enum LoadingScreenStatus {
    connectionError
 }
 
-interface LoadingScreenProps {
-   readonly username: string;
-   readonly tribeType: TribeType;
-   readonly isSpectating: boolean;
-   setAppState(appState: AppState): void;
-}
-const LoadingScreen = (props: LoadingScreenProps) => {
+const LoadingScreen = () => {
    const [status, setStatus] = useState(LoadingScreenStatus.establishingConnection);
    const hasStarted = useRef(false);
-   const hasLoaded = useRef(false);
 
    const openMainMenu = (): void => {
-      props.setAppState(AppState.mainMenu);
+      App_setState(AppState.mainMenu);
    }
 
    const reconnect = (): void => {
@@ -35,52 +26,7 @@ const LoadingScreen = (props: LoadingScreenProps) => {
    }
 
    useEffect(() => {
-      (async () => {
-         if (hasLoaded.current) {
-            return;
-         }
-         hasLoaded.current = true;
-
-         // 
-         // Establish connection with server
-         // 
-
-         const connectionWasSuccessful = await Client.connectToServer(props.setAppState, setStatus);
-         if (connectionWasSuccessful) {
-            setStatus(LoadingScreenStatus.sendingPlayerData);
-         } else {
-            setStatus(LoadingScreenStatus.connectionError);
-            return;
-         }
-         
-         // @HACK
-         // @INCOMPLETE
-         // Cameraa.isSpectating = props.isSpectating;
-         
-         Client.sendInitialPlayerData(props.username, props.tribeType, props.isSpectating);
-
-         // 
-         // Initialise game
-         // 
-         
-         await Client.getInitialGameDataPacket();
-         
-         setStatus(LoadingScreenStatus.initialisingGame);
-         
-         await Game.initialise();
-               
-         definiteGameState.playerUsername = props.username;
-         
-         Client.sendActivatePacket();
-         
-         // Update the game to the first tick received
-         const reader = await Client.getNextGameDataPacket();
-         receiveInitialPacket(reader);
-
-         props.setAppState(AppState.game);
-         
-         Game.start();
-      })();
+      LoadingScreen_setStatus = setStatus;
    }, []);
 
    if (status === LoadingScreenStatus.connectionError) {

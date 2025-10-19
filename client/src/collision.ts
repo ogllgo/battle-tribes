@@ -79,6 +79,9 @@ export function collide(entity: Entity, collidingEntity: Entity, hitbox: Hitbox,
 const calculateEntityPairCollisionInfo = (affectedEntity: Entity, collidingEntity: Entity): EntityPairCollisionInfo | null => {
    const transformComponent1 = TransformComponentArray.getComponent(affectedEntity);
    const transformComponent2 = TransformComponentArray.getComponent(collidingEntity);
+   if (transformComponent1 === null || transformComponent2 === null) {
+      return null;
+   }
    
    // AABB bounding area check
    if (transformComponent1.boundingAreaMinX > transformComponent2.boundingAreaMaxX || // minX(1) > maxX(2)
@@ -145,6 +148,9 @@ const collectEntityCollisionsWithChunk = (collisionPairs: CollisionPairs, affect
       // @Speed: re-gotten further in the line
       const entityTransformComponent = TransformComponentArray.getComponent(affectedEntity);
       const otherEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
+      if (entityTransformComponent === null || otherEntityTransformComponent === null) {
+         continue;
+      }
 
       // Make sure the entities aren't in the same carry heirarchy
       // @Hack
@@ -204,9 +210,13 @@ export function resolvePlayerCollisions(): void {
       return;
    }
    
+   const transformComponent = TransformComponentArray.getComponent(playerInstance);
+   if (transformComponent === null) {
+      return;
+   }
+   
    const collisionPairs: CollisionPairs = new Map();
 
-   const transformComponent = TransformComponentArray.getComponent(playerInstance);
    for (const chunk of transformComponent.chunks) {
       collectEntityCollisionsWithChunk(collisionPairs, playerInstance, chunk);
    }
@@ -215,9 +225,13 @@ export function resolvePlayerCollisions(): void {
 }
 
 export function resolveWallCollisions(entity: Entity): boolean {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent === null) {
+      return false;
+   }
+   
    let hasMoved = false;
    const layer = getEntityLayer(entity);
-   const transformComponent = TransformComponentArray.getComponent(entity);
    for (let i = 0; i < transformComponent.hitboxes.length; i++) {
       const hitbox = transformComponent.hitboxes[i];
       if (hitbox.flags.includes(HitboxFlag.IGNORES_WALL_COLLISIONS)) {
@@ -315,7 +329,7 @@ export function getHitboxesCollidingEntities(layer: Layer, hitboxes: ReadonlyArr
                seenEntityIDs.add(entity);
                
                const entityTransformComponent = TransformComponentArray.getComponent(entity);
-               if (boxHasCollisionWithHitboxes(box, entityTransformComponent.hitboxes, epsilon)) {
+               if (entityTransformComponent !== null && boxHasCollisionWithHitboxes(box, entityTransformComponent.hitboxes, epsilon)) {
                   collidingEntities.push(entity);
                }
             }
@@ -354,6 +368,10 @@ export function getEntitiesInRange(layer: Layer, x: number, y: number, range: nu
             }
 
             const transformComponent = TransformComponentArray.getComponent(entity);
+            if (transformComponent === null) {
+               continue;
+            }
+            
             const entityHitbox = transformComponent.hitboxes[0];
             if (Math.pow(x - entityHitbox.box.position.x, 2) + Math.pow(y - entityHitbox.box.position.y, 2) <= visionRangeSquared) {
                entities.push(entity);

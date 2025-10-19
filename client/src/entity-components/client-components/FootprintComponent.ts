@@ -9,7 +9,7 @@ import { Entity } from "../../../../shared/src/entities";
 import ClientComponentArray from "../ClientComponentArray";
 import { ClientComponentType } from "../client-component-types";
 import { getHitboxTile, getHitboxVelocity } from "../../hitboxes";
-import { tickIntervalHasPassed } from "../../game";
+import { tickIntervalHasPassed } from "../../client";
 
 export interface FootprintComponentData {
    readonly footstepParticleIntervalSeconds: number;
@@ -67,6 +67,10 @@ function getMaxRenderParts(): number {
 
 const createFootstepSound = (entity: Entity): void => {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent === null) {
+      return;
+   }
+   
    const hitbox = transformComponent.hitboxes[0];
    const layer = getEntityLayer(entity);
    
@@ -100,9 +104,17 @@ const createFootstepSound = (entity: Entity): void => {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent === null) {
+      return;
+   }
+   
    const hitbox = transformComponent.hitboxes[0];
    if (hitbox.parent === null) {
       const footprintComponent = FootprintComponentArray.getComponent(entity);
+      if (footprintComponent === null) {
+         return;
+      }
+      
       const velocity = getHitboxVelocity(hitbox);
       
       // Footsteps

@@ -20,10 +20,18 @@ const BackpackInventoryMenu = () => {
          update();
       }
    }, []);
+
+   if (playerInstance === null) {
+      return;
+   }
+
+   const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
+   if (inventoryComponent === null) {
+      return;
+   }
    
-   const inventoryComponent = playerInstance !== null ? InventoryComponentArray.getComponent(playerInstance) : undefined;
-   const backpackSlot = typeof inventoryComponent !== "undefined" ? getInventory(inventoryComponent, InventoryName.backpackSlot) : null;
-   const backpack = typeof inventoryComponent !== "undefined" ? getInventory(inventoryComponent, InventoryName.backpack) : null;
+   const backpackSlot = getInventory(inventoryComponent, InventoryName.backpackSlot);
+   const backpack = getInventory(inventoryComponent, InventoryName.backpack);
    
    // @Cleanup: bad. should be done outside
    // If the player doesn't have a backpack equipped or the menu isn't shown, don't show anything

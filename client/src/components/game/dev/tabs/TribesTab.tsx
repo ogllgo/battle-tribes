@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
-import Game from "../../../../game";
 import DevmodeScrollableOptions from "../DevmodeScrollableOptions";
-import Client from "../../../../networking/Client";
 import { TribeType, NUM_TRIBE_TYPES } from "battletribes-shared/tribes";
 import CLIENT_TRIBE_INFO_RECORD from "../../../../client-tribe-info";
 import DevmodeDropdownInput from "../DevmodeDropdownInput";
 import { setRenderedTribePlanID } from "../../../../rendering/tribe-plan-visualiser/tribe-plan-visualiser";
 import { tribeHasExtendedInfo, tribes } from "../../../../tribes";
 import CLIENT_ENTITY_INFO_RECORD from "../../../../client-entity-info";
-import { sendSetAutogiveBaseResourcesPacket, sendTPTOEntityPacket } from "../../../../networking/packet-sending";
+import { sendDevChangeTribeTypePacket, sendDevCreateTribePacket, sendSetAutogiveBaseResourcesPacket, sendTPTOEntityPacket } from "../../../../networking/packet-sending";
 
 export let TribesTab_refresh: () => void = () => {};
 
@@ -26,7 +24,7 @@ const TribesTab = () => {
 
    const updateTribeType = useCallback((optionIdx: number): void => {
       const tribeType = optionIdx as TribeType;
-      Client.sendDevChangeTribeType(selectedTribe.id, tribeType);
+      sendDevChangeTribeTypePacket(selectedTribe.id, tribeType);
    }, [selectedTribe]);
 
    const tribeTypeOptions = new Array<string>();
@@ -76,7 +74,7 @@ const TribesTab = () => {
 
             {/* @Cleanup: Wrong section */}
             <div className="devmode-menu-section">
-               <button onClick={() => Client.sendDevCreateTribe()}>Create New Tribe</button>
+               <button onClick={sendDevCreateTribePacket}>Create New Tribe</button>
             </div>
          </div>
       </div>

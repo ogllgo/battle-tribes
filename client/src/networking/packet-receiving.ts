@@ -2,7 +2,6 @@ import { WaterRockData, RiverSteppingStoneData, GrassTileInfo, RiverFlowDirectio
 import { PacketReader } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
-import Game from "../game";
 import { refreshCameraView, setCameraPosition } from "../camera";
 import { Tile } from "../Tile";
 import { addLayer, layers, setCurrentLayer, surfaceLayer } from "../world";
@@ -12,7 +11,7 @@ import Layer, { getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorld, t
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { initialiseRenderables } from "../rendering/render-loop";
 import { Biome } from "../../../shared/src/biomes";
-import { TileIndex } from "../../../shared/src/utils";
+import { Point, TileIndex } from "../../../shared/src/utils";
 import { playerInstance } from "../player";
 import { registerTamingSpecsFromData } from "../taming-specs";
 import { addChatMessage } from "../components/game/ChatBox";
@@ -56,7 +55,13 @@ const getBuildingBlockingTiles = (): ReadonlySet<TileIndex> => {
    return buildingBlockingTiles;
 }
 
-export function processInitialGameDataPacket(reader: PacketReader): void {
+// @Cleanup: location
+export interface InitialGameData {
+   readonly spawnLayer: Layer;
+   readonly spawnPosition: Readonly<Point>;
+}
+
+export function processInitialGameDataPacket(reader: PacketReader): InitialGameData {
    const layerIdx = reader.readNumber();
    
    const spawnPositionX = reader.readNumber();
@@ -211,6 +216,11 @@ export function processInitialGameDataPacket(reader: PacketReader): void {
    createRiverSteppingStoneData(surfaceLayer.riverSteppingStones);
 
    registerTamingSpecsFromData(reader);
+
+   return {
+      spawnLayer: spawnLayer,
+      spawnPosition: new Point(spawnPositionX, spawnPositionY)
+   };
 }
 
 const readDebugData = (reader: PacketReader): EntityDebugData => {
@@ -321,25 +331,28 @@ const readDebugData = (reader: PacketReader): EntityDebugData => {
 }
 
 export function processSyncDataPacket(reader: PacketReader): void {
-   if (!Game.isRunning || playerInstance === null) return;
+   // @Incomplete
+   
+   
+   // if (!Game.isRunning || playerInstance === null) return;
 
-   const transformComponent = TransformComponentArray.getComponent(playerInstance);
-   const playerHitbox = transformComponent.hitboxes[0];
+   // const transformComponent = TransformComponentArray.getComponent(playerInstance);
+   // const playerHitbox = transformComponent.hitboxes[0];
    
-   const x = reader.readNumber();
-   const y = reader.readNumber();
-   const angle = reader.readNumber();
+   // const x = reader.readNumber();
+   // const y = reader.readNumber();
+   // const angle = reader.readNumber();
 
-   playerHitbox.previousPosition.x = reader.readNumber();
-   playerHitbox.previousPosition.y = reader.readNumber();
-   playerHitbox.acceleration.x = reader.readNumber();
-   playerHitbox.acceleration.y = reader.readNumber();
+   // playerHitbox.previousPosition.x = reader.readNumber();
+   // playerHitbox.previousPosition.y = reader.readNumber();
+   // playerHitbox.acceleration.x = reader.readNumber();
+   // playerHitbox.acceleration.y = reader.readNumber();
    
-   playerHitbox.box.position.x = x;
-   playerHitbox.box.position.y = y;
-   playerHitbox.box.angle = angle;
+   // playerHitbox.box.position.x = x;
+   // playerHitbox.box.position.y = y;
+   // playerHitbox.box.angle = angle;
    
-   Game.sync();
+   // Game.sync();
 }
 
 export function processForcePositionUpdatePacket(reader: PacketReader): void {
@@ -350,7 +363,7 @@ export function processForcePositionUpdatePacket(reader: PacketReader): void {
    const x = reader.readNumber();
    const y = reader.readNumber();
 
-   const transformComponent = TransformComponentArray.getComponent(playerInstance);
+   const transformComponent = TransformComponentArray.getComponent(playerInstance)!;
    const playerHitbox = transformComponent.hitboxes[0];
    playerHitbox.box.position.x = x;
    playerHitbox.box.position.y = y;

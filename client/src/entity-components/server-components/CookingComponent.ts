@@ -4,7 +4,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { EntityComponentData } from "../../world";
-import { tickIntervalHasPassed } from "../../game";
+import { tickIntervalHasPassed } from "../../client";
 
 export interface CookingComponentData {
    readonly heatingProgress: number;
@@ -85,16 +85,22 @@ const updateLight = (cookingComponent: CookingComponent, entity: Entity): void =
 
 function onLoad(entity: Entity): void {
    const cookingComponent = CookingComponentArray.getComponent(entity);
-   updateLight(cookingComponent, entity);
+   if (cookingComponent !== null) {
+      updateLight(cookingComponent, entity);
+   }
 }
 
 function onTick(entity: Entity): void {
    const cookingComponent = CookingComponentArray.getComponent(entity);
-   updateLight(cookingComponent, entity);
+   if (cookingComponent !== null) {
+      updateLight(cookingComponent, entity);
+   }
 }
 
 function updateFromData(data: CookingComponentData, entity: Entity): void {
    const cookingComponent = CookingComponentArray.getComponent(entity);
-   cookingComponent.heatingProgress = data.heatingProgress;
-   cookingComponent.isCooking = data.isCooking;
+   if (cookingComponent !== null) {
+      cookingComponent.heatingProgress = data.heatingProgress;
+      cookingComponent.isCooking = data.isCooking;
+   }
 }

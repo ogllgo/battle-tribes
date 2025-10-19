@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './components/App';
 import { createPlayerInputListeners } from './components/game/GameInteractableLayer';
 import { toggleSettingsMenu } from './components/game/GameScreen';
-import Game from './game';
+import { gameIsRunning } from './client';
 
 import "./css/index.css";
 import "./css/main-menu.css";
@@ -66,7 +66,7 @@ window.addEventListener("load", () => {
    createPlayerInputListeners();
 });
 window.addEventListener("keydown", (e: KeyboardEvent) => {
-   if (e.key === "Escape" && Game.isRunning) {
+   if (e.key === "Escape" && gameIsRunning) {
       toggleSettingsMenu();
    }
 });

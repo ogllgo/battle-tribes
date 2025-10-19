@@ -8,7 +8,7 @@ import { TransformComponentArray } from "./TransformComponent";
 import { createEmberParticle, createSmokeParticle } from "../../particles";
 import { EntityComponentData } from "../../world";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { tickIntervalHasPassed } from "../../game";
+import { tickIntervalHasPassed } from "../../client";
 
 export interface FireTorchComponentData {}
 
@@ -55,6 +55,10 @@ function onTick(entity: Entity): void {
    // @Copynpaste: all of these effects from InventoryUseComponent
    
    const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent === null) {
+      return;
+   }
+   
    const hitbox = transformComponent.hitboxes[0];
    
    // Ember particles

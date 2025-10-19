@@ -5,7 +5,7 @@ import { Entity } from "../../shared/src/entities";
 import { PacketReader } from "../../shared/src/packets";
 import { getHitboxByLocalID, Hitbox } from "./hitboxes";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
-import { currentSnapshot } from "./game";
+import { currentSnapshot } from "./client";
 
 export type LightID = number;
 

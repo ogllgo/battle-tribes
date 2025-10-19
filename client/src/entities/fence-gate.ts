@@ -19,7 +19,7 @@ export function createFenceGateConfig(position: Point, rotation: number, tribe: 
    let hitboxLocalID = 0;
 
    const box = new RectangularBox(position, new Point(0, 0), rotation, 56, 16);
-   const hitbox = createHitboxQuick(hitboxLocalID++, null, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
+   const hitbox = createHitboxQuick(0, hitboxLocalID++, null, box, 1, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, [HitboxFlag.NON_GRASS_BLOCKING]);
    hitboxes.push(hitbox);
 
    return {

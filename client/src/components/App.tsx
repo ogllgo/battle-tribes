@@ -1,9 +1,10 @@
 import { TribeType } from "battletribes-shared/tribes";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import GameScreen from "./game/GameScreen";
 import LoadingScreen from "./LoadingScreen";
 import FrameGraph from "./game/dev/FrameGraph";
 import MainMenu from "./MainMenu";
+import { establishNetworkConnection } from "../client";
 
 export const enum AppState {
    mainMenu,
@@ -11,17 +12,30 @@ export const enum AppState {
    game
 }
 
+export let App_setState: (state: AppState) => void = () => {};
+
 function App() {
    const usernameRef = useRef("");
    const tribeTypeRef = useRef(TribeType.plainspeople);
    const isSpectatingRef = useRef(false);
    const [appState, setAppState] = useState(AppState.mainMenu);
 
+   useEffect(() => {
+      App_setState = (appState: AppState): void => {
+         // @HACK
+         if (appState === AppState.loading) {
+            establishNetworkConnection(usernameRef.current, tribeTypeRef.current, isSpectatingRef.current);
+         }
+         
+         setAppState(appState);
+      }
+   }, [usernameRef, tribeTypeRef, isSpectatingRef]);
+
    return <>
       {appState === AppState.mainMenu ? <>
-         <MainMenu existingUsername={usernameRef.current} usernameRef={usernameRef} tribeTypeRef={tribeTypeRef} isSpectatingRef={isSpectatingRef} setAppState={setAppState} />
+         <MainMenu existingUsername={usernameRef.current} usernameRef={usernameRef} tribeTypeRef={tribeTypeRef} isSpectatingRef={isSpectatingRef} />
       </> : appState === AppState.loading ? <>
-         <LoadingScreen username={usernameRef.current} tribeType={tribeTypeRef.current} isSpectating={isSpectatingRef.current} setAppState={setAppState} />
+         <LoadingScreen />
       </> : appState === AppState.game ? <>
          <GameScreen setAppState={setAppState} />
       </> : null}

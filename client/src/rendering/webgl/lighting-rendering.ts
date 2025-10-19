@@ -6,8 +6,9 @@ import { getLightPositionMatrix } from "../../lights";
 import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import Layer from "../../Layer";
 import { surfaceLayer } from "../../world";
-import { currentSnapshot, gameFramebufferTexture } from "../../game";
+import { currentSnapshot } from "../../client";
 import { cameraPosition } from "../../camera";
+import { gameFramebufferTexture } from "../render";
 
 const enum Vars {
    MAX_LIGHTS = 64,

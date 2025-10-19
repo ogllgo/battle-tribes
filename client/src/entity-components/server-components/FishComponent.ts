@@ -12,7 +12,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { playSoundOnHitbox } from "../../sound";
 import { getHitboxTile, Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { tickIntervalHasPassed } from "../../game";
+import { tickIntervalHasPassed } from "../../client";
 
 export interface FishComponentData {
    readonly colour: FishColour;
@@ -76,6 +76,10 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent === null) {
+      return;
+   }
+   
    const hitbox = transformComponent.hitboxes[0];
    
    const tile = getHitboxTile(hitbox);
@@ -102,6 +106,10 @@ function onHit(entity: Entity, hitbox: Hitbox): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent === null) {
+      return;
+   }
+   
    const hitbox = transformComponent.hitboxes[0];
 
    createBloodParticleFountain(entity, 0.1, 0.8);

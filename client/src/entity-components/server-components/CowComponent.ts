@@ -15,7 +15,7 @@ import { HitboxFlag } from "../../../../shared/src/boxes/boxes";
 import { RenderPart } from "../../render-parts/render-parts";
 import { getHitboxTile, Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { tickIntervalHasPassed } from "../../game";
+import { tickIntervalHasPassed } from "../../client";
 
 export interface CowComponentData {
    readonly species: CowSpecies;
@@ -110,10 +110,17 @@ function getMaxRenderParts(): number {
 }
 
 function onTick(entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent === null) {
+      return;
+   }
+   
    const cowComponent = CowComponentArray.getComponent(entity);
+   if (cowComponent === null) {
+      return;
+   }
 
    if (cowComponent.grazeProgress !== -1 && tickIntervalHasPassed(0.1)) {
-      const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.hitboxes[0];
       
       const spawnOffsetMagnitude = 30 * Math.random();
@@ -124,20 +131,26 @@ function onTick(entity: Entity): void {
    }
 
    if (Math.random() < 0.1 * Settings.DT_S) {
-      const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.hitboxes[0];
       playSoundOnHitbox("cow-ambient-" + randInt(1, 3) + ".mp3", 0.2, 1, entity, hitbox, true);
    }
 }
 
 function updateFromData(data: CowComponentData, entity: Entity): void {
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent === null) {
+      return;
+   }
+      
    const cowComponent = CowComponentArray.getComponent(entity);
+   if (cowComponent === null) {
+      return;
+   }
    
    const grazeProgress = data.grazeProgress;
    
    // When the cow has finished grazing, create a bunch of dirt particles
    if (grazeProgress < cowComponent.grazeProgress) {
-      const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.hitboxes[0];
       
       const tile = getHitboxTile(hitbox);
@@ -151,7 +164,6 @@ function updateFromData(data: CowComponentData, entity: Entity): void {
 
    const isRamming = data.isRamming;
    if (isRamming && !cowComponent.isRamming) {
-      const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.hitboxes[0];
       playSoundOnHitbox("cow-angry.mp3", 0.4, 1, entity, hitbox, true);
    }
@@ -181,6 +193,10 @@ function onHit(entity: Entity, hitbox: Hitbox, hitPosition: Point): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent === null) {
+      return;
+   }
+   
    const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 3; i++) {

@@ -19,7 +19,7 @@ export function createTribeTotemConfig(position: Point, rotation: number, tribe:
    let hitboxLocalID = 0;
 
    const box = new CircularBox(position, new Point(0, 0), rotation, 60);
-   const hitbox = createHitboxQuick(hitboxLocalID++, null, box, 2.2, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = createHitboxQuick(0, hitboxLocalID++, null, box, 2.2, HitboxCollisionType.hard, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    hitboxes.push(hitbox);
 
    return {

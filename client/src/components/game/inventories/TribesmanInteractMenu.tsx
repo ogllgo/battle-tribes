@@ -3,7 +3,6 @@ import { Settings } from "battletribes-shared/settings";
 import InventoryContainer from "./InventoryContainer";
 import ItemSlot from "./ItemSlot";
 import { getSelectedEntity } from "../../../entity-selection";
-import Client from "../../../networking/Client";
 import { InventoryName, itemTypeIsArmour, itemTypeIsBackpack } from "battletribes-shared/items/items";
 import { TribeComponentArray } from "../../../entity-components/server-components/TribeComponent";
 import { Entity } from "../../../../../shared/src/entities";
@@ -15,6 +14,7 @@ import { getTribeByID, playerTribe } from "../../../tribes";
 import { TribeMemberComponentArray } from "../../../entity-components/server-components/TribeMemberComponent";
 import { TribesmanComponentArray } from "../../../entity-components/server-components/TribesmanComponent";
 import { playerInstance } from "../../../player";
+import { sendRecruitTribesmanPacket } from "../../../networking/packet-sending";
 
 const getTitleByTier = (titles: ReadonlyArray<TitleGenerationInfo>, tier: number): TitleGenerationInfo | null => {
    for (let i = 0; i < titles.length; i++) {
@@ -57,9 +57,24 @@ interface TribesmanInfocardProps {
 
 const TribesmanInfocard = ({ tribesman }: TribesmanInfocardProps) => {
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
+   if (tribeComponent === null) {
+      return;
+   }
+   
    const tribeMemberComponent = TribeMemberComponentArray.getComponent(tribesman);
+   if (tribeMemberComponent === null) {
+      return;
+   }
+
    const tribesmanComponent = TribesmanComponentArray.getComponent(tribesman);
+   if (tribesmanComponent === null) {
+      return;
+   }
+   
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
+   if (tribesmanAIComponent === null) {
+      return;
+   }
 
    // @Cleanup: what?
    if (tribesmanComponent.titles.length === 0) {
@@ -101,7 +116,7 @@ const TribesmanInfocard = ({ tribesman }: TribesmanInfocardProps) => {
 
    const recruit = (): void => {
       if (canRecruit) {
-         Client.sendRecruitTribesman(tribesman);
+         sendRecruitTribesmanPacket(tribesman);
       }
    }
    
@@ -133,8 +148,19 @@ const TribesmanInfocard = ({ tribesman }: TribesmanInfocardProps) => {
 const TribesmanInteractMenu = () => {
    const tribesman = getSelectedEntity();
    const inventoryComponent = InventoryComponentArray.getComponent(tribesman);
+   if (inventoryComponent === null) {
+      return;
+   }
+   
    const inventoryUseComponent = InventoryUseComponentArray.getComponent(tribesman);
+   if (inventoryUseComponent === null) {
+      return;
+   }
+   
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
+   if (tribeComponent === null) {
+      return;
+   }
 
    const backpackSlotInventory = getInventory(inventoryComponent, InventoryName.backpackSlot)!;
    const armourSlotInventory = getInventory(inventoryComponent, InventoryName.armourSlot)!;

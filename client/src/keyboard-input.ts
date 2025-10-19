@@ -1,4 +1,4 @@
-import Game from "./game";
+import { gameIsRunning } from "./client";
 import { focusChatbox } from "./components/game/ChatBox";
 import { toggleCinematicMode } from "./components/game/GameScreen";
 
@@ -68,7 +68,7 @@ const onKeyDown = (e: KeyboardEvent): void => {
 
    callKeyListeners(key, e);
 
-   if (Game.isRunning) {
+   if (gameIsRunning) {
       // Start a chat message
       if (key === "t") {
          focusChatbox();

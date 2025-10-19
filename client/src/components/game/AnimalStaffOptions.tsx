@@ -36,7 +36,14 @@ export let AnimalStaffOptions_setEntity: (entity: Entity | null) => void = () =>
 export let AnimalStaffOptions_update: () => void = () => {};
 
 export function createControlCommandParticles(commandType: AnimalStaffCommandType): void {
-   const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
+   if (playerInstance === null) {
+      return;
+   }
+   
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance);
+   if (inventoryUseComponent === null) {
+      return;
+   }
 
    const activeItemRenderPart = inventoryUseComponent.activeItemRenderParts[0];
 
@@ -115,6 +122,10 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
 
    const updateFromEntity = (entity: Entity): void => {
       const transformComponent = TransformComponentArray.getComponent(entity);
+      if (transformComponent === null) {
+         return;
+      }
+
       const hitbox = transformComponent.hitboxes[0];
 
       const screenPos = worldToScreenPos(hitbox.box.position);
@@ -122,7 +133,9 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
       setY(screenPos.y);
 
       const tamingComponent = TamingComponentArray.getComponent(entity);
-      setFollowOptionIsSelected(tamingComponent.isFollowing);
+      if (tamingComponent !== null) {
+         setFollowOptionIsSelected(tamingComponent.isFollowing);
+      }
    }
    
    useEffect(() => {
@@ -182,7 +195,12 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
    const pressCarryOption = useCallback((): void => {
       if (entity !== null) {
          // @COPYNPASTE
+
          const rideableComponent = RideableComponentArray.getComponent(entity);
+         if (rideableComponent === null) {
+            return;
+         }
+
          let isCarrying = false;
          for (const carrySlot of rideableComponent.carrySlots) {
             if (entityExists(carrySlot.occupiedEntity)) {
@@ -212,13 +230,18 @@ const AnimalStaffOptions = (props: AnimalStaffOptionsProps) => {
    }
 
    const tamingComponent = TamingComponentArray.getComponent(entity);
-
-   const rideableComponent = RideableComponentArray.getComponent(entity);
+   if (tamingComponent === null) {
+      return null;
+   }
+   
    let isCarrying = false;
-   for (const carrySlot of rideableComponent.carrySlots) {
-      if (entityExists(carrySlot.occupiedEntity)) {
-         isCarrying = true;
-         break;
+   const rideableComponent = RideableComponentArray.getComponent(entity);
+   if (rideableComponent !== null) {
+      for (const carrySlot of rideableComponent.carrySlots) {
+         if (entityExists(carrySlot.occupiedEntity)) {
+            isCarrying = true;
+            break;
+         }
       }
    }
 

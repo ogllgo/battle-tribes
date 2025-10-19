@@ -10,7 +10,7 @@ import { getTextureArrayIndex } from "../../texture-atlases/texture-atlases";
 import { EntityComponentData, getEntityRenderInfo } from "../../world";
 import { TransformComponentArray } from "./TransformComponent";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { tickIntervalHasPassed } from "../../game";
+import { tickIntervalHasPassed } from "../../client";
 
 export interface SlimeSpitComponentData {}
 
@@ -65,7 +65,7 @@ function getMaxRenderParts(): number {
 }
 
 function onLoad(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
    const hitbox = transformComponent.hitboxes[0];
    playSoundOnHitbox("slime-spit.mp3", 0.5, 1, entity, hitbox, false);
 }

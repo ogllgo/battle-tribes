@@ -4,7 +4,7 @@ import { PacketReader } from "../../shared/src/packets";
 import { assert, unitsToChunksClamped } from "../../shared/src/utils";
 import { TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { EntityRenderInfo } from "./EntityRenderInfo";
-import { currentSnapshot } from "./game";
+import { currentSnapshot } from "./client";
 import Layer from "./Layer";
 import { readBoxFromData } from "./networking/packet-hitboxes";
 import ColouredRenderPart from "./render-parts/ColouredRenderPart";

@@ -3,7 +3,7 @@ import { RESEARCH_ORB_AMOUNTS, RESEARCH_ORB_COMPLETE_TIME, getRandomResearchOrbS
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
 import { TribesmanTitle } from "battletribes-shared/titles";
-import { currentSnapshot } from "./game";
+import { currentSnapshot } from "./client";
 import { getSelectedEntityID } from "./entity-selection";
 import { playHeadSound } from "./sound";
 import { createMagicParticle, createStarParticle } from "./particles";
@@ -34,7 +34,7 @@ const ORB_COMPLETE_SOUND_PITCHES = [1, 0.85, 0.7];
 const ORB_PARTICLES_PER_SECOND = [2, 3.5, 6];
 
 const generateResearchOrb = (researchBench: Entity): ResearchOrb => {
-   const transformComponent = TransformComponentArray.getComponent(researchBench);
+   const transformComponent = TransformComponentArray.getComponent(researchBench)!;
 
    const hitbox = transformComponent.hitboxes[0];
    
@@ -107,7 +107,7 @@ const completeOrb = (): void => {
    playHeadSound("orb-complete.mp3", 0.3, ORB_COMPLETE_SOUND_PITCHES[currentResearchOrb!.size]);
 
    // Make the player smack to the bench
-   const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!);
+   const inventoryUseComponent = InventoryUseComponentArray.getComponent(playerInstance!)!;
    const useInfo = inventoryUseComponent.limbInfos[0];
    useInfo.lastAttackTicks = currentSnapshot.tick;
    
@@ -119,7 +119,7 @@ const completeOrb = (): void => {
 const getResearchSpeedMultiplier = (): number => {
    let multiplier = 1;
 
-   const tribesmanComponent = TribesmanComponentArray.getComponent(playerInstance!);
+   const tribesmanComponent = TribesmanComponentArray.getComponent(playerInstance!)!;
    if (tribesmanHasTitle(tribesmanComponent, TribesmanTitle.shrewd)) {
       multiplier *= 1.5;
    }

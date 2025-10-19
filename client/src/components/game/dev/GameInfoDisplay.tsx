@@ -10,7 +10,7 @@ import { playerInstance } from "../../../player";
 import { EntityType, NUM_ENTITY_TYPES } from "../../../../../shared/src/entities";
 import CLIENT_ENTITY_INFO_RECORD from "../../../client-entity-info";
 import { getNumLights } from "../../../lights";
-import { getMeasuredServerTPS, currentSnapshot } from "../../../game";
+import { getMeasuredServerTPS, currentSnapshot } from "../../../client";
 import { cameraZoom, setCameraZoom } from "../../../camera";
 import { PacketSnapshot } from "../../../networking/packet-snapshots";
 

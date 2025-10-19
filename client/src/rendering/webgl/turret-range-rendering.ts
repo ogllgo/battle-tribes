@@ -142,7 +142,7 @@ const getRenderingInfo = (): TurretRangeRenderingInfo | null => {
    // @Cleanup: shouldn't call structure place info func. should have it passed in probably
    const playerSelectedItem = getPlayerSelectedItem();
    if (playerSelectedItem !== null && (playerSelectedItem.type === ItemType.ballista || playerSelectedItem.type === ItemType.sling_turret)) {
-      const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
+      const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!)!;
       const playerHitbox = playerTransformComponent.hitboxes[0];
 
       const layer = getEntityLayer(playerInstance!);
@@ -160,7 +160,7 @@ const getRenderingInfo = (): TurretRangeRenderingInfo | null => {
 
    const hoveredEntity = getHoveredEntityID();
    if (entityExists(hoveredEntity) && TurretComponentArray.hasComponent(hoveredEntity)) {
-      const hoveredEntityTransformComponent = TransformComponentArray.getComponent(hoveredEntity);
+      const hoveredEntityTransformComponent = TransformComponentArray.getComponent(hoveredEntity)!;
       // @Hack
       const hoveredEntityHitbox = hoveredEntityTransformComponent.hitboxes[0];
       

@@ -2,7 +2,6 @@ import { BlueprintType, BuildingMaterial } from "battletribes-shared/components"
 import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { deselectSelectedEntity, getSelectedEntityID } from "../../entity-selection";
-import Client from "../../networking/Client";
 import { GhostInfo, GhostType, PARTIAL_OPACITY } from "../../rendering/webgl/entity-ghost-rendering";
 import { getItemTypeImage } from "../../client-item-info";
 import { countItemTypesInInventory } from "../../inventory-manipulation";
@@ -20,7 +19,7 @@ import { SpikesComponentArray } from "../../entity-components/server-components/
 import { HutComponentArray } from "../../entity-components/server-components/HutComponent";
 import { PlanterBoxComponentArray } from "../../entity-components/server-components/PlanterBoxComponent";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
-import { sendModifyBuildingPacket, sendPlaceBlueprintPacket } from "../../networking/packet-sending";
+import { sendDeconstructBuildingPacket, sendModifyBuildingPacket, sendPlaceBlueprintPacket } from "../../networking/packet-sending";
 import { playerTribe } from "../../tribes";
 import { playerInstance } from "../../player";
 import { worldToScreenPos } from "../../camera";
@@ -139,13 +138,13 @@ const getMenuOptions = (entity: Entity): ReadonlyArray<MenuOption> => {
    
    // Enemy buildings can't be selected
    const tribeComponent = TribeComponentArray.getComponent(entity);
-   if (tribeComponent.tribeID !== playerTribe.id) {
+   if (tribeComponent !== null && tribeComponent.tribeID !== playerTribe.id) {
       return [];
    }
 
    // Buildings with active blueprints can't access the build menu
    const structureComponent = StructureComponentArray.getComponent(entity);
-   if (structureComponent.hasActiveBlueprint) {
+   if (structureComponent !== null && structureComponent.hasActiveBlueprint) {
       return [];
    }
    
@@ -156,7 +155,7 @@ const getMenuOptions = (entity: Entity): ReadonlyArray<MenuOption> => {
    // Material upgrade option
    if (playerIsHoldingHammer() && BuildingMaterialComponentArray.hasComponent(entity)) {
       const wallComponent = BuildingMaterialComponentArray.getComponent(entity);
-      if (wallComponent.material < BuildingMaterial.stone) {
+      if (wallComponent !== null && wallComponent.material < BuildingMaterial.stone) {
          const imageSource = MATERIAL_UPGRADE_IMAGE_SOURCES[entityType as UpgradeableEntityType];
          const ghostType = MATERIAL_UPGRADE_GHOST_TYPES[entityType as UpgradeableEntityType];
          const imageSize = MATERIAL_UPGRADE_IMAGE_SIZES[entityType as UpgradeableEntityType];
@@ -182,94 +181,97 @@ const getMenuOptions = (entity: Entity): ReadonlyArray<MenuOption> => {
    // Wall shaping options
    if (playerIsHoldingHammer() && entityType === EntityType.wall) {
       const wallComponent = BuildingMaterialComponentArray.getComponent(entity);
-
-      options.push({
-         name: "DOOR",
-         imageSource: DOOR_IMAGE_SOURCES[wallComponent.material],
-         imageWidth: 64,
-         imageHeight: 24,
-         ghostType: DOOR_GHOST_TYPES[wallComponent.material],
-         optionType: OptionType.placeBlueprint,
-         blueprintType: (wall: Entity) => {
-            const buildingMaterialComponent = BuildingMaterialComponentArray.getComponent(wall);
-            return DOOR_BLUEPRINT_TYPES[buildingMaterialComponent.material];
-         },
-         costs: [],
-         deselectsOnClick: true
-      });
-      options.push({
-         name: "EMBRASURE",
-         imageSource: EMBRASURE_IMAGE_SOURCES[wallComponent.material],
-         imageWidth: 64,
-         imageHeight: 20,
-         ghostType: EMBRASURE_GHOST_TYPES[wallComponent.material],
-         optionType: OptionType.placeBlueprint,
-         blueprintType: (wall: Entity) => {
-            const buildingMaterialComponent = BuildingMaterialComponentArray.getComponent(wall);
-            return EMBRASURE_BLUEPRINT_TYPES[buildingMaterialComponent.material];
-         },
-         costs: [],
-         deselectsOnClick: true
-      });
-      options.push({
-         name: "TUNNEL",
-         imageSource: TUNNEL_IMAGE_SOURCES[wallComponent.material],
-         imageWidth: 64,
-         imageHeight: 64,
-         ghostType: TUNNEL_GHOST_TYPES[wallComponent.material],
-         optionType: OptionType.placeBlueprint,
-         blueprintType: (wall: Entity) => {
-            const buildingMaterialComponent = BuildingMaterialComponentArray.getComponent(wall);
-            return TUNNEL_BLUEPRINT_TYPES[buildingMaterialComponent.material];
-         },
-         costs: [],
-         deselectsOnClick: true
-      });
+      const buildingMaterialComponent = BuildingMaterialComponentArray.getComponent(entity);
+      if (wallComponent !== null && buildingMaterialComponent !== null) {
+         options.push({
+            name: "DOOR",
+            imageSource: DOOR_IMAGE_SOURCES[wallComponent.material],
+            imageWidth: 64,
+            imageHeight: 24,
+            ghostType: DOOR_GHOST_TYPES[wallComponent.material],
+            optionType: OptionType.placeBlueprint,
+            blueprintType: () => {
+               return DOOR_BLUEPRINT_TYPES[buildingMaterialComponent.material];
+            },
+            costs: [],
+            deselectsOnClick: true
+         });
+         options.push({
+            name: "EMBRASURE",
+            imageSource: EMBRASURE_IMAGE_SOURCES[wallComponent.material],
+            imageWidth: 64,
+            imageHeight: 20,
+            ghostType: EMBRASURE_GHOST_TYPES[wallComponent.material],
+            optionType: OptionType.placeBlueprint,
+            blueprintType: () => {
+               return EMBRASURE_BLUEPRINT_TYPES[buildingMaterialComponent.material];
+            },
+            costs: [],
+            deselectsOnClick: true
+         });
+         options.push({
+            name: "TUNNEL",
+            imageSource: TUNNEL_IMAGE_SOURCES[wallComponent.material],
+            imageWidth: 64,
+            imageHeight: 64,
+            ghostType: TUNNEL_GHOST_TYPES[wallComponent.material],
+            optionType: OptionType.placeBlueprint,
+            blueprintType: () => {
+               return TUNNEL_BLUEPRINT_TYPES[buildingMaterialComponent.material];
+            },
+            costs: [],
+            deselectsOnClick: true
+         });
+      }
    }
 
    // Tunnel doors
    if (playerIsHoldingHammer() && entityType === EntityType.tunnel) {
-      options.push({
-         name: "DOOR",
-         imageSource: require("../../images/entities/tunnel/tunnel-door.png"),
-         imageWidth: 48,
-         imageHeight: 24,
-         ghostType: GhostType.tunnelDoor,
-         optionType: OptionType.modify,
-         blueprintType: null,
-         // @Incomplete: implement cost
-         costs: [{
-            itemType: ItemType.wood,
-            amount: 2
-         }],
-         isClickable: (tunnel: Entity): boolean => {
-            const tunnelComponent = TunnelComponentArray.getComponent(tunnel);
-            return tunnelComponent.doorBitset < 0b11;
-         },
-         deselectsOnClick: true
-      });
+      const tunnelComponent = TunnelComponentArray.getComponent(entity);
+      if (tunnelComponent !== null) {
+         options.push({
+            name: "DOOR",
+            imageSource: require("../../images/entities/tunnel/tunnel-door.png"),
+            imageWidth: 48,
+            imageHeight: 24,
+            ghostType: GhostType.tunnelDoor,
+            optionType: OptionType.modify,
+            blueprintType: null,
+            // @Incomplete: implement cost
+            costs: [{
+               itemType: ItemType.wood,
+               amount: 2
+            }],
+            isClickable: (tunnel: Entity): boolean => {
+               return tunnelComponent.doorBitset < 0b11;
+            },
+            deselectsOnClick: true
+         });
+      }
    }
 
    // Spike cover option
    if (entityType === EntityType.floorSpikes) {
-     options.push({
-         name: "COVER",
-         imageSource: require("../../images/miscellaneous/cover-spikes.png"),
-         imageWidth: 56,
-         imageHeight: 56,
-         ghostType: GhostType.coverLeaves,
-         optionType: OptionType.modify,
-         blueprintType: null,
-         isClickable: (entity: Entity): boolean => {
-            const spikesComponent = SpikesComponentArray.getComponent(entity);
-            return !spikesComponent.isCovered;
-         },
-         costs: [{
-            itemType: ItemType.leaf,
-            amount: 5
-         }],
-         deselectsOnClick: true
-      });
+      const spikesComponent = SpikesComponentArray.getComponent(entity);
+      if (spikesComponent !== null) {
+         options.push({
+            name: "COVER",
+            imageSource: require("../../images/miscellaneous/cover-spikes.png"),
+            imageWidth: 56,
+            imageHeight: 56,
+            ghostType: GhostType.coverLeaves,
+            optionType: OptionType.modify,
+            blueprintType: null,
+            isClickable: (): boolean => {
+               return !spikesComponent.isCovered;
+            },
+            costs: [{
+               itemType: ItemType.leaf,
+               amount: 5
+            }],
+            deselectsOnClick: true
+         });
+      }
    }
    
    // Deconstruct option if holding a hammer
@@ -312,41 +314,45 @@ const getMenuOptions = (entity: Entity): ReadonlyArray<MenuOption> => {
          });
       }
 
-      options.push({
-         name: "RECALL",
-         imageSource: require("../../images/miscellaneous/recall.png"),
-         imageWidth: 52,
-         imageHeight: 60,
-         ghostType: GhostType.recallMarker,
-         optionType: OptionType.modify,
-         blueprintType: null,
-         costs: [],
-         isHighlighted: (hut: Entity): boolean => {
-            const hutComponent = HutComponentArray.getComponent(hut);
-            return hutComponent.isRecalling;
-         },
-         deselectsOnClick: false
-      });
+      const hutComponent = HutComponentArray.getComponent(entity);
+      if (hutComponent !== null) {
+         options.push({
+            name: "RECALL",
+            imageSource: require("../../images/miscellaneous/recall.png"),
+            imageWidth: 52,
+            imageHeight: 60,
+            ghostType: GhostType.recallMarker,
+            optionType: OptionType.modify,
+            blueprintType: null,
+            costs: [],
+            isHighlighted: (): boolean => {
+               return hutComponent.isRecalling;
+            },
+            deselectsOnClick: false
+         });
+      }
    }
 
    // Planter box options
    if (entityType === EntityType.planterBox) {
-      // @Incomplete
-      options.push({
-         name: "REMOVE PLANT",
-         imageSource: require("../../images/miscellaneous/shovel.png"),
-         imageWidth: 80,
-         imageHeight: 80,
-         ghostType: GhostType.recallMarker,
-         optionType: OptionType.modify,
-         blueprintType: null,
-         costs: [],
-         isClickable: (entity: Entity): boolean => {
-            const planterBoxComponent = PlanterBoxComponentArray.getComponent(entity);
-            return planterBoxComponent.hasPlant;
-         },
-         deselectsOnClick: true
-      });
+      const planterBoxComponent = PlanterBoxComponentArray.getComponent(entity);
+      if (planterBoxComponent !== null) {
+         // @Incomplete
+         options.push({
+            name: "REMOVE PLANT",
+            imageSource: require("../../images/miscellaneous/shovel.png"),
+            imageWidth: 80,
+            imageHeight: 80,
+            ghostType: GhostType.recallMarker,
+            optionType: OptionType.modify,
+            blueprintType: null,
+            costs: [],
+            isClickable: (): boolean => {
+               return planterBoxComponent.hasPlant;
+            },
+            deselectsOnClick: true
+         });
+      }
    }
 
    // Fence gate option
@@ -377,10 +383,20 @@ export function entityCanOpenBuildMenu(entity: Entity): boolean {
 
 // @Cleanup: copy paste of shared function
 const snapAngleToPlayerAngle = (structure: Entity, rotation: number): number => {
-   const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
+   if (playerInstance === null) {
+      return 0;
+   }
+   
+   const playerTransformComponent = TransformComponentArray.getComponent(playerInstance);
+   if (playerTransformComponent === null) {
+      return 0;
+   }
    const playerHitbox = playerTransformComponent.hitboxes[0];
    
    const entityTransformComponent = TransformComponentArray.getComponent(structure);
+   if (entityTransformComponent === null) {
+      return 0;
+   }
    const entityHitbox = entityTransformComponent.hitboxes[0];
 
    const playerDirection = playerHitbox.box.position.angleTo(entityHitbox.box.position);
@@ -396,17 +412,31 @@ const snapAngleToPlayerAngle = (structure: Entity, rotation: number): number => 
 const getGhostRotation = (building: Entity, ghostType: GhostType): number => {
    // @HACK
    const buildingTransformComponent = TransformComponentArray.getComponent(building);
+   if (buildingTransformComponent === null) {
+      return 0;
+   }
    const buildingHitbox = buildingTransformComponent.hitboxes[0];
    
    switch (ghostType) {
       case GhostType.tunnelDoor: {
          const tunnelComponent = TunnelComponentArray.getComponent(building);
+         if (tunnelComponent === null) {
+            return 0;
+         }
+
          switch (tunnelComponent.doorBitset) {
             case 0b00: {
-               const playerTransformComponent = TransformComponentArray.getComponent(playerInstance!);
+               if (playerInstance === null) {
+                  return 0;
+               }
+               const playerTransformComponent = TransformComponentArray.getComponent(playerInstance);
+               if (playerTransformComponent === null) {
+                  return 0;
+               }
+               const playerHitbox = playerTransformComponent.hitboxes[0];
 
                // Show the door closest to the player
-               const dirToPlayer = buildingHitbox.box.position.angleTo(buildingHitbox.box.position);
+               const dirToPlayer = buildingHitbox.box.position.angleTo(playerHitbox.box.position);
                const dot = Math.sin(buildingHitbox.box.angle) * Math.sin(dirToPlayer) + Math.cos(buildingHitbox.box.angle) * Math.cos(dirToPlayer);
 
                return dot > 0 ? buildingHitbox.box.angle : buildingHitbox.box.angle + Math.PI;
@@ -457,16 +487,18 @@ const BuildMenu = () => {
       }
 
       BuildMenu_updateBuilding = (building?: number): void => {
-         if (typeof building === "undefined" || !entityExists(building)) {
+         if (typeof building === "undefined") {
             return;
          }
 
          const transformComponent = TransformComponentArray.getComponent(building);
-         const hitbox = transformComponent.hitboxes[0];
+         if (transformComponent !== null) {
+            const hitbox = transformComponent.hitboxes[0];
 
-         const screenPos = worldToScreenPos(hitbox.box.position);
-         setX(screenPos.x);
-         setY(screenPos.y);
+            const screenPos = worldToScreenPos(hitbox.box.position);
+            setX(screenPos.x);
+            setY(screenPos.y);
+         }
       }
    }, []);
 
@@ -497,7 +529,7 @@ const BuildMenu = () => {
 
    // Blueprint ghost type
    useEffect(() => {
-      if (hoveredOptionIdx === null || !entityExists(buildingID)) {
+      if (hoveredOptionIdx === null) {
          // @Incomplete
          // setGhostInfo(null);
          return;
@@ -506,6 +538,9 @@ const BuildMenu = () => {
       const option = options[hoveredOptionIdx];
 
       const transformComponent = TransformComponentArray.getComponent(buildingID);
+      if (transformComponent === null) {
+         return;
+      }
       const buildingHitbox = transformComponent.hitboxes[0];
 
       const ghostInfo: GhostInfo = {
@@ -535,6 +570,10 @@ const BuildMenu = () => {
       // @Speed
       const selectOption = (option: MenuOption): void => {
          const inventoryComponent = InventoryComponentArray.getComponent(playerInstance!);
+         if (inventoryComponent === null) {
+            return;
+         }
+         
          const hotbar = getInventory(inventoryComponent, InventoryName.hotbar)!;
          const backpack = getInventory(inventoryComponent, InventoryName.backpack);
          
@@ -572,7 +611,7 @@ const BuildMenu = () => {
                break;
             }
             case OptionType.deconstruct: {
-               Client.sendDeconstructBuilding(selectedStructureID);
+               sendDeconstructBuildingPacket(selectedStructureID);
                break;
             }
          }
@@ -732,3 +771,7 @@ const BuildMenu = () => {
 }
 
 export default BuildMenu;
+
+function sendDeconstructBuilding(selectedStructureID: number) {
+   throw new Error("Function not implemented.");
+}

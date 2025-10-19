@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { NUM_TRIBESMAN_TITLES, TRIBESMAN_TITLE_RECORD, TribesmanTitle } from "battletribes-shared/titles";
-import Client from "../../../../networking/Client";
+import { sendDevGiveTitlePacket, sendDevRemoveTitlePacket } from "../../../../networking/packet-sending";
 
 const enum ListType {
    add,
@@ -30,11 +30,11 @@ const TitlesList = (props: TitlesListProps) => {
    const onClick = (title: TribesmanTitle): void => {
       switch (props.listType) {
          case ListType.add: {
-            Client.sendDevGiveTitlePacket(title);
+            sendDevGiveTitlePacket(title);
             break;
          }
          case ListType.remove: {
-            Client.sendDevRemoveTitlePacket(title);
+            sendDevRemoveTitlePacket(title);
             break;
          }
       }

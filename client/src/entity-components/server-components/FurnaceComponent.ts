@@ -11,7 +11,7 @@ import { CookingComponentArray } from "./CookingComponent";
 import { EntityComponentData } from "../../world";
 import { Hitbox } from "../../hitboxes";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
-import { tickIntervalHasPassed } from "../../game";
+import { tickIntervalHasPassed } from "../../client";
 
 export interface FurnaceComponentData {}
 
@@ -61,8 +61,16 @@ function getMaxRenderParts(): number {
 
 function onTick(entity: Entity): void {
    const cookingComponent = CookingComponentArray.getComponent(entity);
+   if (cookingComponent === null) {
+      return;
+   }
+
+   const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent === null) {
+      return;
+   }
+   
    if (cookingComponent.isCooking) {
-      const transformComponent = TransformComponentArray.getComponent(entity);
       const hitbox = transformComponent.hitboxes[0];
 
       // Smoke particles
@@ -114,6 +122,10 @@ function onHit(_entity: Entity, hitbox: Hitbox): void {
 
 function onDie(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
+   if (transformComponent === null) {
+      return;
+   }
+   
    const hitbox = transformComponent.hitboxes[0];
 
    for (let i = 0; i < 5; i++) {
