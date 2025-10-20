@@ -7,7 +7,8 @@ import { entityExists } from "../world";
 import { ComponentArray } from "./ComponentArray";
 import { attachHitbox, detachHitbox, TransformComponentArray } from "./TransformComponent";
 
-interface CarrySlot {
+// @Cleanup: only exported cuz someone uses it in transformcomponent
+export interface CarrySlot {
    occupiedEntity: Entity;
    readonly parentHitbox: Hitbox;
    readonly offset: Point;
@@ -65,12 +66,15 @@ export function mountCarrySlot(entity: Entity, carrySlot: CarrySlot): void {
    
    // attachEntityWithTether(entity, mount, carrySlot.parentHitbox, 0, 10, 0.4, false);
    // @INCOMPLETE: SHOULD USE TETHER!!!!
+   if (entityHitbox.parent !== null) {
+      detachHitbox(entityHitbox);
+   }
    attachHitbox(entityHitbox, carrySlot.parentHitbox, false);
    carrySlot.occupiedEntity = entity;
 }
 
 export function dismountMount(entity: Entity, mount: Entity): void {
-   // Find the carry slot the entity is attached to
+   // @Copynpaste the same shit in detachHitbox
    let carrySlot: CarrySlot | undefined;
    const rideableComponent = RideableComponentArray.getComponent(mount);
    for (const currentCarrySlot of rideableComponent.carrySlots) {
@@ -91,8 +95,6 @@ export function dismountMount(entity: Entity, mount: Entity): void {
          detachHitbox(rootHitbox);
       }
    }
-
-   carrySlot.occupiedEntity = 0;
 
    // Set the entity to the dismount position
 

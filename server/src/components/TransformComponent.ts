@@ -23,6 +23,7 @@ import { EntityConfig } from "../components";
 import { addEntityTethersToWorld, destroyTether as destroyTether } from "../tethers";
 import { TILE_PHYSICS_INFO_RECORD, TileType } from "../../../shared/src/tiles";
 import { getSubtileIndex } from "../../../shared/src/subtiles";
+import { CarrySlot, RideableComponentArray } from "./RideableComponent";
 
 // @Cleanup: move mass/hitbox related stuff out? (Are there any entities which could take advantage of that extraction?)
 
@@ -860,6 +861,9 @@ const propagateRootEntityChange = (hitbox: Hitbox, rootEntity: Entity): void => 
 
 export function attachHitboxRaw(hitbox: Hitbox, parentHitbox: Hitbox, isPartOfParent: boolean): void {
    assert(hitbox.rootEntity !== parentHitbox.rootEntity);
+   if (hitbox.parent !== null && hitbox.parent !== parentHitbox) {
+      throw new Error("Cannot attach hitbox: already attached to a parent.");
+   }
    assert(!parentHitbox.children.includes(hitbox));
    
    hitbox.rootEntity = parentHitbox.rootEntity;
@@ -943,6 +947,23 @@ export function attachEntityWithTether(entity: Entity, parent: Entity, parentHit
 export function detachHitbox(hitbox: Hitbox): void {
    if (hitbox.parent === null) {
       return;
+   }
+
+   // @HACK @location @Cleanup This used to be in the dismountMount function but it wasn't being called when the rider was detached without going through the dismount function.
+   if (hitbox.parent !== null && RideableComponentArray.hasComponent(hitbox.parent.entity)) {
+      const rideableComponent = RideableComponentArray.getComponent(hitbox.parent.entity);
+
+      let carrySlot: CarrySlot | undefined;
+      for (const currentCarrySlot of rideableComponent.carrySlots) {
+         if (currentCarrySlot.occupiedEntity === hitbox.entity) {
+            carrySlot = currentCarrySlot;
+            break;
+         }
+      }
+
+      if (typeof carrySlot !== "undefined") {
+         carrySlot.occupiedEntity = 0;
+      }
    }
 
    // Make sure that the hitbox hasn't accumulated any acceleration before it's detached

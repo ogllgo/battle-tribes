@@ -252,7 +252,8 @@ const GameScreen = (props: GameScreenProps) => {
 
       <SignInscribeMenu />
 
-      <CowStaminaBar />
+{/* @SQUEAM for pre-stamina-bar shots */}
+      {/* <CowStaminaBar /> */}
 
       { canAscendLayer ? (
          <LayerChangeMessage />

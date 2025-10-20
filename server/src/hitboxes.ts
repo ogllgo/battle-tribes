@@ -326,7 +326,7 @@ export function turnHitboxToAngle(hitbox: Hitbox, idealAngle: number, turnSpeed:
       const parentAngle = hitbox.box.angle - hitbox.box.relativeAngle;
       idealRelativeAngle = idealAngle - parentAngle;
    }
-      
+   
    const angleDiff = getAngleDiff(hitbox.box.relativeAngle, idealRelativeAngle);
    const springForce = angleDiff * turnSpeed; // 'turn speed' is really a spring constant now
    

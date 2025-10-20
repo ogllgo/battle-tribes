@@ -1,6 +1,6 @@
 import { CowSpecies, DamageSource, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { getAbsAngleDiff, lerp, Point, polarVec2, positionIsInWorld, randAngle, randFloat, randInt, randItem, unitsToChunksClamped, UtilVars } from "battletribes-shared/utils";
+import { getAbsAngleDiff, Point, positionIsInWorld, randAngle, randFloat, randInt, randItem, unitsToChunksClamped, UtilVars } from "battletribes-shared/utils";
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
@@ -9,12 +9,12 @@ import { registerEntityTickEvent } from "../server/player-clients";
 import { getHitboxByFlag, TransformComponentArray } from "./TransformComponent";
 import { createItemEntityConfig } from "../entities/item-entity";
 import { Packet } from "battletribes-shared/packets";
-import { findAngleAlignment, getDistanceFromPointToEntity, runHerdAI, willStopAtDesiredDistance } from "../ai-shared";
+import { getDistanceFromPointToEntity, willStopAtDesiredDistance } from "../ai-shared";
 import { AIHelperComponentArray } from "./AIHelperComponent";
 import { BerryBushComponentArray } from "./BerryBushComponent";
 import { damageEntity, healEntity, HealthComponentArray, hitEntityWithoutDamage } from "./HealthComponent";
 import { ItemComponentArray } from "./ItemComponent";
-import { createGrassBlocker, positionHasGrassBlocker } from "../grass-blockers";
+import { createGrassBlocker } from "../grass-blockers";
 import { InventoryUseComponentArray } from "./InventoryUseComponent";
 import { createEntity, destroyEntity, entityExists, getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks } from "../world";
 import { getEntitiesAtPosition } from "../layer-utils";
@@ -24,11 +24,10 @@ import { addSkillLearningProgress, getRiderTargetPosition, TamingComponentArray 
 import { TamingSkillID } from "../../../shared/src/taming";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { CollisionVars, entitiesAreColliding } from "../collision-detection";
-import { addHitboxAngularAcceleration, addHitboxVelocity, applyAcceleration, applyAccelerationFromGround, applyKnockback, getHitboxVelocity, Hitbox, turnHitboxToAngle } from "../hitboxes";
+import { addHitboxVelocity, applyKnockback, getHitboxVelocity, Hitbox } from "../hitboxes";
 import { entityWantsToFollow, FollowAI, followAISetFollowTarget, updateFollowAIComponent } from "../ai/FollowAI";
 import { runEscapeAI } from "../ai/EscapeAI";
 import { HitboxFlag } from "../../../shared/src/boxes/boxes";
-import { PlayerComponentArray } from "./PlayerComponent";
 
 const enum Vars {
    SLOW_ACCELERATION = 200,
@@ -376,27 +375,6 @@ function onTick(cow: Entity): void {
 
          return;
       }
-   }
-
-   // @SQUEAM
-   if(1+1===2) {
-      if (PlayerComponentArray.activeEntities.length === 0) {
-         return;
-      }
-      const player = PlayerComponentArray.activeEntities[0];
-
-      const playerTransformComponent = TransformComponentArray.getComponent(player);
-      const playerHitbox = playerTransformComponent.hitboxes[0];
-
-      const dir = cowBodyHitbox.box.position.angleTo(playerHitbox.box.position) - Math.PI * 0.35;
-
-      const targetPos = cowBodyHitbox.box.position.offset(900, dir);
-      
-      const aiHelperComponent = AIHelperComponentArray.getComponent(cow);
-      aiHelperComponent.moveFunc(cow, targetPos, 920)
-      aiHelperComponent.turnFunc(cow, targetPos, 1.7 * Math.PI, 0.8)
-      
-      return;
    }
 
    // Replenish stamina 

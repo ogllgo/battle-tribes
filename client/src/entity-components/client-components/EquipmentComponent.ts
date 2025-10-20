@@ -159,6 +159,9 @@ const updateArmourRenderPart = (equipmentComponent: EquipmentComponent, entity: 
 
          const renderInfo = getEntityRenderInfo(entity);
          renderInfo.attachRenderPart(equipmentComponent.armourRenderPart);
+
+         // @HACK
+         equipmentComponent.armourRenderPart.parentHitbox = hitbox;
       } else {
          equipmentComponent.armourRenderPart.switchTextureSource(textureSource);
       }

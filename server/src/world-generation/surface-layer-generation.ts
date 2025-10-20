@@ -78,7 +78,7 @@ const HUMIDITY_NOISE_SCALE = 30;
 export let riverMainTiles: ReadonlyArray<WaterTileGenerationInfo>;
 
 const tribesmanSpawnPositionIsValid = (layer: Layer, x: number, y: number): boolean => {
-   if (!OPTIONS.spawnTribes) {
+   if (!OPTIONS.spawnTribesmen) {
       return false;
    }
    
@@ -494,28 +494,29 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       generateCaveEntrances(surfaceLayer);
    }
 
-   registerNewSpawnInfo({
-      entityTypes: [EntityType.cow],
-      layer: surfaceLayer,
-      spawnRate: 0.01,
-      biome: Biome.grasslands,
-      tileTypes: [TileType.grass],
-      packSpawning: {
-         getPackSize: () => randInt(2, 5),
-         spawnRange: 200
-      },
-      onlySpawnsInNight: false,
-      minSpawnDistance: 150,
-      // @SQUEAM for cow pen extended thing, want less cows in shot
-      spawnDistribution: createRawSpawnDistribution(16, 0.001),
-      // spawnDistribution: createRawSpawnDistribution(16, 0.003),
-      balanceSpawnDistribution: false,
-      doStrictTileTypeCheck: false,
-      createEntity: (pos: Point, angle: number, firstEntityConfig: ReadonlyArray<EntityConfig> | null): ReadonlyArray<EntityConfig> | null => {
-         const species = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig[0].components[ServerComponentType.cow]!.species;
-         return [createCowConfig(pos, angle, species)];
-      }
-   });
+   // @SQUEAM for clementus shot
+   // registerNewSpawnInfo({
+   //    entityTypes: [EntityType.cow],
+   //    layer: surfaceLayer,
+   //    spawnRate: 0.01,
+   //    biome: Biome.grasslands,
+   //    tileTypes: [TileType.grass],
+   //    packSpawning: {
+   //       getPackSize: () => randInt(2, 5),
+   //       spawnRange: 200
+   //    },
+   //    onlySpawnsInNight: false,
+   //    minSpawnDistance: 150,
+   //    // @SQUEAM for cow pen extended thing, want less cows in shot
+   //    spawnDistribution: createRawSpawnDistribution(16, 0.001),
+   //    // spawnDistribution: createRawSpawnDistribution(16, 0.003),
+   //    balanceSpawnDistribution: false,
+   //    doStrictTileTypeCheck: false,
+   //    createEntity: (pos: Point, angle: number, firstEntityConfig: ReadonlyArray<EntityConfig> | null): ReadonlyArray<EntityConfig> | null => {
+   //       const species = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig[0].components[ServerComponentType.cow]!.species;
+   //       return [createCowConfig(pos, angle, species)];
+   //    }
+   // });
    registerNewSpawnInfo({
       entityTypes: [EntityType.berryBush],
       layer: surfaceLayer,
@@ -1152,7 +1153,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       }
    });
 
-   if (OPTIONS.spawnTribes) {
+   if (OPTIONS.spawnTribesmen) {
       // Grasslands
       registerNewSpawnInfo({
          entityTypes: [EntityType.tribeWorker],

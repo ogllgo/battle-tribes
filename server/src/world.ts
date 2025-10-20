@@ -16,6 +16,7 @@ import { generateUndergroundTerrain } from "./world-generation/underground-layer
 import { EntityConfig, entityConfigAttachInfoIsTethered } from "./components";
 import { attachLightToHitbox } from "./lights";
 import { attachEntityWithTether, attachHitboxRaw } from "./components/TransformComponent";
+import { Hitbox } from "./hitboxes";
 
 const enum Vars {
    START_TIME = 8

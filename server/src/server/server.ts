@@ -35,6 +35,9 @@ import { generateGrassStrands } from "../world-generation/grass-generation";
 import { Hitbox } from "../hitboxes";
 import OPTIONS from "../options";
 import { createCowConfig } from "../entities/mobs/cow";
+import { generateDecorations } from "../world-generation/decoration-generation";
+import { ServerComponentType } from "../../../shared/src/components";
+import { getTamingSkill, TamingSkillID } from "../../../shared/src/taming";
 
 /*
 
@@ -171,7 +174,7 @@ class GameServer {
       generateGrassStrands();
       console.log("grass",performance.now() - _SHITTYCUMMERY)
       _SHITTYCUMMERY = performance.now();
-      // generateDecorations();
+      generateDecorations();
       console.log("decorations",performance.now() - _SHITTYCUMMERY)
       _SHITTYCUMMERY = performance.now();
       // spawnGuardians();
@@ -234,8 +237,14 @@ class GameServer {
                setTimeout(() => {
                   if (BB) return;
                   BB = true;
-                  const cowConfig = createCowConfig(new Point(spawnPosition.x, spawnPosition.y + 200), Math.PI * 0.5, CowSpecies.brown);
-                  createEntity(cowConfig, layer, 0);
+                  for (let i = 0; i < 5; i++) {
+                     const cowConfig = createCowConfig(new Point(spawnPosition.x + Math.random() * 50, spawnPosition.y + 200), Math.PI * 0.5, CowSpecies.brown);
+                     cowConfig.components[ServerComponentType.taming]!.tameTribe = tribe;
+                     cowConfig.components[ServerComponentType.taming]!.acquiredSkills.push(getTamingSkill(TamingSkillID.riding));
+                     cowConfig.components[ServerComponentType.taming]!.acquiredSkills.push(getTamingSkill(TamingSkillID.follow));
+                     cowConfig.components[ServerComponentType.taming]!.followTarget = playerClient!.instance;
+                     createEntity(cowConfig, layer, 0);
+                  }
                }, 4000);
                
                addPlayerClient(playerClient, surfaceLayer, spawnPosition);

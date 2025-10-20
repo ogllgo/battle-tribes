@@ -78,7 +78,7 @@ const calculateRedness = (healthComponent: HealthComponent): number => {
 }
 
 function onTick(entity: Entity): void {
-   const healthComponent = HealthComponentArray.getComponent(entity);
+   const healthComponent = HealthComponentArray.getComponent(entity)!;
    
    const previousRedness = calculateRedness(healthComponent);
    healthComponent.secondsSinceLastHit += Settings.DT_S;
@@ -92,7 +92,7 @@ function onTick(entity: Entity): void {
 }
 
 function onHit(entity: Entity, _hitbox: Hitbox, _hitPosition: Point, hitFlags: number): void {
-   const healthComponent = HealthComponentArray.getComponent(entity);
+   const healthComponent = HealthComponentArray.getComponent(entity)!;
       
    const isDamagingHit = (hitFlags & HitFlags.NON_DAMAGING_HIT) === 0;
    if (isDamagingHit) {
@@ -106,7 +106,7 @@ function onHit(entity: Entity, _hitbox: Hitbox, _hitPosition: Point, hitFlags: n
 }
    
 function updateFromData(data: HealthComponentData, entity: Entity): void {
-   const healthComponent = HealthComponentArray.getComponent(entity);
+   const healthComponent = HealthComponentArray.getComponent(entity)!;
    healthComponent.health = data.health;
    healthComponent.maxHealth = data.maxHealth;
 }
@@ -114,12 +114,12 @@ function updateFromData(data: HealthComponentData, entity: Entity): void {
 function updatePlayerFromData(data: HealthComponentData): void {
    updateFromData(data, playerInstance!);
 
-   const healthComponent = HealthComponentArray.getComponent(playerInstance!);
+   const healthComponent = HealthComponentArray.getComponent(playerInstance!)!;
    updateHealthBar(healthComponent.health);
 }
 
 function calculateTint(entity: Entity): ComponentTint {
-   const healthComponent = HealthComponentArray.getComponent(entity);
+   const healthComponent = HealthComponentArray.getComponent(entity)!;
    const redness = calculateRedness(healthComponent);
 
    // @Incomplete?

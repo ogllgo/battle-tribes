@@ -1,6 +1,6 @@
 interface Options {
    readonly spawnEntities: boolean;
-   readonly spawnTribes: boolean;
+   readonly spawnTribesmen: boolean;
    readonly generateRivers: boolean;
    readonly generateWalls: boolean;
    readonly generateCaves: boolean;
@@ -10,8 +10,8 @@ interface Options {
 
 // @Speed: Make into const enum
 const OPTIONS: Options = {
-   spawnEntities: false,
-   spawnTribes: false,
+   spawnEntities: true,
+   spawnTribesmen: false,
    generateRivers: false,
    generateWalls: true,
    generateCaves: true,
