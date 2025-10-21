@@ -1,4 +1,3 @@
-import { EntityDebugData } from "../../../shared/src/client-server-types";
 import { Settings } from "../../../shared/src/settings";
 import { maxVisibleChunkX, maxVisibleChunkY, maxVisibleRenderChunkX, maxVisibleRenderChunkY, minVisibleChunkX, minVisibleChunkY, minVisibleRenderChunkX, minVisibleRenderChunkY, refreshCameraPosition, refreshCameraView } from "../camera";
 import { updateDebugScreen } from "../components/game/dev/GameInfoDisplay";
@@ -7,6 +6,7 @@ import { playerIsHoldingPlaceableItem } from "../components/game/GameInteractabl
 import { updateInspectHealthBar } from "../components/game/HealthInspector";
 import { getSelectedEntityID, getHighlightedRenderInfo, getHighlightedEntityID } from "../entity-selection";
 import Layer from "../Layer";
+import { getEntityDebugData } from "../networking/dev-packets";
 import OPTIONS from "../options";
 import { updatePlayerRotation } from "../player";
 import { RenderLayer, MAX_RENDER_LAYER } from "../render-layers";
@@ -61,10 +61,6 @@ import { createWallConnectionShaders, renderWallConnections } from "./webgl/wall
 import { createForcefieldShaders, renderForcefield } from "./webgl/world-border-forcefield-rendering";
 import { createWorldBorderShaders, renderWorldBorder } from "./webgl/world-border-rendering";
 
-let entityDebugData: EntityDebugData | null = null;
-// @Temporary so that typescript compiler smartness doesn't give me unhelpful errors
-if(1+1===69) entityDebugData = 0 as any;
-
 export let gameFramebuffer: WebGLFramebuffer;
 export let gameFramebufferTexture: WebGLTexture;
 
@@ -73,16 +69,6 @@ let lastTextureWidth = 0;
 let lastTextureHeight = 0;
 
 let hasSetupRendering = false;
-
-// @INCOMPLETE
-// public static setGameObjectDebugData(newEntityDebugData: EntityDebugData | null): void {
-//    entityDebugData = newEntityDebugData;
-//    setDebugInfoDebugData(entityDebugData);
-// }
-
-export function getEntityDebugData(): EntityDebugData | null {
-   return entityDebugData;
-}
 
 export async function setupRendering(): Promise<void> {
    if (!hasSetupRendering) {
@@ -207,6 +193,7 @@ const renderLayer = (layer: Layer, frameProgress: number): void => {
 
    renderTurretRange();
 
+   const entityDebugData = getEntityDebugData();
    if (nerdVisionIsVisible() && entityDebugData !== null && entityExists(entityDebugData.entityID)) {
       renderTriangleDebugData(entityDebugData);
    }

@@ -46,6 +46,7 @@ import { TribesmanTitle } from "../../../shared/src/titles";
 import { acceptTitleOffer, forceAddTitle, rejectTitleOffer, removeTitle } from "../components/TribesmanComponent";
 import Tribe from "../Tribe";
 import { Settings } from "../../../shared/src/settings";
+import { broadcastSimulationStatus } from "./packet-sending";
 
 // @Cleanup: Messy as fuck
 export function processPlayerDataPacket(playerClient: PlayerClient, reader: PacketReader): void {
@@ -466,6 +467,7 @@ export function processEntitySummonPacket(playerClient: PlayerClient, reader: Pa
 
 export function processToggleSimulationPacket(playerClient: PlayerClient, reader: PacketReader): void {
    SERVER.isSimulating = reader.readBool();
+   broadcastSimulationStatus(SERVER.isSimulating);
 }
 
 // @Cleanup: name, and there is already a shared definition

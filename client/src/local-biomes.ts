@@ -87,7 +87,7 @@ const updateLocalBiomeFromData = (reader: PacketReader, localBiome: LocalBiome):
    localBiome.lastUpdateTicks = currentSnapshot.tick;
 }
 
-export function readLocalBiomes(reader: PacketReader): void {
+export function updateLocalBiomesFromData(reader: PacketReader): void {
    const numLocalBiomes = reader.readNumber();
    assert(Number.isInteger(numLocalBiomes));
    for (let i = 0; i < numLocalBiomes; i++) {

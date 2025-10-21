@@ -9,7 +9,7 @@ import Tribe from "../Tribe";
 import SRandom from "../SRandom";
 import { updateDynamicPathfindingNodes } from "../pathfinding";
 import { updateGrassBlockers } from "../grass-blockers";
-import { createGameDataPacket, createSyncDataPacket, createSyncPacket } from "./packet-sending";
+import { broadcastSimulationStatus, createGameDataPacket, createSyncDataPacket, createSyncPacket } from "./packet-sending";
 import PlayerClient, { PlayerClientVars } from "./PlayerClient";
 import { addPlayerClient, generatePlayerSpawnPosition, getPlayerClients, handlePlayerDisconnect, resetDirtyEntities } from "./player-clients";
 import { createPlayerConfig } from "../entities/tribes/player";
@@ -20,7 +20,7 @@ import { TribeComponentArray } from "../components/TribeComponent";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { forceMaxGrowAllIceSpikes } from "../components/IceSpikesComponent";
 import { sortComponentArrays } from "../components/ComponentArray";
-import { destroyFlaggedEntities, entityExists, getEntityLayer, pushEntityJoinBuffer, tickGameTime, tickEntities, generateLayers, preDestroyFlaggedEntities, createEntity, getGameTicks } from "../world";
+import { destroyFlaggedEntities, entityExists, getEntityLayer, pushEntityJoinBuffer, tickGameTime, tickEntities, generateLayers, preDestroyFlaggedEntities, createEntity, getGameTicks, tickIntervalHasPassed } from "../world";
 import { resolveEntityCollisions } from "../collision-detection";
 import { runCollapses } from "../collapses";
 import { updateTribes } from "../tribes";
@@ -38,6 +38,7 @@ import { createCowConfig } from "../entities/mobs/cow";
 import { generateDecorations } from "../world-generation/decoration-generation";
 import { ServerComponentType } from "../../../shared/src/components";
 import { getTamingSkill, TamingSkillID } from "../../../shared/src/taming";
+import { createDevGameDataPacket } from "./dev-packets";
 
 /*
 
@@ -518,6 +519,11 @@ class GameServer {
          updateTribes();
          
          pushEntityJoinBuffer(true);
+      } else {
+         // If not simulating, regularly broadcast so to all players
+         if (tickIntervalHasPassed(0.5)) {
+            broadcastSimulationStatus(SERVER.isSimulating);
+         }
       }
       preDestroyFlaggedEntities();
 
@@ -617,6 +623,11 @@ class GameServer {
          playerClient.hasPickedUpItem = false;
          playerClient.entityTickEvents = [];
          playerClient.visibleDirtiedEntities = [];
+
+         if (playerClient.isDev) {
+            const packet = createDevGameDataPacket(playerClient);
+            playerClient.socket.send(packet.buffer);
+         }
       }
 
       // @Hack?

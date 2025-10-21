@@ -10,7 +10,7 @@ import { getCurrentLayer } from "./world";
 import { Entity } from "../../shared/src/entities";
 import { Point } from "../../shared/src/utils";
 import { cameraZoom, screenToWorldPos, worldToScreenPos } from "./camera";
-import { getEntityDebugData } from "./rendering/render";
+import { getEntityDebugData } from "./networking/dev-packets";
 
 export const cursorScreenPos = new Point(0, 0);
 export const cursorWorldPos = new Point(0, 0);

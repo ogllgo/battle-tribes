@@ -128,3 +128,18 @@ body {
    height: 32px;
    image-rendering: pixelated;
 }
+
+.simulation-pause-label {
+   font-size: 2rem;
+   font-family:'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+   color: red;
+   position: absolute;
+   left: 50%;
+   top: 25%;
+   transform: translate(-50%, -50%);
+   z-index: 2;
+   white-space: pre;
+   text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.75);
+   letter-spacing: 0.05rem;
+   pointer-events: none;
+}

@@ -15,6 +15,7 @@ import { Point, TileIndex } from "../../../shared/src/utils";
 import { playerInstance } from "../player";
 import { registerTamingSpecsFromData } from "../taming-specs";
 import { addChatMessage } from "../components/game/ChatBox";
+import { GameScreen_setIsSimulating } from "../components/game/GameScreen";
 
 const getBuildingBlockingTiles = (): ReadonlySet<TileIndex> => {
    // Initially find all tiles below a dropdown tile
@@ -223,113 +224,6 @@ export function processInitialGameDataPacket(reader: PacketReader): InitialGameD
    };
 }
 
-const readDebugData = (reader: PacketReader): EntityDebugData => {
-   const entityID = reader.readNumber();
-
-   const lines = new Array<LineDebugData>();
-   const numLines = reader.readNumber();
-   for (let i = 0; i < numLines; i++) {
-      const r = reader.readNumber();
-      const g = reader.readNumber();
-      const b = reader.readNumber();
-      const targetX = reader.readNumber();
-      const targetY = reader.readNumber();
-      const thickness = reader.readNumber();
-
-      lines.push({
-         colour: [r, g, b],
-         targetPosition: [targetX, targetY],
-         thickness: thickness
-      });
-   }
-
-   const circles = new Array<CircleDebugData>();
-   const numCircles = reader.readNumber();
-   for (let i = 0; i < numCircles; i++) {
-      const r = reader.readNumber();
-      const g = reader.readNumber();
-      const b = reader.readNumber();
-      const radius = reader.readNumber();
-      const thickness = reader.readNumber();
-
-      circles.push({
-         colour: [r, g, b],
-         radius: radius,
-         thickness: thickness
-      });
-   }
-
-   const tileHighlights = new Array<TileHighlightData>();
-   const numTileHighlights = reader.readNumber();
-   for (let i = 0; i < numTileHighlights; i++) {
-      const r = reader.readNumber();
-      const g = reader.readNumber();
-      const b = reader.readNumber();
-      const x = reader.readNumber();
-      const y = reader.readNumber();
-
-      tileHighlights.push({
-         colour: [r, g, b],
-         tilePosition: [x, y]
-      });
-   }
-   
-   const entries = new Array<string>();
-   const numDebugEntries = reader.readNumber();
-   for (let i = 0; i < numDebugEntries; i++) {
-      const entry = reader.readString();
-      entries.push(entry);
-   }
-
-   let pathData: PathData | undefined;
-
-   const hasPathData = reader.readBool();
-   if (hasPathData) {
-      const goalX = reader.readNumber();
-      const goalY = reader.readNumber();
-      
-      const pathNodes = new Array<PathfindingNodeIndex>();
-      const numPathNodes = reader.readNumber();
-      for (let i = 0; i < numPathNodes; i++) {
-         const nodeIndex = reader.readNumber();
-         pathNodes.push(nodeIndex);
-      }
-   
-      const rawPathNodes = new Array<PathfindingNodeIndex>();
-      const numRawPathNodes = reader.readNumber();
-      for (let i = 0; i < numRawPathNodes; i++) {
-         const nodeIndex = reader.readNumber();
-         rawPathNodes.push(nodeIndex);
-      }
-   
-      const visitedNodes = new Array<PathfindingNodeIndex>();
-      const numVisitedNodes = reader.readNumber();
-      for (let i = 0; i < numVisitedNodes; i++) {
-         const nodeIndex = reader.readNumber();
-         visitedNodes.push(nodeIndex);
-      }
-   
-      if (numPathNodes > 0 || numRawPathNodes > 0 || numVisitedNodes > 0) {
-         pathData = {
-            goalX: goalX,
-            goalY: goalY,
-            pathNodes: pathNodes,
-            rawPathNodes: rawPathNodes,
-            visitedNodes: visitedNodes
-         };
-      }
-   }
-   
-   return {
-      entityID: entityID,
-      lines: lines,
-      circles: circles,
-      tileHighlights: tileHighlights,
-      debugEntries: entries,
-      pathData: pathData
-   };
-}
-
 export function processSyncDataPacket(reader: PacketReader): void {
    // @Incomplete
    
@@ -373,4 +267,11 @@ export function receiveChatMessagePacket(reader: PacketReader): void {
    const username = reader.readString();
    const message = reader.readString();
    addChatMessage(username, message);
+}
+   
+export function processSimulationStatusUpdatePacket(reader: PacketReader): void {
+   const isSimulating = reader.readBool();
+   console.log("A",isSimulating)
+   // @SQUEAM if kept then can be put in the update debug screen, else just fully removed.
+   GameScreen_setIsSimulating(isSimulating);
 }

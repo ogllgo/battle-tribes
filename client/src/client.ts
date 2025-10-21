@@ -32,8 +32,9 @@ import { TribeType } from "../../shared/src/tribes";
 import { App_setState, AppState } from "./components/App";
 import { sendActivatePacket, sendInitialPlayerDataPacket, sendPlayerDataPacket } from "./networking/packet-sending";
 import { LoadingScreen_setStatus, LoadingScreenStatus } from "./components/LoadingScreen";
-import { InitialGameData, processForcePositionUpdatePacket, processInitialGameDataPacket, processSyncDataPacket, receiveChatMessagePacket } from "./networking/packet-receiving";
+import { InitialGameData, processForcePositionUpdatePacket, processInitialGameDataPacket, processSimulationStatusUpdatePacket, processSyncDataPacket, receiveChatMessagePacket } from "./networking/packet-receiving";
 import { renderGame, setupRendering } from "./rendering/render";
+import { processDevGameDataPacket } from "./networking/dev-packets";
 
 const SNAPSHOT_BUFFER_LENGTH = 2;
 /** The number of ticks it takes for the measured server packet interval to fully adjust (if going from a constant tps of A to a constant tps of B) */
@@ -153,6 +154,8 @@ const onPacket = (msg: MessageEvent): void => {
       // case PacketType.sync: Game.sync(); break;              // @INCOMPLETE
       case PacketType.forcePositionUpdate: processForcePositionUpdatePacket(reader); break;
       case PacketType.serverToClientChatMessage: receiveChatMessagePacket(reader); break;
+      case PacketType.simulationStatusUpdate: processSimulationStatusUpdatePacket(reader); break;
+      case PacketType.devGameData: processDevGameDataPacket(reader); break;
    }
 }
 

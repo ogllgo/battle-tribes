@@ -13,6 +13,7 @@ import { GameInteractState } from "../GameScreen";
 
 interface NerdVisionProps {
    readonly summonPacketRef: MutableRefObject<Mutable<EntitySummonPacket> | null>;
+   readonly isSimulating: boolean;
    setGameInteractState(state: GameInteractState): void;
 }
 
@@ -69,7 +70,7 @@ const NerdVision = (props: NerdVisionProps) => {
    if (!isEnabled) return null;
 
    return <div id="nerd-vision-wrapper">
-      <GameInfoDisplay setGameInteractState={props.setGameInteractState} />
+      <GameInfoDisplay isSimulating={props.isSimulating} setGameInteractState={props.setGameInteractState} />
       <DebugInfo />
       {/* <TerminalButton startingIsOpened={terminalStartingVisibility} /> */}
       <Terminal startingIsVisible={terminalStartingVisibility}/>

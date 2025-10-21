@@ -1,17 +1,19 @@
 import { GameDataPacketOptions } from "../../../shared/src/client-server-types";
-import { Packet } from "../../../shared/src/packets";
+import { Packet, PacketType } from "../../../shared/src/packets";
 import { Settings } from "../../../shared/src/settings";
 import { AIPlanType, clamp, getTileIndexIncludingEdges, TileIndex } from "../../../shared/src/utils";
 import { getSubtileSupport, getVisibleSubtileSupports } from "../collapses";
-import { EntitySpawnEvent, getSpawnInfoForEntityType, SpawnDistribution } from "../entity-spawn-info";
+import { addEntityDebugDataToPacket, createEntityDebugData, getEntityDebugDataLength } from "../entity-debug-data";
+import {getSpawnInfoForEntityType, SpawnDistribution } from "../entity-spawn-info";
 import { addPlayerLightLevelsData, getPlayerLightLevelsDataLength } from "../lights";
 import { getVisiblePathfindingNodeOccupances } from "../pathfinding";
 import { addTribeAssignmentData, addTribeBuildingSafetyData, getTribeAssignmentDataLength, getTribeBuildingSafetyDataLength, getVisibleSafetyNodesData } from "../tribesman-ai/building-plans/ai-building-client-data";
 import { addVirtualBuildingData, getVirtualBuildingDataLength } from "../tribesman-ai/building-plans/TribeBuildingLayer";
 import { AIPlanAssignment } from "../tribesman-ai/tribesman-ai-planning";
-import { getEntitySpawnTicks, getTribes } from "../world";
+import { getTribes } from "../world";
 import { LocalBiome } from "../world-generation/terrain-generation-utils";
 import PlayerClient from "./PlayerClient";
+import { SERVER } from "./server";
 
 interface VisibleLocalBiomeInfo {
    readonly visibleLocalBiomes: ReadonlyArray<LocalBiome>;
@@ -178,10 +180,55 @@ const addVirtualBuildingGhostEntities = (packet: Packet, assignment: AIPlanAssig
    }
 }
 
-export function getDevPacketDataLength(playerClient: PlayerClient): number {
-   const tribes = getTribes();
+const getViewedSpawnDistributionDataLength = (playerClient: PlayerClient, distribution: SpawnDistribution): number => {
+   // @Copynpaste
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.WORLD_SIZE_TILES / distribution.blockSize;
    
-   let lengthBytes = 0;
+   const minBlockX = clamp(Math.floor(playerClient.minVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   const maxBlockX = clamp(Math.floor(playerClient.maxVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   const minBlockY = clamp(Math.floor(playerClient.minVisibleY / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   const maxBlockY = clamp(Math.floor(playerClient.maxVisibleY / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+
+   const numVisibleBlocks = (maxBlockX + 1 - minBlockX) * (maxBlockY + 1 - minBlockY);
+   return Float32Array.BYTES_PER_ELEMENT + 4 * Float32Array.BYTES_PER_ELEMENT * numVisibleBlocks;
+}
+
+const addViewedSpawnDistributionData = (packet: Packet, playerClient: PlayerClient, distribution: SpawnDistribution): void => {
+   // @Copynpaste
+   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.WORLD_SIZE_TILES / distribution.blockSize;
+   
+   const minBlockX = clamp(Math.floor(playerClient.minVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   const maxBlockX = clamp(Math.floor(playerClient.maxVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   const minBlockY = clamp(Math.floor(playerClient.minVisibleY / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   const maxBlockY = clamp(Math.floor(playerClient.maxVisibleY / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   
+   packet.writeNumber((maxBlockX + 1 - minBlockX) * (maxBlockY + 1 - minBlockY));
+   for (let blockY = minBlockY; blockY <= maxBlockY; blockY++) {
+      for (let blockX = minBlockX; blockX <= maxBlockX; blockX++) {
+         const blockIdx = blockY * BLOCKS_IN_BOARD_DIMENSIONS + blockX;
+
+         const x = (blockX + 0.5) * distribution.blockSize * Settings.TILE_SIZE;
+         const y = (blockY + 0.5) * distribution.blockSize * Settings.TILE_SIZE;
+
+         packet.writeNumber(x);
+         packet.writeNumber(y);
+         packet.writeNumber(distribution.currentDensities[blockIdx]);
+         packet.writeNumber(distribution.targetDensities[blockIdx]);
+      }
+   }
+}
+
+export function createDevGameDataPacket(playerClient: PlayerClient): Packet {
+   const tribes = getTribes();
+   const visibleLocalBiomeInfo = getVisibleLocalBiomeInfo(playerClient);
+
+   const viewedSpawnDistributionSpawnInfo = getSpawnInfoForEntityType(playerClient.viewedSpawnDistribution);
+   const distribution = viewedSpawnDistributionSpawnInfo?.spawnDistribution;
+   
+   const trackedEntity = SERVER.trackedEntityID;
+   const debugData = typeof trackedEntity !== "undefined" ? createEntityDebugData(trackedEntity) : null;
+   
+   let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
    
    // Subtile supports
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
@@ -234,63 +281,22 @@ export function getDevPacketDataLength(playerClient: PlayerClient): number {
    }
 
    // Local biomes
-   const info = getVisibleLocalBiomeInfo(playerClient);
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
-   for (const localBiome of info.visibleLocalBiomes) {
+   for (const localBiome of visibleLocalBiomeInfo.visibleLocalBiomes) {
       lengthBytes += getLocalBiomeDataLength(playerClient, localBiome);
    }
    
-   const spawnInfo = getSpawnInfoForEntityType(playerClient.viewedSpawnDistribution);
-   const distribution = spawnInfo?.spawnDistribution;
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    if (typeof distribution !== "undefined") {
       lengthBytes += getViewedSpawnDistributionDataLength(playerClient, distribution);
    }
-
-   return lengthBytes;
-}
-
-const getViewedSpawnDistributionDataLength = (playerClient: PlayerClient, distribution: SpawnDistribution): number => {
-   // @Copynpaste
-   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.WORLD_SIZE_TILES / distribution.blockSize;
    
-   const minBlockX = clamp(Math.floor(playerClient.minVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
-   const maxBlockX = clamp(Math.floor(playerClient.maxVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
-   const minBlockY = clamp(Math.floor(playerClient.minVisibleY / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
-   const maxBlockY = clamp(Math.floor(playerClient.maxVisibleY / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
+   // Debug data
+   lengthBytes += Float32Array.BYTES_PER_ELEMENT; // Has debug data boolean
+   lengthBytes += debugData !== null ? getEntityDebugDataLength(debugData) : 0;
 
-   const numVisibleBlocks = (maxBlockX + 1 - minBlockX) * (maxBlockY + 1 - minBlockY);
-   return Float32Array.BYTES_PER_ELEMENT + 4 * Float32Array.BYTES_PER_ELEMENT * numVisibleBlocks;
-}
-
-const addViewedSpawnDistributionData = (packet: Packet, playerClient: PlayerClient, distribution: SpawnDistribution): void => {
-   // @Copynpaste
-   const BLOCKS_IN_BOARD_DIMENSIONS = Settings.WORLD_SIZE_TILES / distribution.blockSize;
+   const packet = new Packet(PacketType.devGameData, lengthBytes);
    
-   const minBlockX = clamp(Math.floor(playerClient.minVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
-   const maxBlockX = clamp(Math.floor(playerClient.maxVisibleX / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
-   const minBlockY = clamp(Math.floor(playerClient.minVisibleY / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
-   const maxBlockY = clamp(Math.floor(playerClient.maxVisibleY / Settings.TILE_SIZE / distribution.blockSize), 0, BLOCKS_IN_BOARD_DIMENSIONS - 1);
-   
-   packet.writeNumber((maxBlockX + 1 - minBlockX) * (maxBlockY + 1 - minBlockY));
-   for (let blockY = minBlockY; blockY <= maxBlockY; blockY++) {
-      for (let blockX = minBlockX; blockX <= maxBlockX; blockX++) {
-         const blockIdx = blockY * BLOCKS_IN_BOARD_DIMENSIONS + blockX;
-
-         const x = (blockX + 0.5) * distribution.blockSize * Settings.TILE_SIZE;
-         const y = (blockY + 0.5) * distribution.blockSize * Settings.TILE_SIZE;
-
-         packet.writeNumber(x);
-         packet.writeNumber(y);
-         packet.writeNumber(distribution.currentDensities[blockIdx]);
-         packet.writeNumber(distribution.targetDensities[blockIdx]);
-      }
-   }
-}
-
-export function addDevPacketData(packet: Packet, playerClient: PlayerClient): void {
-   const tribes = getTribes();
-
    // Subtile supports
    if (playerClient.hasPacketOption(GameDataPacketOptions.sendSubtileSupports)) {
       // @Speed: called twice
@@ -359,16 +365,23 @@ export function addDevPacketData(packet: Packet, playerClient: PlayerClient): vo
    }
 
    // Local biomes
-   const info = getVisibleLocalBiomeInfo(playerClient);
-   packet.writeNumber(info.visibleLocalBiomes.length);
-   for (const localBiome of info.visibleLocalBiomes) {
+   packet.writeNumber(visibleLocalBiomeInfo.visibleLocalBiomes.length);
+   for (const localBiome of visibleLocalBiomeInfo.visibleLocalBiomes) {
       addLocalBiomeDataToPacket(packet, playerClient, localBiome);
    }
 
-   const spawnInfo = getSpawnInfoForEntityType(playerClient.viewedSpawnDistribution);
-   const distribution = spawnInfo?.spawnDistribution;
    packet.writeBool(typeof distribution !== "undefined");
    if (typeof distribution !== "undefined") {
       addViewedSpawnDistributionData(packet, playerClient, distribution);
    }
+
+   // @Bug: Shared for all players
+   if (debugData !== null) {
+      packet.writeBool(true);
+      addEntityDebugDataToPacket(packet, trackedEntity, debugData);
+   } else {
+      packet.writeBool(false);
+   }
+
+   return packet;
 }

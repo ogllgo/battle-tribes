@@ -3,10 +3,7 @@ import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import Layer from "../Layer";
 import { ComponentArrays, getComponentArrayRecord } from "../components/ComponentArray";
 import { InventoryComponentArray, getInventory } from "../components/InventoryComponent";
-import { addCrossbowLoadProgressRecordToPacket, getCrossbowLoadProgressRecordLength, InventoryUseComponentArray, LimbInfo } from "../components/InventoryUseComponent";
-import { SERVER } from "./server";
 import { Settings } from "battletribes-shared/settings";
-import { addEntityDebugDataToPacket, createEntityDebugData, getEntityDebugDataLength } from "../entity-debug-data";
 import PlayerClient from "./PlayerClient";
 import { PlayerComponentArray } from "../components/PlayerComponent";
 import { Inventory, InventoryName } from "battletribes-shared/items/items";
@@ -17,11 +14,11 @@ import { getPlayerNearbyCollapses, getSubtileSupport, subtileIsCollapsing } from
 import { getSubtileIndex } from "../../../shared/src/subtiles";
 import { layers } from "../layers";
 import { addExtendedTribeData, addShortTribeData, getExtendedTribeDataLength, getShortTribeDataLength, shouldAddTribeExtendedData } from "../Tribe";
-import { addDevPacketData, getDevPacketDataLength } from "./dev-packet-creation";
 import { addGrassBlockerToData, getGrassBlockerLengthBytes, GrassBlocker } from "../grass-blockers";
 import { addTamingSpecToData, getTamingSpecDataLength, getTamingSpecsMap } from "../taming-specs";
 import { Point } from "../../../shared/src/utils";
 import { addLightData, getEntityHitboxLights, getLightDataLength } from "../lights";
+import { getPlayerClients } from "./player-clients";
 
 export function getInventoryDataLength(inventory: Inventory): number {
    let lengthBytes = 4 * Float32Array.BYTES_PER_ELEMENT;
@@ -146,16 +143,7 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    
    const tileUpdates = layer.popTileUpdates();
 
-   const trackedEntity = SERVER.trackedEntityID;
-   const debugData = typeof trackedEntity !== "undefined" ? createEntityDebugData(trackedEntity) : null;
-
    const tribes = getTribes();
-
-   let hotbarUseInfo: LimbInfo | undefined;
-   if (player !== null) {
-      const inventoryUseComponent = InventoryUseComponentArray.getComponent(player);
-      hotbarUseInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
-   }
 
    const titleOffer = player !== null ? PlayerComponentArray.getComponent(player).titleOffer : null;
 
@@ -165,8 +153,6 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    
    // Packet type
    let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
-   // Is simulating
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    // Ticks, time
    lengthBytes += 2 * Float32Array.BYTES_PER_ELEMENT;
    // Layer
@@ -251,14 +237,9 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
       lengthBytes += getGrassBlockerLengthBytes(blocker);
    }
 
-   lengthBytes += getDevPacketDataLength(playerClient);
-   
    lengthBytes = alignLengthBytes(lengthBytes);
 
    const packet = new Packet(PacketType.gameData, lengthBytes);
-
-   // Whether or not the simulation is paused
-   packet.writeBool(!SERVER.isSimulating);
 
    packet.writeNumber(getGameTicks());
    packet.writeNumber(getGameTime());
@@ -414,12 +395,6 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
    for (const blocker of visibleGrassBlockers) {
       addGrassBlockerToData(packet, blocker);
    }
-
-   // Dev data
-   packet.writeBool(playerClient.isDev);
-   if (playerClient.isDev) {
-      addDevPacketData(packet, playerClient);
-   }
    
    // @Cleanup: remove all this shit
    
@@ -438,9 +413,6 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
       // serverTicks: Board.ticks,
       // serverTime: Board.time,
       // playerHealth: player !== null ? HealthComponentArray.getComponent(player).health : 0,
-      // entityDebugData: entityDebugData,
-      // playerTribeData: bundlePlayerTribeData(playerClient),
-      // enemyTribesData: bundleEnemyTribesData(playerClient),
       // pickedUpItem: playerClient.hasPickedUpItem,
       // hotbarCrossbowLoadProgressRecord: bundleHotbarCrossbowLoadProgressRecord(player),
       // titleOffer: player !== null ? PlayerComponentArray.getComponent(player).titleOffer : null,
@@ -460,20 +432,6 @@ export function createGameDataPacket(playerClient: PlayerClient, entitiesToSend:
 
    return packet.buffer;
 }
-
-   
-// @SQUEAM @INCOMPLETE
-   // // Debug data
-   // lengthBytes += Float32Array.BYTES_PER_ELEMENT; // Has debug data boolean
-   // lengthBytes += debugData !== null ? getEntityDebugDataLength(debugData) : 0;
-// @SQUEAM @INCOMPLETE
-   // // @Bug: Shared for all players
-   // if (debugData !== null) {
-   //    packet.writeBool(true);
-   //    addEntityDebugDataToPacket(packet, trackedEntity, debugData);
-   // } else {
-   //    packet.writeBool(false);
-   // }
 
 export function createInitialGameDataPacket(spawnLayer: Layer, spawnPosition: Point): ArrayBuffer {
    const tamingSpecsMap = getTamingSpecsMap();
@@ -624,4 +582,25 @@ export function createSyncDataPacket(playerClient: PlayerClient): ArrayBuffer {
    addInventoryDataToPacket(packet, gloveSlotInventory);
 
    return packet.buffer;
+}
+
+const createSimulationStatusUpdatePacket = (isSimulating: boolean): Packet => {
+   const packet = new Packet(PacketType.simulationStatusUpdate, 2 * Float32Array.BYTES_PER_ELEMENT);
+   packet.writeBool(isSimulating);
+   return packet;
+}
+
+export function broadcastSimulationStatus(isSimulating: boolean): void {
+   const packet = createSimulationStatusUpdatePacket(isSimulating);
+
+   // @Copynpaste
+   const playerClients = getPlayerClients();
+   for (let i = 0; i < playerClients.length; i++) {
+      const playerClient = playerClients[i];
+      if (!playerClient.isActive) {
+         continue;
+      }
+
+      playerClient.socket.send(packet.buffer);
+   }
 }

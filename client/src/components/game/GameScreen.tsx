@@ -68,11 +68,14 @@ const cloneEmptyInventory = (inventory: Inventory): Inventory => {
    return new Inventory(inventory.width, inventory.height, inventory.name);
 }
 
+export let GameScreen_setIsSimulating: (isSimulating: boolean) => void = () => {};
+
 const GameScreen = (props: GameScreenProps) => {
    const [settingsIsOpen, setSettingsIsOpen] = useState(false);
    const [isDead, setIsDead] = useState(false);
    const [cinematicModeIsEnabled, setCinematicModeIsEnabled] = useState(false);
    const [interactState, setInteractState] = useState(GameInteractState.none);
+   const [isSimulating, setIsSimulating] = useState(true);
 
    const [hotbar, setHotbar] = useState(new Inventory(Settings.INITIAL_PLAYER_HOTBAR_SIZE, 1, InventoryName.hotbar));
    const [offhand, setOffhand] = useState(new Inventory(1, 1, InventoryName.offhand));
@@ -115,6 +118,7 @@ const GameScreen = (props: GameScreenProps) => {
       closeSettingsMenu = (): void => setSettingsIsOpen(false);
 
       gameScreenSetIsDead = setIsDead;
+      GameScreen_setIsSimulating = setIsSimulating;
    }, []);
 
    useEffect(() => {
@@ -219,7 +223,7 @@ const GameScreen = (props: GameScreenProps) => {
       ) : undefined}
 
       {interactState !== GameInteractState.summonEntity ? (
-         <NerdVision summonPacketRef={summonPacketRef} setGameInteractState={setInteractState} />
+         <NerdVision isSimulating={isSimulating} summonPacketRef={summonPacketRef} setGameInteractState={setInteractState} />
       ) : <>
          <div id="summon-prompt">
             <div className="line left"></div>
@@ -258,6 +262,10 @@ const GameScreen = (props: GameScreenProps) => {
       { canAscendLayer ? (
          <LayerChangeMessage />
       ) : null }
+
+      { !isSimulating ? (
+         <h1 className="simulation-pause-label">(Server simulation has been paused manually)</h1>
+      ) : undefined}
    </>;
 }
 

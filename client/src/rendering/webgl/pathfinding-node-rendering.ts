@@ -7,7 +7,7 @@ import { bindUBOToProgram, UBOBindingIndex } from "../ubos";
 import { nerdVisionIsVisible } from "../../components/game/dev/NerdVision";
 import { entityExists } from "../../world";
 import { TransformComponentArray } from "../../entity-components/server-components/TransformComponent";
-import { getEntityDebugData } from "../render";
+import { getEntityDebugData } from "../../networking/dev-packets";
 
 enum NodeType {
    occupied,

@@ -67,12 +67,14 @@ export const enum PacketType {
    // -----------------
    initialGameData,
    gameData,
+   devGameData, // ((DEV))
    // @Cleanup: unused?
    syncData,
    sync,
    forcePositionUpdate,
    // @CLEANUP i snapped on the 'serverToClient' prefix to this cuz chatMessage was taken to the client-to-server packet
-   serverToClientChatMessage
+   serverToClientChatMessage,
+   simulationStatusUpdate
 }
 
 // @Bandwidth: figure out a way to be tightly packed (not have to add padding)

@@ -1,33 +1,23 @@
 import { PlayerKnockbackData, HealData, ResearchOrbCompleteData } from "battletribes-shared/client-server-types";
-import { BuildingMaterial, MATERIAL_TO_ITEM_MAP } from "battletribes-shared/components";
-import { getTechByID, TechID } from "battletribes-shared/techs";
-import { TribesmanTitle } from "battletribes-shared/titles";
 import Layer from "../Layer";
 import { registerCommand } from "../commands";
 import PlayerClient, { HitData } from "./PlayerClient";
-import { SERVER } from "./server";
 import { createInitialGameDataPacket } from "./packet-sending";
-import { Entity, EntityType } from "battletribes-shared/entities";
+import { Entity } from "battletribes-shared/entities";
 import { TRIBE_INFO_RECORD, TribeType } from "battletribes-shared/tribes";
 import { InventoryComponentArray, addItemToInventory, getInventory } from "../components/InventoryComponent";
-import { TribeComponentArray, recruitTribesman } from "../components/TribeComponent";
+import { TribeComponentArray } from "../components/TribeComponent";
 import { getTileX, getTileY, Point, randInt, randItem } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { getTilesOfBiome } from "../census";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { deoccupyResearchBench } from "../components/ResearchBenchComponent";
-import { BuildingMaterialComponentArray } from "../components/BuildingMaterialComponent";
 import { TurretComponentArray } from "../components/TurretComponent";
-import { TribesmanAIComponentArray } from "../components/TribesmanAIComponent";
 import { EntitySummonPacket } from "battletribes-shared/dev-packets";
 import { InventoryName, ItemType } from "battletribes-shared/items/items";
-import Tribe from "../Tribe";
 import { EntityTickEvent } from "battletribes-shared/entity-events";
 import { TransformComponentArray } from "../components/TransformComponent";
-import { destroyEntity, entityExists, getEntityType, getTribe } from "../world";
+import { destroyEntity, entityExists } from "../world";
 import { surfaceLayer } from "../layers";
-import { createItemsOverEntity } from "../entities/item-entity";
-import { acceptTitleOffer, rejectTitleOffer, forceAddTitle, removeTitle } from "../components/TribesmanComponent";
 import { Hitbox } from "../hitboxes";
 import { PlayerComponentArray } from "../components/PlayerComponent";
 
@@ -184,14 +174,6 @@ export function addPlayerClient(playerClient: PlayerClient, layer: Layer, spawnP
 
    socket.on("command", (command: string) => {
       processCommandPacket(playerClient, command);
-   });
-
-   socket.on("dev_pause_simulation", (): void => {
-      SERVER.isSimulating = false;
-   });
-
-   socket.on("dev_unpause_simulation", (): void => {
-      SERVER.isSimulating = true;
    });
 
    // -------------------------- //

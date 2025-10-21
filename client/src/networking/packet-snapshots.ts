@@ -2,7 +2,7 @@ import { ServerComponentType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
 import { PacketReader } from "../../../shared/src/packets";
 import { setCameraSubject } from "../camera";
-import { updateDebugScreenCurrentSnapshot, updateDebugScreenIsPaused } from "../components/game/dev/GameInfoDisplay";
+import { updateDebugScreenCurrentSnapshot } from "../components/game/dev/GameInfoDisplay";
 import { getComponentArrays, getServerComponentArray } from "../entity-components/ComponentArray";
 import { setCurrentSnapshot } from "../client";
 import Layer from "../Layer";
@@ -115,8 +115,6 @@ interface CollapseData {
 
 /** A snapshot of the game represented by a game tick packet. */
 export interface PacketSnapshot {
-   // @CLEANUP @INCOMPLETE best done as a separate packet instead of this.
-   readonly simulationIsPaused: boolean;
    readonly tick: number;
    readonly time: number;
    readonly layer: Layer;
@@ -179,8 +177,6 @@ const decodeEntitySnapshot = (reader: PacketReader): EntitySnapshot => {
 }
 
 export function decodeSnapshotFromGameDataPacket(reader: PacketReader): PacketSnapshot {
-   const simulationIsPaused = reader.readBool();
-
    const tick = reader.readNumber();
    
    const time = reader.readNumber();
@@ -378,7 +374,6 @@ export function decodeSnapshotFromGameDataPacket(reader: PacketReader): PacketSn
    const grassBlockers = readGrassBlockers(reader);
 
    return {
-      simulationIsPaused: simulationIsPaused,
       tick: tick,
       time: time,
       layer: layer,
@@ -466,9 +461,6 @@ export function updateGameToSnapshot(snapshot: PacketSnapshot): void {
 
    setCurrentSnapshot(snapshot);
    updateDebugScreenCurrentSnapshot(snapshot);
-   
-   // @SQUEAM if kept then can be put in the update debug screen, else just fully removed.
-   updateDebugScreenIsPaused(snapshot.simulationIsPaused);
 
    if (snapshot.layer !== getCurrentLayer()) {
       setCurrentLayer(snapshot.layer);
@@ -647,22 +639,3 @@ export function updateGameToSnapshot(snapshot: PacketSnapshot): void {
 
    updateGrassBlockersFromData(snapshot.grassBlockers);
 }
-
-// @INCOMPLETE @SQUEAM
-   // const hasDebugData = reader.readBool();
-   
-   // if (hasDebugData && isDev()) {
-   //    const debugData = readDebugData(reader);
-   //    Game.setGameObjectDebugData(debugData);
-   // } else {
-   //    Game.setGameObjectDebugData(null);
-   // }
-
-
-// @INCOMPLETE @SQUEAM
-   // // Tribe plans and virtual buildings
-   // // @Cleanup: remove underscore
-   // const _isDev = reader.readBool();
-   // if (_isDev) {
-   //    readPacketDevData(reader);
-   // }

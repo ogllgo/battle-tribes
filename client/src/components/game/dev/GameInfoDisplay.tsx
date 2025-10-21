@@ -15,6 +15,7 @@ import { cameraZoom, setCameraZoom } from "../../../camera";
 import { PacketSnapshot } from "../../../networking/packet-snapshots";
 
 interface GameInfoDisplayProps {
+   readonly isSimulating: boolean;
    setGameInteractState(state: GameInteractState): void;
 }
 
@@ -23,7 +24,6 @@ interface GameInfoDisplayProps {
 export let updateDebugScreenCurrentSnapshot: (snapshot: PacketSnapshot) => void = () => {};
 export let updateDebugScreen: () => void = () => {};
 export let updateDebugScreenRenderTime: (renderTime: number) => void = () => {};
-export let updateDebugScreenIsPaused: (isPaused: boolean) => void = () => {};
 export let GameInfoDisplay_setBufferSize: (size: number) => void = () => {};
 
 const GameInfoDisplay = (props: GameInfoDisplayProps) => {
@@ -33,7 +33,6 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
    const [currentTime, setCurrentTime] = useState(0);
    const [ticks, setTicks] = useState(currentSnapshot.tick);
    const [zoom, setZoom] = useState(cameraZoom);
-   const [isPaused, setIsPaused] = useState(false);
    const [bufferSize, setBufferSize] = useState(0);
 
    const [_, forceUpdate] = useReducer(x => x + 1, 0);
@@ -62,8 +61,6 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
       }
 
       updateDebugScreen = forceUpdate;
-
-      updateDebugScreenIsPaused = setIsPaused;
 
       GameInfoDisplay_setBufferSize = setBufferSize;
    }, []);
@@ -180,12 +177,12 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
    }
 
    const toggleSimulation = useCallback((): void => {
-      if (isPaused) {
-         sendToggleSimulationPacket(true);
-      } else {
+      if (props.isSimulating) {
          sendToggleSimulationPacket(false);
+      } else {
+         sendToggleSimulationPacket(true);
       }
-   }, [isPaused]);
+   }, [props.isSimulating]);
 
    const onChange = (e: Event): void => {
       const target = e.target as HTMLSelectElement;
@@ -199,7 +196,7 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
       <p>Server TPS: {getMeasuredServerTPS().toFixed(2)}</p>
       <p>Buffer size: {bufferSize}</p>
 
-      <button onClick={toggleSimulation}>{isPaused ? "Resume" : "Pause"} Simulation</button>
+      <button onClick={toggleSimulation}>{props.isSimulating ? "Pause" : "Resume"} Simulation</button>
 
       <button onClick={() => props.setGameInteractState(GameInteractState.spectateEntity)}>Spectate Entity</button>
       <button onClick={() => { playerInstance !== null ? sendSpectateEntityPacket(playerInstance) : undefined }}>Clear Spectate</button>
