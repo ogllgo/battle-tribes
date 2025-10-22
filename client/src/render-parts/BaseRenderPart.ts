@@ -33,8 +33,6 @@ export default abstract class BaseRenderPart {
 
    public readonly children = new Array<RenderPart>();
    public readonly parent: RenderPartParent;
-   // @HACK
-   public parentHitbox: Hitbox | null = null;
 
    // Needed for the tree-like update system regardless of whether the thing will be rendered to the screen
    public readonly modelMatrix = createIdentityMatrix();

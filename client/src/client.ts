@@ -27,7 +27,7 @@ import { callEntityOnUpdateFunctions } from "./entity-components/ComponentArray"
 import { resolvePlayerCollisions } from "./collision";
 import { CowStaminaBar_forceUpdate } from "./components/game/CowStaminaBar";
 import { Packet, PacketReader, PacketType } from "../../shared/src/packets";
-import { decodeSnapshotFromGameDataPacket, PacketSnapshot, updateGameToSnapshot } from "./networking/packet-snapshots";
+import { decodeSnapshotFromGameDataPacket, PacketSnapshot, updateGameStateToSnapshot } from "./networking/packet-snapshots";
 import { TribeType } from "../../shared/src/tribes";
 import { App_setState, AppState } from "./components/App";
 import { sendActivatePacket, sendInitialPlayerDataPacket, sendPlayerDataPacket } from "./networking/packet-sending";
@@ -173,7 +173,9 @@ export function establishNetworkConnection(username: string, tribeType: TribeTyp
 }
 
 const receivePacket = (reader: PacketReader): PacketSnapshot => {
-   const snapshot = decodeSnapshotFromGameDataPacket(reader);
+   const previousSnapshot = snapshotBuffer.length > 0 ? snapshotBuffer[snapshotBuffer.length - 1] : null;
+   const snapshot = decodeSnapshotFromGameDataPacket(reader, previousSnapshot);
+   
    snapshotBuffer.push(snapshot);
    GameInfoDisplay_setBufferSize(snapshotBuffer.length);
 
@@ -195,7 +197,7 @@ export function receiveInitialPacket(reader: PacketReader): PacketSnapshot {
    
    const snapshot = receivePacket(reader);
 
-   updateGameToSnapshot(snapshot);
+   updateGameStateToSnapshot(snapshot);
    currentSnapshot = snapshot;
    clientTick = snapshot.tick; // Start the client tick off at the tick of the very first packet received.
 
@@ -252,7 +254,7 @@ const runFrame = (frameStartTime: number): void => {
          const snapshot = snapshotBuffer[i];
          if (snapshot.tick < renderTick) {
             if (snapshot.tick > currentSnapshot.tick) {
-               updateGameToSnapshot(snapshot);
+               updateGameStateToSnapshot(snapshot);
                currentSnapshot = snapshot;
             }
          } else {
@@ -283,6 +285,7 @@ const runFrame = (frameStartTime: number): void => {
       while (clientTickInterp >= 1) {
          // @Cleanup: this function name i think is a lil weird for something which the contents of the if updates the player.
          if (playerInstance !== null && entityUsesClientInterp(playerInstance)) {
+            updatePlayerMovement();
             callEntityOnUpdateFunctions(playerInstance);
             resolvePlayerCollisions();
          }
@@ -338,8 +341,6 @@ const runFrame = (frameStartTime: number): void => {
       Board.updateTickCallbacks();
       Board.updateParticles();
       
-      updatePlayerMovement();
-
       renderCursorTooltip();
    }
 

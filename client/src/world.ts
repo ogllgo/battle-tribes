@@ -243,12 +243,13 @@ export function removeEntity(entity: Entity, isDeath: boolean): void {
    }
    
    removeEntitySounds(entity);
+
+   undirtyRenderInfo(renderInfo);
    
    // @Incomplete: commenting this out because removed entities should have their lights automatically
    // removed by the light data update immediately after the entity data update, but i'm wondering if there
    // are any cases where entities are removed not in the entity data update?? or could be in the future? cuz this is exported everywhence
    // removeAllAttachedLights(renderInfo);
-   undirtyRenderInfo(renderInfo);
 
    const componentArrays = getComponentArrays();
 

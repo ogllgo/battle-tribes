@@ -1,5 +1,5 @@
 import { ServerComponentType } from "../../../shared/src/components";
-import { Entity, EntityType } from "../../../shared/src/entities";
+import { Entity, EntityType, EntityTypeString } from "../../../shared/src/entities";
 import { PacketReader } from "../../../shared/src/packets";
 import { setCameraSubject } from "../camera";
 import { updateDebugScreenCurrentSnapshot } from "../components/game/dev/GameInfoDisplay";
@@ -18,10 +18,10 @@ import { registerDirtyRenderInfo } from "../rendering/render-part-matrices";
 import { assert, Point, randAngle, randFloat } from "../../../shared/src/utils";
 import { LightData, readLightsFromData, updateLightsFromData } from "../lights";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
-import { getRandomPositionInEntity, TransformComponentArray } from "../entity-components/server-components/TransformComponent";
+import { getRandomPositionInEntity, TransformComponentArray, TransformComponentData } from "../entity-components/server-components/TransformComponent";
 import { createHealingParticle, createSlimePoolParticle, createSparkParticle } from "../particles";
 import { HitFlags } from "../../../shared/src/client-server-types";
-import { addHitboxVelocity, getHitboxByLocalID, getHitboxVelocity, setHitboxVelocity } from "../hitboxes";
+import { addHitboxVelocity, getHitboxByLocalID, getHitboxVelocity, Hitbox, setHitboxVelocity } from "../hitboxes";
 import { createDamageNumber, createHealNumber, createResearchNumber } from "../text-canvas";
 import { STRUCTURE_TYPES } from "../../../shared/src/structures";
 import { SubtileType, TileType } from "../../../shared/src/tiles";
@@ -119,6 +119,8 @@ export interface PacketSnapshot {
    readonly time: number;
    readonly layer: Layer;
    readonly entities: Map<Entity, EntitySnapshot>;
+   /** Entities which have at least one thing which needs to be visually interpolated from the previous packet to this one. */
+   readonly interpolatingEntities: ReadonlyArray<Entity>;
    readonly removedEntities: ReadonlyArray<RemovedEntityInfo>;
    readonly playerTribeData: ExtendedTribe;
    readonly enemyTribeData: ReadonlyArray<Tribe>;
@@ -143,7 +145,31 @@ export interface PacketSnapshot {
 // Use prime numbers / 100 to ensure a decent distribution of different types of particles
 const HEALING_PARTICLE_AMOUNTS = [0.05, 0.37, 1.01];
 
-const decodeEntitySnapshot = (reader: PacketReader): EntitySnapshot => {
+const entityShouldInterpolate = (newTransformData: TransformComponentData, previousTransformData: TransformComponentData): boolean => {
+   // If any hitboxes' positions or angles have changed
+   for (const newHitbox of newTransformData.hitboxes) {
+      // Find the previous hitbox
+      // @Speed
+      let previousHitbox: Hitbox | undefined;
+      for (const hitbox of previousTransformData.hitboxes) {
+         if (hitbox.localID === newHitbox.localID) {
+            previousHitbox = hitbox;
+         }
+      }
+      
+      if (typeof previousHitbox !== "undefined") {
+         if (newHitbox.box.position.x !== previousHitbox.box.position.x
+            || newHitbox.box.position.y !== previousHitbox.box.position.y
+            || newHitbox.box.angle !== previousHitbox.box.angle) {
+            return true;
+         }
+      }
+   }
+
+   return false;
+}
+
+const decodeEntitySnapshot = (reader: PacketReader, interpolatingEntities: Array<Entity>, previousSnapshot: PacketSnapshot | null, entity: Entity): EntitySnapshot => {
    const entityType = reader.readNumber() as EntityType;
    const spawnTicks = reader.readNumber();
    
@@ -164,6 +190,17 @@ const decodeEntitySnapshot = (reader: PacketReader): EntitySnapshot => {
 
       // @Cleanup: cast
       entityServerComponentData[componentType] = componentArray.decodeData(reader) as any;
+
+      // @Speed: lot can be done to improve the way this is done
+      if (previousSnapshot !== null && componentType === ServerComponentType.transform) {
+         const previousEntityData = previousSnapshot.entities.get(entity);
+         if (typeof previousEntityData !== "undefined") {
+            const previousTransformComponentData = previousEntityData.serverComponentData[ServerComponentType.transform]!;
+            if (entityShouldInterpolate(entityServerComponentData[componentType]!, previousTransformComponentData)) {
+               interpolatingEntities.push(entity);
+            }
+         }
+      }
    }
       
    return {
@@ -176,7 +213,7 @@ const decodeEntitySnapshot = (reader: PacketReader): EntitySnapshot => {
    };
 }
 
-export function decodeSnapshotFromGameDataPacket(reader: PacketReader): PacketSnapshot {
+export function decodeSnapshotFromGameDataPacket(reader: PacketReader, previousSnapshot: PacketSnapshot | null): PacketSnapshot {
    const tick = reader.readNumber();
    
    const time = reader.readNumber();
@@ -186,9 +223,10 @@ export function decodeSnapshotFromGameDataPacket(reader: PacketReader): PacketSn
 
    const numEntities = reader.readNumber();
    const entities = new Map<Entity, EntitySnapshot>();
+   const interpolatingEntities = new Array<Entity>();
    for (let i = 0; i < numEntities; i++) {
       const entity = reader.readNumber() as Entity;
-      const entitySnapshot = decodeEntitySnapshot(reader);
+      const entitySnapshot = decodeEntitySnapshot(reader, interpolatingEntities, previousSnapshot, entity);
       entities.set(entity, entitySnapshot);
    }
 
@@ -378,6 +416,7 @@ export function decodeSnapshotFromGameDataPacket(reader: PacketReader): PacketSn
       time: time,
       layer: layer,
       entities: entities,
+      interpolatingEntities: interpolatingEntities,
       removedEntities: removedEntities,
       playerTribeData: playerTribeData,
       enemyTribeData: enemyTribeData,
@@ -455,7 +494,7 @@ const updatePlayerFromData = (playerInstance: number, data: EntitySnapshot): voi
    }
 }
 
-export function updateGameToSnapshot(snapshot: PacketSnapshot): void {
+export function updateGameStateToSnapshot(snapshot: PacketSnapshot): void {
    // @HACK @CLEANUP impure Done before so that server data can override particles
    Board.updateParticles();
 

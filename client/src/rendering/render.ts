@@ -21,7 +21,7 @@ import { layers, getCurrentLayer, entityExists, getEntityRenderInfo } from "../w
 import { renderLightLevelsText } from "./light-levels-text-rendering";
 import { createRenderChunks, RENDER_CHUNK_SIZE } from "./render-chunks";
 import { resetRenderOrder, renderNextRenderables } from "./render-loop";
-import { dirtifyMovingEntities, updateRenderPartMatrices } from "./render-part-matrices";
+import { updateRenderPartMatrices } from "./render-part-matrices";
 import { createTribePlanVisualiserGLContext, renderTribePlans } from "./tribe-plan-visualiser/tribe-plan-visualiser";
 import { createUBOs, updateUBOs } from "./ubos";
 import { createHitboxShaders, renderHitboxes } from "./webgl/box-wireframe-rendering";
@@ -309,7 +309,6 @@ export function renderGame(clientTickInterp: number, serverTickInterp: number): 
 
    updateUBOs();
 
-   dirtifyMovingEntities();
    updateRenderPartMatrices(clientTickInterp, serverTickInterp);
 
    refreshCameraPosition(clientTickInterp, serverTickInterp)

@@ -12,9 +12,8 @@ import Board from "../../Board";
 import { Entity, EntityType } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../../shared/src/collision";
-import { registerDirtyRenderInfo, renderParentIsHitboxReference } from "../../rendering/render-part-matrices";
 import { playerInstance } from "../../player";
-import { applyAccelerationFromGround, createHitboxFromData, findEntityHitbox, getHitboxTile, getHitboxVelocity, getRandomPositionInBox, getRootHitbox, Hitbox, readHitboxFromData, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox, updateHitboxFromData, updatePlayerHitboxFromData } from "../../hitboxes";
+import { applyAccelerationFromGround, getHitboxTile, getHitboxVelocity, getRandomPositionInBox, getRootHitbox, Hitbox, readHitboxFromData, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox, updateHitboxFromData, updatePlayerHitboxFromData } from "../../hitboxes";
 import Particle from "../../Particle";
 import { createWaterSplashParticle } from "../../particles";
 import { addTexturedParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
@@ -27,7 +26,7 @@ export interface TransformComponentData {
    readonly collisionBit: CollisionBit;
    readonly collisionMask: number;
    readonly traction: number;
-   readonly hitboxes: ReadonlyArray<Readonly<Hitbox>>;
+   readonly hitboxes: ReadonlyArray<Hitbox>;
 }
 
 export interface TransformComponent {
@@ -314,8 +313,6 @@ const applyHitboxKinematics = (transformComponent: TransformComponent, entity: E
 
    // Mark entity's position as updated
    cleanEntityTransform(entity);
-   const renderInfo = getEntityRenderInfo(entity);
-   registerDirtyRenderInfo(renderInfo);
 }
 
 const collideWithVerticalWorldBorder = (hitbox: Hitbox, tx: number): void => {
@@ -449,8 +446,7 @@ function createComponent(entityComponentData: EntityComponentData): TransformCom
    const hitboxes = new Array<Hitbox>();
    const rootHitboxes = new Array<Hitbox>();
    const hitboxMap = new Map<number, Hitbox>();
-   for (const hitboxData of transformComponentData.hitboxes) {
-      const hitbox = createHitboxFromData(hitboxData);
+   for (const hitbox of transformComponentData.hitboxes) {
       // Set all the hitboxes' last update ticks, since they default to 0 and it has to be done here.
       hitbox.lastUpdateTicks = currentSnapshot.tick;
       
@@ -483,14 +479,6 @@ function getMaxRenderParts(): number {
 
 function onLoad(entity: Entity): void {
    cleanEntityTransform(entity);
-
-   // @Hack: this whole system with optional parentHitbox
-   const renderInfo = getEntityRenderInfo(entity);
-   for (const renderPart of renderInfo.renderPartsByZIndex) {
-      if (renderParentIsHitboxReference(renderPart.parent)) {
-         renderPart.parentHitbox = findEntityHitbox(renderPart.parent.entity, renderPart.parent.localID);
-      }
-   }
 }
 
 function onTick(entity: Entity): void {
@@ -585,10 +573,6 @@ function updateFromData(data: TransformComponentData, entity: Entity): void {
    // @SPEED: What we could do is explicitly send which hitboxes have been created, and removed, from the server. (When using carmack networking)
    
    const transformComponent = TransformComponentArray.getComponent(entity)!;
-   
-   // @HACK @SPEED? (actually this might be ok just if we do the optimisation which only sends components which were updated, not all of em at once)
-   const renderInfo = getEntityRenderInfo(entity);
-   registerDirtyRenderInfo(renderInfo);
    
    transformComponent.collisionBit = data.collisionBit;
    transformComponent.collisionMask = data.collisionMask;

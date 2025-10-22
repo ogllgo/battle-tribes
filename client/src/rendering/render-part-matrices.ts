@@ -1,9 +1,9 @@
 import { EntityRenderInfo, updateEntityRenderInfoRenderData } from "../EntityRenderInfo";
 import { createIdentityMatrix, createTranslationMatrix, Matrix3x2, matrixMultiplyInPlace } from "./matrices";
 import { Settings } from "battletribes-shared/settings";
-import { RenderPartParent, RenderPart, HitboxReference } from "../render-parts/render-parts";
+import { RenderPart, renderParentIsHitbox } from "../render-parts/render-parts";
 import { renderLayerIsChunkRendered, updateChunkRenderedEntity } from "./webgl/chunked-entity-rendering";
-import { getEntityRenderInfo } from "../world";
+import { entityExists, getEntityRenderInfo } from "../world";
 import { assert, getAngleDiff, lerp, Point, randAngle, slerp } from "../../../shared/src/utils";
 import { gl } from "../webgl";
 import { HealthComponentArray } from "../entity-components/server-components/HealthComponent";
@@ -17,6 +17,7 @@ import { ServerComponentType } from "../../../shared/src/components";
 
 // @Cleanup: file name
 
+// @HACK i've only kept this dirty array around for hacky reasons. when i make the rework where the client works off sent render parts this should go away.
 let dirtyEntityRenderInfos = new Array<EntityRenderInfo>();
 
 /* ------------------------ */
@@ -192,7 +193,7 @@ const calculateHitboxMatrix = (hitbox: Hitbox, tickInterp: number): Matrix3x2 =>
    // @HACK we know/calculated this previously when we had to find tickInterp...
    let usesClientInterp = entityUsesClientInterp(hitbox.entity);
    // @HACK cuz we sometimes create imaginary render parts e.g. to show selection outlines, they won't be in the snapshots!
-   if (typeof currentSnapshot.entities.get(hitbox.entity) === "undefined") {
+   if (!currentSnapshot.entities.has(hitbox.entity)) {
       usesClientInterp = true;
    }
    
@@ -244,10 +245,6 @@ export function calculateHitboxRenderPosition(hitbox: Hitbox, tickInterp: number
    return getMatrixPosition(matrix);
 }
 
-export function renderParentIsHitboxReference(parent: RenderPartParent): parent is HitboxReference {
-   return parent !== null && typeof (parent as Hitbox).mass !== "undefined";
-}
-
 export function translateEntityRenderParts(renderInfo: EntityRenderInfo, tx: number, ty: number): void {
    for (const thing of renderInfo.renderPartsByZIndex) {
       const matrix = createTranslationMatrix(tx, ty);
@@ -262,12 +259,10 @@ const cleanRenderPartModelMatrix = (renderPart: RenderPart, tickInterp: number):
 
    let parentRotation: number;
    let parentModelMatrix: Readonly<Matrix3x2>;
-   if (renderParentIsHitboxReference(renderPart.parent)) {
-      assert(renderPart.parentHitbox !== null);
-      
+   if (renderParentIsHitbox(renderPart.parent)) {
       // @Speed? @Garbage: Should override
-      parentModelMatrix = calculateHitboxMatrix(renderPart.parentHitbox, tickInterp);
-      parentRotation = renderPart.parentHitbox.box.angle;
+      parentModelMatrix = calculateHitboxMatrix(renderPart.parent, tickInterp);
+      parentRotation = renderPart.parent.box.angle;
    } else {
       parentModelMatrix = renderPart.parent.modelMatrix;
       parentRotation = renderPart.parent.angle;
@@ -319,17 +314,18 @@ export function updateRenderPartMatrices(clientTickInterp: number, serverTickInt
    // Do this before so that binding buffers during the loop doesn't mess up any previously bound vertex array.
    gl.bindVertexArray(null);
 
-   // @HACK: to fix the flash bug where the damage flash doesn't play
-   for (const entity of HealthComponentArray.entities) {
-      const renderInfo = getEntityRenderInfo(entity);
-      registerDirtyRenderInfo(renderInfo);
+   for (const entity of nextSnapshot.interpolatingEntities) {
+      // @Hack? I send entity data even if the entity is removed that tick, so while we have to interpolate to that deleted data, also if currentSnapshot = nextSnapshot then it sometimes tries to interpolate a deleted entity.
+      if (entityExists(entity)) {
+         const renderInfo = getEntityRenderInfo(entity);
+         const tickInterp = getEntityTickInterp(renderInfo.entity, clientTickInterp, serverTickInterp);
+         cleanEntityRenderInfo(renderInfo, tickInterp);
+      }
    }
-   
-   // @Bug: I don't think this will account for cases where the game is updated less than 60 times a second.
-   // To fix: temporarily set Settings.TICK_RATE to like 10 or something and then fix the subsequent slideshow
-   for (let i = 0; i < dirtyEntityRenderInfos.length; i++) {
-      const renderInfo = dirtyEntityRenderInfos[i];
 
+   // @HACK
+   // @CRASH potential crash, cuz cleanEntityRenderInfo is now intertwined with the interpolating entities and if an entity is dirtied which doesn't appear in that array then it will probs crash
+   for (const renderInfo of dirtyEntityRenderInfos) {
       const tickInterp = getEntityTickInterp(renderInfo.entity, clientTickInterp, serverTickInterp);
       cleanEntityRenderInfo(renderInfo, tickInterp);
    }

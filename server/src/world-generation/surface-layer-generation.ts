@@ -43,7 +43,6 @@ import { createTumbleweedLiveConfig } from "../entities/desert/tumbleweed-live";
 import { createTumbleweedDeadConfig } from "../entities/desert/tumbleweed-dead";
 import { createPalmTreeConfig } from "../entities/desert/palm-tree";
 import { createSandstoneRockConfig } from "../entities/desert/sandstone-rock";
-import { createCowConfig } from "../entities/mobs/cow";
 import { createSpruceTreeConfig } from "../entities/tundra/spruce-tree";
 import { createTundraRockConfig } from "../entities/tundra/tundra-rock";
 import { createSnowberryBushConfig } from "../entities/tundra/snowberry-bush";
@@ -54,6 +53,7 @@ import { createTukmokConfig } from "../entities/tundra/tukmok";
 import { createDustfleaConfig } from "../entities/desert/dustflea";
 import { createKrumblidConfig } from "../entities/mobs/krumblid";
 import { createOkrenConfig } from "../entities/desert/okren";
+import { createCowConfig } from "../entities/mobs/cow";
 
 const enum Vars {
    TRIBESMAN_SPAWN_EXCLUSION_RANGE = 1200
@@ -495,28 +495,28 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    }
 
    // @SQUEAM for clementus shot
-   // registerNewSpawnInfo({
-   //    entityTypes: [EntityType.cow],
-   //    layer: surfaceLayer,
-   //    spawnRate: 0.01,
-   //    biome: Biome.grasslands,
-   //    tileTypes: [TileType.grass],
-   //    packSpawning: {
-   //       getPackSize: () => randInt(2, 5),
-   //       spawnRange: 200
-   //    },
-   //    onlySpawnsInNight: false,
-   //    minSpawnDistance: 150,
-   //    // @SQUEAM for cow pen extended thing, want less cows in shot
-   //    spawnDistribution: createRawSpawnDistribution(16, 0.001),
-   //    // spawnDistribution: createRawSpawnDistribution(16, 0.003),
-   //    balanceSpawnDistribution: false,
-   //    doStrictTileTypeCheck: false,
-   //    createEntity: (pos: Point, angle: number, firstEntityConfig: ReadonlyArray<EntityConfig> | null): ReadonlyArray<EntityConfig> | null => {
-   //       const species = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig[0].components[ServerComponentType.cow]!.species;
-   //       return [createCowConfig(pos, angle, species)];
-   //    }
-   // });
+   registerNewSpawnInfo({
+      entityTypes: [EntityType.cow],
+      layer: surfaceLayer,
+      spawnRate: 0.01,
+      biome: Biome.grasslands,
+      tileTypes: [TileType.grass],
+      packSpawning: {
+         getPackSize: () => randInt(2, 5),
+         spawnRange: 200
+      },
+      onlySpawnsInNight: false,
+      minSpawnDistance: 150,
+      // @SQUEAM for cow pen extended thing, want less cows in shot
+      spawnDistribution: createRawSpawnDistribution(16, 0.001),
+      // spawnDistribution: createRawSpawnDistribution(16, 0.003),
+      balanceSpawnDistribution: false,
+      doStrictTileTypeCheck: false,
+      createEntity: (pos: Point, angle: number, firstEntityConfig: ReadonlyArray<EntityConfig> | null): ReadonlyArray<EntityConfig> | null => {
+         const species = firstEntityConfig === null ? randInt(0, 1) : firstEntityConfig[0].components[ServerComponentType.cow]!.species;
+         return [createCowConfig(pos, angle, species)];
+      }
+   });
    registerNewSpawnInfo({
       entityTypes: [EntityType.berryBush],
       layer: surfaceLayer,

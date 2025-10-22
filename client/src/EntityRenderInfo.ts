@@ -2,13 +2,13 @@ import { assert } from "battletribes-shared/utils";
 import { Entity, EntityTypeString } from "battletribes-shared/entities";
 import { RenderPartOverlayGroup } from "./rendering/webgl/overlay-rendering";
 import { removeRenderable } from "./rendering/render-loop";
-import { RenderPart } from "./render-parts/render-parts";
+import { renderParentIsHitbox, RenderPart } from "./render-parts/render-parts";
 import { RenderLayer } from "./render-layers";
-import { registerDirtyRenderInfo, renderParentIsHitboxReference } from "./rendering/render-part-matrices";
 import { getEntityLayer, getEntityType } from "./world";
 import { getServerComponentArrays } from "./entity-components/ComponentArray";
 import { gl } from "./webgl";
 import { EntityRenderingVars, setRenderInfoInVertexData } from "./rendering/webgl/entity-rendering";
+import { registerDirtyRenderInfo } from "./rendering/render-part-matrices";
 
 export interface ComponentTint {
    readonly tintR: number;
@@ -134,7 +134,7 @@ export class EntityRenderInfo {
       }
       this.renderPartsByZIndex.splice(idx, 0, renderPart);
 
-      if (renderParentIsHitboxReference(renderPart.parent)) {
+      if (renderParentIsHitbox(renderPart.parent)) {
          this.rootRenderParts.push(renderPart);
       } else {
          renderPart.parent.children.push(renderPart);

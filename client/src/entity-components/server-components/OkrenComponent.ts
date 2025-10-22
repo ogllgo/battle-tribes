@@ -9,8 +9,8 @@ import { Entity } from "../../../../shared/src/entities";
 import { Hitbox } from "../../hitboxes";
 import { Point, randAngle, randFloat } from "../../../../shared/src/utils";
 import { createOkrenEyeParticle } from "../../particles";
-import { renderParentIsHitboxReference } from "../../rendering/render-part-matrices";
 import { EntityRenderInfo } from "../../EntityRenderInfo";
+import { renderParentIsHitbox } from "../../render-parts/render-parts";
 
 // @Copynpaste from server
 export const enum OkrenAgeStage {
@@ -133,7 +133,7 @@ function getMaxRenderParts(): number {
 const getEyeRenderPart = (okren: Entity, flipX: boolean): TexturedRenderPart => {
    const renderInfo = getEntityRenderInfo(okren);
    for (const renderPart of renderInfo.renderPartsByZIndex) {
-      if (renderParentIsHitboxReference(renderPart.parent) && renderPart.parent.flags.includes(HitboxFlag.OKREN_EYE) && renderPart.parent.box.flipX === flipX) {
+      if (renderParentIsHitbox(renderPart.parent) && renderPart.parent.flags.includes(HitboxFlag.OKREN_EYE) && renderPart.parent.box.flipX === flipX) {
          return renderPart as TexturedRenderPart;
       }
    }
@@ -143,7 +143,7 @@ const getEyeRenderPart = (okren: Entity, flipX: boolean): TexturedRenderPart => 
 function updateFromData(data: OkrenComponentData, okren: Entity): void {
    const size = data.size;
 
-   const okrenComponent = OkrenComponentArray.getComponent(okren);
+   const okrenComponent = OkrenComponentArray.getComponent(okren)!;
    if (okrenComponent.size !== size) {
       okrenComponent.size = size;
    }
