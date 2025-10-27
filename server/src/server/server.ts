@@ -1,7 +1,7 @@
 import { VisibleChunkBounds } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { TribeType } from "battletribes-shared/tribes";
-import { Point, randFloat, randInt } from "battletribes-shared/utils";
+import { Point } from "battletribes-shared/utils";
 import { PacketReader, PacketType } from "battletribes-shared/packets";
 import WebSocket, { Server } from "ws";
 import { runSpawnAttempt, spawnInitialEntities } from "../entity-spawning";
@@ -28,17 +28,15 @@ import { surfaceLayer, layers } from "../layers";
 import { generateReeds } from "../world-generation/reed-generation";
 import { riverMainTiles } from "../world-generation/surface-layer-generation";
 import { updateWind } from "../wind";
-import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
 import { applyTethers } from "../tethers";
-import { createTukmokConfig } from "../entities/tundra/tukmok";
 import { generateGrassStrands } from "../world-generation/grass-generation";
 import { Hitbox } from "../hitboxes";
-import OPTIONS from "../options";
 import { createCowConfig } from "../entities/mobs/cow";
 import { generateDecorations } from "../world-generation/decoration-generation";
 import { ServerComponentType } from "../../../shared/src/components";
 import { getTamingSkill, TamingSkillID } from "../../../shared/src/taming";
 import { createDevGameDataPacket } from "./dev-packets";
+import { createTribeWorkerConfig } from "../entities/tribes/tribe-worker";
 
 /*
 
@@ -92,9 +90,6 @@ const getPlayerVisibleEntities = (playerClient: PlayerClient): Set<Entity> => {
                for (const rootHitbox of transformComponent.rootHitboxes) {
                   const rootEntity = rootHitbox.rootEntity;
                   const rootTransformComponent = TransformComponentArray.getComponent(rootEntity);
-                  // @CRASH @Investigate rootTransformComponent is undefined sometimes idfky
-                  // - Once this happened when a cow had been hit by a bunch of arrows which were embedded in them, and then i killed the cow.
-                  //    - might have been an arrow attached to another arrow attached to the cow? maybe just arrows attached to the cow? Investigate.
                   // @Cleanup lolllllllll
                   for (const rootRootHitbox of rootTransformComponent.rootHitboxes) {
                      addHitboxHeirarchyToEntities(playerClient, visibleEntities, rootRootHitbox);
@@ -188,9 +183,6 @@ class GameServer {
          port: Settings.SERVER_PORT
       });
 
-      // @SQUEAM
-      let BB = false;
-
       // Handle player connections
       this.server.on("connection", (socket: WebSocket) => {
          let playerClient: PlayerClient | undefined;
@@ -234,19 +226,10 @@ class GameServer {
                   createEntity(config, layer, 0);
                }
 
-               // @SQUEAM
                setTimeout(() => {
-                  if (BB) return;
-                  BB = true;
-                  for (let i = 0; i < 5; i++) {
-                     const cowConfig = createCowConfig(new Point(spawnPosition.x + Math.random() * 50, spawnPosition.y + 200), Math.PI * 0.5, CowSpecies.brown);
-                     cowConfig.components[ServerComponentType.taming]!.tameTribe = tribe;
-                     cowConfig.components[ServerComponentType.taming]!.acquiredSkills.push(getTamingSkill(TamingSkillID.riding));
-                     cowConfig.components[ServerComponentType.taming]!.acquiredSkills.push(getTamingSkill(TamingSkillID.follow));
-                     cowConfig.components[ServerComponentType.taming]!.followTarget = playerClient!.instance;
-                     createEntity(cowConfig, layer, 0);
-                  }
-               }, 4000);
+                  const config = createTribeWorkerConfig(new Point(spawnPosition.x + 200, spawnPosition.y), 0, new Tribe(TribeType.plainspeople, true, new Point(spawnPosition.x + 200, spawnPosition.y)));
+                  createEntity(config, layer, 0);
+               }, 1000);
                
                addPlayerClient(playerClient, surfaceLayer, spawnPosition);
 

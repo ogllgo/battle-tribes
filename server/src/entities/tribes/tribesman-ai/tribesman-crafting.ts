@@ -3,48 +3,39 @@ import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { Settings, PathfindingSettings } from "battletribes-shared/settings";
 import Tribe from "../../../Tribe";
 import { turnEntityToEntity } from "../../../ai-shared";
-import { recipeCraftingStationIsAvailable, InventoryComponentArray, craftRecipe, InventoryComponent, countItemType } from "../../../components/InventoryComponent";
+import { InventoryComponentArray, craftRecipe, InventoryComponent, countItemType } from "../../../components/InventoryComponent";
 import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
 import { TribesmanPathType, TribesmanAIComponentArray } from "../../../components/TribesmanAIComponent";
 import { PathfindFailureDefault } from "../../../pathfinding";
-import { getAvailableCraftingStations } from "../tribe-member";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
-import { CraftingStation, CRAFTING_RECIPES, CRAFTING_STATION_ITEM_TYPE_RECORD } from "battletribes-shared/items/crafting-recipes";
+import { CRAFTING_RECIPES } from "battletribes-shared/items/crafting-recipes";
 import { InventoryName } from "battletribes-shared/items/items";
 import { TransformComponentArray } from "../../../components/TransformComponent";
 import { getEntityLayer, getEntityType, getGameTicks } from "../../../world";
 import { AICraftRecipePlan, planToPlaceStructure } from "../../../tribesman-ai/tribesman-ai-planning";
 import { addAssignmentPart, AIAssignmentComponentArray } from "../../../components/AIAssignmentComponent";
 import { TribeComponentArray } from "../../../components/TribeComponent";
-import { assert } from "../../../../../shared/src/utils";
-import { Hitbox } from "../../../hitboxes";
 import { clearPathfinding, pathfindTribesman } from "../../../components/AIPathfindingComponent";
 
-const buildingMatchesCraftingStation = (building: Entity, craftingStation: CraftingStation): boolean => {
-   return getEntityType(building) === EntityType.workbench && craftingStation === CraftingStation.workbench;
-}
-
-const getClosestCraftingStation = (tribesman: Entity, tribe: Tribe, craftingStation: CraftingStation): Entity | null => {
-   // @Incomplete: slime
+const getClosestCraftingStation = (tribesman: Entity, tribe: Tribe, craftingStation: EntityType): Entity | null => {
+   // @Incomplete: Shouldn't just look for this tribe's crafting stations, if possible should check for visible non-tribe crafting stations.
 
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const tribesmanHitbox = transformComponent.hitboxes[0];
    
+   const craftingStations = tribe.getEntitiesByType(craftingStation);
+   
    // @Speed
    let closestStation: Entity | undefined;
    let minDist = Number.MAX_SAFE_INTEGER;
-   for (let i = 0; i < tribe.buildings.length; i++) {
-      const building = tribe.buildings[i];
-
-      if (buildingMatchesCraftingStation(building, craftingStation)) {
-         const buildingTransformComponent = TransformComponentArray.getComponent(building);
-         const buildingHitbox = buildingTransformComponent.hitboxes[0];
-         
-         const dist = tribesmanHitbox.box.position.distanceTo(buildingHitbox.box.position);
-         if (dist < minDist) {
-            minDist = dist;
-            closestStation = building;
-         }
+   for (const entity of craftingStations) {
+      const buildingTransformComponent = TransformComponentArray.getComponent(entity);
+      const buildingHitbox = buildingTransformComponent.hitboxes[0];
+      
+      const dist = tribesmanHitbox.box.position.distanceTo(buildingHitbox.box.position);
+      if (dist < minDist) {
+         minDist = dist;
+         closestStation = entity;
       }
    }
 
@@ -52,6 +43,42 @@ const getClosestCraftingStation = (tribesman: Entity, tribe: Tribe, craftingStat
       return closestStation;
    }
    return null;
+}
+
+const getAvailableCraftingStations = (tribeMember: Entity): ReadonlyArray<EntityType> => {
+   const transformComponent = TransformComponentArray.getComponent(tribeMember);
+   const tribeMemberHitbox = transformComponent.hitboxes[0];
+   
+   const layer = getEntityLayer(tribeMember);
+   
+   const minChunkX = Math.max(Math.floor((tribeMemberHitbox.box.position.x - Settings.MAX_CRAFTING_STATION_USE_DISTANCE) / Settings.CHUNK_UNITS), 0);
+   const maxChunkX = Math.min(Math.floor((tribeMemberHitbox.box.position.x + Settings.MAX_CRAFTING_STATION_USE_DISTANCE) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
+   const minChunkY = Math.max(Math.floor((tribeMemberHitbox.box.position.y - Settings.MAX_CRAFTING_STATION_USE_DISTANCE) / Settings.CHUNK_UNITS), 0);
+   const maxChunkY = Math.min(Math.floor((tribeMemberHitbox.box.position.y + Settings.MAX_CRAFTING_STATION_USE_DISTANCE) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
+
+   const availableCraftingStations = new Array<EntityType>();
+
+   for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+      for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
+         const chunk = layer.getChunk(chunkX, chunkY);
+         for (const entity of chunk.entities) {
+            const entityTransformComponent = TransformComponentArray.getComponent(entity);
+            const entityHitbox = entityTransformComponent.hitboxes[0];
+            
+            const distance = tribeMemberHitbox.box.position.distanceTo(entityHitbox.box.position);
+            if (distance > Settings.MAX_CRAFTING_STATION_USE_DISTANCE) {
+               continue;
+            }
+
+            const entityType = getEntityType(entity);
+            if (!availableCraftingStations.includes(entityType)) {
+               availableCraftingStations.push(entityType);
+            }
+         }
+      }
+   }
+
+   return availableCraftingStations;
 }
 
 export function goCraftItem(tribesman: Entity, plan: AICraftRecipePlan, tribe: Tribe): void {
@@ -68,10 +95,8 @@ export function goCraftItem(tribesman: Entity, plan: AICraftRecipePlan, tribe: T
       // If there are no crafting stations available, create a plan to do that
       if (craftingStation === null) {
          const tribeComponent = TribeComponentArray.getComponent(tribesman);
-         const craftingStationItemType = CRAFTING_STATION_ITEM_TYPE_RECORD[recipe.craftingStation];
-         // @Cleanup: shouldn't need an assert here...
-         assert(typeof craftingStationItemType !== "undefined");
-         const placeAssignment = planToPlaceStructure(tribeComponent.tribe, craftingStationItemType, null);
+         // @HACK: the cast
+         const placeAssignment = planToPlaceStructure(tribeComponent.tribe, recipe.craftingStation as any, null);
 
          const aiAssignmentComponent = AIAssignmentComponentArray.getComponent(tribesman);
          addAssignmentPart(aiAssignmentComponent, placeAssignment);
@@ -80,7 +105,7 @@ export function goCraftItem(tribesman: Entity, plan: AICraftRecipePlan, tribe: T
          return;
       }
 
-      if (!recipeCraftingStationIsAvailable(availableCraftingStations, recipe)) {
+      if (!availableCraftingStations.includes(recipe.craftingStation)) {
          const craftingStationTransformComponent = TransformComponentArray.getComponent(craftingStation);
          const craftingStationHitbox = craftingStationTransformComponent.hitboxes[0];
          

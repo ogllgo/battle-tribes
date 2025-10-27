@@ -271,6 +271,5 @@ export function receiveChatMessagePacket(reader: PacketReader): void {
    
 export function processSimulationStatusUpdatePacket(reader: PacketReader): void {
    const isSimulating = reader.readBool();
-   // @SQUEAM if kept then can be put in the update debug screen, else just fully removed.
    GameScreen_setIsSimulating(isSimulating);
 }

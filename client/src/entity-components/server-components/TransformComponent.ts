@@ -9,7 +9,7 @@ import { ServerComponentType } from "battletribes-shared/components";
 import { boxIsCircular, updateBox, Box } from "battletribes-shared/boxes/boxes";
 import { EntityComponentData, getCurrentLayer, getEntityAgeTicks, getEntityLayer, getEntityRenderInfo, getEntityType, surfaceLayer } from "../../world";
 import Board from "../../Board";
-import { Entity, EntityType } from "../../../../shared/src/entities";
+import { Entity, EntityType, EntityTypeString } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../../shared/src/collision";
 import { playerInstance } from "../../player";
@@ -116,8 +116,6 @@ export function removeHitboxFromEntity(transformComponent: TransformComponent, h
 }
 
 export function entityIsInRiver(transformComponent: TransformComponent, entity: Entity): boolean {
-   const layer = getEntityLayer(entity);
-
    // @Hack
    const hitbox = transformComponent.hitboxes[0];
    
@@ -484,6 +482,9 @@ function onLoad(entity: Entity): void {
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity)!;
    const hitbox = transformComponent.hitboxes[0];
+   console.log(EntityTypeString[getEntityType(entity)]);
+
+   // @SPEED This is so bad
 
    // Water droplet particles
    // @Cleanup: Don't hardcode fish condition

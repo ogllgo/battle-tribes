@@ -3,7 +3,6 @@ import RectangularBox from "../../../shared/src/boxes/RectangularBox";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../shared/src/collision";
 import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType } from "../../../shared/src/entities";
-import { CraftingStation } from "../../../shared/src/items/crafting-recipes";
 import { Point } from "../../../shared/src/utils";
 import { createHitboxQuick, Hitbox } from "../hitboxes";
 import { createCraftingStationComponentData } from "../entity-components/server-components/CraftingStationComponent";
@@ -49,7 +48,7 @@ export function createMithrilAnvilConfig(position: Point, rotation: number, trib
          [ServerComponentType.statusEffect]: createStatusEffectComponentData(),
          [ServerComponentType.structure]: createStructureComponentData(),
          [ServerComponentType.tribe]: createTribeComponentData(tribe),
-         [ServerComponentType.craftingStation]: createCraftingStationComponentData(CraftingStation.mithrilAnvil),
+         [ServerComponentType.craftingStation]: createCraftingStationComponentData(),
          [ServerComponentType.mithrilAnvil]: createMithrilAnvilComponentData()
       },
       clientComponentData: {}

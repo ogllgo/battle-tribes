@@ -1,6 +1,7 @@
-import { ItemSlots, ItemType, ItemTypeString, StructureItemType } from "./items";
+import { ItemSlots, ItemType, ItemTypeString } from "./items";
 import { Settings } from "../settings";
 import { ItemTally2, createTallyFromRecord } from "./ItemTally";
+import { EntityType } from "../entities";
 
 const enum Vars {
    FAST_CRAFT_TIME = (0.5 * Settings.TICK_RATE) | 0,
@@ -8,19 +9,7 @@ const enum Vars {
    SLOW_CRAFT_TIME = (2.5 * Settings.TICK_RATE) | 0
 }
 
-export enum CraftingStation {
-   workbench,
-   slime,
-   water,
-   frostshaper,
-   stonecarvingTable,
-   automatonAssembler,
-   mithrilAnvil
-}
-
-export const CRAFTING_STATION_ITEM_TYPE_RECORD: Partial<Record<CraftingStation, StructureItemType>> = {
-   [CraftingStation.workbench]: ItemType.workbench
-};
+export type CraftingStationEntityType = EntityType.workbench | EntityType.slime | EntityType.frostshaper | EntityType.stonecarvingTable | EntityType.automatonAssembler | EntityType.mithrilAnvil;
 
 // @Cleanup: remove once all references to this are removed
 export type ItemRequirements = Partial<Record<ItemType, number>>;
@@ -31,7 +20,7 @@ export interface CraftingRecipe {
    readonly yield: number;
    readonly ingredients: ItemTally2;
    readonly aiCraftTimeTicks: number;
-   readonly craftingStation?: CraftingStation;
+   readonly craftingStation?: CraftingStationEntityType;
 }
 
 export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
@@ -83,7 +72,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.rock]: 15
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.stone_pickaxe,
@@ -93,7 +82,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.rock]: 10
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.stone_axe,
@@ -103,7 +92,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.rock]: 10
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.stone_hammer,
@@ -113,7 +102,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.rock]: 10
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.leather_backpack,
@@ -122,7 +111,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.leather]: 5
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.flesh_sword,
@@ -133,7 +122,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.eyeball]: 1
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.slime
+      craftingStation: EntityType.slime
    },
    {
       product: ItemType.tribe_totem,
@@ -142,7 +131,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.wood]: 40
       }),
       aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.worker_hut,
@@ -151,7 +140,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.wood]: 20,
       }),
       aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.barrel,
@@ -160,7 +149,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.wood]: 20,
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.frostArmour,
@@ -170,7 +159,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.inguSerpentTooth]: 10
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.frostshaper
+      craftingStation: EntityType.frostshaper
    },
    {
       product: ItemType.campfire,
@@ -205,7 +194,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.rock]: 30
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.stonecarvingTable
+      craftingStation: EntityType.stonecarvingTable
    },
    {
       product: ItemType.reinforced_bow,
@@ -215,7 +204,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.rock]: 30
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.stonecarvingTable
+      craftingStation: EntityType.stonecarvingTable
    },
    {
       product: ItemType.ice_bow,
@@ -224,7 +213,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.frostcicle]: 20
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.frostshaper
+      craftingStation: EntityType.frostshaper
    },
    {
       product: ItemType.meat_suit,
@@ -234,7 +223,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.cactus_spine]: 10
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.fishlord_suit,
@@ -244,7 +233,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.cactus_spine]: 1
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.water
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.woodenSpear,
@@ -270,7 +259,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.wood]: 3
       }),
       aiCraftTimeTicks: Vars.FAST_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.research_bench,
@@ -281,7 +270,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.slimeball]: 5
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.stone_battleaxe,
@@ -291,7 +280,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.living_rock]: 25
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.stonecarvingTable
+      craftingStation: EntityType.stonecarvingTable
    },
    {
       product: ItemType.wooden_spikes,
@@ -300,7 +289,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.wood]: 10
       }),
       aiCraftTimeTicks: Vars.FAST_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.punji_sticks,
@@ -311,7 +300,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.poop]: 2
       }),
       aiCraftTimeTicks: Vars.FAST_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.sling_turret,
@@ -321,7 +310,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.rock]: 30
       }),
       aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
-      craftingStation: CraftingStation.stonecarvingTable
+      craftingStation: EntityType.stonecarvingTable
    },
    {
       product: ItemType.ballista,
@@ -331,7 +320,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.rock]: 50
       }),
       aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
-      craftingStation: CraftingStation.stonecarvingTable
+      craftingStation: EntityType.stonecarvingTable
    },
    {
       product: ItemType.wooden_wall,
@@ -340,7 +329,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.wood]: 4
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.wooden_fence,
@@ -349,7 +338,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.wood]: 2
       }),
       aiCraftTimeTicks: Vars.FAST_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.herbal_medicine,
@@ -360,7 +349,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.slimeball]: 2
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.leaf_suit,
@@ -369,7 +358,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.leaf]: 40
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.gathering_gloves,
@@ -378,7 +367,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.leather]: 7
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.gardening_gloves,
@@ -388,7 +377,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.leaf]: 15
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.planter_box,
@@ -397,7 +386,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.wood]: 20
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.healing_totem,
@@ -407,7 +396,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.leaf]: 80
       }),
       aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.fertiliser,
@@ -417,7 +406,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.leaf]: 3
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.frostshaper,
@@ -427,7 +416,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.yeti_hide]: 1
       }),
       aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.stonecarvingTable,
@@ -436,7 +425,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.rock]: 15
       }),
       aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.woodenBracings,
@@ -445,7 +434,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.wood]: 5
       }),
       aiCraftTimeTicks: Vars.FAST_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.fireTorch,
@@ -454,7 +443,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.wood]: 2
       }),
       aiCraftTimeTicks: Vars.FAST_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.slurbTorch,
@@ -464,7 +453,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.slurb]: 2
       }),
       aiCraftTimeTicks: Vars.FAST_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.mithrilAnvil,
@@ -473,7 +462,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.mithrilBar]: 15
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.mithrilSword,
@@ -483,7 +472,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.mithrilBar]: 10
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.mithrilAnvil
+      craftingStation: EntityType.mithrilAnvil
    },
    {
       product: ItemType.mithrilPickaxe,
@@ -493,7 +482,8 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.mithrilBar]: 10
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.mithrilAnvil
+      craftingStation: EntityType.mithrilAnvil
+
    },
    {
       product: ItemType.mithrilAxe,
@@ -503,7 +493,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.mithrilBar]: 10
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.mithrilAnvil
+      craftingStation: EntityType.mithrilAnvil
    },
    {
       product: ItemType.automatonAssembler,
@@ -512,7 +502,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.mithrilBar]: 15
       }),
       aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
-      craftingStation: CraftingStation.mithrilAnvil
+      craftingStation: EntityType.mithrilAnvil
    },
    {
       product: ItemType.scrappy,
@@ -521,7 +511,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.mithrilBar]: 3
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.automatonAssembler
+      craftingStation: EntityType.automatonAssembler
    },
    {
       product: ItemType.crabplateArmour,
@@ -530,7 +520,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.chitin]: 15
       }),
       aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
-      craftingStation: CraftingStation.mithrilAnvil
+      craftingStation: EntityType.mithrilAnvil
    },
    // @Temporary: this makes no sense to be made in the workbench but thats all that can be done rn
    {
@@ -540,7 +530,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.rawSnobeMeat]: 5
       }),
       aiCraftTimeTicks: Vars.NORMAL_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.iceWringer,
@@ -550,7 +540,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.frostcicle]: 20
       }),
       aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
-      craftingStation: CraftingStation.frostshaper
+      craftingStation: EntityType.frostshaper
    },
    {
       product: ItemType.winterskinArmour,
@@ -559,7 +549,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.tukmokFurHide]: 10
       }),
       aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
    {
       product: ItemType.ivorySpear,
@@ -569,7 +559,7 @@ export const CRAFTING_RECIPES: ReadonlyArray<CraftingRecipe> = [
          [ItemType.wood]: 10
       }),
       aiCraftTimeTicks: Vars.SLOW_CRAFT_TIME,
-      craftingStation: CraftingStation.workbench
+      craftingStation: EntityType.workbench
    },
 ];
 

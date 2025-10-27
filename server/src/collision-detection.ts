@@ -239,7 +239,7 @@ export function resolveEntityCollisions(layer: Layer): void {
 export function boxArraysAreColliding(boxes1: ReadonlyArray<Box>, boxes2: ReadonlyArray<Box>): boolean {
    for (const box of boxes1) {
       for (const otherBox of boxes2) {
-         if (box.getCollisionResult(otherBox)) {
+         if (box.getCollisionResult(otherBox).isColliding) {
             return true;
          }
       }
@@ -250,7 +250,7 @@ export function boxArraysAreColliding(boxes1: ReadonlyArray<Box>, boxes2: Readon
 export function boxHasCollisionWithBoxes(box: Box, boxes: ReadonlyArray<Box>, epsilon: number = 0): boolean {
    for (let i = 0; i < boxes.length; i++) {
       const otherBox = boxes[i];
-      if (box.getCollisionResult(otherBox, epsilon)) {
+      if (box.getCollisionResult(otherBox, epsilon).isColliding) {
          return true;
       }
    }

@@ -1,20 +1,28 @@
 import { Settings } from "battletribes-shared/settings";
 import Chunk from "./Chunk";
-import { Entity } from "battletribes-shared/entities";
+import { Entity, EntityType } from "battletribes-shared/entities";
 import { TransformComponentArray } from "./components/TransformComponent";
 import { Box, boxIsCircular, cloneBox, HitboxFlag, updateVertexPositionsAndSideAxes } from "battletribes-shared/boxes/boxes";
-import { entityExists, getEntityLayer } from "./world";
+import { createEntity, destroyEntity, entityExists, entityIsFlaggedForDestruction, getEntityLayer, getEntityType } from "./world";
 import { surfaceLayer } from "./layers";
 import { Packet } from "../../shared/src/packets";
 import { Point, unitsToChunksClamped } from "../../shared/src/utils";
 import Layer from "./Layer";
 import { boxIsInRange } from "./ai-shared";
 import { addBoxDataToPacket, getBoxDataLength } from "./server/packet-hitboxes";
+import { TileType } from "../../shared/src/tiles";
+import { getHitboxTile } from "./hitboxes";
+import { createGrassStrandConfig } from "./entities/grass-strand";
 
 const enum Vars {
    GRASS_FULL_REGROW_TICKS = Settings.TICK_RATE * 120,
    GRASS_FULL_DIE_TICKS = Settings.TICK_RATE * 20,
    STRUCTURE_BLOCKER_PADDING = -4
+}
+
+interface DestroyedGrassInfo {
+   readonly position: Point;
+   readonly angle: number;
 }
 
 export interface GrassBlocker {
@@ -25,6 +33,7 @@ export interface GrassBlocker {
    blockAmount: number;
    // @Bandwidth: unnecessary
    readonly maxBlockAmount: number;
+   readonly destroyedGrasses: ReadonlyArray<DestroyedGrassInfo>;
 }
 
 let nextID = 0;
@@ -65,13 +74,56 @@ const addGrassBlocker = (blocker: GrassBlocker, associatedEntityID: number): voi
    blockerAssociatedEntities.push(associatedEntityID);
 }
 
+const getBlockedGrasses = (box: Box, layer: Layer): ReadonlyArray<Entity> => {
+   const grasses = new Array<Entity>();
+   
+   const minChunkX = unitsToChunksClamped(box.calculateBoundsMinX());
+   const maxChunkX = unitsToChunksClamped(box.calculateBoundsMaxX());
+   const minChunkY = unitsToChunksClamped(box.calculateBoundsMinY());
+   const maxChunkY = unitsToChunksClamped(box.calculateBoundsMaxY());
+   for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
+      for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+         const chunk = layer.getChunk(chunkX, chunkY);
+         for (const entity of chunk.entities) {
+            if (getEntityType(entity) === EntityType.grassStrand && !grasses.includes(entity) && !entityIsFlaggedForDestruction(entity)) {
+               const grassTransformComponent = TransformComponentArray.getComponent(entity);
+               const grassHitbox = grassTransformComponent.hitboxes[0];
+
+               const collisionResult = box.getCollisionResult(grassHitbox.box);
+               if (collisionResult.isColliding) {
+                  grasses.push(entity);
+               }
+            }
+         }
+      }
+   }
+
+   return grasses;
+}
+
 export function createGrassBlocker(box: Box, layer: Layer, initialBlockAmount: number, maxBlockAmount: number, associatedEntity: Entity): void {
+   const blockedGrasses = getBlockedGrasses(box, layer);
+   
+   const destroyedGrasses = new Array<DestroyedGrassInfo>();
+   for (const grass of blockedGrasses) {
+      destroyEntity(grass);
+
+      const grassTransformComponent = TransformComponentArray.getComponent(grass);
+      const grassHitbox = grassTransformComponent.hitboxes[0];
+      
+      destroyedGrasses.push({
+         position: grassHitbox.box.position.copy(),
+         angle: grassHitbox.box.angle
+      });
+   }
+
    const blocker: GrassBlocker = {
       id: nextID++,
       layer: layer,
       box: box,
       blockAmount: initialBlockAmount,
-      maxBlockAmount: maxBlockAmount
+      maxBlockAmount: maxBlockAmount,
+      destroyedGrasses: destroyedGrasses
    };
    addGrassBlocker(blocker, associatedEntity);
 }
@@ -90,6 +142,13 @@ const removeGrassBlocker = (blocker: GrassBlocker, i: number): void => {
    // @Speed: swap with last instead
    blockers.splice(i, 1);
    blockerAssociatedEntities.splice(i, 1);
+
+   // Revive the grass!
+   for (const grassInfo of blocker.destroyedGrasses) {
+      const tileType = blocker.layer.getTileTypeAtPosition(grassInfo.position.x, grassInfo.position.y);
+      const config = createGrassStrandConfig(grassInfo.position, grassInfo.angle, tileType);
+      createEntity(config, blocker.layer, 0);
+   }
 }
 
 export function updateGrassBlockers(): void {

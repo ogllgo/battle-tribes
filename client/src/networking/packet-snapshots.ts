@@ -527,7 +527,10 @@ export function updateGameStateToSnapshot(snapshot: PacketSnapshot): void {
    }
 
    for (const entityRemoveInfo of snapshot.removedEntities) {
-      removeEntity(entityRemoveInfo.entity, entityRemoveInfo.isDestroyed);
+      // @HACK @INCOMPLETE sometimes entities don't exist here... suggesting some deeper bug. This is a shitty hack.
+      if (entityExists(entityRemoveInfo.entity)) {
+         removeEntity(entityRemoveInfo.entity, entityRemoveInfo.isDestroyed);
+      }
    }
 
    updatePlayerTribe(snapshot.playerTribeData);

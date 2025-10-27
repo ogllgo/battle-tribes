@@ -10,7 +10,7 @@ import { tickTribesman } from "../entities/tribes/tribesman-ai/tribesman-ai";
 import { Packet } from "battletribes-shared/packets";
 import { entityExists, getGameTicks } from "../world";
 import { HutComponentArray } from "./HutComponent";
-import { Path } from "../pathfinding";
+import { TribesmanComponentArray } from "./TribesmanComponent";
 
 // @Incomplete: periodically remove dead entities from the relations object
 // @Incomplete: only keep track of tribesman relations
@@ -239,11 +239,15 @@ export function adjustTribeRelations(attackedTribe: Tribe, attackingTribe: Tribe
    }
    
    // @Speed
-   for (let i = 0; i < attackingTribe.tribesmanIDs.length; i++) {
-      const tribesmanID = attackingTribe.tribesmanIDs[i];
+   for (const tribesmanID of attackingTribe.entities) {
+      if (!TribesmanComponentArray.hasComponent(tribesmanID)) {
+         continue;
+      }
 
-      for (let j = 0; j < attackedTribe.tribesmanIDs.length; j++) {
-         const attackedTribesmanID = attackedTribe.tribesmanIDs[j];
+      for (const attackedTribesmanID of attackedTribe.entities) {
+         if (!TribesmanComponentArray.hasComponent(attackedTribesmanID)) {
+            continue;
+         }
 
          const adjustment = attackedTribesmanID === attackedEntityID ? attackedAdjustment : defaultAdjustment;
          adjustTribesmanRelations(attackedTribesmanID, tribesmanID, adjustment);

@@ -1,7 +1,7 @@
 import { Box, cloneBox } from "../../../../shared/src/boxes/boxes";
 import RectangularBox from "../../../../shared/src/boxes/RectangularBox";
 import { ServerComponentType } from "../../../../shared/src/components";
-import { EntityType } from "../../../../shared/src/entities";
+import { Entity, EntityType, NUM_ENTITY_TYPES } from "../../../../shared/src/entities";
 import { Packet } from "../../../../shared/src/packets";
 import { Settings } from "../../../../shared/src/settings";
 import { STRUCTURE_TYPES, StructureType } from "../../../../shared/src/structures";
@@ -70,7 +70,9 @@ export interface VirtualDoor extends BaseVirtualStructure {
 
 export type VirtualStructure = VirtualUnidentifiedBuilding | VirtualWall | VirtualDoor;
 
-export type VirtualBuildingsByEntityType = { [T in StructureType]: Array<VirtualStructure> };
+// @Location
+export type EntitiesByEntityType = { [T in EntityType]: Array<Entity> };
+export type VirtualStructuresByEntityType = { [T in StructureType]: Array<VirtualStructure> };
 
 const createRestrictedBuildingArea = (position: Point, width: number, height: number, rotation: number, associatedBuildingID: number): RestrictedBuildingArea => {
    const box = new RectangularBox(position, new Point(0, 0), rotation, width, height);
@@ -326,10 +328,10 @@ const wallSideIsConnected = (buildingLayer: TribeBuildingLayer, wallSideNodes: R
       }
 
       // Only make connections between walls and doors
-      const virtualBuildingIDs = buildingLayer.occupiedNodeToVirtualBuildingIDRecord[node];
+      const virtualBuildingIDs = buildingLayer.occupiedNodeToVirtualStructureIDRecord[node];
       for (let i = 0; i < virtualBuildingIDs.length; i++) {
          const buildingID = virtualBuildingIDs[i];
-         const virtualBuilding = buildingLayer.virtualBuildingRecord[buildingID];
+         const virtualBuilding = buildingLayer.virtualStructureRecord[buildingID];
          if (virtualBuilding.entityType !== EntityType.wall && virtualBuilding.entityType !== EntityType.door) {
             return false;
          }
@@ -359,7 +361,7 @@ const updateWallConnectionBitset = (buildingLayer: TribeBuildingLayer, wall: Vir
 }
 
 export function updateTribeWalls(buildingLayer: TribeBuildingLayer): void {
-   for (const wall of buildingLayer.virtualBuildingsByEntityType[EntityType.wall]) {
+   for (const wall of buildingLayer.virtualStructuresByEntityType[EntityType.wall]) {
       // @Hack: cast
       updateWallConnectionBitset(buildingLayer, wall as VirtualWall);
    }
@@ -382,14 +384,26 @@ export function getNumWallConnections(wallConnectionBitset: number): number {
    return numConnections;
 }
 
-export function createVirtualBuildingsByEntityType(): VirtualBuildingsByEntityType {
-   const record: Partial<VirtualBuildingsByEntityType> = {};
+// @Location
+export function createEntitiesByEntityType(): EntitiesByEntityType {
+   const record: Partial<EntitiesByEntityType> = {};
+   // @Memory
+   for (let entityType: EntityType = 0; entityType < NUM_ENTITY_TYPES; entityType++) {
+      record[entityType] = [];
+   }
+   // @Hack
+   record[EntityType.blueprintEntity as StructureType] = [];
+   return record as EntitiesByEntityType;
+}
+
+export function createVirtualStructuresByEntityType(): VirtualStructuresByEntityType {
+   const record: Partial<VirtualStructuresByEntityType> = {};
    for (const entityType of STRUCTURE_TYPES) {
       record[entityType] = [];
    }
    // @Hack
    record[EntityType.blueprintEntity as StructureType] = [];
-   return record as VirtualBuildingsByEntityType;
+   return record as VirtualStructuresByEntityType;
 }
 
 export default class TribeBuildingLayer {
@@ -400,13 +414,13 @@ export default class TribeBuildingLayer {
    public occupiedSafetyNodes = new Set<SafetyNode>();
    public safetyNodes = new Set<SafetyNode>();
 
-   public occupiedNodeToVirtualBuildingIDRecord: Record<SafetyNode, Array<number>> = {};
+   public occupiedNodeToVirtualStructureIDRecord: Record<SafetyNode, Array<number>> = {};
 
    public nodeToRoomRecord: Record<SafetyNode, TribeRoom> = {};
 
-   public virtualBuildings = new Array<VirtualStructure>;
-   public virtualBuildingRecord: Record<number, VirtualStructure> = {};
-   public virtualBuildingsByEntityType = createVirtualBuildingsByEntityType();
+   public virtualStructures = new Array<VirtualStructure>();
+   public virtualStructureRecord: Record<number, VirtualStructure> = {};
+   public virtualStructuresByEntityType = createVirtualStructuresByEntityType();
 
    public rooms = new Array<TribeRoom>();
    
@@ -415,32 +429,32 @@ export default class TribeBuildingLayer {
       this.tribe = tribe;
    }
 
-   public addVirtualBuilding(virtualBuilding: VirtualStructure): void {
+   public addVirtualBuilding(virtualStructure: VirtualStructure): void {
       // Add to building layer
-      this.virtualBuildings.push(virtualBuilding);
-      this.virtualBuildingRecord[virtualBuilding.id] = virtualBuilding;
-      this.virtualBuildingsByEntityType[virtualBuilding.entityType]!.push(virtualBuilding);
+      this.virtualStructures.push(virtualStructure);
+      this.virtualStructureRecord[virtualStructure.id] = virtualStructure;
+      this.virtualStructuresByEntityType[virtualStructure.entityType]!.push(virtualStructure);
 
       // Add to tribe
-      this.tribe.virtualStructures.push(virtualBuilding);
-      this.tribe.virtualStructureRecord[virtualBuilding.id] = virtualBuilding;
-      this.tribe.virtualStructuresByEntityType[virtualBuilding.entityType]!.push(virtualBuilding);
+      this.tribe.virtualStructures.push(virtualStructure);
+      this.tribe.virtualStructureRecord[virtualStructure.id] = virtualStructure;
+      this.tribe.virtualStructuresByEntityType[virtualStructure.entityType]!.push(virtualStructure);
    }
 
-   public removeVirtualBuilding(virtualBuilding: VirtualStructure): void {
+   public removeVirtualBuilding(virtualStructure: VirtualStructure): void {
       // Remove from building layer
       
-      delete this.virtualBuildingRecord[virtualBuilding.id];
+      delete this.virtualStructureRecord[virtualStructure.id];
       
-      let idx = this.virtualBuildings.indexOf(virtualBuilding);
+      let idx = this.virtualStructures.indexOf(virtualStructure);
       if (idx !== -1) {
-         this.virtualBuildings.splice(idx, 1);
+         this.virtualStructures.splice(idx, 1);
       } else {
          throw new Error();
       }
 
-      let buildingsOfType = this.virtualBuildingsByEntityType[virtualBuilding.entityType];
-      idx = buildingsOfType.indexOf(virtualBuilding);
+      let buildingsOfType = this.virtualStructuresByEntityType[virtualStructure.entityType];
+      idx = buildingsOfType.indexOf(virtualStructure);
       if (idx !== -1) {
          buildingsOfType.splice(idx, 1);
       } else {
@@ -449,17 +463,17 @@ export default class TribeBuildingLayer {
 
       // Remove from tribe
       
-      delete this.tribe.virtualStructureRecord[virtualBuilding.id];
+      delete this.tribe.virtualStructureRecord[virtualStructure.id];
       
-      idx = this.tribe.virtualStructures.indexOf(virtualBuilding);
+      idx = this.tribe.virtualStructures.indexOf(virtualStructure);
       if (idx !== -1) {
          this.tribe.virtualStructures.splice(idx, 1);
       } else {
          throw new Error();
       }
 
-      buildingsOfType = this.tribe.virtualStructuresByEntityType[virtualBuilding.entityType];
-      idx = buildingsOfType.indexOf(virtualBuilding);
+      buildingsOfType = this.tribe.virtualStructuresByEntityType[virtualStructure.entityType];
+      idx = buildingsOfType.indexOf(virtualStructure);
       if (idx !== -1) {
          buildingsOfType.splice(idx, 1);
       } else {

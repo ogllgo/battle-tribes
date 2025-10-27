@@ -10,9 +10,9 @@ import { LayeredRodComponent } from "../components/LayeredRodComponent";
 import { Hitbox } from "../hitboxes";
 import { TileType } from "../../../shared/src/tiles";
    
-export function createGrassStrandConfig(position: Point, rotation: number, tileType: TileType): EntityConfig {
+export function createGrassStrandConfig(position: Point, angle: number, tileType: TileType): EntityConfig {
    const transformComponent = new TransformComponent();
-   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 4, 4), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), angle, 4, 4), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
    let numLayers: number;

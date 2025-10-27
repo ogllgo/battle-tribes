@@ -1,6 +1,6 @@
 import { CowSpecies, DamageSource, Entity, EntityType } from "battletribes-shared/entities";
 import { Settings } from "battletribes-shared/settings";
-import { getAbsAngleDiff, Point, positionIsInWorld, randAngle, randFloat, randInt, randItem, unitsToChunksClamped, UtilVars } from "battletribes-shared/utils";
+import { getAbsAngleDiff, Point, positionIsInWorld, randAngle, randFloat, randInt, randItem, UtilVars } from "battletribes-shared/utils";
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
 import { ServerComponentType } from "battletribes-shared/components";
 import { ComponentArray } from "./ComponentArray";
@@ -208,34 +208,7 @@ const graze = (cow: Entity, cowComponent: CowComponent, targetGrass: Entity): vo
 
             const blockerBox = new CircularBox(position, new Point(0, 0), 0, randFloat(12, 18));
             createGrassBlocker(blockerBox, getEntityLayer(cow), blockAmount, blockAmount, 0);
-
-            // @SQUEAM
-            // Kill all grass blades on the blocker
-            const minChunkX = unitsToChunksClamped(blockerBox.calculateBoundsMinX());
-            const maxChunkX = unitsToChunksClamped(blockerBox.calculateBoundsMaxX());
-            const minChunkY = unitsToChunksClamped(blockerBox.calculateBoundsMinY());
-            const maxChunkY = unitsToChunksClamped(blockerBox.calculateBoundsMaxY());
-            const layer = getEntityLayer(cow);
-            for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-               for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-                  const chunk = layer.getChunk(chunkX, chunkY);
-
-                  for (const entity of chunk.entities) {
-                     if (getEntityType(entity) === EntityType.grassStrand) {
-                        const grassTransformComponent = TransformComponentArray.getComponent(entity);
-                        const grassHitbox = grassTransformComponent.hitboxes[0];
-
-                        const collisionResult = blockerBox.getCollisionResult(grassHitbox.box);
-                        if (collisionResult.isColliding) {
-                           destroyEntity(entity);
-                        }
-                     }
-                  }
-               }
-            }
          }
-
-
          
          healEntity(cow, 3, cow);
          cowComponent.grazeCooldownTicks = randInt(Vars.MIN_GRAZE_COOLDOWN, Vars.MAX_GRAZE_COOLDOWN);

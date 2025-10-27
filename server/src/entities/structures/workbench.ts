@@ -1,5 +1,4 @@
 import { EntityType } from "battletribes-shared/entities";
-import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { StatusEffect } from "battletribes-shared/status-effects";
@@ -40,7 +39,7 @@ export function createWorkbenchConfig(position: Point, rotation: number, tribe: 
 
    const tribeComponent = new TribeComponent(tribe);
    
-   const craftingStationComponent = new CraftingStationComponent(CraftingStation.workbench);
+   const craftingStationComponent = new CraftingStationComponent();
    
    return {
       entityType: EntityType.workbench,

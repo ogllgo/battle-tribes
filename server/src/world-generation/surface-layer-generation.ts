@@ -507,9 +507,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       },
       onlySpawnsInNight: false,
       minSpawnDistance: 150,
-      // @SQUEAM for cow pen extended thing, want less cows in shot
-      spawnDistribution: createRawSpawnDistribution(16, 0.001),
-      // spawnDistribution: createRawSpawnDistribution(16, 0.003),
+      spawnDistribution: createRawSpawnDistribution(16, 0.003),
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: false,
       createEntity: (pos: Point, angle: number, firstEntityConfig: ReadonlyArray<EntityConfig> | null): ReadonlyArray<EntityConfig> | null => {
@@ -520,9 +518,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    registerNewSpawnInfo({
       entityTypes: [EntityType.berryBush],
       layer: surfaceLayer,
-      // @SQUEAM so that they don't regrow after killed, for the pen shot
-      // spawnRate: 0.001,
-      spawnRate: 0,
+      spawnRate: 0.001,
       biome: Biome.grasslands,
       tileTypes: [TileType.grass],
       onlySpawnsInNight: false,
@@ -537,9 +533,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
    registerNewSpawnInfo({
       entityTypes: [EntityType.tree],
       layer: surfaceLayer,
-      // @SQUEAM so that they don't regrow after killed, for the pen shot
-      // spawnRate: 0.013,
-      spawnRate: 0,
+      spawnRate: 0.013,
       biome: Biome.grasslands,
       tileTypes: [TileType.grass],
       onlySpawnsInNight: false,

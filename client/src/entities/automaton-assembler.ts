@@ -3,7 +3,6 @@ import RectangularBox from "../../../shared/src/boxes/RectangularBox";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../shared/src/collision";
 import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType } from "../../../shared/src/entities";
-import { CraftingStation } from "../../../shared/src/items/crafting-recipes";
 import { Point } from "../../../shared/src/utils";
 import { createHitboxQuick, Hitbox } from "../hitboxes";
 import { createAutomatonAssemblerComponentData } from "../entity-components/server-components/AutomatonAssemblerComponent";
@@ -32,7 +31,7 @@ export function createAutomatonAssemblerConfig(position: Point, rotation: number
          [ServerComponentType.statusEffect]: createStatusEffectComponentData(),
          [ServerComponentType.structure]: createStructureComponentData(),
          [ServerComponentType.tribe]: createTribeComponentData(tribe),
-         [ServerComponentType.craftingStation]: createCraftingStationComponentData(CraftingStation.workbench),
+         [ServerComponentType.craftingStation]: createCraftingStationComponentData(),
          [ServerComponentType.automatonAssembler]: createAutomatonAssemblerComponentData(),
       },
       clientComponentData: {}

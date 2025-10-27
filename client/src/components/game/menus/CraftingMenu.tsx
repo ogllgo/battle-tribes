@@ -5,7 +5,7 @@ import { windowHeight } from "../../../webgl";
 import ItemSlot, { ItemSlotCallbackInfo } from "../inventories/ItemSlot";
 import { countItemTypesInInventory } from "../../../inventory-manipulation";
 import { playHeadSound } from "../../../sound";
-import { CraftingRecipe, CraftingStation, CRAFTING_RECIPES, forceGetItemRecipe } from "battletribes-shared/items/crafting-recipes";
+import { CraftingRecipe, CRAFTING_RECIPES, forceGetItemRecipe, CraftingStationEntityType } from "battletribes-shared/items/crafting-recipes";
 import { ItemType, Item, Inventory, InventoryName } from "battletribes-shared/items/items";
 import { ItemTally2, tallyInventoryItems } from "battletribes-shared/items/ItemTally";
 import InventoryContainer from "../inventories/InventoryContainer";
@@ -16,6 +16,7 @@ import { sendCraftItemPacket, sendItemDropPacket } from "../../../networking/pac
 import { playerTribe } from "../../../tribes";
 import { playerInstance } from "../../../player";
 import { getInventory, InventoryComponentArray } from "../../../entity-components/server-components/InventoryComponent";
+import { EntityType } from "../../../../../shared/src/entities";
 
 interface RecipeViewerProps {
    readonly recipe: CraftingRecipe;
@@ -30,26 +31,24 @@ interface CraftingMenuProps {
 }
 
 // @Temporary? @Robustness
-const CRAFTING_STATION_ICON_TEXTURE_SOURCES: Record<CraftingStation, string> = {
-   [CraftingStation.workbench]: CLIENT_ITEM_INFO_RECORD[ItemType.workbench].textureSource,
-   [CraftingStation.slime]: CLIENT_ITEM_INFO_RECORD[ItemType.slimeball].textureSource,
-   [CraftingStation.water]: "miscellaneous/water-droplet.png",
-   [CraftingStation.frostshaper]: CLIENT_ITEM_INFO_RECORD[ItemType.frostshaper].textureSource,
-   [CraftingStation.stonecarvingTable]: CLIENT_ITEM_INFO_RECORD[ItemType.stonecarvingTable].textureSource,
-   [CraftingStation.automatonAssembler]: CLIENT_ITEM_INFO_RECORD[ItemType.automatonAssembler].textureSource,
-   [CraftingStation.mithrilAnvil]: CLIENT_ITEM_INFO_RECORD[ItemType.automatonAssembler].textureSource,
+const CRAFTING_STATION_ICON_TEXTURE_SOURCES: Record<CraftingStationEntityType, string> = {
+   [EntityType.workbench]: CLIENT_ITEM_INFO_RECORD[ItemType.workbench].textureSource,
+   [EntityType.slime]: CLIENT_ITEM_INFO_RECORD[ItemType.slimeball].textureSource,
+   [EntityType.frostshaper]: CLIENT_ITEM_INFO_RECORD[ItemType.frostshaper].textureSource,
+   [EntityType.stonecarvingTable]: CLIENT_ITEM_INFO_RECORD[ItemType.stonecarvingTable].textureSource,
+   [EntityType.automatonAssembler]: CLIENT_ITEM_INFO_RECORD[ItemType.automatonAssembler].textureSource,
+   [EntityType.mithrilAnvil]: CLIENT_ITEM_INFO_RECORD[ItemType.automatonAssembler].textureSource,
 };
 
 // @Robustness
-const CRAFTING_RECIPE_RECORD: Record<CraftingStation | "hand", Array<CraftingRecipe>> = {
+const CRAFTING_RECIPE_RECORD: Record<CraftingStationEntityType | "hand", Array<CraftingRecipe>> = {
    hand: [],
-   [CraftingStation.workbench]: [],
-   [CraftingStation.slime]: [],
-   [CraftingStation.water]: [],
-   [CraftingStation.frostshaper]: [],
-   [CraftingStation.stonecarvingTable]: [],
-   [CraftingStation.automatonAssembler]: [],
-   [CraftingStation.mithrilAnvil]: [],
+   [EntityType.workbench]: [],
+   [EntityType.slime]: [],
+   [EntityType.frostshaper]: [],
+   [EntityType.stonecarvingTable]: [],
+   [EntityType.automatonAssembler]: [],
+   [EntityType.mithrilAnvil]: [],
 };
 
 // Categorise the crafting recipes
@@ -152,13 +151,13 @@ const RECIPE_BROWSER_WIDTH = 3;
 const MIN_RECIPE_BROWSER_HEIGHT = 9;
 
 export let setCraftingMenuAvailableRecipes: (craftingRecipes: Array<CraftingRecipe>) => void = () => {};
-export let setCraftingMenuAvailableCraftingStations: (craftingStations: Set<CraftingStation>) => void = () => {};
-export let CraftingMenu_setCraftingStation: (craftingStation: CraftingStation | null) => void = () => {};
+export let setCraftingMenuAvailableCraftingStations: (craftingStations: Set<CraftingStationEntityType>) => void = () => {};
+export let CraftingMenu_setCraftingStation: (craftingStation: CraftingStationEntityType | null) => void = () => {};
 export let CraftingMenu_setIsVisible: (isVisible: boolean) => void;
 
 export let craftingMenuIsOpen: () => boolean;
 
-const getCraftableRecipes = (hotbar: Inventory, backpack: Inventory, craftingStation: CraftingStation | null): ReadonlyArray<CraftingRecipe> => {
+const getCraftableRecipes = (hotbar: Inventory, backpack: Inventory, craftingStation: CraftingStationEntityType | null): ReadonlyArray<CraftingRecipe> => {
    if (playerInstance === null) {
       return [];
    }
@@ -187,7 +186,7 @@ const getCraftableRecipes = (hotbar: Inventory, backpack: Inventory, craftingSta
 
 const CraftingMenu = (props: CraftingMenuProps) => {
    const [isVisible, setIsVisible] = useState(false);
-   const [craftingStation, setCraftingStation] = useState<CraftingStation | null>(null);
+   const [craftingStation, setCraftingStation] = useState<CraftingStationEntityType | null>(null);
 
    // const [availableRecipes, setAvailableRecipes] = useState(new Array<CraftingRecipe>());
    // const [availableCraftingStations, setAvailableCraftingStations] = useState(new Set<CraftingStation>());
@@ -253,11 +252,11 @@ const CraftingMenu = (props: CraftingMenuProps) => {
       }
 
       // @Temporary
-      setCraftingMenuAvailableCraftingStations = (craftingStations: Set<CraftingStation>): void => {
+      setCraftingMenuAvailableCraftingStations = (craftingStations: Set<CraftingStationEntityType>): void => {
          // setAvailableCraftingStations(craftingStations);
       }
 
-      CraftingMenu_setCraftingStation = (craftingStation: CraftingStation | null): void => {
+      CraftingMenu_setCraftingStation = (craftingStation: CraftingStationEntityType | null): void => {
          setCraftingStation(craftingStation);
 
          if (craftingStation !== null) {
@@ -284,13 +283,14 @@ const CraftingMenu = (props: CraftingMenuProps) => {
             // When the crafting menu is closed, if an item was being dragged, drop the item
             if (playerInstance !== null) {
                const inventoryComponent = InventoryComponentArray.getComponent(playerInstance);
-               const heldItemInventory = getInventory(inventoryComponent, InventoryName.heldItemSlot)!;
-               const heldItem = heldItemInventory.itemSlots[1];
-               if (typeof heldItem !== "undefined") {
-                  const playerTransformComponent = TransformComponentArray.getComponent(playerInstance);
-                  const playerHitbox = playerTransformComponent.hitboxes[0];
-            
-                  sendItemDropPacket(InventoryName.heldItemSlot, 1, heldItem.count, playerHitbox.box.angle);
+               if (inventoryComponent !== null) {
+                  const heldItemInventory = getInventory(inventoryComponent, InventoryName.heldItemSlot)!;
+                  const heldItem = heldItemInventory.itemSlots[1];
+                  if (typeof heldItem !== "undefined") {
+                     const transformComponent = TransformComponentArray.getComponent(playerInstance)!;
+                     const hitbox = transformComponent.hitboxes[0];
+                     sendItemDropPacket(InventoryName.heldItemSlot, 1, heldItem.count, hitbox.box.angle);
+                  }
                }
             }
          });

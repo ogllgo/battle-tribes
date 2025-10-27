@@ -7,7 +7,6 @@ import { BuildMenu_hide, BuildMenu_setBuildingID, BuildMenu_updateBuilding, enti
 import { InventoryMenuType, InventorySelector_inventoryIsOpen, InventorySelector_setInventoryMenuType } from "./components/game/inventories/InventorySelector";
 import { GhostInfo, GhostType, PARTIAL_OPACITY } from "./rendering/webgl/entity-ghost-rendering";
 import { CraftingMenu_setCraftingStation, CraftingMenu_setIsVisible } from "./components/game/menus/CraftingMenu";
-import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { ItemType, InventoryName, ITEM_INFO_RECORD } from "battletribes-shared/items/items";
 import { boxIsWithinRange, HitboxCollisionType } from "battletribes-shared/boxes/boxes";
 import { getPlayerSelectedItem, playerIsPlacingEntity } from "./components/game/GameInteractableLayer";
@@ -39,6 +38,7 @@ import { SignInscribeMenu_setEntity } from "./components/game/SignInscribeMenu";
 import { FloorSignComponentArray } from "./entity-components/server-components/FloorSignComponent";
 import { TamingSkillID } from "../../shared/src/taming";
 import { cursorWorldPos } from "./mouse";
+import { CraftingStationEntityType } from "../../shared/src/items/crafting-recipes";
 
 const enum Vars {
    DEFAULT_INTERACT_RANGE = 150
@@ -102,7 +102,7 @@ interface OpenInventoryAction extends BaseInteractAction {
 
 interface OpenCraftingMenuAction extends BaseInteractAction {
    readonly type: InteractActionType.openCraftingStation;
-   readonly craftingStation: CraftingStation;
+   readonly craftingStation: CraftingStationEntityType;
 }
 
 interface OpenAnimalStaffMenuAction extends BaseInteractAction {
@@ -309,13 +309,12 @@ const getEntityInteractAction = (gameInteractState: GameInteractState, entity: E
    }
 
    // Crafting stations
-   const craftingStationComponent = CraftingStationComponentArray.getComponent(entity);
-   if (craftingStationComponent !== null) {
+   if (CraftingStationComponentArray.hasComponent(entity)) {
       return {
          type: InteractActionType.openCraftingStation,
          interactEntity: entity,
          interactRange: Vars.DEFAULT_INTERACT_RANGE,
-         craftingStation: craftingStationComponent.craftingStation
+         craftingStation: getEntityType(entity) as CraftingStationEntityType
       };
    }
 

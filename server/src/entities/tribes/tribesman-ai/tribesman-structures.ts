@@ -180,10 +180,10 @@ export function goUpgradeBuilding(tribesman: Entity, plan: AIUpgradeBuildingPlan
    const useInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
    useInfo.selectedItemSlot = hammerItemSlot;
 
-   const desiredAttackRange = getTribesmanDesiredAttackRange(tribesman);
-   
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const tribesmanHitbox = transformComponent.hitboxes[0];
+   
+   const desiredAttackRange = getTribesmanDesiredAttackRange() - getHumanoidRadius(transformComponent);
 
    const buildingTransformComponent = TransformComponentArray.getComponent(building);
    const buildingHitbox = buildingTransformComponent.hitboxes[0];
@@ -250,7 +250,7 @@ export function attemptToRepairBuildings(tribesman: Entity, hammerItemSlot: numb
    const useInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
    useInfo.selectedItemSlot = hammerItemSlot;
 
-   const desiredAttackRange = getTribesmanDesiredAttackRange(tribesman);
+   const desiredAttackRange = getTribesmanDesiredAttackRange() - getHumanoidRadius(transformComponent);
 
    const buildingTransformComponent = TransformComponentArray.getComponent(closestDamagedBuilding);
    const buildingHitbox = buildingTransformComponent.hitboxes[0];

@@ -3,7 +3,6 @@ import RectangularBox from "../../../shared/src/boxes/RectangularBox";
 import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../shared/src/collision";
 import { ServerComponentType } from "../../../shared/src/components";
 import { EntityType } from "../../../shared/src/entities";
-import { CraftingStation } from "../../../shared/src/items/crafting-recipes";
 import { Point } from "../../../shared/src/utils";
 import { createCraftingStationComponentData } from "../entity-components/server-components/CraftingStationComponent";
 import { createHealthComponentData } from "../entity-components/server-components/HealthComponent";
@@ -31,7 +30,7 @@ export function createStonecarvingTableConfig(position: Point, rotation: number,
          [ServerComponentType.statusEffect]: createStatusEffectComponentData(),
          [ServerComponentType.structure]: createStructureComponentData(),
          [ServerComponentType.tribe]: createTribeComponentData(tribe),
-         [ServerComponentType.craftingStation]: createCraftingStationComponentData(CraftingStation.stonecarvingTable)
+         [ServerComponentType.craftingStation]: createCraftingStationComponentData()
       },
       clientComponentData: {}
    };

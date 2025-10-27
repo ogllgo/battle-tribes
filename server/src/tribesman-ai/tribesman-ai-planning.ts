@@ -1,10 +1,10 @@
 import { BlueprintType } from "../../../shared/src/components";
 import { Entity, EntityType } from "../../../shared/src/entities";
-import { CRAFTING_STATION_ITEM_TYPE_RECORD, CraftingRecipe, CraftingStation, getItemRecipe } from "../../../shared/src/items/crafting-recipes";
-import { InventoryName, ITEM_INFO_RECORD, ItemType, StructureItemType, ToolType } from "../../../shared/src/items/items";
+import { CraftingRecipe, getItemRecipe } from "../../../shared/src/items/crafting-recipes";
+import { InventoryName, ITEM_INFO_RECORD, ItemType, NUM_ITEM_TYPES, PlaceableItemInfo, ToolType } from "../../../shared/src/items/items";
 import { StructureType } from "../../../shared/src/structures";
 import { getTechRequiredForItem, Tech } from "../../../shared/src/techs";
-import { AIPlanType, assert } from "../../../shared/src/utils";
+import { AIPlanType, Point } from "../../../shared/src/utils";
 import { AIAssignmentComponentArray, clearAssignment } from "../components/AIAssignmentComponent";
 import { getInventory, InventoryComponentArray, inventoryHasItemType } from "../components/InventoryComponent";
 import { TribeComponentArray } from "../components/TribeComponent";
@@ -18,7 +18,7 @@ import { tribeIsVulnerable } from "./ai-building-heuristics";
 import { findIdealWallPlacePosition, WallPlaceCandidate } from "./ai-building-plans";
 import { generateBuildingCandidate } from "./building-plans/ai-building-utils";
 import { generateLightPosition, structureLightLevelIsValid } from "./building-plans/ai-buildling-lights";
-import { createVirtualStructure, VirtualStructure } from "./building-plans/TribeBuildingLayer";
+import { createVirtualStructure, VirtualStructure, VirtualUnidentifiedBuilding } from "./building-plans/TribeBuildingLayer";
 
 /*
 This file contains the logic for planning what AI tribes should do.
@@ -29,6 +29,9 @@ interface AIBasePlan {
    /** Whether or not the plan has been completed by the assigned entity. */
    // Stored on the plan so that when an entity completes the assignment in their personal plan, its completion is also reflected in the main tree
    isComplete: boolean;
+   // @Cleanup: very awkward to have to set this everywhere.
+   /** Whether the plan can actually be completable or not. This is expected to be true in all normal circumstances, and is only false if e.g. the AI can't find a valid building position to place a building at */
+   readonly isCompletable: boolean;
 }
 
 export interface AIRootPlan extends AIBasePlan {
@@ -223,35 +226,39 @@ const createNewAssignmentWithSamePlan = <T extends AIPlan>(assignment: AIPlanAss
    };
 }
 
-export function createRootPlanAssignment(children: Array<AIPlanAssignment>): AIPlanAssignment<AIRootPlan> {
+export function createRootPlanAssignment(children: Array<AIPlanAssignment>, isCompletable: boolean): AIPlanAssignment<AIRootPlan> {
    return createAssignment({
       type: AIPlanType.root,
-      isComplete: false
+      isComplete: false,
+      isCompletable: isCompletable
    }, children);
 }
 
-export function createCraftRecipePlanAssignment(children: Array<AIPlanAssignment>, recipe: CraftingRecipe, productAmount: number): AIPlanAssignment<AICraftRecipePlan> {
+export function createCraftRecipePlanAssignment(children: Array<AIPlanAssignment>, isCompletable: boolean, recipe: CraftingRecipe, productAmount: number): AIPlanAssignment<AICraftRecipePlan> {
    return createAssignment({
       type: AIPlanType.craftRecipe,
       isComplete: false,
+      isCompletable: isCompletable,
       recipe: recipe,
       productAmount: productAmount
    }, children);
 }
 
-export function createPlaceBuildingPlanAssignment(children: Array<AIPlanAssignment>, virtualBuilding: VirtualStructure): AIPlanAssignment<AIPlaceBuildingPlan> {
+export function createPlaceBuildingPlanAssignment(children: Array<AIPlanAssignment>, isCompletable: boolean, virtualBuilding: VirtualStructure): AIPlanAssignment<AIPlaceBuildingPlan> {
    return createAssignment({
       type: AIPlanType.placeBuilding,
       isComplete: false,
+      isCompletable: isCompletable,
       potentialPlans: [],
       virtualBuilding: virtualBuilding
    }, children);
 }
 
-export function createUpgradeBuildingPlanAssignment(children: Array<AIPlanAssignment>, baseBuildingID: number, rotation: number, blueprintType: BlueprintType, entityType: StructureType): AIPlanAssignment<AIUpgradeBuildingPlan> {
+export function createUpgradeBuildingPlanAssignment(children: Array<AIPlanAssignment>, isCompletable: boolean, baseBuildingID: number, rotation: number, blueprintType: BlueprintType, entityType: StructureType): AIPlanAssignment<AIUpgradeBuildingPlan> {
    return createAssignment({
       type: AIPlanType.upgradeBuilding,
       isComplete: false,
+      isCompletable: isCompletable,
       baseBuildingID: baseBuildingID,
       rotation: rotation,
       blueprintType: blueprintType,
@@ -259,53 +266,45 @@ export function createUpgradeBuildingPlanAssignment(children: Array<AIPlanAssign
    }, children);
 }
 
-export function createTechStudyPlanAssignment(children: Array<AIPlanAssignment>, tech: Tech): AIPlanAssignment<AITechStudyPlan> {
+export function createTechStudyPlanAssignment(children: Array<AIPlanAssignment>, isCompletable: boolean, tech: Tech): AIPlanAssignment<AITechStudyPlan> {
    return createAssignment({
       type: AIPlanType.doTechStudy,
       isComplete: false,
+      isCompletable: isCompletable,
       tech: tech
    }, children);
 }
 
-export function createTechItemPlanAssignment(children: Array<AIPlanAssignment>, tech: Tech, itemType: ItemType): AIPlanAssignment<AITechItemPlan> {
+export function createTechItemPlanAssignment(children: Array<AIPlanAssignment>, isCompletable: boolean, tech: Tech, itemType: ItemType): AIPlanAssignment<AITechItemPlan> {
    return createAssignment({
       type: AIPlanType.doTechItems,
       isComplete: false,
+      isCompletable: isCompletable,
       tech: tech,
       itemType: itemType
    }, children);
 }
 
-export function createTechCompletePlanAssignment(children: Array<AIPlanAssignment>, tech: Tech): AIPlanAssignment<AITechCompletePlan> {
+export function createTechCompletePlanAssignment(children: Array<AIPlanAssignment>, isCompletable: boolean, tech: Tech): AIPlanAssignment<AITechCompletePlan> {
    return createAssignment({
       type: AIPlanType.completeTech,
       isComplete: false,
+      isCompletable: isCompletable,
       tech: tech
    }, children);
 }
 
-export function createGatherItemPlanAssignment(children: Array<AIPlanAssignment>, itemType: ItemType, amount: number): AIPlanAssignment<AIGatherItemPlan> {
+export function createGatherItemPlanAssignment(children: Array<AIPlanAssignment>, isCompletable: boolean, itemType: ItemType, amount: number): AIPlanAssignment<AIGatherItemPlan> {
    return createAssignment({
       type: AIPlanType.gatherItem,
       isComplete: false,
+      isCompletable: isCompletable,
       itemType: itemType,
       amount: amount
    }, children);
 }
 
-const craftingStationExists = (tribe: Tribe, craftingStation: CraftingStation): boolean => {
-   let entityType: EntityType;
-   switch (craftingStation) {
-      case CraftingStation.workbench: {
-         entityType = EntityType.workbench;
-         break;
-      }
-      // @Robustness
-      default: {
-         throw new Error();
-      }
-   }
-   
+const craftingStationExists = (tribe: Tribe, entityType: StructureType): boolean => {
    return tribe.virtualStructuresByEntityType[entityType].length > 0;
 }
 
@@ -321,12 +320,11 @@ const planToCraftItem = (tribe: Tribe, recipe: CraftingRecipe, productAmount: nu
    }
    
    // If there is no crafting station which can craft the recipe, first place that crafting station.
-   if (typeof recipe.craftingStation !== "undefined" && !craftingStationExists(tribe, recipe.craftingStation)) {
-      const craftingStationItemType = CRAFTING_STATION_ITEM_TYPE_RECORD[recipe.craftingStation];
-      assert(typeof craftingStationItemType !== "undefined");
-
+   // @HACK: CAST!!!
+   if (typeof recipe.craftingStation !== "undefined" && !craftingStationExists(tribe, recipe.craftingStation as any)) {
       children.push(
-         planToPlaceStructure(tribe, craftingStationItemType, null)
+         // @HACK: CAST!!!
+         planToPlaceStructure(tribe, recipe.craftingStation as any, null)
       );
    }
 
@@ -337,7 +335,7 @@ const planToCraftItem = (tribe: Tribe, recipe: CraftingRecipe, productAmount: nu
       );
    }
 
-   return createCraftRecipePlanAssignment(children, recipe, productAmount);
+   return createCraftRecipePlanAssignment(children, true, recipe, productAmount);
 }
 
 /** Creates a goal to obtain an item by any means necessary */
@@ -346,7 +344,7 @@ export function planToGetItem(tribe: Tribe, itemType: ItemType, amount: number):
    if (recipe !== null) {
       return planToCraftItem(tribe, recipe, amount);
    } else {
-      return createGatherItemPlanAssignment([], itemType, amount);
+      return createGatherItemPlanAssignment([], true, itemType, amount);
    }
 }
 
@@ -375,28 +373,39 @@ const planToResearchTech = (tribe: Tribe, tech: Tech): AIPlanAssignment<AITechCo
       );
 
       children.push(
-         createTechItemPlanAssignment([], tech, requiredItemType)
+         createTechItemPlanAssignment([], true, tech, requiredItemType)
       );
    }
 
    // If there is no bench to research at, go place one
    if (tech.researchStudyRequirements > 0 && !tribeHasResearchBench(tribe)) {
       children.push(
-         planToPlaceStructure(tribe, ItemType.research_bench, null)
+         planToPlaceStructure(tribe, EntityType.researchBench, null)
       );
    }
 
    if (tech.researchStudyRequirements > 0) {
       children.push(
-         createTechStudyPlanAssignment([], tech)
+         createTechStudyPlanAssignment([], true, tech)
       );
    }
 
-   return createTechCompletePlanAssignment(children, tech);
+   return createTechCompletePlanAssignment(children, true, tech);
+}
+
+const getStructureItemType = (entityType: EntityType): ItemType => {
+   // @Speed
+   for (let itemType: ItemType = 0; itemType < NUM_ITEM_TYPES; itemType++) {
+      const itemInfo = ITEM_INFO_RECORD[itemType];
+      if ((itemInfo as PlaceableItemInfo).entityType === entityType) {
+         return itemType;
+      }
+   }
+   throw new Error();
 }
 
 // @Cleanup: I feel like this should take in the entity type instead of the item type. That feels more natural
-export function planToPlaceStructure(tribe: Tribe, itemType: StructureItemType, virtualStructure: VirtualStructure | null): AIPlanAssignment<AIPlaceBuildingPlan> {
+export function planToPlaceStructure(tribe: Tribe, entityType: StructureType, virtualStructure: VirtualStructure | null): AIPlanAssignment<AIPlaceBuildingPlan> {
    const children = new Array<AIPlanAssignment>();
    
    let placedVirtualStructure: VirtualStructure;
@@ -404,9 +413,22 @@ export function planToPlaceStructure(tribe: Tribe, itemType: StructureItemType, 
       // Find a random spot to put the structure
       // @Hack: home layer
       const buildingLayer = tribe.getBuildingLayer(tribe.homeLayer);
-      const entityType = ITEM_INFO_RECORD[itemType].entityType;
       // @Cleanup: shouldn't have to define both entity type and placeable item type
       const candidate = generateBuildingCandidate(buildingLayer, entityType);
+      if (candidate === null) {
+         const uselessVirtualStructure: VirtualUnidentifiedBuilding = {
+            // @HACK the cast
+            entityType: entityType as any,
+            id: 0,
+            layer: buildingLayer.layer,
+            position: new Point(0, 0),
+            rotation: 0,
+            boxes: [],
+            occupiedNodes: new Set(),
+            restrictedBuildingAreas: []
+         };
+         return createPlaceBuildingPlanAssignment([], false, uselessVirtualStructure);
+      }
       placedVirtualStructure = createVirtualStructure(buildingLayer, candidate.position, candidate.rotation, entityType);
    } else {
       placedVirtualStructure = virtualStructure;
@@ -422,19 +444,19 @@ export function planToPlaceStructure(tribe: Tribe, itemType: StructureItemType, 
 
    // If the area is too dark to be placed in, place a torch first
    const lightLevel = getLightIntensityAtPos(placedVirtualStructure.layer, placedVirtualStructure.position.x, placedVirtualStructure.position.y);
-   // @Hack: item type check
-   if (itemType !== ItemType.slurbTorch && numWorkbenches > 0 && !structureLightLevelIsValid(lightLevel)) {
+   // @Hack: item type check. should really check if the entity produces light.
+   if (entityType !== EntityType.slurbTorch && numWorkbenches > 0 && !structureLightLevelIsValid(lightLevel)) {
       const virtualStructure = generateLightPosition(tribe, placedVirtualStructure.layer, placedVirtualStructure.position.x, placedVirtualStructure.position.y);
       children.push(
-         planToPlaceStructure(tribe, ItemType.slurbTorch, virtualStructure)
+         planToPlaceStructure(tribe, EntityType.slurbTorch, virtualStructure)
       );
    }
    
    children.push(
-      planToGetItem(tribe, itemType, 1)
+      planToGetItem(tribe, getStructureItemType(entityType), 1)
    );
 
-   return createPlaceBuildingPlanAssignment(children, placedVirtualStructure);
+   return createPlaceBuildingPlanAssignment(children, true, placedVirtualStructure);
 }
 
 const getNumDesiredBarrels = (tribe: Tribe): number => {
@@ -489,14 +511,14 @@ export function updateTribePlans(tribe: Tribe): void {
    // If the tribe doesn't have a totem, place one
    if (tribe.virtualStructuresByEntityType[EntityType.tribeTotem].length === 0) {
       tribe.rootAssignment.children.push(
-         planToPlaceStructure(tribe, ItemType.tribe_totem, null)
+         planToPlaceStructure(tribe, EntityType.tribeTotem, null)
       );
    }
 
    // Plan to place a hut so the settler can respawn if it dies
    if (tribe.virtualStructuresByEntityType[EntityType.workerHut].length === 0) {
       tribe.rootAssignment.children.push(
-         planToPlaceStructure(tribe, ItemType.worker_hut, null)
+         planToPlaceStructure(tribe, EntityType.workerHut, null)
       );
    }
 
@@ -512,11 +534,12 @@ export function updateTribePlans(tribe: Tribe): void {
       }
    }
 
-   for (let i = 0; i < tribe.getNumHuts(); i++) {
+   const numHuts = tribe.getNumEntitiesOfType(EntityType.workerHut) + tribe.getNumEntitiesOfType(EntityType.warriorHut);
+   for (let i = 0; i < numHuts; i++) {
       const numDesiredBarrels = getNumDesiredBarrels(tribe);
       if (tribe.virtualStructuresByEntityType[EntityType.barrel].length < numDesiredBarrels) {
          tribe.rootAssignment.children.push(
-            planToPlaceStructure(tribe, ItemType.barrel, null)
+            planToPlaceStructure(tribe, EntityType.barrel, null)
          );
          continue;
       }
@@ -528,7 +551,7 @@ export function updateTribePlans(tribe: Tribe): void {
          const wallPlaceResult = findIdealWallPlacePosition(tribe);
          if (wallPlaceResult !== null) {
             // @Hack: item type
-            const assignment = planToPlaceStructure(tribe, ItemType.wooden_wall, wallPlaceResult.virtualBuilding);
+            const assignment = planToPlaceStructure(tribe, EntityType.wall, wallPlaceResult.virtualBuilding);
             assignment.plan.potentialPlans = wallPlaceResult.potentialPlans;
 
             tribe.rootAssignment.children.push(assignment);

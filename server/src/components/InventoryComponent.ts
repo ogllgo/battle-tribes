@@ -3,7 +3,7 @@ import { createItemEntityConfig } from "../entities/item-entity";
 import { ComponentArray } from "./ComponentArray";
 import { createItem } from "../items";
 import { ItemComponentArray, itemEntityCanBePickedUp } from "./ItemComponent";
-import { CraftingRecipe, CraftingStation } from "battletribes-shared/items/crafting-recipes";
+import { CraftingRecipe } from "battletribes-shared/items/crafting-recipes";
 import { ItemTally2, tallyInventoryItems } from "battletribes-shared/items/ItemTally";
 import { InventoryName, Inventory, ItemType, Item, itemIsStackable, ITEM_INFO_RECORD, StackableItemInfo, getItemStackSize } from "battletribes-shared/items/items";
 import { Entity } from "battletribes-shared/entities";
@@ -426,14 +426,6 @@ export function inventoryComponentCanAffordRecipe(inventoryComponent: InventoryC
 
    const inventoryComponentTally = createInventoryComponentTally(inventoryComponent);
    return inventoryComponentTally.fullyCoversOtherTally(recipe.ingredients);
-}
-
-export function recipeCraftingStationIsAvailable(availableCraftingStations: ReadonlyArray<CraftingStation>, recipe: CraftingRecipe): boolean {
-   if (typeof recipe.craftingStation === "undefined") {
-      return true;
-   }
-
-   return availableCraftingStations.indexOf(recipe.craftingStation) !== -1;
 }
 
 export function craftRecipe(entity: Entity, inventoryComponent: InventoryComponent, recipe: CraftingRecipe, outputInventoryName: InventoryName): void {

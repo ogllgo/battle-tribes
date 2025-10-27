@@ -35,9 +35,6 @@ export function createTribeComponentData(tribe: Tribe): TribeComponentData {
 
 function decodeData(reader: PacketReader): TribeComponentData {
    const tribeID = reader.readNumber();
-   if (!tribeExists(tribeID)) {
-      console.warn("In creating tribe component from data, no tribe with id '" + tribeID + "' exists!");
-   }
    const tribeType = reader.readNumber() as TribeType;
    
    return {
@@ -48,6 +45,10 @@ function decodeData(reader: PacketReader): TribeComponentData {
 
 function createComponent(entityComponentData: EntityComponentData): TribeComponent {
    const tribeComponentData = entityComponentData.serverComponentData[ServerComponentType.tribe]!;
+
+   if (!tribeExists(tribeComponentData.tribeID)) {
+      console.warn("In creating tribe component from data, no tribe with id '" + tribeComponentData.tribeID + "' exists!");
+   }
 
    return {
       tribeID: tribeComponentData.tribeID,

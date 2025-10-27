@@ -278,7 +278,7 @@ export function getVisibleWallsData(playerLayer: Layer, visibleTribes: ReadonlyA
 
       // @Incomplete: filter out areas which aren't in the chunk bounds
       // @Hack: cast
-      for (const wall of buildingLayer.virtualBuildingsByEntityType[EntityType.wall] as Array<VirtualWall>) {
+      for (const wall of buildingLayer.virtualStructuresByEntityType[EntityType.wall] as Array<VirtualWall>) {
          const topSideNodes = wall.topSideNodes.map(nodeIndex => getWallSideNodeData(nodeIndex, 0));
          const rightSideNodes = wall.rightSideNodes.map(nodeIndex => getWallSideNodeData(nodeIndex, 1));
          const bottomSideNodes = wall.bottomSideNodes.map(nodeIndex => getWallSideNodeData(nodeIndex, 2));
@@ -304,7 +304,7 @@ export function getVisibleWallConnections(playerLayer: Layer, visibleTribes: Rea
       const buildingLayer = tribe.buildingLayers[playerLayer.depth];
 
       // @Hack: cast
-      for (const wall of buildingLayer.virtualBuildingsByEntityType[EntityType.wall] as Array<VirtualWall>) {
+      for (const wall of buildingLayer.virtualStructuresByEntityType[EntityType.wall] as Array<VirtualWall>) {
          // @Incomplete: filter out nodes which aren't in the chunk bounds
 
          if (wall.connectionBitset & 0b0001) {
@@ -345,9 +345,10 @@ const addBaseAssignmentData = (packet: Packet, assignment: AIPlanAssignment): vo
    packet.writeNumber(assignment.plan.type);
    packet.writeNumber(assignment.assignedEntity !== null ? assignment.assignedEntity : 0);
    packet.writeBool(assignment.plan.isComplete);
+   packet.writeBool(assignment.plan.isCompletable);
 }
 const getBasePlanDataLength = (): number => {
-   return 3 * Float32Array.BYTES_PER_ELEMENT;
+   return 4 * Float32Array.BYTES_PER_ELEMENT;
 }
 
 const addCraftRecipePlanData = (packet: Packet, plan: AICraftRecipePlan): void => {
@@ -450,7 +451,7 @@ export function addTribeAssignmentData(packet: Packet, tribe: Tribe): void {
 
    // @Speed @Hack
    let numEntitiesWithAIAssignmentComponent = 0;
-   for (const tribesman of tribe.tribesmanIDs) {
+   for (const tribesman of tribe.entities) {
       if (AIAssignmentComponentArray.hasComponent(tribesman)) {
          const aiAssignmentComponent = AIAssignmentComponentArray.getComponent(tribesman);
          if (aiAssignmentComponent.wholeAssignment !== null) {
@@ -462,8 +463,8 @@ export function addTribeAssignmentData(packet: Packet, tribe: Tribe): void {
    // Tribesman assignments
    packet.writeNumber(numEntitiesWithAIAssignmentComponent);
    // @Incomplete: won't account for cogwalkers
-   for (let i = 0; i < tribe.tribesmanIDs.length; i++) {
-      const tribesman = tribe.tribesmanIDs[i];
+   for (let i = 0; i < tribe.entities.length; i++) {
+      const tribesman = tribe.entities[i];
       
       if (AIAssignmentComponentArray.hasComponent(tribesman)) {
          const aiAssignmentComponent = AIAssignmentComponentArray.getComponent(tribesman);
@@ -482,8 +483,8 @@ export function getTribeAssignmentDataLength(tribe: Tribe): number {
    // Tribesman assignments
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    // @Incomplete: won't account for cogwalkers
-   for (let i = 0; i < tribe.tribesmanIDs.length; i++) {
-      const tribesman = tribe.tribesmanIDs[i];
+   for (let i = 0; i < tribe.entities.length; i++) {
+      const tribesman = tribe.entities[i];
       
       if (AIAssignmentComponentArray.hasComponent(tribesman)) {
          const aiAssignmentComponent = AIAssignmentComponentArray.getComponent(tribesman);

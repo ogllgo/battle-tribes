@@ -579,12 +579,11 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
       }
    }
 
-   const desiredAttackRange = getTribesmanDesiredAttackRange(tribesman);
-
+   const desiredAttackRange = getTribesmanDesiredAttackRange();
    const distance = getDistanceFromPointToEntity(tribesmanHitbox.box.position, huntedEntityTransformComponent) - getHumanoidRadius(transformComponent);
-   if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange, distance)) {
+   if (distance < desiredAttackRange) {
       // If the tribesman will stop too close to the target, move back a bit
-      if (willStopAtDesiredDistance(tribesmanHitbox, desiredAttackRange - 20, distance)) {
+      if (distance < desiredAttackRange - 10) {
          const acceleration = getTribesmanSlowAcceleration(tribesman);
          applyAccelerationFromGround(tribesmanHitbox, polarVec2(acceleration, tribesmanHitbox.box.angle + Math.PI));
       }
@@ -600,7 +599,9 @@ export function goKillEntity(tribesman: Entity, huntedEntity: Entity, isAggressi
       const pointDistance = tribesmanHitbox.box.position.distanceTo(huntedHitbox.box.position);
       const targetDirectRadius = pointDistance - distance;
 
-      const goalRadius = Math.floor((desiredAttackRange + targetDirectRadius) / PathfindingSettings.NODE_SEPARATION);
+      // @TEMPORARY? cuz they aren't going close enough
+      // const goalRadius = Math.floor((desiredAttackRange + targetDirectRadius) / PathfindingSettings.NODE_SEPARATION);
+      const goalRadius = Math.floor((targetDirectRadius) / PathfindingSettings.NODE_SEPARATION);
       // @Temporary?
       // const failureDefault = isAggressive ? PathfindFailureDefault.returnClosest : PathfindFailureDefault.throwError;
       const failureDefault = isAggressive ? PathfindFailureDefault.returnClosest : PathfindFailureDefault.none;

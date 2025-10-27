@@ -453,15 +453,13 @@ export function entityIsFlaggedForDestruction(entity: Entity): boolean {
 }
 
 export function destroyEntity(entity: Entity): void {
-   // @Temporary
-   const entityType = getEntityType(entity);
-   if (typeof entityType === "undefined") {
-      throw new Error("Tried to remove an entity which doesn't exist.");
+   // Throw an error if already being/is destroyed
+   // - This erroring is quite useful for catching bugs where the same entity gets processed multiple times erroneously
+   if (!entityExists(entity)) {
+      throw new Error("Tried to destroy an entity which doesn't exist.");
    }
-   
-   // Don't try to remove if already being/is removed
-   if (entityIsFlaggedForDestruction(entity) || !entityExists(entity)) {
-      return;
+   if (entityIsFlaggedForDestruction(entity)) {
+      throw new Error("Tried to destroy an entity which is already being destroyed.");
    }
 
    // Add the entity to the remove buffer

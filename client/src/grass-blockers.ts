@@ -20,7 +20,6 @@ export interface GrassBlocker {
    // @Bandwidth: unnecessary
    readonly maxBlockAmount: number;
    lastUpdateTicks: number;
-   readonly affectedGrassStrands: Array<Entity>;
 
    readonly vao: WebGLVertexArrayObject;
    readonly vertexBuffer: WebGLBuffer;
@@ -38,33 +37,8 @@ export interface GrassBlockerData {
 
 const grassBlockers = new Map<number, GrassBlocker>();
 
-const strandBlockers = new Map<Entity, Array<number>>();
-
 export function getGrassBlockers(): ReadonlyMap<number, Readonly<GrassBlocker>> {
    return grassBlockers;
-}
-
-const addAffectedGrassStrands = (layer: Layer, blockerBox: Box, blocker: GrassBlocker): void => {
-   const minChunkX = unitsToChunksClamped(blockerBox.calculateBoundsMinX());
-   const maxChunkX = unitsToChunksClamped(blockerBox.calculateBoundsMaxX());
-   const minChunkY = unitsToChunksClamped(blockerBox.calculateBoundsMinY());
-   const maxChunkY = unitsToChunksClamped(blockerBox.calculateBoundsMaxY());
-   for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-      for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-         const chunk = layer.getChunk(chunkX, chunkY);
-
-         for (const entity of chunk.entities) {
-            if (getEntityType(entity) === EntityType.grassStrand) {
-               const grassTransformComponent = TransformComponentArray.getComponent(entity);
-               const grassHitbox = grassTransformComponent.hitboxes[0];
-               const collisionResult = blockerBox.getCollisionResult(grassHitbox.box);
-               if (collisionResult.isColliding) {
-                  blocker.affectedGrassStrands.push(entity);
-               }
-            }
-         }
-      }
-   }
 }
 
 const createGrassBlockerFromData = (data: GrassBlockerData): GrassBlocker => {
@@ -76,13 +50,10 @@ const createGrassBlockerFromData = (data: GrassBlockerData): GrassBlocker => {
       blockAmount: data.blockAmount,
       maxBlockAmount: data.maxBlockAmount,
       lastUpdateTicks: currentSnapshot.tick,
-      affectedGrassStrands: [],
       vao: vao,
       vertexBuffer: vertexBuffer,
       vertexDataLength: 0
    };
-
-   addAffectedGrassStrands(data.layer, data.box, blocker);
 
    gl.bindVertexArray(vao);
 
@@ -113,12 +84,6 @@ const updateGrassBlockerVertices = (blocker: GrassBlocker): void => {
    gl.bufferSubData(gl.ARRAY_BUFFER, 0, newVertexData);
    
    gl.bindVertexArray(null);
-}
-
-const updateGrassStrandOpacity = (renderInfo: EntityRenderInfo, opacity: number): void => {
-   for (const renderPart of renderInfo.renderPartsByZIndex as Array<ColouredRenderPart>) {
-      renderPart.opacity = opacity;
-   }
 }
 
 export function readGrassBlockers(reader: PacketReader): ReadonlyArray<GrassBlockerData> {
@@ -157,20 +122,6 @@ export function updateGrassBlockersFromData(grassBlockerData: ReadonlyArray<Gras
       } else {
          const grassBlocker = createGrassBlockerFromData(data);
          grassBlockers.set(data.id, grassBlocker);
-
-         for (const grassStrand of grassBlocker.affectedGrassStrands) {
-            const renderInfo = getEntityRenderInfo(grassStrand);
-            // @SQUEAM cuz i wanna test removing the grass server-side!!!!
-            // updateGrassStrandOpacity(renderInfo, 0);
-            registerDirtyRenderInfo(renderInfo);
-
-            const blockers = strandBlockers.get(grassStrand);
-            if (typeof blockers === "undefined") {
-               strandBlockers.set(grassStrand, [data.id]);
-            } else {
-               blockers.push(data.id);
-            }
-         }
       }
    }
 
@@ -180,25 +131,6 @@ export function updateGrassBlockersFromData(grassBlockerData: ReadonlyArray<Gras
       if (blocker.lastUpdateTicks !== currentSnapshot.tick) {
          const id = pair[0];
          grassBlockers.delete(id);
-
-         // @Copynpaste
-         for (const grassStrand of blocker.affectedGrassStrands) {
-            if (entityExists(grassStrand)) {
-               const blockers = strandBlockers.get(grassStrand);
-               assert(typeof blockers !== "undefined");
-               const idx = blockers.indexOf(id);
-               assert(idx !== -1)
-               blockers.splice(idx, 1);
-
-               if (blockers.length === 0) {
-                  const renderInfo = getEntityRenderInfo(grassStrand);
-                  // @SQUEAM cuz i wanna test removing the grass server-side!!!!
-                  // updateGrassStrandOpacity(renderInfo, 1);
-                  registerDirtyRenderInfo(renderInfo);
-                  strandBlockers.delete(grassStrand);
-               }
-            }
-         }
       }
    }
 }

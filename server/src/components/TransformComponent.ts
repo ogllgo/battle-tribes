@@ -790,14 +790,15 @@ function onRemove(entity: Entity): void {
          detachHitbox(hitbox);
       }
 
-      // Untether
-      while (hitbox.tethers.length > 0) {
-         const tether = hitbox.tethers[0];
+      // Untether all tethers
+      for (let i = hitbox.tethers.length - 1; i >= 0; i--) {
+         const tether = hitbox.tethers[i];
          destroyTether(tether);
       }
 
-      // Detach any children
-      for (const childHitbox of hitbox.children) {
+      // Detach all children
+      for (let i = hitbox.children.length - 1; i >= 0; i--) {
+         const childHitbox = hitbox.children[i];
          if (childHitbox.entity !== entity) {
             detachHitbox(childHitbox);
          }

@@ -1,9 +1,8 @@
 import { Settings } from "battletribes-shared/settings";
-import { getDistanceFromPointToEntity, willStopAtDesiredDistance } from "../ai-shared";
+import { getDistanceFromPointToEntity } from "../ai-shared";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { entityExists, getEntityType } from "../world";
-import { Hitbox } from "../hitboxes";
 import { Point, randInt } from "../../../shared/src/utils";
 import { AIHelperComponentArray } from "../components/AIHelperComponent";
 
@@ -86,7 +85,7 @@ export function continueFollowingEntity(entity: Entity, followAI: FollowAI, foll
       radius = 32;
    }
    const distance = getDistanceFromPointToEntity(followTargetHitbox.box.position, transformComponent) - radius;
-   if (willStopAtDesiredDistance(entityHitbox, followAI.followDistance, distance - 4)) {
+   if (distance < followAI.followDistance) {
       // Too close, move backwards with half acceleration!
 
       aiHelperComponent.turnFunc(entity, followTargetHitbox.box.position, turnSpeed, turnDamping)
@@ -95,8 +94,6 @@ export function continueFollowingEntity(entity: Entity, followAI: FollowAI, foll
       const moveTargetX = entityHitbox.box.position.x + 500 * Math.sin(awayDirection);
       const moveTargetY = entityHitbox.box.position.y + 500 * Math.cos(awayDirection);
       aiHelperComponent.moveFunc(entity, new Point(moveTargetX, moveTargetY), acceleration * 0.5);
-   } else if (willStopAtDesiredDistance(entityHitbox, followAI.followDistance, distance)) {
-      aiHelperComponent.turnFunc(entity, followTargetHitbox.box.position, turnSpeed, turnDamping);
    } else {
       aiHelperComponent.turnFunc(entity, followTargetHitbox.box.position, turnSpeed, turnDamping);
       aiHelperComponent.moveFunc(entity, followTargetHitbox.box.position, acceleration);

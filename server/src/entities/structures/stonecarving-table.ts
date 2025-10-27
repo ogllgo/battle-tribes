@@ -1,6 +1,5 @@
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../components";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
@@ -34,7 +33,7 @@ export function createStonecarvingTableConfig(position: Point, rotation: number,
    
    const tribeComponent = new TribeComponent(tribe);
    
-   const craftingStationComponent = new CraftingStationComponent(CraftingStation.stonecarvingTable);
+   const craftingStationComponent = new CraftingStationComponent();
    
    return {
       entityType: EntityType.stonecarvingTable,

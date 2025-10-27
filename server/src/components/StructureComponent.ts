@@ -73,8 +73,6 @@ function onJoin(entity: Entity): void {
       structureComponent.virtualStructure = createVirtualStructureFromHitboxes(buildingLayer, entityHitbox.box.position.copy(), entityHitbox.box.angle, entityType, transformComponent.hitboxes);
    }
    
-   tribeComponent.tribe.addBuilding(entity);
-
    createStructureGrassBlockers(entity);
    
    // Register connections in any connected structures
@@ -85,9 +83,6 @@ function onJoin(entity: Entity): void {
 }
 
 function onRemove(entity: Entity): void {
-   const tribeComponent = TribeComponentArray.getComponent(entity);
-   tribeComponent.tribe.removeBuilding(entity);
-
    const structureComponent = StructureComponentArray.getComponent(entity);
 
    for (const connection of structureComponent.connections) {

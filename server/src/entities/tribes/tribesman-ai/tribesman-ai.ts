@@ -27,7 +27,7 @@ import { runAssignmentAI } from "../../../components/AIAssignmentComponent";
 import { replantPlanterBoxes } from "./tribesman-replanting";
 import { getAbsAngleDiff, polarVec2 } from "../../../../../shared/src/utils";
 import { entitiesAreColliding, CollisionVars } from "../../../collision-detection";
-import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../../hitboxes";
+import { applyAccelerationFromGround, turnHitboxToAngle } from "../../../hitboxes";
 import { clearPathfinding, pathfindTribesman } from "../../../components/AIPathfindingComponent";
 
 // @Cleanup: Move all of this to the TribesmanComponent file
@@ -276,19 +276,22 @@ const barrelHasFood = (barrel: Entity): boolean => {
    return false;
 }
 
-const getAvailableHut = (tribe: Tribe): Entity | null => {
-   for (let i = 0; i < tribe.buildings.length; i++) {
-      const building = tribe.buildings[i];
-      if (!HutComponentArray.hasComponent(building)) {
-         continue;
-      }
-
-      const hutComponent = HutComponentArray.getComponent(building);
+const findAvailableHut = (tribe: Tribe): Entity | null => {
+   for (const hut of tribe.getEntitiesByType(EntityType.workerHut)) {
+      const hutComponent = HutComponentArray.getComponent(hut);
       if (!hutComponent.hasTribesman) {
-         return building;
+         return hut;
       }
    }
 
+   // @Copynpaste
+   for (const hut of tribe.getEntitiesByType(EntityType.warriorHut)) {
+      const hutComponent = HutComponentArray.getComponent(hut);
+      if (!hutComponent.hasTribesman) {
+         return hut;
+      }
+   }
+   
    return null;
 }
 
@@ -454,7 +457,7 @@ export function tickTribesman(tribesman: Entity): void {
 
    // If the tribesman doesn't have a hut, try to look for one
    if (tribesmanAIComponent.hut === 0) {
-      const availableHut = getAvailableHut(tribeComponent.tribe);
+      const availableHut = findAvailableHut(tribeComponent.tribe);
       if (availableHut !== null) {
          const hutTransformComponent = TransformComponentArray.getComponent(availableHut);
          const hutHitbox = hutTransformComponent.hitboxes[0];
@@ -567,7 +570,7 @@ export function tickTribesman(tribesman: Entity): void {
          
          const targetDir = tribesmanHitbox.box.position.angleTo(blueprintHitbox.box.position);
 
-         const desiredAttackRange = getTribesmanDesiredAttackRange(tribesman);
+         const desiredAttackRange = getTribesmanDesiredAttackRange() - getHumanoidRadius(transformComponent);
          
          // @Incomplete: use pathfinding
          // @Cleanup: Copy and pasted from huntEntity. Should be combined into its own function

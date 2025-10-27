@@ -121,6 +121,17 @@ const getFoodTarget = (tribesman: Entity, visibleEntities: ReadonlyArray<Entity>
          continue;
       }
 
+      // Don't attack cows unless the tribe has a furnace
+      // @Hack: kinda hardcoded. should just check to see if the item type requires cooking to be valuable?
+      if (getEntityType(entity) === EntityType.cow) {
+         const tribeComponent = TribeComponentArray.getComponent(tribesman);
+         const tribe = tribeComponent.tribe;
+
+         if (tribe.getNumEntitiesOfType(EntityType.furnace) === 0) {
+            continue;
+         }
+      }
+
       const resourceTransformComponent = TransformComponentArray.getComponent(entity);
       const resourceHitbox = resourceTransformComponent.hitboxes[0];
 
@@ -305,7 +316,6 @@ export function workOnGatherPlan(tribesman: Entity, gatherPlan: AIGatherItemPlan
    // Passively look for food
    // @Temporary: This is disabled while the combat swing AI is shit, because the tribesmen will try to attack cows to get raw beef and endlessly miss.
    if (isLowOnFood(tribesman)) {
-      // @Incomplete: Don't attack cows unless the tribe has a furnace.
       const target = getFoodTarget(tribesman, aiHelperComponent.visibleEntities);
       if (target !== null) {
          goKillEntity(tribesman, target, false);

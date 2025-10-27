@@ -35,6 +35,7 @@ import { LoadingScreen_setStatus, LoadingScreenStatus } from "./components/Loadi
 import { InitialGameData, processForcePositionUpdatePacket, processInitialGameDataPacket, processSimulationStatusUpdatePacket, processSyncDataPacket, receiveChatMessagePacket } from "./networking/packet-receiving";
 import { renderGame, setupRendering } from "./rendering/render";
 import { processDevGameDataPacket } from "./networking/dev-packets";
+import { assert } from "../../shared/src/utils";
 
 const SNAPSHOT_BUFFER_LENGTH = 2;
 /** The number of ticks it takes for the measured server packet interval to fully adjust (if going from a constant tps of A to a constant tps of B) */
@@ -54,6 +55,7 @@ let clientTick = 0;
 let clientTickInterp = 0;
 
 const snapshotBuffer = new Array<PacketSnapshot>();
+const unprocessedGamePackets = new Array<PacketReader>();
 export let currentSnapshot: PacketSnapshot;
 export let nextSnapshot: PacketSnapshot;
 
@@ -65,6 +67,25 @@ let playerPacketAccumulator = 0;
 document.addEventListener("visibilitychange", () => {
    if (document.visibilityState === "visible") {
       lastPacketTime = performance.now();
+
+      gameIsSynced = true;
+      // If the ideal buffer length is 2, we want to revive the top 3 snapshots.
+      // for (let i = Math.max(unprocessedGamePackets.length - SNAPSHOT_BUFFER_LENGTH - 1, 0); i < unprocessedGamePackets.length; i++) {
+      //    const reader = unprocessedGamePackets[i];
+      //    receivePacket(reader);
+      // }
+      // @HACK @SPEED im doing this all at once... if you're tabbed out for long enough this is going to be horrible.
+      console.log(unprocessedGamePackets.length);
+      for (const reader of unprocessedGamePackets) {
+         const previousSnapshot = snapshotBuffer.length > 0 ? snapshotBuffer[snapshotBuffer.length - 1] : null;
+         const snapshot = decodeSnapshotFromGameDataPacket(reader, previousSnapshot);
+         updateGameStateToSnapshot(snapshot);
+      }
+      unprocessedGamePackets.splice(0, unprocessedGamePackets.length);
+   } else if (document.visibilityState === "hidden") {
+      gameIsSynced = false;
+      assert(unprocessedGamePackets.length === 0);
+      unprocessedGamePackets.splice(0, unprocessedGamePackets.length);
    }
 });
 
@@ -144,9 +165,13 @@ const onPacket = (msg: MessageEvent): void => {
             if (snapshotBuffer.length === SNAPSHOT_BUFFER_LENGTH) {
                startGame();
             }
-         } else if (gameIsRunning && gameIsSynced && document.visibilityState !== "hidden") {
+         } else if (gameIsRunning) {
             // Only unload game packets when the game is running
-            receivePacket(reader);
+            if (gameIsSynced) {
+               receivePacket(reader);
+            } else {
+               unprocessedGamePackets.push(reader);
+            }
          }
          break;
       }

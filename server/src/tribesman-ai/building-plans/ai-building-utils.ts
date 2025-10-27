@@ -97,7 +97,7 @@ export function buildingCandidateIsValid(candidate: BuildingCandidate): boolean 
    
    // Make sure the space doesn't collide with any buildings or their restricted building areas
    // @Speed!!
-   for (const virtualBuilding of candidate.buildingLayer.virtualBuildings) {
+   for (const virtualBuilding of candidate.buildingLayer.virtualStructures) {
       if (boxArraysAreColliding(candidate.boxes, virtualBuilding.boxes)) {
          return false;
       }
@@ -116,6 +116,7 @@ export function buildingCandidateIsOnSafeNode(candidate: BuildingCandidate): boo
    const occupiedNodes = new Set<SafetyNode>();
    // @Speed
    addBoxesOccupiedNodes(candidate.boxes, occupiedNodes);
+   
    for (const node of occupiedNodes) {
       if (candidate.buildingLayer.safetyNodes.has(node)) {
          return true;
@@ -125,14 +126,14 @@ export function buildingCandidateIsOnSafeNode(candidate: BuildingCandidate): boo
    return false;
 }
 
-/** Generates a random valid building location */
-export function generateBuildingCandidate(buildingLayer: TribeBuildingLayer, entityType: StructureType): BuildingCandidate {
+/** Generates a random valid building location. If returns null, then something has gone really wrong. */
+export function generateBuildingCandidate(buildingLayer: TribeBuildingLayer, entityType: StructureType): BuildingCandidate | null {
    // If there are no virtual buildings, we can't use any existing buildings as reference so we go off the start position of the tribe
    let minX: number;
    let maxX: number;
    let minY: number;
    let maxY: number;
-   if (buildingLayer.virtualBuildings.length === 0) {
+   if (buildingLayer.virtualStructures.length === 0) {
       minX = buildingLayer.tribe.startPosition.x - Vars.INITIAL_BUILDING_CANDIDATE_GENERATION_RANGE;
       maxX = buildingLayer.tribe.startPosition.x + Vars.INITIAL_BUILDING_CANDIDATE_GENERATION_RANGE;
       minY = buildingLayer.tribe.startPosition.y - Vars.INITIAL_BUILDING_CANDIDATE_GENERATION_RANGE;
@@ -144,6 +145,7 @@ export function generateBuildingCandidate(buildingLayer: TribeBuildingLayer, ent
       let maxNodeX = 0;
       let minNodeY = Settings.SAFETY_NODES_IN_WORLD_WIDTH - 1;
       let maxNodeY = 0;
+      // @Speed: if a tribe builds something in the bottom right and top left of the map then this will be brutal.
       for (const node of buildingLayer.occupiedSafetyNodes) {
          const nodeX = node % Settings.SAFETY_NODES_IN_WORLD_WIDTH;
          const nodeY = Math.floor(node / Settings.SAFETY_NODES_IN_WORLD_WIDTH);
@@ -176,10 +178,10 @@ export function generateBuildingCandidate(buildingLayer: TribeBuildingLayer, ent
       
       const candidate = createBuildingCandidate(entityType, buildingLayer, x, y, rotation);
 
-      if ((buildingLayer.virtualBuildings.length === 0 || buildingCandidateIsOnSafeNode(candidate)) && buildingCandidateIsValid(candidate)) {
+      if ((buildingLayer.virtualStructures.length === 0 || buildingCandidateIsOnSafeNode(candidate)) && buildingCandidateIsValid(candidate)) {
          return candidate;
       }
    }
 
-   throw new Error();
+   return null;
 }

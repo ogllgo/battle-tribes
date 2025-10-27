@@ -7,7 +7,6 @@ import { getEntityLayer } from "../world";
 import { createGrassBlocker } from "../grass-blockers";
 import CircularBox from "../../../shared/src/boxes/CircularBox";
 import { Point } from "../../../shared/src/utils";
-import { Hitbox } from "../hitboxes";
 
 const TREE_TRUNK_RADII: Record<TreeSize, number> = {
    [TreeSize.small]: 15,
@@ -26,9 +25,6 @@ export const TreeComponentArray = new ComponentArray<TreeComponent>(ServerCompon
 TreeComponentArray.onJoin = onJoin;
 
 function onJoin(entity: Entity): void {
-   // @SQUEAM for the pen shot cuz i dont want grass gaps being made in the thing
-   if (1+1===2)return;
-   
    const transformComponent = TransformComponentArray.getComponent(entity);
    const treeHitbox = transformComponent.hitboxes[0];
    

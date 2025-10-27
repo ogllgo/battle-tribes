@@ -338,8 +338,9 @@ export function markWallTileInPathfinding(layer: Layer, tileX: number, tileY: nu
 }
 
 export function getClosestPathfindNode(x: number, y: number): PathfindingNodeIndex {
-   const nodeX = Math.round(x / PathfindingSettings.NODE_SEPARATION);
-   const nodeY = Math.round(y / PathfindingSettings.NODE_SEPARATION);
+   // use floor not round cuz that makes sense for this
+   const nodeX = Math.floor(x / PathfindingSettings.NODE_SEPARATION);
+   const nodeY = Math.floor(y / PathfindingSettings.NODE_SEPARATION);
    return getPathfindingNode(nodeX, nodeY);
 }
 
@@ -348,43 +349,35 @@ export function positionIsAccessible(layer: Layer, x: number, y: number, ignored
    return nodeIsAccessibleForEntity(layer, node, ignoredGroupID, pathfindingEntityFootprint);
 }
 
-export function getAngleToNode(transformComponent: TransformComponent, node: PathfindingNodeIndex): number {
-   // @Hack
-   const hitbox = transformComponent.hitboxes[0];
-   
-   const x = (node % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1) * PathfindingSettings.NODE_SEPARATION;
-   const y = (Math.floor(node / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1) * PathfindingSettings.NODE_SEPARATION;
-   return angle(x - hitbox.box.position.x, y - hitbox.box.position.y);
+const nodeIndexToXY = (node: PathfindingNodeIndex): Point => {
+   const nodeX = node % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1;
+   const nodeY = Math.floor(node / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1;
+   return new Point(nodeX, nodeY);
+}
+
+const nodeXYToWorldPos = (nodeXY: Point): Point => {
+   const x = (nodeXY.x + 0.5) * PathfindingSettings.NODE_SEPARATION;
+   const y = (nodeXY.y + 0.5) * PathfindingSettings.NODE_SEPARATION;
+   return new Point(x, y);
+}
+
+export function getPathfindingNodePos(node: PathfindingNodeIndex): Point {
+   return nodeXYToWorldPos(nodeIndexToXY(node));
 }
 
 export function getDistanceToNode(transformComponent: TransformComponent, node: PathfindingNodeIndex): number {
-   const x = (node % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1) * PathfindingSettings.NODE_SEPARATION;
-   const y = (Math.floor(node / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1) * PathfindingSettings.NODE_SEPARATION;
-   
-   return getDistanceFromPointToEntity(new Point(x, y), transformComponent);
+   const nodeWorldPos = getPathfindingNodePos(node);
+   return getDistanceFromPointToEntity(nodeWorldPos, transformComponent);
 }
 
-export function getDistBetweenNodes(node1: PathfindingNodeIndex, node2: PathfindingNodeIndex): number {
-   const x1 = node1 % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1;
-   const y1 = Math.floor(node1 / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1;
-
-   const x2 = node2 % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1;
-   const y2 = Math.floor(node2 / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1;
-
-   const diffX = x1 - x2;
-   const diffY = y1 - y2;
-   return Math.sqrt(diffX * diffX + diffY * diffY);
+export function getAngleToNode(transformComponent: TransformComponent, node: PathfindingNodeIndex): number {
+   const hitbox = transformComponent.hitboxes[0]; // @Hack
+   const nodePos = getPathfindingNodePos(node);
+   return hitbox.box.position.angleTo(nodePos);
 }
 
 export function entityHasReachedNode(transformComponent: TransformComponent, node: PathfindingNodeIndex): boolean {
-   // @Hack
-   const hitbox = transformComponent.hitboxes[0];
-   
-   const x = (node % PathfindingSettings.NODES_IN_WORLD_WIDTH - 1) * PathfindingSettings.NODE_SEPARATION;
-   const y = (Math.floor(node / PathfindingSettings.NODES_IN_WORLD_WIDTH) - 1) * PathfindingSettings.NODE_SEPARATION;
-
-   const distSquared = calculateDistanceSquared(hitbox.box.position.x, hitbox.box.position.y, x, y);
-   return distSquared <= PathfindingSettings.NODE_REACH_DIST * PathfindingSettings.NODE_SEPARATION;
+   return getDistanceToNode(transformComponent, node) <= PathfindingSettings.NODE_REACH_DIST;
 }
 
 const aStarHeuristic = (startNode: PathfindingNodeIndex, endNode: PathfindingNodeIndex): number => {
@@ -396,6 +389,12 @@ const aStarHeuristic = (startNode: PathfindingNodeIndex, endNode: PathfindingNod
    const diffX = startNodeX - endNodeX;
    const diffY = startNodeY - endNodeY;
    return Math.sqrt(diffX * diffX + diffY * diffY);
+}
+
+const getNodeDistBetweenNodes = (node1: PathfindingNodeIndex, node2: PathfindingNodeIndex): number => {
+   const node1XY = nodeIndexToXY(node1);
+   const node2XY = nodeIndexToXY(node2);
+   return node1XY.distanceTo(node2XY);
 }
 
 export function getEntityFootprint(radius: number): number {
@@ -496,7 +495,7 @@ export function findSingleLayerPath(layer: Layer, startX: number, startY: number
       closedSet.add(currentNode);
 
       // If reached the goal, return the path from start to the goal
-      if ((options.goalRadius === 0 && currentNode === goal) || (options.goalRadius > 0 && getDistBetweenNodes(currentNode, goal) <= options.goalRadius)) {
+      if ((options.goalRadius === 0 && currentNode === goal) || (options.goalRadius > 0 && getNodeDistBetweenNodes(currentNode, goal) <= options.goalRadius)) {
          const rawPath = reconstructRawPath(currentNode, cameFrom);
          return {
             layer: layer,

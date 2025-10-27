@@ -1,10 +1,10 @@
 import { TribesmanAIType } from "battletribes-shared/components";
-import { Entity, LimbAction } from "battletribes-shared/entities";
+import { Entity, EntityType, LimbAction } from "battletribes-shared/entities";
 import { Tech } from "battletribes-shared/techs";
 import { getDistanceFromPointToEntity } from "../../../ai-shared";
 import { InventoryUseComponentArray, setLimbActions } from "../../../components/InventoryUseComponent";
 import { continueResearching, markPreemptiveMoveToBench, attemptToOccupyResearchBench, canResearchAtBench, shouldMoveToResearchBench } from "../../../components/ResearchBenchComponent";
-import { TribeComponent, TribeComponentArray } from "../../../components/TribeComponent";
+import { TribeComponentArray } from "../../../components/TribeComponent";
 import { TribesmanAIComponentArray, TribesmanPathType } from "../../../components/TribesmanAIComponent";
 import { TRIBESMAN_TURN_SPEED } from "./tribesman-ai";
 import { getTribesmanSlowAcceleration, getHumanoidRadius } from "./tribesman-ai-utils";
@@ -16,29 +16,26 @@ import { assert, polarVec2 } from "../../../../../shared/src/utils";
 import { getEntityLayer } from "../../../world";
 import { PathfindingSettings } from "../../../../../shared/src/settings";
 import { PathfindFailureDefault } from "../../../pathfinding";
-import { applyAccelerationFromGround, Hitbox, turnHitboxToAngle } from "../../../hitboxes";
+import { applyAccelerationFromGround, turnHitboxToAngle } from "../../../hitboxes";
 import { pathfindTribesman } from "../../../components/AIPathfindingComponent";
 
-const getOccupiedResearchBenchID = (tribesman: Entity, tribeComponent: TribeComponent): Entity => {
-   for (let i = 0; i < tribeComponent.tribe.researchBenches.length; i++) {
-      const bench = tribeComponent.tribe.researchBenches[i];
+const getOccupiedResearchBenchID = (tribesman: Entity, tribe: Tribe): Entity => {
+   for (const bench of tribe.getEntitiesByType(EntityType.researchBench)) {
       if (canResearchAtBench(bench, tribesman)) {
          return bench;
       }
    }
-
    return 0;
 }
 
-const getAvailableResearchBenchID = (tribesman: Entity, tribeComponent: TribeComponent): Entity => {
+const getAvailableResearchBenchID = (tribesman: Entity, tribe: Tribe): Entity => {
    const transformComponent = TransformComponentArray.getComponent(tribesman);
    const tribesmanHitbox = transformComponent.hitboxes[0];
    
    let id = 0;
    let minDist = Number.MAX_SAFE_INTEGER;
 
-   for (let i = 0; i < tribeComponent.tribe.researchBenches.length; i++) {
-      const bench = tribeComponent.tribe.researchBenches[i];
+   for (const bench of tribe.getEntitiesByType(EntityType.researchBench)) {
       if (!shouldMoveToResearchBench(bench, tribesman)) {
          continue;
       }
@@ -61,14 +58,15 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
    const tribesmanHitbox = transformComponent.hitboxes[0];
    
    const tribeComponent = TribeComponentArray.getComponent(tribesman);
+   const tribe = tribeComponent.tribe;
    
    const tribesmanAIComponent = TribesmanAIComponentArray.getComponent(tribesman);
 
    // Make sure that the tech requires researching
-   assert(tribeComponent.tribe.techRequiresResearching(tech));
+   assert(tribe.techRequiresResearching(tech));
 
    // If already researching at a bench, continue researching at an occupied bench
-   const occupiedBench = getOccupiedResearchBenchID(tribesman, tribeComponent);
+   const occupiedBench = getOccupiedResearchBenchID(tribesman, tribe);
    if (occupiedBench !== 0) {
       const benchTransformComponent = TransformComponentArray.getComponent(occupiedBench);
       const researchBenchHitbox = benchTransformComponent.hitboxes[0];
@@ -91,7 +89,7 @@ export function goResearchTech(tribesman: Entity, tech: Tech): void {
       return;
    }
    
-   const bench = getAvailableResearchBenchID(tribesman, tribeComponent);
+   const bench = getAvailableResearchBenchID(tribesman, tribe);
    if (bench !== 0) {
       const benchTransformComponent = TransformComponentArray.getComponent(bench);
       const researchBenchHitbox = benchTransformComponent.hitboxes[0];

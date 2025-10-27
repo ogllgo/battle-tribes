@@ -55,7 +55,7 @@ export function createTribeArea(buildingLayer: TribeBuildingLayer, nodes: Set<Sa
 
    // @Incomplete
    for (const nodeIndex of encounteredOccupiedNodeIndexes) {
-      const virtualBuildingIDs = buildingLayer.occupiedNodeToVirtualBuildingIDRecord[nodeIndex];
+      const virtualBuildingIDs = buildingLayer.occupiedNodeToVirtualStructureIDRecord[nodeIndex];
       if (virtualBuildingIDs === undefined) {
          continue;
       }
@@ -67,7 +67,7 @@ export function createTribeArea(buildingLayer: TribeBuildingLayer, nodes: Set<Sa
          }
          seenBuildingIDs.add(buildingID);
          
-         const virtualBuilding = buildingLayer.virtualBuildingRecord[buildingID];
+         const virtualBuilding = buildingLayer.virtualStructureRecord[buildingID];
          switch (virtualBuilding.entityType) {
             case EntityType.wall: {
                connectedWalls.push(virtualBuilding);
@@ -165,7 +165,7 @@ export function getOutsideDoorPlacePlan(buildingLayer: TribeBuildingLayer, room:
       });
 
       // @Cleanup: probs should be done in the tribesman-ai-olanning file
-      assignment = createUpgradeBuildingPlanAssignment([], wall.id, doorRotation, BlueprintType.woodenDoor, EntityType.door);
+      assignment = createUpgradeBuildingPlanAssignment([], true, wall.id, doorRotation, BlueprintType.woodenDoor, EntityType.door);
       break;
    }
 

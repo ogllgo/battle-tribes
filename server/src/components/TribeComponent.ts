@@ -37,12 +37,12 @@ TribeComponentArray.onRemove = onRemove;
 
 function onJoin(entity: Entity): void {
    const tribeComponent = TribeComponentArray.getComponent(entity);
-   tribeComponent.tribe.registerEntity();
+   tribeComponent.tribe.registerEntity(entity);
 }
 
 function onRemove(entity: Entity): void {
    const tribeComponent = TribeComponentArray.getComponent(entity);
-   tribeComponent.tribe.deregisterEntity();
+   tribeComponent.tribe.deregisterEntity(entity);
 }
 
 export function getEntityRelationship(entity: Entity, comparingEntity: Entity): EntityRelationship {

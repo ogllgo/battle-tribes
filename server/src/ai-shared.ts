@@ -61,6 +61,19 @@ export function willStopAtDesiredDistance(hitbox: Hitbox, desiredDistance: numbe
    return distance - distanceToStop <= desiredDistance;
 }
 
+export function getVelocityClosenessAdjustmentFactor(distance: number, startingAdjustmentDistance: number): number {
+   const u = distance / startingAdjustmentDistance;
+   if (u > 1) {
+      return 1;
+   } else if (u > 0) {
+      return 0.3 + u * 0.7;
+   } else if (u < -1) {
+      return -1;
+   } else {
+      return -0.3 + u * 0.7;
+   }
+}
+
 export function turnToPosition(entity: Entity, pos: Point, turnSpeed: number, turnDamping: number): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
    // @Hack

@@ -4,13 +4,13 @@ import { InventoryName } from "../../../shared/src/items/items";
 import { Settings, PathfindingSettings } from "../../../shared/src/settings";
 import { TileType } from "../../../shared/src/tiles";
 import { assert, distance, polarVec2 } from "../../../shared/src/utils";
-import { getEntitiesInRange, willStopAtDesiredDistance } from "../ai-shared";
+import { getEntitiesInRange, getVelocityClosenessAdjustmentFactor } from "../ai-shared";
 import { TRIBESMAN_TURN_SPEED } from "../entities/tribes/tribesman-ai/tribesman-ai";
 import { getHumanoidRadius, getTribesmanAcceleration } from "../entities/tribes/tribesman-ai/tribesman-ai-utils";
 import { Hitbox, applyAccelerationFromGround, getHitboxTile, getHitboxVelocity, turnHitboxToAngle } from "../hitboxes";
 import Layer from "../Layer";
 import { surfaceLayer } from "../layers";
-import { convertEntityPathfindingGroupID, entityCanBlockPathfinding, entityHasReachedNode, findMultiLayerPath, getAngleToNode, getDistanceToNode, getEntityFootprint, getEntityPathfindingGroupID, Path, PathfindFailureDefault, PathfindOptions, positionIsAccessible } from "../pathfinding";
+import { convertEntityPathfindingGroupID, entityCanBlockPathfinding, entityHasReachedNode, findMultiLayerPath, getAngleToNode, getDistanceToNode, getEntityFootprint, getEntityPathfindingGroupID, getPathfindingNodePos, Path, PathfindFailureDefault, PathfindOptions, positionIsAccessible } from "../pathfinding";
 import Tribe from "../Tribe";
 import { getEntityAgeTicks, getEntityLayer, getEntityType, getGameTicks } from "../world";
 import { ComponentArray } from "./ComponentArray";
@@ -147,11 +147,10 @@ export function continueCurrentPath(tribesman: Entity): boolean {
       turnHitboxToAngle(tribesmanHitbox, targetDirection, TRIBESMAN_TURN_SPEED, 1, false);
 
       // If the tribesman is close to the next node, slow down as to not overshoot it
-      const distFromNode = getDistanceToNode(transformComponent, nextNode);
-      if (!willStopAtDesiredDistance(tribesmanHitbox, -2, distFromNode)) {
-         const accelerationMagnitude = getTribesmanAcceleration(tribesman);
-         applyAccelerationFromGround(tribesmanHitbox, polarVec2(accelerationMagnitude, tribesmanHitbox.box.angle));
-      }
+      const distanceFromNextNode = getDistanceToNode(transformComponent, nextNode);
+      const accel = getTribesmanAcceleration(tribesman);
+      const adjustmentFactor = getVelocityClosenessAdjustmentFactor(distanceFromNextNode, 80);
+      applyAccelerationFromGround(tribesmanHitbox, polarVec2(accel * adjustmentFactor, tribesmanHitbox.box.angle));
 
       // @Speed: only do this if we know the path has a door in it
       // Open any doors in their way

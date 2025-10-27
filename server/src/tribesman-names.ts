@@ -181,8 +181,7 @@ const TITLELESS_ADJECTIVES: ReadonlyArray<string> = [
    "Depressed",
    "Struggler",
    "Limp",
-   "Lame",
-   "Twink" // shh
+   "Lame"
 ];
 
 export function generateTribesmanName(tribeType: TribeType): string {
@@ -232,10 +231,12 @@ export function addTitleToTribesmanName(name: string, title: TribesmanTitle): st
 }
 
 const nameAlreadyExists = (tribe: Tribe, name: string): boolean => {
-   for (const tribeMember of tribe.tribesmanIDs) {
-      const tribeMemberComponent = TribeMemberComponentArray.getComponent(tribeMember);
-      if (tribeMemberComponent.name === name) {
-         return true;
+   for (const tribeMember of tribe.entities) {
+      if (TribeMemberComponentArray.hasComponent(tribeMember)) {
+         const tribeMemberComponent = TribeMemberComponentArray.getComponent(tribeMember);
+         if (tribeMemberComponent.name === name) {
+            return true;
+         }
       }
    }
 

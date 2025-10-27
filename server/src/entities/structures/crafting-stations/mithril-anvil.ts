@@ -1,6 +1,5 @@
 import { EntityType } from "battletribes-shared/entities";
 import { StatusEffect } from "battletribes-shared/status-effects";
-import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { ServerComponentType } from "battletribes-shared/components";
 import { EntityConfig } from "../../../components";
 import { CraftingStationComponent } from "../../../components/CraftingStationComponent";
@@ -54,7 +53,7 @@ export function createMithrilAnvilConfig(position: Point, rotation: number, trib
    
    const tribeComponent = new TribeComponent(tribe);
    
-   const craftingStationComponent = new CraftingStationComponent(CraftingStation.mithrilAnvil);
+   const craftingStationComponent = new CraftingStationComponent();
    
    const mithrilAnvilComponent = new MithrilAnvilComponent();
    

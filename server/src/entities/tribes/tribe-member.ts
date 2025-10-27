@@ -17,7 +17,6 @@ import { TribesmanAIComponentArray } from "../../components/TribesmanAIComponent
 import { createItemEntityConfig } from "../item-entity";
 import { StructureComponentArray } from "../../components/StructureComponent";
 import { BuildingMaterialComponentArray } from "../../components/BuildingMaterialComponent";
-import { CraftingStation } from "battletribes-shared/items/crafting-recipes";
 import { Item, ITEM_TYPE_RECORD, ITEM_INFO_RECORD, BattleaxeItemInfo, SwordItemInfo, AxeItemInfo, InventoryName, ItemType, ConsumableItemInfo, ConsumableItemCategory, PlaceableItemType, BowItemInfo, itemIsStackable, getItemStackSize } from "battletribes-shared/items/items";
 import { EntityTickEvent, EntityTickEventType } from "battletribes-shared/entity-events";
 import { registerEntityTickEvent } from "../../server/player-clients";
@@ -691,52 +690,6 @@ export function placeBlueprint(tribeMember: Entity, structure: Entity, blueprint
          destroyEntity(structure);
       }
    }
-}
-
-export function getAvailableCraftingStations(tribeMember: Entity): ReadonlyArray<CraftingStation> {
-   const transformComponent = TransformComponentArray.getComponent(tribeMember);
-   const tribeMemberHitbox = transformComponent.hitboxes[0];
-   
-   const layer = getEntityLayer(tribeMember);
-   
-   const minChunkX = Math.max(Math.floor((tribeMemberHitbox.box.position.x - Settings.MAX_CRAFTING_STATION_USE_DISTANCE) / Settings.CHUNK_UNITS), 0);
-   const maxChunkX = Math.min(Math.floor((tribeMemberHitbox.box.position.x + Settings.MAX_CRAFTING_STATION_USE_DISTANCE) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
-   const minChunkY = Math.max(Math.floor((tribeMemberHitbox.box.position.y - Settings.MAX_CRAFTING_STATION_USE_DISTANCE) / Settings.CHUNK_UNITS), 0);
-   const maxChunkY = Math.min(Math.floor((tribeMemberHitbox.box.position.y + Settings.MAX_CRAFTING_STATION_USE_DISTANCE) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1);
-
-   const availableCraftingStations = new Array<CraftingStation>();
-
-   for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-      for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-         const chunk = layer.getChunk(chunkX, chunkY);
-         for (const entity of chunk.entities) {
-            const entityTransformComponent = TransformComponentArray.getComponent(entity);
-            const entityHitbox = entityTransformComponent.hitboxes[0];
-            
-            const distance = tribeMemberHitbox.box.position.distanceTo(entityHitbox.box.position);
-            if (distance > Settings.MAX_CRAFTING_STATION_USE_DISTANCE) {
-               continue;
-            }
-
-            switch (getEntityType(entity)) {
-               case EntityType.workbench: {
-                  if (!availableCraftingStations.includes(CraftingStation.workbench)) {
-                     availableCraftingStations.push(CraftingStation.workbench);
-                  }
-                  break;
-               }
-               case EntityType.slime: {
-                  if (!availableCraftingStations.includes(CraftingStation.slime)) {
-                     availableCraftingStations.push(CraftingStation.slime);
-                  }
-                  break;
-               }
-            }
-         }
-      }
-   }
-
-   return availableCraftingStations;
 }
 
 // @Cleanup: why need 2?

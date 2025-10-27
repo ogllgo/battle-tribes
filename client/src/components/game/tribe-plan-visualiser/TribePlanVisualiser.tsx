@@ -116,6 +116,9 @@ const PlanNode = (props: PlanNodeProps) => {
    } else if (plan.assignedTribesman !== null) {
       className += " assigned";
    }
+   if (!plan.isCompletable) {
+      className += " incompletable";
+   }
    
    return <>
       <div style={{"left": `calc(50% + ${getPlanX(plan, props.offsetX)}px)`, "top": `calc(50% + ${getPlanY(plan, props.offsetY)}px)`}} className={className}>

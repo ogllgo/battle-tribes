@@ -151,7 +151,7 @@ const getChunkIndex = (chunkX: number, chunkY: number): number => {
 }
 
 const getEntityChunkIndex = (entity: Entity): number => {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
    const hitbox = transformComponent.hitboxes[0];
 
    const chunkX = Math.floor(hitbox.box.position.x / Settings.CHUNK_UNITS);

@@ -44,7 +44,7 @@ const addGridAlignedWallCandidates = (buildingLayer: TribeBuildingLayer, placeCa
    const tileIndexes = new Set<number>();
 
    // First, we mark which tiles are occupied by buildings or restricted building areas
-   for (const virtualBuilding of buildingLayer.virtualBuildings) {
+   for (const virtualBuilding of buildingLayer.virtualStructures) {
       for (const node of virtualBuilding.occupiedNodes) {
          const tileIndex = convertSafetyNodeToTileIndex(node);
          tileIndexes.add(tileIndex);
@@ -114,8 +114,8 @@ const addGridAlignedWallCandidates = (buildingLayer: TribeBuildingLayer, placeCa
 
 /** Adds the walls off from existing walls */
 const addSnappedWallCandidates = (buildingLayer: TribeBuildingLayer, placeCandidates: Array<BuildingCandidate>): void => {
-   for (let i = 0; i < buildingLayer.virtualBuildings.length; i++) {
-      const virtualBuilding = buildingLayer.virtualBuildings[i];
+   for (let i = 0; i < buildingLayer.virtualStructures.length; i++) {
+      const virtualBuilding = buildingLayer.virtualStructures[i];
       if (virtualBuilding.entityType !== EntityType.wall) {
          continue;
       }

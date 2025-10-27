@@ -312,66 +312,6 @@ export function runSpawnAttempt(): void {
 }
 
 export function spawnInitialEntities(): void {
-   // @Temporary
-   setTimeout(() => {
-      // const config = createCowConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 - 140, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100), 0, 0);
-      // const config = createTukmokConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 - 140 + 2000, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100 - 1000), 0);
-      // createEntity(config, surfaceLayer, 0);
-
-      // const dustfleaConfig = createDustfleaConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 - 140, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100), 0);
-      // createEntity(dustfleaConfig, surfaceLayer, 0);
-      // setTimeout(() => {
-         
-      //    const krumblidConfig = createKrumblidConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 - 32 + 200, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100), Math.PI * 0.5);
-      //    createEntity(krumblidConfig, surfaceLayer, 0);
-      // }, 4000)
-
-      // setTimeout(() => {
-
-      //    const ancientOkrenConfig = createOkrenConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 + 600, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100), 0, 4);
-      //    createEntity(ancientOkrenConfig, surfaceLayer, 0);
-      // }, 10000)
-
-      // const juvenileOkrenConfig = createOkrenConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 - 940, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100), 0, 0);
-      // createEntity(juvenileOkrenConfig, surfaceLayer, 0);
-      // const youthOkrenConfig = createOkrenConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 - 580, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100), 0, 1);
-      // createEntity(youthOkrenConfig, surfaceLayer, 0);
-      // const adultOkrenConfig = createOkrenConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 - 220, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100), 0, 2);
-      // createEntity(adultOkrenConfig, surfaceLayer, 0);
-      // const elderOkrenConfig = createOkrenConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 + 140, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100), 0, 3);
-      // createEntity(elderOkrenConfig, surfaceLayer, 0);
-      // const ancientOkrenConfig = createOkrenConfig(new Point(Settings.WORLD_UNITS * 0.5 - 500 + 600, Settings.WORLD_UNITS * 0.5 - 500 - 300 + 100), 0, 4);
-      // createEntity(ancientOkrenConfig, surfaceLayer, 0);
-      
-      if(1+1===2)return;
-      // const config = createGlurbConfig(Settings.WORLD_UNITS * 0.5 + 200, Settings.WORLD_UNITS * 0.5, 0, randInt(3, 5));
-      // createEntity(config, surfaceLayer, 0);
-
-      if(1+1===2)return;
-      
-      // // const x = Settings.WORLD_UNITS * 0.5 + 700;
-      const x = 6400;
-      // // const y = Settings.WORLD_UNITS * 0.5;
-      const y = 3400;
-      
-      // const tribe = new Tribe(TribeType.dwarves, true, new Point(x, y));
-      // const a = createTribeWorkerConfig(tribe);
-      // a.components[ServerComponentType.transform].position.x = x;
-      // a.components[ServerComponentType.transform].position.y = y;
-      // createEntity(a, undergroundLayer, 0);
-
-      // {
-      // const x = Settings.WORLD_UNITS * 0.5 + 800;
-      // const y = Settings.WORLD_UNITS * 0.5;
-      
-      // const a = createCogwalkerConfig(tribe);
-      // // const a = createScrappyConfig(tribe);
-      // a.components[ServerComponentType.transform].position.x = x;
-      // a.components[ServerComponentType.transform].position.y = y;
-      // createEntity(a, undergroundLayer, 0);
-      // }
-   }, 10100);
-
    if (!OPTIONS.spawnEntities) {
       return;
    }

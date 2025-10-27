@@ -23,8 +23,7 @@ export function updateTribes(): void {
          }
 
          if (tribe.isAIControlled) {
-            // @TEMPORARY
-            // updateTribePlans(tribe);
+            updateTribePlans(tribe);
          }
 
          tribe.buildingsAreDirty = false;

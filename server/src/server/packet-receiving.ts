@@ -213,15 +213,19 @@ export function processRespawnPacket(playerClient: PlayerClient): void {
    // Calculate spawn position
    let spawnPosition: Point;
    let layer: Layer;
-   if (playerClient.tribe.totem !== null) {
-      const totemTransformComponent = TransformComponentArray.getComponent(playerClient.tribe.totem);
+
+   const totems = playerClient.tribe.getEntitiesByType(EntityType.tribeTotem);
+   if (totems.length > 0) {
+      const totem = totems[0];
+
+      const totemTransformComponent = TransformComponentArray.getComponent(totem);
       const totemHitbox = totemTransformComponent.hitboxes[0];
       
       spawnPosition = totemHitbox.box.position.copy();
       const offsetDirection = randAngle();
       spawnPosition.x += 100 * Math.sin(offsetDirection);
       spawnPosition.y += 100 * Math.cos(offsetDirection);
-      layer = getEntityLayer(playerClient.tribe.totem);
+      layer = getEntityLayer(totem);
    } else {
       spawnPosition = generatePlayerSpawnPosition(playerClient.tribe.tribeType);
       layer = surfaceLayer;

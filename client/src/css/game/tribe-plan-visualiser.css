@@ -25,6 +25,9 @@
 #tribe-plan-visualiser .tribe-plan-node.assigned {
    background-color: #deab4e;
 }
+#tribe-plan-visualiser .tribe-plan-node.incompletable {
+   background-color: red;
+}
 #tribe-plan-visualiser .tribe-plan-node :is(h3, p) {
    user-select: none;
    text-align: center;

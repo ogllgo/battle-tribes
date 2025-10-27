@@ -9,7 +9,7 @@ const CONNECTION_HEIGHT = 8;
 
 let program: WebGLProgram;
 
-let wallConnections: ReadonlyArray<WallConnectionData>;
+let wallConnections: ReadonlyArray<WallConnectionData> = [];
 
 export function setVisibleWallConnections(newWallConnections: ReadonlyArray<WallConnectionData>): void {
    // @Speed: Garbage collection 

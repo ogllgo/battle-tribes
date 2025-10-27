@@ -1,5 +1,5 @@
 import { StatusEffectData } from "./client-server-types";
-import { CraftingStation } from "./items/crafting-recipes";
+import { CraftingStationEntityType } from "./items/crafting-recipes";
 import { CowSpecies, DeathInfo, DoorToggleType, FishColour, SlimeSize, TreeSize, TribeTotemBanner, EntityType } from "./entities";
 import { Inventory, InventoryName, ItemType } from "./items/items";
 import { Settings } from "./settings";

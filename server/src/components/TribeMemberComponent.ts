@@ -1,13 +1,12 @@
 import { ServerComponentType  } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { ComponentArray } from "./ComponentArray";
-import { TribeComponentArray } from "./TribeComponent";
 import { getStringLengthBytes, Packet } from "battletribes-shared/packets";
 import { TransformComponentArray } from "./TransformComponent";
 import { getEntityLayer, getEntityType } from "../world";
 import { tribeMemberCanPickUpItem, VACUUM_RANGE } from "../entities/tribes/tribe-member";
 import { Settings } from "../../../shared/src/settings";
-import { lerp, Point, polarVec2 } from "../../../shared/src/utils";
+import { lerp, polarVec2 } from "../../../shared/src/utils";
 import { itemEntityCanBePickedUp, ItemComponentArray } from "./ItemComponent";
 import { TribesmanComponentArray } from "./TribesmanComponent";
 import { registerPlayerDroppedItemPickup } from "../server/player-clients";
@@ -16,7 +15,7 @@ import { adjustTribesmanRelationsAfterGift } from "./TribesmanAIComponent";
 import { ArmourItemInfo, InventoryName, ITEM_INFO_RECORD, ItemType } from "../../../shared/src/items/items";
 import { addDefence, HealthComponentArray, removeDefence } from "./HealthComponent";
 import { CollisionBit } from "../../../shared/src/collision";
-import { Hitbox, addHitboxVelocity } from "../hitboxes";
+import { addHitboxVelocity } from "../hitboxes";
 
 const enum Vars {
    VACUUM_STRENGTH = 25
@@ -32,18 +31,11 @@ export class TribeMemberComponent {
 }
 
 export const TribeMemberComponentArray = new ComponentArray<TribeMemberComponent>(ServerComponentType.tribeMember, true, getDataLength, addDataToPacket);
-TribeMemberComponentArray.onJoin = onJoin;
 TribeMemberComponentArray.onTick = {
    func: onTick,
    tickInterval: 1
 };
 TribeMemberComponentArray.onEntityCollision = onEntityCollision;
-TribeMemberComponentArray.onRemove = onRemove;
-
-function onJoin(entity: Entity): void {
-   const tribeComponent = TribeComponentArray.getComponent(entity);
-   tribeComponent.tribe.registerNewTribeMember(entity);
-}
 
 function onTick(tribeMember: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(tribeMember);
@@ -128,11 +120,6 @@ function onEntityCollision(tribeMember: Entity, collidingEntity: Entity): void {
          }
       }
    }
-}
-
-function onRemove(entity: Entity): void {
-   const tribeComponent = TribeComponentArray.getComponent(entity);
-   tribeComponent.tribe.registerTribeMemberDeath(entity);
 }
 
 function getDataLength(entity: Entity): number {
