@@ -40,26 +40,6 @@ const CRAFTING_STATION_ICON_TEXTURE_SOURCES: Record<CraftingStationEntityType, s
    [EntityType.mithrilAnvil]: CLIENT_ITEM_INFO_RECORD[ItemType.automatonAssembler].textureSource,
 };
 
-// @Robustness
-const CRAFTING_RECIPE_RECORD: Record<CraftingStationEntityType | "hand", Array<CraftingRecipe>> = {
-   hand: [],
-   [EntityType.workbench]: [],
-   [EntityType.slime]: [],
-   [EntityType.frostshaper]: [],
-   [EntityType.stonecarvingTable]: [],
-   [EntityType.automatonAssembler]: [],
-   [EntityType.mithrilAnvil]: [],
-};
-
-// Categorise the crafting recipes
-for (const craftingRecipe of CRAFTING_RECIPES) {
-   if (typeof craftingRecipe.craftingStation === "undefined") {
-      CRAFTING_RECIPE_RECORD.hand.push(craftingRecipe);
-   } else {
-      CRAFTING_RECIPE_RECORD[craftingRecipe.craftingStation].push(craftingRecipe);
-   }
-}
-
 const RecipeViewer = ({ recipe, hoverPosition, craftingMenuHeight }: RecipeViewerProps) => {
    const recipeViewerRef = useRef<HTMLDivElement | null>(null);
 
@@ -303,11 +283,18 @@ const CraftingMenu = (props: CraftingMenuProps) => {
 
    if (!isVisible) return null;
 
-   let availableRecipes: Array<CraftingRecipe>;
-   if (craftingStation === null) {
-      availableRecipes = CRAFTING_RECIPE_RECORD.hand.slice();
-   } else {
-      availableRecipes = CRAFTING_RECIPE_RECORD[craftingStation].slice();
+   // Get all available recipes
+   const availableRecipes = new Array<CraftingRecipe>();
+   for (const recipe of CRAFTING_RECIPES) {
+      if (craftingStation === null) {
+         if (typeof recipe.craftingStation === "undefined") {
+            availableRecipes.push(recipe);
+         }
+      } else {
+         if (typeof recipe.craftingStation !== "undefined") {
+            availableRecipes.push(recipe);
+         }
+      }
    }
 
    // Filter out recipes which the player doesn't have the tech for

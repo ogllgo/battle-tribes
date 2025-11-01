@@ -188,6 +188,11 @@ const decodeEntitySnapshot = (reader: PacketReader, interpolatingEntities: Array
 
       const componentArray = getServerComponentArray(componentType);
 
+      if (typeof componentArray === "undefined") {
+         console.log(componentType, componentArray)
+         throw new Error();
+      }
+      
       // @Cleanup: cast
       entityServerComponentData[componentType] = componentArray.decodeData(reader) as any;
 
