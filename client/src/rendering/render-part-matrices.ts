@@ -178,7 +178,7 @@ const getHitboxDataFromEntityData = (hitbox: Hitbox, entityData: EntitySnapshot)
    throw new Error();
 }
 
-const getHitboxData = (hitbox: Hitbox): [Hitbox, Hitbox] => {
+const getHitboxSnapshotDatas = (hitbox: Hitbox): [Hitbox, Hitbox] => {
    const currentEntityData = currentSnapshot.entities.get(hitbox.entity);
    assert(typeof currentEntityData !== "undefined");
    const currentHitboxData = getHitboxDataFromEntityData(hitbox, currentEntityData);
@@ -194,11 +194,12 @@ const calculateHitboxMatrix = (hitbox: Hitbox, tickInterp: number): Matrix3x2 =>
    let usesClientInterp = entityUsesClientInterp(hitbox.entity);
    // @HACK cuz we sometimes create imaginary render parts e.g. to show selection outlines, they won't be in the snapshots!
    if (!currentSnapshot.entities.has(hitbox.entity)) {
+      // So that it doesn't go through the getHitboxData path
       usesClientInterp = true;
    }
    
    // @HACK the optional shit
-   const [currentHitboxData, nextHitboxData] = !usesClientInterp ? getHitboxData(hitbox) : [undefined, undefined];
+   const [currentHitboxData, nextHitboxData] = !usesClientInterp ? getHitboxSnapshotDatas(hitbox) : [undefined, undefined];
    
    const matrix = createIdentityMatrix();
 

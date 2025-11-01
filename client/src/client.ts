@@ -190,7 +190,7 @@ export function establishNetworkConnection(username: string, tribeType: TribeTyp
       return;
    }
    
-   socket = new WebSocket(`ws://127.0.0.1:${Settings.SERVER_PORT}`);
+   socket = new WebSocket(`ws://10.0.0.21:${Settings.SERVER_PORT}`);
    socket.binaryType = "arraybuffer";
 
    socket.onopen = () => onSuccessfulConnection(username, tribeType, isSpectating);
