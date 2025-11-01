@@ -357,6 +357,7 @@ export function sortComponentArrays(): void {
       [ServerComponentType.iceArrow]: ComponentArrayPriority.medium,
       [ServerComponentType.layeredRod]: ComponentArrayPriority.medium,
       [ServerComponentType.decoration]: ComponentArrayPriority.medium,
+      [ServerComponentType.riverSteppingStone]: ComponentArrayPriority.medium,
       [ServerComponentType.spitPoisonArea]: ComponentArrayPriority.medium,
       [ServerComponentType.battleaxeProjectile]: ComponentArrayPriority.medium,
       [ServerComponentType.spearProjectile]: ComponentArrayPriority.medium,

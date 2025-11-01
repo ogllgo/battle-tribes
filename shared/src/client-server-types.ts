@@ -64,27 +64,6 @@ export interface WaterRockData {
    readonly opacity: number;
 }
 
-export enum RiverSteppingStoneSize {
-   small,
-   medium,
-   large
-}
-
-export const RIVER_STEPPING_STONE_SIZES: Record<RiverSteppingStoneSize, number> = {
-   [RiverSteppingStoneSize.small]: 32,
-   [RiverSteppingStoneSize.medium]: 48,
-   [RiverSteppingStoneSize.large]: 56
-};
-
-export interface RiverSteppingStoneData {
-   readonly positionX: number;
-   readonly positionY: number;
-   readonly rotation: number;
-   readonly size: RiverSteppingStoneSize;
-   /** ID of the group the stepping stone belongs to */
-   readonly groupID: number;
-}
-
 export interface GrassTileInfo {
    readonly tileX: number;
    readonly tileY: number;

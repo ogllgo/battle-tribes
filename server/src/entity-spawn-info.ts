@@ -1,13 +1,11 @@
 import { Biome } from "../../shared/src/biomes";
-import { RIVER_STEPPING_STONE_SIZES } from "../../shared/src/client-server-types";
 import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { TileType } from "../../shared/src/tiles";
-import { assert, distance, getTileIndexIncludingEdges, Point } from "../../shared/src/utils";
+import { assert, getTileIndexIncludingEdges, Point } from "../../shared/src/utils";
 import { EntityConfig } from "./components";
 import { AutoSpawnedComponent } from "./components/AutoSpawnedComponent";
 import Layer from "./Layer";
-import { surfaceLayer } from "./layers";
 
 // @Cleanup: should probably combine this file with entity-spawning...
 
@@ -296,28 +294,4 @@ export function spawnPositionLacksDensity(spawnInfo: EntitySpawnEvent, x: number
    const currentDensity = spawnDistribution.currentDensities[blockIdx];
    const targetDensity = spawnDistribution.targetDensities[blockIdx];
    return currentDensity < targetDensity;
-}
-
-// @Cleanup: won't be necessary once stepping stones are entities (can just use the getentitiesinrange function)
-export function isTooCloseToSteppingStone(x: number, y: number, checkRadius: number): boolean {
-   const minChunkX = Math.max(Math.min(Math.floor((x - checkRadius) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
-   const maxChunkX = Math.max(Math.min(Math.floor((x + checkRadius) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
-   const minChunkY = Math.max(Math.min(Math.floor((y - checkRadius) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
-   const maxChunkY = Math.max(Math.min(Math.floor((y + checkRadius) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
-
-   for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-      for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-         const chunk = surfaceLayer.getChunk(chunkX, chunkY);
-
-         for (const steppingStone of chunk.riverSteppingStones) {
-            const dist = distance(x, y, steppingStone.positionX, steppingStone.positionY) - RIVER_STEPPING_STONE_SIZES[steppingStone.size] * 0.5;
-            
-            if (dist < checkRadius) {
-               return true;
-            }
-         }
-      }
-   }
-
-   return false;
 }

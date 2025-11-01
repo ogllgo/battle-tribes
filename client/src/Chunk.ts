@@ -1,4 +1,3 @@
-import { RiverSteppingStoneData } from "battletribes-shared/client-server-types";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { getEntityType } from "./world";
 
@@ -8,8 +7,6 @@ class Chunk {
 
    public readonly entities = new Array<Entity>();
    public readonly nonGrassEntities = new Array<Entity>();
-
-   public readonly riverSteppingStones = new Array<RiverSteppingStoneData>();
 
    constructor(x: number, y: number) {
       this.x = x;

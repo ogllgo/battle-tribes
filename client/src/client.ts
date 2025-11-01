@@ -54,6 +54,7 @@ let lastFrameTime = 0;
 let clientTick = 0;
 let clientTickInterp = 0;
 
+// @Garbage: I could create a set fixed number of packet snapshots, and then just override their data!
 const snapshotBuffer = new Array<PacketSnapshot>();
 const unprocessedGamePackets = new Array<PacketReader>();
 export let currentSnapshot: PacketSnapshot;
@@ -308,9 +309,11 @@ const runFrame = (frameStartTime: number): void => {
       // Tick the player (independently from all other entities)
       clientTickInterp += deltaTick;
       while (clientTickInterp >= 1) {
+         // Call this outside of the check to make sure the player is in-client, cuz we want the movement intention to update too!
+         updatePlayerMovement();
+         
          // @Cleanup: this function name i think is a lil weird for something which the contents of the if updates the player.
          if (playerInstance !== null && entityUsesClientInterp(playerInstance)) {
-            updatePlayerMovement();
             callEntityOnUpdateFunctions(playerInstance);
             resolvePlayerCollisions();
          }

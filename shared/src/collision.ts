@@ -9,13 +9,13 @@ export const enum CollisionBit {
    cactus = 1 << 1,
    none = 1 << 2,
    iceSpikes = 1 << 3,
-   plants = 1 << 4,
+   plant = 1 << 4,
    planterBox = 1 << 5,
    arrowPassable = 1 << 6,
    snowball = 1 << 7
 };
 
-export const DEFAULT_COLLISION_MASK = CollisionBit.default | CollisionBit.cactus | CollisionBit.iceSpikes | CollisionBit.plants | CollisionBit.planterBox | CollisionBit.arrowPassable | CollisionBit.snowball;
+export const DEFAULT_COLLISION_MASK = CollisionBit.default | CollisionBit.cactus | CollisionBit.iceSpikes | CollisionBit.plant | CollisionBit.planterBox | CollisionBit.arrowPassable | CollisionBit.snowball;
 
 export interface CollisionResult {
    readonly isColliding: boolean;

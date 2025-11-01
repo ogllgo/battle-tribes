@@ -1,10 +1,10 @@
 import { Box, cloneBox, HitboxCollisionType, HitboxFlag } from "../../shared/src/boxes/boxes";
-import { RIVER_STEPPING_STONE_SIZES } from "../../shared/src/client-server-types";
 import { CollisionBit } from "../../shared/src/collision";
 import { Entity, EntityType } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { TILE_PHYSICS_INFO_RECORD, TileType } from "../../shared/src/tiles";
 import { getAngleDiff, getTileIndexIncludingEdges, Point, polarVec2, TileIndex } from "../../shared/src/utils";
+import { CollisionVars, entitiesAreColliding } from "./collision-detection";
 import { TransformComponent, TransformComponentArray } from "./components/TransformComponent";
 import { registerPlayerKnockback } from "./server/player-clients";
 import { HitboxTether } from "./tethers";
@@ -361,13 +361,11 @@ export function hitboxIsInRiver(hitbox: Hitbox): boolean {
    // If the entity is standing on a stepping stone they aren't in a river
    // @Speed: we only need to check the chunks the hitbox is in
    for (const chunk of transformComponent.chunks) {
-      for (const steppingStone of chunk.riverSteppingStones) {
-         const size = RIVER_STEPPING_STONE_SIZES[steppingStone.size];
-         
-         const distX = hitbox.box.position.x - steppingStone.positionX;
-         const distY = hitbox.box.position.y - steppingStone.positionY;
-         if (distX * distX + distY * distY <= size * size / 4) {
-            return false;
+      for (const currentEntity of chunk.entities) {
+         if (getEntityType(currentEntity) === EntityType.riverSteppingStone) {
+            if (entitiesAreColliding(entity, currentEntity) !== CollisionVars.NO_COLLISION) {
+               return false;
+            }
          }
       }
    }

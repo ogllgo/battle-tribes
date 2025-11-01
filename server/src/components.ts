@@ -133,6 +133,7 @@ import { TukmokSpurComponent } from "./components/TukmokSpurComponent";
 import { InguYetuksnoglurblidokowfleaComponent } from "./components/InguYetuksnoglurblidokowfleaComponent";
 import { InguYetuksnoglurblidokowfleaSeekerHeadComponent } from "./components/InguYetuksnoglurblidokowfleaSeekerHeadComponent";
 import { InguYetukLaserComponent } from "./components/InguYetukLaserComponent";
+import { RiverSteppingStoneComponent } from "./components/RiverSteppingStoneComponent";
 
 // @Cleanup @Robustness: find better way to do this
 // @Cleanup: see if you can remove the arrow functions
@@ -195,6 +196,7 @@ const ComponentClassRecord = {
    [ServerComponentType.iceArrow]: () => IceArrowComponent,
    [ServerComponentType.layeredRod]: () => LayeredRodComponent,
    [ServerComponentType.decoration]: () => DecorationComponent,
+   [ServerComponentType.riverSteppingStone]: () => RiverSteppingStoneComponent,
    [ServerComponentType.spitPoisonArea]: () => SpitPoisonAreaComponent,
    [ServerComponentType.battleaxeProjectile]: () => BattleaxeProjectileComponent,
    [ServerComponentType.spearProjectile]: () => SpearProjectileComponent,

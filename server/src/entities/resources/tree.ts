@@ -45,10 +45,9 @@ const TREE_RADII: ReadonlyArray<number> = [40, 50];
 export function createTreeConfig(position: Point, angle: number, size: TreeSize): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), angle, TREE_RADII[size]), 1.25 + size * 0.25, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), angle, TREE_RADII[size]), 1.25 + size * 0.25, HitboxCollisionType.soft, CollisionBit.plant, DEFAULT_COLLISION_MASK, []);
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
-   transformComponent.collisionBit = CollisionBit.plants;
 
    const healthComponent = new HealthComponent(TREE_MAX_HEALTHS[size]);
    

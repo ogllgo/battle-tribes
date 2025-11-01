@@ -56,6 +56,9 @@ export const enum HitboxFlag {
    YETUK_SNOBE_TAIL,
    FENCE_GATE_DOOR,
    FENCE_GATE_SIDE,
+   RIVER_STEPPING_STONE_SMALL,
+   RIVER_STEPPING_STONE_MEDIUM,
+   RIVER_STEPPING_STONE_LARGE,
 }
 
 export const enum HitboxCollisionType {

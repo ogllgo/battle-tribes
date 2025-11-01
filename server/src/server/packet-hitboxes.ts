@@ -49,7 +49,6 @@ export function addBoxDataToPacket(packet: Packet, box: Box): void {
    if (isCircular) {
       addCircularBoxData(packet, box);
    } else {
-      // @Hack: cast
       addRectangularBoxData(packet, box);
    }
 }

@@ -3,7 +3,7 @@ import { AMMO_INFO_RECORD, ServerComponentType } from "battletribes-shared/compo
 import { EntityType, DamageSource, Entity } from "battletribes-shared/entities";
 import { angleToPoint, Point } from "battletribes-shared/utils";
 import { HealthComponentArray, addLocalInvulnerabilityHash, canDamageEntity, damageEntity } from "../../components/HealthComponent";
-import { EntityRelationship, TribeComponent, TribeComponentArray, getEntityRelationship } from "../../components/TribeComponent";
+import { TribeComponent, TribeComponentArray } from "../../components/TribeComponent";
 import { StatusEffectComponentArray, applyStatusEffect } from "../../components/StatusEffectComponent";
 import { EntityConfig } from "../../components";
 import { AttackEffectiveness } from "battletribes-shared/entity-damage-types";
@@ -18,10 +18,9 @@ import { applyKnockback, getHitboxVelocity, Hitbox } from "../../hitboxes";
 
 export function createWoodenArrowConfig(position: Point, rotation: number, tribe: Tribe, owner: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
-
    transformComponent.isAffectedByGroundFriction = false;
    
-   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 12, 64), 0.05, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.arrowPassable, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 12, 64), 0.025, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.arrowPassable, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
    
 
@@ -109,8 +108,9 @@ export function onWoodenArrowHitboxCollision(arrow: Entity, collidingEntity: Ent
 
    // When the hitbox is pushed to the point that it is no longer travelling in the direction it is facing, attach it to the colliding hitbox
    // Lodge the arrow in the entity when it's slow enough
-   const arrowVelocity = getHitboxVelocity(affectedHitbox);
-   if (arrowVelocity.magnitude() < 50 || arrowVelocity.calculateDotProduct(angleToPoint(affectedHitbox.box.angle)) < 0) {
+   // @HACK commented out the if check so that it just always attaches so a shot is easier to get
+   // const arrowVelocity = getHitboxVelocity(affectedHitbox);
+   // if (arrowVelocity.magnitude() < 50 || arrowVelocity.calculateDotProduct(angleToPoint(affectedHitbox.box.angle)) < 0) {
       attachHitbox(affectedHitbox, collidingHitbox, false);
-   }
+   // }
 }

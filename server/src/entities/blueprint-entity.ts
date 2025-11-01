@@ -1,4 +1,3 @@
-import { CollisionBit } from "battletribes-shared/collision";
 import { BlueprintType, ServerComponentType } from "battletribes-shared/components";
 import { Entity, EntityType } from "battletribes-shared/entities";
 import { EntityConfig } from "../components";
@@ -47,13 +46,13 @@ export function createBlueprintEntityConfig(position: Point, rotation: number, t
       const structureTransformComponent = TransformComponentArray.getComponent(associatedEntityID);
       
       transformComponent = new TransformComponent();
-      transformComponent.collisionBit = CollisionBit.none;
-      transformComponent.collisionMask = 0;
 
       for (const structureHitbox of structureTransformComponent.hitboxes) {
          const hitbox = cloneHitbox(transformComponent, structureHitbox);
          hitbox.mass = 0;
          hitbox.collisionType = HitboxCollisionType.soft;
+         // @Hack
+         hitbox.collisionMask = 0;
          addHitboxToTransformComponent(transformComponent, hitbox);
       }
    } else {

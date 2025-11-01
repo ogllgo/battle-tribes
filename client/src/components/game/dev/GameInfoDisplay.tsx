@@ -13,6 +13,7 @@ import { getNumLights } from "../../../lights";
 import { getMeasuredServerTPS, currentSnapshot } from "../../../client";
 import { cameraZoom, setCameraZoom } from "../../../camera";
 import { PacketSnapshot } from "../../../networking/packet-snapshots";
+import { getNumActiveSounds } from "../../../sound";
 
 interface GameInfoDisplayProps {
    readonly isSimulating: boolean;
@@ -195,6 +196,7 @@ const GameInfoDisplay = (props: GameInfoDisplayProps) => {
       <p>Ticks: {roundNum(ticks, 2)}</p>
       <p>Server TPS: {getMeasuredServerTPS().toFixed(2)}</p>
       <p>Buffer size: {bufferSize}</p>
+      <p>Active sounds: {getNumActiveSounds()}</p>
 
       <button onClick={toggleSimulation}>{props.isSimulating ? "Pause" : "Resume"} Simulation</button>
 

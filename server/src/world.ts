@@ -453,13 +453,11 @@ export function entityIsFlaggedForDestruction(entity: Entity): boolean {
 }
 
 export function destroyEntity(entity: Entity): void {
-   // Throw an error if already being/is destroyed
-   // - This erroring is quite useful for catching bugs where the same entity gets processed multiple times erroneously
    if (!entityExists(entity)) {
       throw new Error("Tried to destroy an entity which doesn't exist.");
    }
    if (entityIsFlaggedForDestruction(entity)) {
-      throw new Error("Tried to destroy an entity which is already being destroyed.");
+      return;
    }
 
    // Add the entity to the remove buffer

@@ -35,6 +35,6 @@ function getMaxRenderParts(): number {
 }
 
 function updateFromData(data: BlockAttackComponentData, entity: Entity): void {
-   const blockAttackComponent = BlockAttackComponentArray.getComponent(entity);
+   const blockAttackComponent = BlockAttackComponentArray.getComponent(entity)!;
    blockAttackComponent.hasBlocked = data.hasBlocked;
 }

@@ -4,7 +4,7 @@ import { TileType } from "battletribes-shared/tiles";
 import { playSound } from "../../sound";
 import { createFootprintParticle } from "../../particles";
 import { EntityComponentData, getEntityLayer } from "../../world";
-import { entityIsInRiver, TransformComponentArray } from "../server-components/TransformComponent";
+import { hitboxIsInRiver, TransformComponentArray } from "../server-components/TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
 import ClientComponentArray from "../ClientComponentArray";
 import { ClientComponentType } from "../client-component-types";
@@ -94,7 +94,9 @@ const createFootstepSound = (entity: Entity): void => {
          break;
       }
       case TileType.water: {
-         if (!entityIsInRiver(transformComponent, entity)) {
+         // @Hack
+         // For walking on river stepping stones
+         if (!hitboxIsInRiver(hitbox)) {
             playSound("rock-walk-" + randInt(1, 4) + ".mp3", 0.08, 1, hitbox.box.position, layer);
          }
          break;
@@ -118,7 +120,7 @@ function onTick(entity: Entity): void {
       const velocity = getHitboxVelocity(hitbox);
       
       // Footsteps
-      if (velocity.magnitude() >= 50 && !entityIsInRiver(transformComponent, entity) && tickIntervalHasPassed(footprintComponent.footstepParticleIntervalSeconds)) {
+      if (velocity.magnitude() >= 50 && !hitboxIsInRiver(hitbox) && tickIntervalHasPassed(footprintComponent.footstepParticleIntervalSeconds)) {
          if (footprintComponent.doDoubleFootprints) {
             createFootprintParticle(entity, false, footprintComponent.footstepOffset, footprintComponent.footstepSize, footprintComponent.footstepLifetime);
             createFootprintParticle(entity, true, footprintComponent.footstepOffset, footprintComponent.footstepSize, footprintComponent.footstepLifetime);

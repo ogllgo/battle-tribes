@@ -11,10 +11,11 @@ import { HealthComponent } from "../../components/HealthComponent";
 import { StatusEffectComponent } from "../../components/StatusEffectComponent";
 import { addHitboxToTransformComponent, TransformComponent } from "../../components/TransformComponent";
 import { BerryBushPlantedComponent, BerryBushPlantedComponentArray } from "../../components/BerryBushPlantedComponent";
-import { registerEntityLootOnHit } from "../../components/LootComponent";
+import { LootComponent, registerEntityLootOnHit } from "../../components/LootComponent";
 import { ItemType } from "../../../../shared/src/items/items";
 import { registerDirtyEntity } from "../../server/player-clients";
 import { Hitbox } from "../../hitboxes";
+import { Settings } from "../../../../shared/src/settings";
 
 registerEntityLootOnHit(EntityType.berryBushPlanted, {
    itemType: ItemType.berry,
@@ -35,10 +36,9 @@ registerEntityLootOnHit(EntityType.berryBushPlanted, {
 export function createBerryBushPlantedConfig(position: Point, rotation: number, planterBox: Entity): EntityConfig {
    const transformComponent = new TransformComponent();
    
-   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 28), 0.3, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, 28), 0.3, HitboxCollisionType.soft, CollisionBit.plant, DEFAULT_COLLISION_MASK, []);
    hitbox.isStatic = true;
    addHitboxToTransformComponent(transformComponent, hitbox);
-   transformComponent.collisionBit = CollisionBit.plants;
 
    const healthComponent = new HealthComponent(10);
 
@@ -46,8 +46,13 @@ export function createBerryBushPlantedConfig(position: Point, rotation: number, 
 
    const plantedComponent = new PlantedComponent(planterBox);
 
+   const lootComponent = new LootComponent();
+
    const berryBushPlantedComponent = new BerryBushPlantedComponent();
-   
+   // @SQUEAM for a horse archer shot
+   berryBushPlantedComponent.numFruit = 4;
+   berryBushPlantedComponent.plantGrowthTicks = 60 * Settings.TICK_RATE;
+
    return {
       entityType: EntityType.berryBushPlanted,
       components: {
@@ -55,6 +60,7 @@ export function createBerryBushPlantedConfig(position: Point, rotation: number, 
          [ServerComponentType.health]: healthComponent,
          [ServerComponentType.statusEffect]: statusEffectComponent,
          [ServerComponentType.planted]: plantedComponent,
+         [ServerComponentType.loot]: lootComponent,
          [ServerComponentType.berryBushPlanted]: berryBushPlantedComponent
       },
       lights: []

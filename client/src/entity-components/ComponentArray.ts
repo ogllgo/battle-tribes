@@ -149,8 +149,13 @@ export abstract class ComponentArray<
       return typeof this.entityToIndexMap[entity] !== "undefined";
    }
 
+   public componentIsActive(entity: Entity): boolean {
+      return typeof this.activeEntityToIndexMap[entity] !== "undefined";
+   }
+
    public activateComponent(component: T, entity: Entity): void {
-      if (typeof this.activeEntityToIndexMap[entity] !== "undefined") {
+      // Don't activate if already active
+      if (this.componentIsActive(entity)) {
          return;
       }
       

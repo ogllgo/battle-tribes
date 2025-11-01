@@ -6,27 +6,7 @@ import { entityExists } from "./world";
 import { Entity } from "../../shared/src/entities";
 import { getRandomPositionOnBoxEdge, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { createHotSparkParticle } from "./particles";
-
-export function playBowFireSound(sourceEntity: Entity, bowItemType: ItemType): void {
-   // @Hack
-   const transformComponent = TransformComponentArray.getComponent(sourceEntity);
-   const hitbox = transformComponent.hitboxes[0];
-
-   switch (bowItemType) {
-      case ItemType.wooden_bow: {
-         playSoundOnHitbox("bow-fire.mp3", 0.4, 1, sourceEntity, hitbox, false);
-         break;
-      }
-      case ItemType.reinforced_bow: {
-         playSoundOnHitbox("reinforced-bow-fire.mp3", 0.2, 1, sourceEntity, hitbox, false);
-         break;
-      }
-      case ItemType.ice_bow: {
-         playSoundOnHitbox("ice-bow-fire.mp3", 0.4, 1, sourceEntity, hitbox, false);
-         break;
-      }
-   }
-}
+import { playBowFireSound } from "./components/game/GameInteractableLayer";
 
 export function processTickEvent(entity: Entity, type: EntityTickEventType, data: number): void {
    // @HACK
@@ -35,7 +15,7 @@ export function processTickEvent(entity: Entity, type: EntityTickEventType, data
    }
    
    // @Hack
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
    const hitbox = transformComponent.hitboxes[0];
 
    switch (type) {

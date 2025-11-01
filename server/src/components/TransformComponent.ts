@@ -13,7 +13,6 @@ import { resolveWallCollision } from "../collision-resolution";
 import { Packet } from "battletribes-shared/packets";
 import { Box, boxIsCircular, getBoxArea, HitboxFlag, updateBox } from "battletribes-shared/boxes/boxes";
 import { destroyEntity, getEntityLayer, getEntityType, setEntityLayer } from "../world";
-import { CollisionBit, DEFAULT_COLLISION_MASK } from "battletribes-shared/collision";
 import { removeEntityLights, updateEntityLights } from "../lights";
 import { registerDirtyEntity } from "../server/player-clients";
 import { surfaceLayer, undergroundLayer } from "../layers";
@@ -50,9 +49,6 @@ export class TransformComponent {
    
    public lastValidLayer = surfaceLayer;
 
-   public collisionBit = CollisionBit.default;
-   public collisionMask = DEFAULT_COLLISION_MASK;
-   
    public occupiedPathfindingNodes = new Set<PathfindingNodeIndex>();
 
    public nextHitboxLocalID = 1;
@@ -823,12 +819,10 @@ function onRemove(entity: Entity): void {
 function getDataLength(entity: Entity): number {
    const transformComponent = TransformComponentArray.getComponent(entity);
 
-   // Collision bit and collision mask
-   let lengthBytes = 2 * Float32Array.BYTES_PER_ELEMENT;
-   
    // Traction
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT;
+   let lengthBytes = Float32Array.BYTES_PER_ELEMENT;
    
+   // Hitboxes
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    for (const hitbox of transformComponent.hitboxes) {
       lengthBytes += getHitboxDataLength(hitbox);
@@ -839,9 +833,6 @@ function getDataLength(entity: Entity): number {
 
 function addDataToPacket(packet: Packet, entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity);
-   
-   packet.writeNumber(transformComponent.collisionBit);
-   packet.writeNumber(transformComponent.collisionMask);
    
    packet.writeNumber(transformComponent.traction);
    

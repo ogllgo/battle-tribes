@@ -153,7 +153,7 @@ const MIN_RECIPE_BROWSER_HEIGHT = 9;
 export let setCraftingMenuAvailableRecipes: (craftingRecipes: Array<CraftingRecipe>) => void = () => {};
 export let setCraftingMenuAvailableCraftingStations: (craftingStations: Set<CraftingStationEntityType>) => void = () => {};
 export let CraftingMenu_setCraftingStation: (craftingStation: CraftingStationEntityType | null) => void = () => {};
-export let CraftingMenu_setIsVisible: (isVisible: boolean) => void;
+export let CraftingMenu_setIsVisible: (isVisible: boolean) => void = () => {};
 
 export let craftingMenuIsOpen: () => boolean;
 

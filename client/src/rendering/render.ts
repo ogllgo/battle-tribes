@@ -85,7 +85,7 @@ export async function setupRendering(): Promise<void> {
          
          clearSolidTileRenderingData();
          for (const layer of layers) {
-            createRenderChunks(layer, layer.waterRocks, layer.riverSteppingStones);
+            createRenderChunks(layer, layer.waterRocks);
          }
 
          preloadTextureAtlasImages();
@@ -169,7 +169,7 @@ export async function setupRendering(): Promise<void> {
    } else {
       clearSolidTileRenderingData();
       for (const layer of layers) {
-         createRenderChunks(layer, layer.waterRocks, layer.riverSteppingStones);
+         createRenderChunks(layer, layer.waterRocks);
       }
    }
 }

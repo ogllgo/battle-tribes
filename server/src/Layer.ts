@@ -1,4 +1,4 @@
-import { WaterRockData, RiverSteppingStoneData, ServerTileUpdateData } from "battletribes-shared/client-server-types";
+import { WaterRockData, ServerTileUpdateData } from "battletribes-shared/client-server-types";
 import { Entity } from "battletribes-shared/entities";
 import { PathfindingSettings, Settings } from "battletribes-shared/settings";
 import { NUM_TILE_TYPES, SubtileType, TileType } from "battletribes-shared/tiles";
@@ -122,7 +122,6 @@ export default class Layer {
    public readonly wallSubtileDamageTakenMap = new Map<number, number>();
 
    public readonly waterRocks = new Array<WaterRockData>();
-   public readonly riverSteppingStones = new Array<RiverSteppingStoneData>();
 
    private tileUpdateCoordinates = new Set<number>();
    public wallSubtileUpdates = new Array<WallSubtileUpdate>();
@@ -150,23 +149,6 @@ export default class Layer {
 
    constructor(depth: number) {
       this.depth = depth;
-
-      // @Incomplete: this is broken. fix it by making river stepping stones into entities
-      // Add river stepping stones to chunks
-      // for (const steppingStoneData of generationInfo.riverSteppingStones) {
-      //    const size = RIVER_STEPPING_STONE_SIZES[steppingStoneData.size];
-      //    const minChunkX = Math.max(Math.min(Math.floor((steppingStoneData.positionX - size/2) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
-      //    const maxChunkX = Math.max(Math.min(Math.floor((steppingStoneData.positionX + size/2) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
-      //    const minChunkY = Math.max(Math.min(Math.floor((steppingStoneData.positionY - size/2) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
-      //    const maxChunkY = Math.max(Math.min(Math.floor((steppingStoneData.positionY + size/2) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
-         
-      //    for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-      //       for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-      //          const chunk = this.getChunk(chunkX, chunkY);
-      //          chunk.riverSteppingStones.push(steppingStoneData);
-      //       }
-      //    }
-      // }
    }
 
    public tileIsBuildingBlocking(tileIndex: TileIndex): boolean {

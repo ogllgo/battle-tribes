@@ -93,9 +93,15 @@ function onTick(tribeMember: Entity): void {
          addDefence(healthComponent, itemInfo.defence, "armour");
    
          if (armour.type === ItemType.leaf_suit) {
-            transformComponent.collisionMask &= ~CollisionBit.plants;
+            // @HACK
+            for (const hitbox of transformComponent.hitboxes) {
+               hitbox.collisionMask &= ~CollisionBit.plant;
+            }
          } else {
-            transformComponent.collisionMask |= CollisionBit.plants;
+            // @HACK
+            for (const hitbox of transformComponent.hitboxes) {
+               hitbox.collisionMask |= CollisionBit.plant;
+            }
          }
       } else {
          removeDefence(healthComponent, "armour");

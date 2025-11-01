@@ -10,7 +10,7 @@ import { getEntityLayer } from "./world";
 import Layer from "./Layer";
 import { getComponentArrays } from "./entity-components/ComponentArray";
 import { playerInstance } from "./player";
-import { addHitboxVelocity, applyForce, getHitboxVelocity, Hitbox, setHitboxVelocity, translateHitbox } from "./hitboxes";
+import { applyForce, getHitboxVelocity, Hitbox, setHitboxVelocity, translateHitbox } from "./hitboxes";
 import CircularBox from "../../shared/src/boxes/CircularBox";
 import { CollisionResult } from "../../shared/src/collision";
 
@@ -395,6 +395,32 @@ export function getEntitiesInRange(layer: Layer, x: number, y: number, range: nu
    return entities;
 }
 
-function getHitboxConnectedMass(affectedHitbox: any) {
-   throw new Error("Function not implemented.");
+export function entitiesAreColliding(entity1: Entity, entity2: Entity): boolean {
+   const transformComponent1 = TransformComponentArray.getComponent(entity1)!;
+   const transformComponent2 = TransformComponentArray.getComponent(entity2)!;
+   
+   // AABB bounding area check
+   if (transformComponent1.boundingAreaMinX > transformComponent2.boundingAreaMaxX || // minX(1) > maxX(2)
+       transformComponent1.boundingAreaMaxX < transformComponent2.boundingAreaMinX || // maxX(1) < minX(2)
+       transformComponent1.boundingAreaMinY > transformComponent2.boundingAreaMaxY || // minY(1) > maxY(2)
+       transformComponent1.boundingAreaMaxY < transformComponent2.boundingAreaMinY) { // maxY(1) < minY(2)
+      return false;
+   }
+   
+   // More expensive hitbox check
+   for (let i = 0; i < transformComponent1.hitboxes.length; i++) {
+      const hitbox = transformComponent1.hitboxes[i];
+      const box = hitbox.box;
+
+      for (let j = 0; j < transformComponent2.hitboxes.length; j++) {
+         const otherHitbox = transformComponent2.hitboxes[j];
+
+         // If the objects are colliding, add the colliding object and this object
+         if (collisionBitsAreCompatible(hitbox.collisionMask, hitbox.collisionBit, otherHitbox.collisionMask, otherHitbox.collisionBit) && box.getCollisionResult(otherHitbox.box).isColliding) {
+            return true;
+         }
+      }
+   }
+
+   return false;
 }

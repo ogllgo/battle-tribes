@@ -199,7 +199,7 @@ export function resolveEntityCollisions(layer: Layer): void {
                const collidingEntityTransformComponent = TransformComponentArray.getComponent(collidingEntity);
 
                // Make sure the entities aren't in the same carry heirarchy
-               // @HACK
+               // @HACK @SPEED
                const firstAffectedEntityHitbox = affectedEntityTransformComponent.hitboxes[0];
                const firstCollidingEntityHitbox = collidingEntityTransformComponent.hitboxes[0];
                if (firstAffectedEntityHitbox.rootEntity === firstCollidingEntityHitbox.rootEntity) {

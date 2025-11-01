@@ -228,7 +228,7 @@ const updateOffsets = (layeredRodComponent: LayeredRodComponent, entity: Entity)
 }
 
 function onTick(entity: Entity): void {
-   const layeredRodComponent = LayeredRodComponentArray.getComponent(entity);
+   const layeredRodComponent = LayeredRodComponentArray.getComponent(entity)!;
    if (layeredRodComponent.bendX === 0 && layeredRodComponent.bendY === 0) {
       LayeredRodComponentArray.queueComponentDeactivate(entity);
       return;
@@ -257,7 +257,7 @@ function onCollision(entity: Entity, collidingEntity: Entity, affectedHitbox: Hi
       return;
    }
    
-   const layeredRodComponent = LayeredRodComponentArray.getComponent(entity);
+   const layeredRodComponent = LayeredRodComponentArray.getComponent(entity)!;
    LayeredRodComponentArray.activateComponent(layeredRodComponent, entity);
    
    const directionFromCollidingEntity = collidingHitbox.box.position.angleTo(affectedHitbox.box.position);

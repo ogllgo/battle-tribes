@@ -26,7 +26,6 @@ registerEntityLootOnDeath(EntityType.cactus, {
 
 export function createCactusConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
-   transformComponent.collisionBit = CollisionBit.cactus;
 
    // Root hitbox
    const rootHitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), rotation, RADIUS - HITBOX_PADDING), 1, HitboxCollisionType.soft, CollisionBit.cactus, DEFAULT_COLLISION_MASK, []);

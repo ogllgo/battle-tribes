@@ -4,7 +4,7 @@ import { Entity } from "../../shared/src/entities";
 import { Point, randAngle, randFloat, rotateXAroundOrigin, rotateYAroundOrigin } from "../../shared/src/utils";
 import { Settings } from "../../shared/src/settings";
 import { TILE_PHYSICS_INFO_RECORD, TileType } from "../../shared/src/tiles";
-import { entityIsInRiver, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
+import { hitboxIsInRiver, TransformComponentArray } from "./entity-components/server-components/TransformComponent";
 import { getEntityLayer, getEntityRenderInfo } from "./world";
 import { registerDirtyRenderInfo } from "./rendering/render-part-matrices";
 import { getTileIndexIncludingEdges } from "./Layer";
@@ -381,7 +381,7 @@ export function applyAccelerationFromGround(hitbox: Hitbox, accelerationX: numbe
    const tilePhysicsInfo = TILE_PHYSICS_INFO_RECORD[tile.type];
       
    let tileMoveSpeedMultiplier = tilePhysicsInfo.moveSpeedMultiplier;
-   if (transformComponent.ignoredTileSpeedMultipliers.includes(tile.type) || (tile.type === TileType.water && !entityIsInRiver(transformComponent, hitbox.entity))) {
+   if (transformComponent.ignoredTileSpeedMultipliers.includes(tile.type) || (tile.type === TileType.water && !hitboxIsInRiver(hitbox))) {
       tileMoveSpeedMultiplier = 1;
    }
    

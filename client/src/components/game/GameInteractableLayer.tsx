@@ -12,12 +12,11 @@ import { createHealthComponentData, HealthComponentArray } from "../../entity-co
 import { createInventoryComponentData, getInventory, InventoryComponentArray, updatePlayerHeldItem } from "../../entity-components/server-components/InventoryComponent";
 import { getCurrentLimbState, getLimbByInventoryName, getLimbConfiguration, InventoryUseComponentArray, LimbInfo } from "../../entity-components/server-components/InventoryUseComponent";
 import { attemptEntitySelection, getHoveredEntityID, getSelectedEntityID } from "../../entity-selection";
-import { playBowFireSound } from "../../entity-tick-events";
 import { addKeyListener, keyIsPressed } from "../../keyboard-input";
 import { closeCurrentMenu } from "../../menus";
 import { addGhostRenderInfo, removeGhostRenderInfo } from "../../rendering/webgl/entity-ghost-rendering";
 import { attemptToCompleteNode } from "../../research";
-import { playHeadSound } from "../../sound";
+import { playHeadSound, playSoundOnHitbox } from "../../sound";
 import { BackpackInventoryMenu_setIsVisible } from "./inventories/BackpackInventory";
 import Hotbar, { Hotbar_updateLeftThrownBattleaxeItemID, Hotbar_updateRightThrownBattleaxeItemID, Hotbar_setHotbarSelectedItemSlot } from "./inventories/Hotbar";
 import { CraftingMenu_setCraftingStation, CraftingMenu_setIsVisible } from "./menus/CraftingMenu";
@@ -56,6 +55,7 @@ import { assert, Point } from "../../../../shared/src/utils";
 import { getEntityClientComponentConfigs } from "../../entity-components/client-components";
 import { EntityServerComponentData } from "../../networking/packet-snapshots";
 import { cursorWorldPos } from "../../mouse";
+import SpectatorControls from "./SpectatorControls";
 
 export interface ItemRestTime {
    remainingTimeTicks: number;
@@ -117,6 +117,9 @@ const PLAYER_SLOW_ACCELERATION = 350;
 /** Acceleration of the player for a brief period after being hit */
 const PLAYER_DISCOMBOBULATED_ACCELERATION = 275;
 
+let spectatorSpeed = 500;
+let spectatorHasInstantMovement = true;
+
 export let rightMouseButtonIsPressed = false;
 
 let hotbarSelectedItemSlot = 1;
@@ -145,6 +148,20 @@ const playerMoveIntention = new Point(0, 0);
 
 export function getPlayerMoveIntention(): Point {
    return playerMoveIntention;
+}
+
+export function getSpectatorSpeed(): number {
+   return spectatorSpeed;
+}
+export function setSpectatorSpeed(speed: number): void {
+   spectatorSpeed = speed;
+}
+
+export function setSpectatorHasInstantMovement(hasInstantMovement: boolean): void {
+   spectatorHasInstantMovement = hasInstantMovement;
+}
+export function getSpectatorHasInstantMovement(): boolean {
+   return spectatorHasInstantMovement;
 }
 
 // @Copynpaste
@@ -929,10 +946,7 @@ export function updatePlayerMovement(): void {
       return;
    }
    
-   const transformComponent = TransformComponentArray.getComponent(playerInstance);
-   if (transformComponent === null) {
-      return;
-   }
+   const transformComponent = TransformComponentArray.getComponent(playerInstance)!;
 
    // Get pressed keys
    const wIsPressed = keyIsPressed("w") || keyIsPressed("W") || keyIsPressed("ArrowUp");
@@ -970,7 +984,14 @@ export function updatePlayerMovement(): void {
       const playerAction = getInstancePlayerAction(InventoryName.hotbar);
       
       let acceleration: number;
-      if (keyIsPressed("l")) {
+      if (isSpectating) {
+         acceleration = spectatorSpeed;
+         // @Hack to counteract the fact that directly setting velocity is faster than directly setting acceleration.
+         // - a far better way to do this is to have instant movement actually use acceleration as well, but with a supa high traction so it instantly reaches its top speed
+         if (!spectatorHasInstantMovement) {
+            acceleration *= 1.5;
+         }
+      } else if (keyIsPressed("l")) {
          acceleration = PLAYER_LIGHTSPEED_ACCELERATION;
       // @Bug: doesn't account for offhand
       } else if (playerAction === LimbAction.eat || playerAction === LimbAction.useMedicine || playerAction === LimbAction.chargeBow || playerAction === LimbAction.chargeSpear || playerAction === LimbAction.loadCrossbow || playerAction === LimbAction.block || playerAction === LimbAction.windShieldBash || playerAction === LimbAction.pushShieldBash || playerAction === LimbAction.returnShieldBashToRest || playerIsPlacingEntity()) {
@@ -996,7 +1017,7 @@ export function updatePlayerMovement(): void {
       const accelerationX = acceleration * Math.sin(moveDirection);
       const accelerationY = acceleration * Math.cos(moveDirection);
 
-      if (isSpectating) {
+      if (isSpectating && spectatorHasInstantMovement) {
          setHitboxVelocity(playerHitbox, accelerationX, accelerationY);
       } else {
          applyAccelerationFromGround(playerHitbox, accelerationX, accelerationY);
@@ -1005,7 +1026,7 @@ export function updatePlayerMovement(): void {
       playerMoveIntention.x = 0;
       playerMoveIntention.y = 0;
 
-      if (isSpectating) {
+      if (isSpectating && spectatorHasInstantMovement) {
          // @Copynpaste
          const playerHitbox = transformComponent.hitboxes[0];
          setHitboxVelocity(playerHitbox, 0, 0);
@@ -1281,6 +1302,27 @@ const onItemStartUse = (itemType: ItemType, itemInventoryName: InventoryName, it
    }
 }
 
+export function playBowFireSound(sourceEntity: Entity, bowItemType: ItemType): void {
+   // @Hack
+   const transformComponent = TransformComponentArray.getComponent(sourceEntity)!;
+   const hitbox = transformComponent.hitboxes[0];
+
+   switch (bowItemType) {
+      case ItemType.wooden_bow: {
+         playSoundOnHitbox("bow-fire.mp3", 0.4, 1, sourceEntity, hitbox, false);
+         break;
+      }
+      case ItemType.reinforced_bow: {
+         playSoundOnHitbox("reinforced-bow-fire.mp3", 0.2, 1, sourceEntity, hitbox, false);
+         break;
+      }
+      case ItemType.ice_bow: {
+         playSoundOnHitbox("ice-bow-fire.mp3", 0.4, 1, sourceEntity, hitbox, false);
+         break;
+      }
+   }
+}
+
 const onItemEndUse = (item: Item, inventoryName: InventoryName): void => {
    if (playerInstance === null) {
       return;
@@ -1336,6 +1378,12 @@ const onItemEndUse = (item: Item, inventoryName: InventoryName): void => {
                Hotbar_updateRightThrownBattleaxeItemID(item.id);
             }
          }
+         
+         if (limb.action === LimbAction.chargeBow && limb.currentActionElapsedTicks >= limb.currentActionDurationTicks) {
+            sendItemUsePacket();
+            // @HACK: commented it out cuz it was doubling the sound due to the one also received by the server. But this is actually the correct thing to do, to eliminate ping delay, have this play immediately locally and then disregard the sound sent by the server. Same with all sounds caused by the player which we know will happen immediately.
+            // playBowFireSound(playerInstance!, item.type);
+         }
             
          const holdingLimb = getLimbByInventoryName(inventoryUseComponent, InventoryName.hotbar);
          const startHoldingLimbState = getCurrentLimbState(holdingLimb);
@@ -1372,10 +1420,6 @@ const onItemEndUse = (item: Item, inventoryName: InventoryName): void => {
          //    // @Garbage
          //    limb.currentActionEndLimbState = copyLimbState(restingLimbState);
          // }
-         
-         sendItemUsePacket();
-         // @Incomplete: Don't play if bow didn't actually fire an arrow
-         playBowFireSound(playerInstance!, item.type);
 
          break;
       }
@@ -1875,7 +1919,11 @@ const GameInteractableLayer = (props: GameInteractableLayerProps) => {
       <AttackChargeBar mouseX={mouseX} mouseY={mouseY + 18} chargeElapsedTicks={offhandChargeElapsedTicks} chargeDuration={offhandChargeDuration} />
 
       {!props.cinematicModeIsEnabled ? (
-         <Hotbar hotbar={props.hotbar} offhand={props.offhand} backpackSlot={props.backpackSlot} armourSlot={props.armourSlot} gloveSlot={props.gloveSlot} hotbarItemRestTimes={hotbarItemRestTimes.current} offhandItemRestTimes={offhandItemRestTimes.current} />
+         isSpectating ? (
+            <SpectatorControls />
+         ) : (
+            <Hotbar hotbar={props.hotbar} offhand={props.offhand} backpackSlot={props.backpackSlot} armourSlot={props.armourSlot} gloveSlot={props.gloveSlot} hotbarItemRestTimes={hotbarItemRestTimes.current} offhandItemRestTimes={offhandItemRestTimes.current} />
+         )
       ) : undefined}
 
       {(props.gameInteractState === GameInteractState.selectCarryTarget || props.gameInteractState === GameInteractState.selectAttackTarget || props.gameInteractState === GameInteractState.selectMoveTargetPosition) ? (

@@ -1,4 +1,3 @@
-import { WaterRockData, RiverSteppingStoneData } from "battletribes-shared/client-server-types";
 import { TileType } from "battletribes-shared/tiles";
 import { getTileIndexIncludingEdges, lerp, Point, randInt, smoothstep } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
@@ -10,19 +9,17 @@ import Layer from "../Layer";
 import { generateCaveEntrances } from "./cave-entrance-generation";
 import { groupLocalBiomes, setWallInSubtiles } from "./terrain-generation-utils";
 import { Biome } from "../../../shared/src/biomes";
-import { createRawSpawnDistribution, EntitySpawnEvent, isTooCloseToSteppingStone, registerNewSpawnInfo } from "../entity-spawn-info";
+import { createRawSpawnDistribution, EntitySpawnEvent, registerNewSpawnInfo } from "../entity-spawn-info";
 import { EntityType, TreeSize } from "../../../shared/src/entities";
 import { getEntitiesInRange } from "../ai-shared";
 import { getEntityType } from "../world";
 import { TransformComponentArray } from "../components/TransformComponent";
 import { entityIsTribesman } from "../entities/tribes/tribe-member";
-import { Hitbox } from "../hitboxes";
 import { entityIsStructure } from "../structure-placement";
 import { EntityConfig } from "../components";
 import { ServerComponentType } from "../../../shared/src/components";
 import { createBerryBushConfig } from "../entities/resources/berry-bush";
 import { createTreeConfig } from "../entities/resources/tree";
-import { createTombstoneConfig } from "../entities/tombstone";
 import { createBoulderConfig } from "../entities/resources/boulder";
 import { createCactusConfig } from "../entities/desert/cactus";
 import { createYetiConfig } from "../entities/mobs/yeti";
@@ -57,18 +54,6 @@ import { createCowConfig } from "../entities/mobs/cow";
 
 const enum Vars {
    TRIBESMAN_SPAWN_EXCLUSION_RANGE = 1200
-}
-
-export interface TerrainGenerationInfo {
-   readonly tileTypes: Float32Array;
-   readonly tileBiomes: Float32Array;
-   readonly subtileTypes: Float32Array;
-   readonly riverFlowDirections: Float32Array;
-   readonly tileTemperatures: Float32Array;
-   readonly tileHumidities: Float32Array;
-   readonly riverMainTiles: ReadonlyArray<WaterTileGenerationInfo>;
-   readonly waterRocks: ReadonlyArray<WaterRockData>;
-   readonly riverSteppingStones: ReadonlyArray<RiverSteppingStoneData>;
 }
 
 const HEIGHT_NOISE_SCALE = 50;
@@ -125,7 +110,8 @@ const isTooCloseToReedOrLilypad = (layer: Layer, x: number, y: number): boolean 
    }
 
    // Only allow overlapping slightly with other lilypads
-   entities = getEntitiesInRange(layer, x, y, 24 - 6);
+   // @HACK: lilypad radius is hardcoded
+   entities = getEntitiesInRange(layer, x, y, 28 - 6);
    for (let i = 0; i < entities.length; i++) {
       const entity = entities[i];
       if (getEntityType(entity) === EntityType.lilypad) {
@@ -486,7 +472,7 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       surfaceLayer.riverFlowDirections[tileIndex] = tileInfo.flowDirectionIdx;
    }
 
-   generateRiverFeatures(riverTiles, surfaceLayer.waterRocks, surfaceLayer.riverSteppingStones);
+   generateRiverFeatures(surfaceLayer, riverTiles, surfaceLayer.waterRocks);
 
    groupLocalBiomes(surfaceLayer);
 
@@ -899,7 +885,15 @@ export function generateSurfaceTerrain(surfaceLayer: Layer): void {
       balanceSpawnDistribution: false,
       doStrictTileTypeCheck: true,
       customSpawnIsValidFunc: (spawnInfo: EntitySpawnEvent, x: number, y: number): boolean => {
-         return !isTooCloseToSteppingStone(x, y, 50) && !isTooCloseToReedOrLilypad(spawnInfo.layer, x, y);
+         // Make sure the lilypad isn't too close to a stepping stone
+         const testEntities = getEntitiesInRange(spawnInfo.layer, x, y, 50);
+         for (const entity of testEntities) {
+            if (getEntityType(entity) === EntityType.riverSteppingStone) {
+               return false;
+            }
+         }
+         
+         return !isTooCloseToReedOrLilypad(spawnInfo.layer, x, y);
       },
       createEntity: (pos: Point, angle: number): ReadonlyArray<EntityConfig> | null => {
          return [createLilypadConfig(pos, angle)];

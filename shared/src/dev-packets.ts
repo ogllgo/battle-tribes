@@ -66,6 +66,7 @@ const SUMMON_DATA_RECORD = {
    [ServerComponentType.iceArrow]: {},
    [ServerComponentType.layeredRod]: {},
    [ServerComponentType.decoration]: {},
+   [ServerComponentType.riverSteppingStone]: {},
    [ServerComponentType.spitPoisonArea]: {},
    [ServerComponentType.battleaxeProjectile]: {},
    [ServerComponentType.spearProjectile]: {},

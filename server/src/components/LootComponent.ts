@@ -10,6 +10,8 @@ import { LocalBiome } from "../world-generation/terrain-generation-utils";
 import { ComponentArray } from "./ComponentArray";
 import { TransformComponentArray } from "./TransformComponent";
 
+// @ROBUSTNESS: The game really should crash or show a warning or something when an entity register loot on hit/death but the entity doesn't have a loot component because i've forgotten to add it.
+
 export interface LootEntry {
    readonly itemType: ItemType;
    readonly getAmount: (entity: Entity) => number;

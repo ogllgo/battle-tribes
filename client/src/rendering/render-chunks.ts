@@ -1,13 +1,11 @@
-import { RIVER_STEPPING_STONE_SIZES, RiverSteppingStoneData, ServerTileUpdateData, WaterRockData } from "battletribes-shared/client-server-types";
+import { WaterRockData } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { createTileRenderChunks, recalculateSolidTileRenderChunkData } from "./webgl/solid-tile-rendering";
 import { calculateRiverRenderChunkData } from "./webgl/river-rendering";
 import { calculateShadowInfo, TileShadowType } from "./webgl/tile-shadow-rendering";
 import { calculateWallBorderInfo } from "./webgl/wall-border-rendering";
-import Board from "../Board";
 import Layer from "../Layer";
 import { layers } from "../world";
-import { positionIsInWorld } from "../../../shared/src/utils";
 
 /** Width and height of a render chunk in tiles */
 export const RENDER_CHUNK_SIZE = 8;
@@ -34,8 +32,9 @@ export interface RenderChunkRiverInfo {
    readonly noiseVertexCount: number;
    readonly transitionVAO: WebGLVertexArrayObject;
    readonly transitionVertexCount: number;
+   // @SQUEAM
    /** IDs of all stepping stone groups resent in the render chunk */
-   readonly riverSteppingStoneGroupIDs: ReadonlyArray<number>;
+   // readonly riverSteppingStoneGroupIDs: ReadonlyArray<number>;
    readonly waterRocks: Array<WaterRockData>;
 }
 
@@ -80,7 +79,7 @@ export function getRenderChunkTileShadowInfo(layer: Layer, renderChunkX: number,
    return tileShadowInfoArrays[layerIdx][tileShadowType][getRenderChunkIndex(renderChunkX, renderChunkY)];
 }
 
-export function createRenderChunks(layer: Layer, waterRocks: ReadonlyArray<WaterRockData>, riverSteppingStones: ReadonlyArray<RiverSteppingStoneData>): void {
+export function createRenderChunks(layer: Layer, waterRocks: ReadonlyArray<WaterRockData>): void {
    // @hack
    const layerIdx = layers.indexOf(layer);
    
@@ -99,34 +98,35 @@ export function createRenderChunks(layer: Layer, waterRocks: ReadonlyArray<Water
       waterRocksChunked[renderChunkX][renderChunkY].push(waterRock);
    }
 
-   // Group edge stepping stones
-   let edgeSteppingStonesChunked: Record<number, Record<number, Array<RiverSteppingStoneData>>> = {};
-   for (const steppingStone of riverSteppingStones) {
-      if (positionIsInWorld(steppingStone.positionX, steppingStone.positionY)) {
-         continue;
-      }
+   // @SQUEAM
+   // // Group edge stepping stones
+   // let edgeSteppingStonesChunked: Record<number, Record<number, Array<RiverSteppingStoneData>>> = {};
+   // for (const steppingStone of riverSteppingStones) {
+   //    if (positionIsInWorld(steppingStone.positionX, steppingStone.positionY)) {
+   //       continue;
+   //    }
       
-      const size = RIVER_STEPPING_STONE_SIZES[steppingStone.size];
+   //    const size = RIVER_STEPPING_STONE_SIZES[steppingStone.size];
       
-      const minRenderChunkX = Math.max(Math.min(Math.floor((steppingStone.positionX - size/2) / RENDER_CHUNK_UNITS), WORLD_RENDER_CHUNK_SIZE - 1), 0);
-      const maxRenderChunkX = Math.max(Math.min(Math.floor((steppingStone.positionX + size/2) / RENDER_CHUNK_UNITS), WORLD_RENDER_CHUNK_SIZE - 1), 0);
-      const minRenderChunkY = Math.max(Math.min(Math.floor((steppingStone.positionY - size/2) / RENDER_CHUNK_UNITS), WORLD_RENDER_CHUNK_SIZE - 1), 0);
-      const maxRenderChunkY = Math.max(Math.min(Math.floor((steppingStone.positionY + size/2) / RENDER_CHUNK_UNITS), WORLD_RENDER_CHUNK_SIZE - 1), 0);
+   //    const minRenderChunkX = Math.max(Math.min(Math.floor((steppingStone.positionX - size/2) / RENDER_CHUNK_UNITS), WORLD_RENDER_CHUNK_SIZE - 1), 0);
+   //    const maxRenderChunkX = Math.max(Math.min(Math.floor((steppingStone.positionX + size/2) / RENDER_CHUNK_UNITS), WORLD_RENDER_CHUNK_SIZE - 1), 0);
+   //    const minRenderChunkY = Math.max(Math.min(Math.floor((steppingStone.positionY - size/2) / RENDER_CHUNK_UNITS), WORLD_RENDER_CHUNK_SIZE - 1), 0);
+   //    const maxRenderChunkY = Math.max(Math.min(Math.floor((steppingStone.positionY + size/2) / RENDER_CHUNK_UNITS), WORLD_RENDER_CHUNK_SIZE - 1), 0);
       
-      for (let renderChunkX = minRenderChunkX; renderChunkX <= maxRenderChunkX; renderChunkX++) {
-         for (let renderChunkY = minRenderChunkY; renderChunkY <= maxRenderChunkY; renderChunkY++) {
-            if (!edgeSteppingStonesChunked.hasOwnProperty(renderChunkX)) {
-               edgeSteppingStonesChunked[renderChunkX] = {};
-            }
-            if (!edgeSteppingStonesChunked[renderChunkX].hasOwnProperty(renderChunkY)) {
-               edgeSteppingStonesChunked[renderChunkX][renderChunkY] = [];
-            }
-            if (!edgeSteppingStonesChunked[renderChunkX][renderChunkY].includes(steppingStone)) {
-               edgeSteppingStonesChunked[renderChunkX][renderChunkY].push(steppingStone);
-            }
-         }
-      }
-   }
+   //    for (let renderChunkX = minRenderChunkX; renderChunkX <= maxRenderChunkX; renderChunkX++) {
+   //       for (let renderChunkY = minRenderChunkY; renderChunkY <= maxRenderChunkY; renderChunkY++) {
+   //          if (!edgeSteppingStonesChunked.hasOwnProperty(renderChunkX)) {
+   //             edgeSteppingStonesChunked[renderChunkX] = {};
+   //          }
+   //          if (!edgeSteppingStonesChunked[renderChunkX].hasOwnProperty(renderChunkY)) {
+   //             edgeSteppingStonesChunked[renderChunkX][renderChunkY] = [];
+   //          }
+   //          if (!edgeSteppingStonesChunked[renderChunkX][renderChunkY].includes(steppingStone)) {
+   //             edgeSteppingStonesChunked[renderChunkX][renderChunkY].push(steppingStone);
+   //          }
+   //       }
+   //    }
+   // }
 
    createTileRenderChunks(layer);
 
@@ -135,9 +135,8 @@ export function createRenderChunks(layer: Layer, waterRocks: ReadonlyArray<Water
    for (let renderChunkY = -RENDER_CHUNK_EDGE_GENERATION; renderChunkY < WORLD_RENDER_CHUNK_SIZE + RENDER_CHUNK_EDGE_GENERATION; renderChunkY++) {
       for (let renderChunkX = -RENDER_CHUNK_EDGE_GENERATION; renderChunkX < WORLD_RENDER_CHUNK_SIZE + RENDER_CHUNK_EDGE_GENERATION; renderChunkX++) {
          const waterRocks = (waterRocksChunked.hasOwnProperty(renderChunkX) && waterRocksChunked[renderChunkX].hasOwnProperty(renderChunkY)) ? waterRocksChunked[renderChunkX][renderChunkY] : [];
-         const edgeSteppingStones = (edgeSteppingStonesChunked.hasOwnProperty(renderChunkX) && edgeSteppingStonesChunked[renderChunkX].hasOwnProperty(renderChunkY)) ? edgeSteppingStonesChunked[renderChunkX][renderChunkY] : [];
 
-         const data = calculateRiverRenderChunkData(layer, renderChunkX, renderChunkY, waterRocks, edgeSteppingStones);
+         const data = calculateRiverRenderChunkData(layer, renderChunkX, renderChunkY, waterRocks);
          layer.riverInfoArray.push(data);
       }
    }

@@ -11,11 +11,10 @@ import { Hitbox } from "../../hitboxes";
 
 export function createIceShardConfig(position: Point, rotation: number): EntityConfig {
    const transformComponent = new TransformComponent();
-   transformComponent.collisionMask = DEFAULT_COLLISION_MASK & ~CollisionBit.planterBox;
 
    transformComponent.isAffectedByGroundFriction = false;
 
-   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 24, 24), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   const hitbox = new Hitbox(transformComponent, null, true, new RectangularBox(position, new Point(0, 0), rotation, 24, 24), 0.4, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.planterBox, []);
    addHitboxToTransformComponent(transformComponent, hitbox);
 
    const iceShardComponent = new IceShardComponent();

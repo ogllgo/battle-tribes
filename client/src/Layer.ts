@@ -1,4 +1,4 @@
-import { GrassTileInfo, RiverFlowDirectionsRecord, RiverSteppingStoneData, WaterRockData } from "../../shared/src/client-server-types";
+import { GrassTileInfo, RiverFlowDirectionsRecord, WaterRockData } from "../../shared/src/client-server-types";
 import { Entity } from "../../shared/src/entities";
 import { Settings } from "../../shared/src/settings";
 import { SubtileType, TileType } from "../../shared/src/tiles";
@@ -68,7 +68,6 @@ export default class Layer {
    public readonly wallSubtileDamageTakenMap: Map<number, number>;
    public readonly riverFlowDirections: RiverFlowDirectionsRecord;
    public readonly waterRocks: Array<WaterRockData>;
-   public readonly riverSteppingStones: Array<RiverSteppingStoneData>;
    public readonly grassInfo: Record<number, Record<number, GrassTileInfo>>;
 
    /** All dropdown tiles in the layer */
@@ -92,7 +91,7 @@ export default class Layer {
 
    public readonly slimeTrailPixels = new Map<number, number>();
    
-   constructor(idx: number, tiles: ReadonlyArray<Tile>, buildingBlockingTiles: ReadonlySet<TileIndex>, wallSubtileTypes: Float32Array, wallSubtileDamageTakenMap: Map<number, number>, riverFlowDirections: RiverFlowDirectionsRecord, waterRocks: Array<WaterRockData>, riverSteppingStones: Array<RiverSteppingStoneData>, grassInfo: Record<number, Record<number, GrassTileInfo>>) {
+   constructor(idx: number, tiles: ReadonlyArray<Tile>, buildingBlockingTiles: ReadonlySet<TileIndex>, wallSubtileTypes: Float32Array, wallSubtileDamageTakenMap: Map<number, number>, riverFlowDirections: RiverFlowDirectionsRecord, waterRocks: Array<WaterRockData>, grassInfo: Record<number, Record<number, GrassTileInfo>>) {
       this.idx = idx;
       this.wallSubtileTypes = wallSubtileTypes;
       this.wallSubtileDamageTakenMap = wallSubtileDamageTakenMap;
@@ -100,7 +99,6 @@ export default class Layer {
       this.buildingBlockingTiles = buildingBlockingTiles;
       this.riverFlowDirections = riverFlowDirections;
       this.waterRocks = waterRocks;
-      this.riverSteppingStones = riverSteppingStones;
       this.grassInfo = grassInfo;
 
       // Create the chunk array

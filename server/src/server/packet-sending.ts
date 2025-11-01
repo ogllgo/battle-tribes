@@ -447,8 +447,8 @@ export function createInitialGameDataPacket(spawnLayer: Layer, spawnPosition: Po
    for (const layer of layers) {
       lengthBytes += Float32Array.BYTES_PER_ELEMENT + layer.wallSubtileDamageTakenMap.size * 2 * Float32Array.BYTES_PER_ELEMENT;
    }
+   // Water rocks
    lengthBytes += Float32Array.BYTES_PER_ELEMENT + spawnLayer.waterRocks.length * 5 * Float32Array.BYTES_PER_ELEMENT;
-   lengthBytes += Float32Array.BYTES_PER_ELEMENT + spawnLayer.riverSteppingStones.length * 5 * Float32Array.BYTES_PER_ELEMENT;
    // Taming specs
    lengthBytes += Float32Array.BYTES_PER_ELEMENT;
    for (const pair of tamingSpecsMap) {
@@ -502,17 +502,6 @@ export function createInitialGameDataPacket(spawnLayer: Layer, spawnPosition: Po
       packet.writeNumber(waterRock.rotation);
       packet.writeNumber(waterRock.size);
       packet.writeNumber(waterRock.opacity);
-   }
-
-   packet.writeNumber(spawnLayer.riverSteppingStones.length);
-   for (let i = 0; i < spawnLayer.riverSteppingStones.length; i++) {
-      const steppingStone = spawnLayer.riverSteppingStones[i];
-
-      packet.writeNumber(steppingStone.positionX);
-      packet.writeNumber(steppingStone.positionY);
-      packet.writeNumber(steppingStone.rotation);
-      packet.writeNumber(steppingStone.size);
-      packet.writeNumber(steppingStone.groupID);
    }
 
    // Taming specs

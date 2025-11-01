@@ -1,8 +1,14 @@
-import { WaterRockData, RiverSteppingStoneData, RiverSteppingStoneSize, RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
+import { WaterRockData } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
-import { Point, TileCoordinates, lerp, randFloat, tileIsInWorld } from "battletribes-shared/utils";
+import { Point, TileCoordinates, lerp, randAngle, randFloat, randInt, tileIsInWorld } from "battletribes-shared/utils";
 import { generateOctavePerlinNoise } from "../perlin-noise";
-import SRandom from "../SRandom";
+import { Hitbox } from "../hitboxes";
+import { createRiverSteppingStoneConfig, RiverSteppingStoneSize } from "../entities/plains/river-stepping-stone";
+import { ServerComponentType } from "../../../shared/src/components";
+import { createEntityImmediate } from "../world";
+import Layer from "../Layer";
+import { getDistanceFromPointToHitbox } from "../ai-shared";
+import CircularBox from "../../../shared/src/boxes/CircularBox";
 
 const NUM_RIVERS = 20;
 
@@ -224,8 +230,8 @@ const calculateRiverCrossingPositions = (riverTiles: ReadonlyArray<WaterTileGene
          continue;
       }
 
-      const sign = SRandom.next() < 0.5 ? 1 : -1;
-      const directionOffset = SRandom.randFloat(0, Math.PI/10) * sign;
+      const sign = Math.random() < 0.5 ? 1 : -1;
+      const directionOffset = randFloat(0, Math.PI/10) * sign;
 
       let crossingDirection: number | undefined;
       const clockwiseIsWater = tileAtOffsetIsWater(startTile.tileX, startTile.tileY, startTile.flowDirectionIdx + directionOffset + Math.PI/2, riverTiles);
@@ -284,24 +290,24 @@ const calculateRiverCrossingPositions = (riverTiles: ReadonlyArray<WaterTileGene
    return riverCrossings;
 }
 
-export function generateRiverFeatures(riverTiles: ReadonlyArray<WaterTileGenerationInfo>, waterRocks: Array<WaterRockData>, riverSteppingStones: Array<RiverSteppingStoneData>): void {
+export function generateRiverFeatures(surfaceLayer: Layer, riverTiles: ReadonlyArray<WaterTileGenerationInfo>, waterRocks: Array<WaterRockData>): void {
    const MIN_CROSSING_DISTANCE = 325;
    /** Minimum distance between crossings */
    const RIVER_CROSSING_WIDTH = 100;
    const RIVER_CROSSING_WATER_ROCK_WIDTH = 150;
    const NUM_STONE_SPAWN_ATTEMPTS_PER_RIVER = 25;
-   const RIVER_STEPPING_STONE_SPACING = -5;
+   const MIN_RIVER_STEPPING_STONE_SPACING = -5;
 
    // Generate random water rocks throughout all river tiles
    for (const tile of riverTiles) {
-      if (SRandom.next() < 0.075) {
-         const x = (tile.tileX + SRandom.next()) * Settings.TILE_SIZE;
-         const y = (tile.tileY + SRandom.next()) * Settings.TILE_SIZE;
+      if (Math.random() < 0.075) {
+         const x = (tile.tileX + Math.random()) * Settings.TILE_SIZE;
+         const y = (tile.tileY + Math.random()) * Settings.TILE_SIZE;
          waterRocks.push({
             position: [x, y],
-            rotation: 2 * Math.PI * SRandom.next(),
-            size: SRandom.randInt(0, 1),
-            opacity: SRandom.next()
+            rotation: randAngle(),
+            size: randInt(0, 1),
+            opacity: Math.random()
          });
       }
    }
@@ -312,7 +318,7 @@ export function generateRiverFeatures(riverTiles: ReadonlyArray<WaterTileGenerat
    const riverCrossings = new Array<RiverCrossingInfo>();
    mainLoop:
    for (const crossingInfo of potentialRiverCrossings) {
-      if (SRandom.next() >= 0.15) {
+      if (Math.random() >= 0.15) {
          continue;
       }
       
@@ -327,15 +333,17 @@ export function generateRiverFeatures(riverTiles: ReadonlyArray<WaterTileGenerat
       riverCrossings.push(crossingInfo);
    }
 
+   // 
    // Generate features for the crossings
-   let currentCrossingGroupID = 0;
+   // 
+   
    for (const crossing of riverCrossings) {
       const minX = (crossing.startTileX + 0.5) * Settings.TILE_SIZE;
       const maxX = (crossing.endTileX + 0.5) * Settings.TILE_SIZE;
       const minY = (crossing.startTileY + 0.5) * Settings.TILE_SIZE;
       const maxY = (crossing.endTileY + 0.5) * Settings.TILE_SIZE;
 
-      const localCrossingStones = new Array<RiverSteppingStoneData>();
+      const localStoneHitboxes = new Array<Hitbox>();
 
       stoneCreationLoop:
       for (let i = 0; i < NUM_STONE_SPAWN_ATTEMPTS_PER_RIVER; i++) {
@@ -345,7 +353,7 @@ export function generateRiverFeatures(riverTiles: ReadonlyArray<WaterTileGenerat
          let x = lerp(minX, maxX, dist);
          let y = lerp(minY, maxY, dist);
 
-         const offsetMultiplier = SRandom.randFloat(-1, 1);
+         const offsetMultiplier = randFloat(-1, 1);
          x += RIVER_CROSSING_WIDTH/2 * Math.sin(crossing.direction + Math.PI/2) * offsetMultiplier;
          y += RIVER_CROSSING_WIDTH/2 * Math.cos(crossing.direction + Math.PI/2) * offsetMultiplier;
 
@@ -361,39 +369,33 @@ export function generateRiverFeatures(riverTiles: ReadonlyArray<WaterTileGenerat
             continue;
          }
 
-         const stoneSize: RiverSteppingStoneSize = SRandom.randInt(0, 2);
-         const radius = RIVER_STEPPING_STONE_SIZES[stoneSize]/2;
+         const stoneSize: RiverSteppingStoneSize = randInt(0, 2);
+         const stoneConfig = createRiverSteppingStoneConfig(new Point(x, y), randAngle(), stoneSize);
+         const stoneHitbox = stoneConfig.components[ServerComponentType.transform]!.hitboxes[0];
 
          // Don't overlap with existing stones in the crossing
-         for (const stone of localCrossingStones) {
-            const dist = Math.sqrt(Math.pow(x - stone.positionX, 2) + Math.pow(y - stone.positionY, 2));
-            if (dist - RIVER_STEPPING_STONE_SIZES[stone.size]/2 - radius < RIVER_STEPPING_STONE_SPACING) {
+         for (const otherHitbox of localStoneHitboxes) {
+            // @HACK @Cleanup should use the hitboxToHitboxDist function once i make that!!!!!
+            const dist = getDistanceFromPointToHitbox(stoneHitbox.box.position, otherHitbox) - (stoneHitbox.box as CircularBox).radius;
+            if (dist < MIN_RIVER_STEPPING_STONE_SPACING) {
                continue stoneCreationLoop;
             }
          }
 
-         const data: RiverSteppingStoneData = {
-            positionX: x,
-            positionY: y,
-            size: stoneSize,
-            rotation: 2 * Math.PI * SRandom.next(),
-            groupID: currentCrossingGroupID
-         };
-         localCrossingStones.push(data);
-
-         riverSteppingStones.push(data);
+         localStoneHitboxes.push(stoneHitbox);
+         createEntityImmediate(stoneConfig, surfaceLayer);
       }
 
       // Create water rocks
       const crossingDist = Math.sqrt(Math.pow(minX - maxX, 2) + Math.pow(minY - maxY, 2));
       const numWaterRocks = Math.floor(crossingDist / 6);
       for (let i = 0; i < numWaterRocks; i++) {
-         const dist = SRandom.next();
+         const dist = Math.random();
          
          let x = lerp(minX, maxX, dist);
          let y = lerp(minY, maxY, dist);
 
-         const offsetMultiplier = SRandom.randFloat(-1, 1);
+         const offsetMultiplier = randFloat(-1, 1);
          x += RIVER_CROSSING_WATER_ROCK_WIDTH/2 * Math.sin(crossing.direction + Math.PI/2) * offsetMultiplier;
          y += RIVER_CROSSING_WATER_ROCK_WIDTH/2 * Math.cos(crossing.direction + Math.PI/2) * offsetMultiplier;
 
@@ -411,12 +413,10 @@ export function generateRiverFeatures(riverTiles: ReadonlyArray<WaterTileGenerat
 
          waterRocks.push({
             position: [x, y],
-            size: SRandom.randInt(0, 1),
-            rotation: 2 * Math.PI * SRandom.next(),
+            size: randInt(0, 1),
+            rotation: 2 * Math.PI * Math.random(),
             opacity: randFloat(0.6, 1)
          });
       }
-
-      currentCrossingGroupID++;
    }
 }

@@ -1,4 +1,4 @@
-import { WaterRockData, RiverSteppingStoneData, GrassTileInfo, RiverFlowDirectionsRecord, WaterRockSize, RiverSteppingStoneSize, EntityDebugData, LineDebugData, CircleDebugData, TileHighlightData, PathData, PathfindingNodeIndex, RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
+import { WaterRockData, GrassTileInfo, RiverFlowDirectionsRecord, WaterRockSize } from "battletribes-shared/client-server-types";
 import { PacketReader } from "battletribes-shared/packets";
 import { Settings } from "battletribes-shared/settings";
 import { TileType } from "battletribes-shared/tiles";
@@ -6,7 +6,6 @@ import { refreshCameraView, setCameraPosition } from "../camera";
 import { Tile } from "../Tile";
 import { addLayer, layers, setCurrentLayer, surfaceLayer } from "../world";
 import { NEIGHBOUR_OFFSETS } from "../utils";
-import { createRiverSteppingStoneData } from "../rendering/webgl/river-rendering";
 import Layer, { getTileIndexIncludingEdges, getTileX, getTileY, tileIsInWorld, tileIsWithinEdge } from "../Layer";
 import { TransformComponentArray } from "../entity-components/server-components/TransformComponent";
 import { initialiseRenderables } from "../rendering/render-loop";
@@ -143,7 +142,7 @@ export function processInitialGameDataPacket(reader: PacketReader): InitialGameD
       }
 
       const buildingBlockingTiles: ReadonlySet<TileIndex> = i > 0 ? getBuildingBlockingTiles() : new Set();
-      const layer = new Layer(i, tiles, buildingBlockingTiles, wallSubtileTypes, wallSubtileDamageTakenMap, flowDirections, [], [], grassInfoRecord);
+      const layer = new Layer(i, tiles, buildingBlockingTiles, wallSubtileTypes, wallSubtileDamageTakenMap, flowDirections, [], grassInfoRecord);
       addLayer(layer);
    }
 
@@ -177,44 +176,6 @@ export function processInitialGameDataPacket(reader: PacketReader): InitialGameD
       };
       surfaceLayer.waterRocks.push(waterRock);
    }
-
-   const numSteppingStones = reader.readNumber();
-   for (let i = 0; i < numSteppingStones; i++) {
-      const x = reader.readNumber();
-      const y = reader.readNumber();
-      const rotation = reader.readNumber();
-      const size = reader.readNumber() as RiverSteppingStoneSize;
-      const groupID = reader.readNumber();
-
-      const steppingStone: RiverSteppingStoneData = {
-         positionX: x,
-         positionY: y,
-         rotation: rotation,
-         size: size,
-         groupID: groupID
-      };
-      surfaceLayer.riverSteppingStones.push(steppingStone);
-   }
-
-   // Add river stepping stones to chunks
-   for (const steppingStone of surfaceLayer.riverSteppingStones) {
-      const size = RIVER_STEPPING_STONE_SIZES[steppingStone.size];
-
-      const minChunkX = Math.max(Math.min(Math.floor((steppingStone.positionX - size/2) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
-      const maxChunkX = Math.max(Math.min(Math.floor((steppingStone.positionX + size/2) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
-      const minChunkY = Math.max(Math.min(Math.floor((steppingStone.positionY - size/2) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
-      const maxChunkY = Math.max(Math.min(Math.floor((steppingStone.positionY + size/2) / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
-      
-      for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
-         for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
-            const chunk = surfaceLayer.getChunk(chunkX, chunkY);
-            chunk.riverSteppingStones.push(steppingStone);
-         }
-      }
-   }
-
-   // @Hack @Temporary
-   createRiverSteppingStoneData(surfaceLayer.riverSteppingStones);
 
    registerTamingSpecsFromData(reader);
 

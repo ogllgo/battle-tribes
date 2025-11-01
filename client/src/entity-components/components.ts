@@ -150,6 +150,7 @@ import { TukmokSpurComponent, TukmokSpurComponentArray, TukmokSpurComponentData 
 import { InguYetuksnoglurblidokowfleaComponent, InguYetuksnoglurblidokowfleaComponentArray, InguYetuksnoglurblidokowfleaComponentData } from "./server-components/InguYetuksnoglurblidokowfleaComponent";
 import { InguYetuksnoglurblidokowfleaSeekerHeadComponent, InguYetuksnoglurblidokowfleaSeekerHeadComponentArray, InguYetuksnoglurblidokowfleaSeekerHeadComponentData } from "./server-components/InguYetuksnoglurblidokowfleaSeekerHeadComponent";
 import { InguYetukLaserComponent, InguYetukLaserComponentArray, InguYetukLaserComponentData } from "./server-components/InguYetukLaserComponent";
+import { RiverSteppingStoneComponent, RiverSteppingStoneComponentArray, RiverSteppingStoneComponentData } from "./server-components/RiverSteppingStoneComponent";
 
 // @cleanup: same as below
 const ClientComponentArrayRecord: Record<ClientComponentType, object> = {
@@ -235,6 +236,7 @@ const ServerComponentArrayRecord: Record<ServerComponentType, object> = {
    [ServerComponentType.tribeWarrior]: TribeWarriorComponentArray,
    [ServerComponentType.layeredRod]: LayeredRodComponentArray,
    [ServerComponentType.decoration]: DecorationComponentArray,
+   [ServerComponentType.riverSteppingStone]: RiverSteppingStoneComponentArray,
    [ServerComponentType.spitPoisonArea]: SpitPoisonAreaComponentArray,
    [ServerComponentType.battleaxeProjectile]: BattleaxeProjectileComponentArray,
    [ServerComponentType.spearProjectile]: SpearProjectileComponentArray,
@@ -369,6 +371,7 @@ const ServerComponentRecord = {
    [ServerComponentType.tribeWarrior]: (): TribeWarriorComponent => 0 as any,
    [ServerComponentType.layeredRod]: (): LayeredRodComponent => 0 as any,
    [ServerComponentType.decoration]: (): DecorationComponent => 0 as any,
+   [ServerComponentType.riverSteppingStone]: (): RiverSteppingStoneComponent => 0 as any,
    [ServerComponentType.spitPoisonArea]: (): SpitPoisonAreaComponent => 0 as any,
    [ServerComponentType.battleaxeProjectile]: (): BattleaxeProjectileComponent => 0 as any,
    [ServerComponentType.spearProjectile]: (): SpearProjectileComponent => 0 as any,
@@ -505,6 +508,7 @@ const ServerComponentDataRecord = {
    [ServerComponentType.tribeWarrior]: (): TribeWarriorComponentData => 0 as any,
    [ServerComponentType.layeredRod]: (): LayeredRodComponentData => 0 as any,
    [ServerComponentType.decoration]: (): DecorationComponentData => 0 as any,
+   [ServerComponentType.riverSteppingStone]: (): RiverSteppingStoneComponentData => 0 as any,
    [ServerComponentType.spitPoisonArea]: (): SpitPoisonAreaComponentData => 0 as any,
    [ServerComponentType.battleaxeProjectile]: (): BattleaxeProjectileComponentData => 0 as any,
    [ServerComponentType.spearProjectile]: (): SpearProjectileComponentData => 0 as any,

@@ -160,10 +160,10 @@ export class Point {
       return this.x * this.x + this.y * this.y;
    }
 
-   public package(): [number, number] {
-      return [this.x, this.y];
+   public isZero(): boolean {
+      return this.x === 0 && this.y === 0;
    }
-
+   
    public offset(offsetMagnitude: number, offsetDirection: number): Point {
       const x = this.x + offsetMagnitude * Math.sin(offsetDirection);
       const y = this.y + offsetMagnitude * Math.cos(offsetDirection);

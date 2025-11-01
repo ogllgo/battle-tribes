@@ -1,4 +1,3 @@
-import { RiverSteppingStoneData } from "battletribes-shared/client-server-types";
 import { Entity } from "battletribes-shared/entities";
 import { GrassBlocker } from "./grass-blockers";
 
@@ -9,8 +8,6 @@ class Chunk {
 
    /** Stores all mobs which have the chunk in their vision range */
    public readonly viewingEntities = new Array<Entity>();
-
-   public readonly riverSteppingStones = new Array<RiverSteppingStoneData>();
 
    public readonly grassBlockers = new Array<GrassBlocker>();
    

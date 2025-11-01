@@ -4,10 +4,11 @@ import { createReedConfig } from "../entities/reed";
 import { WaterTileGenerationInfo } from "./river-generation";
 import { distance, getTileIndexIncludingEdges, Point } from "battletribes-shared/utils";
 import { generateOctavePerlinNoise } from "../perlin-noise";
-import { isTooCloseToSteppingStone } from "../entity-spawn-info";
 import Layer from "../Layer";
 import { Biome } from "../../../shared/src/biomes";
-import { createEntityImmediate } from "../world";
+import { createEntityImmediate, getEntityType } from "../world";
+import { getEntitiesInRange } from "../ai-shared";
+import { EntityType } from "../../../shared/src/entities";
 
 const enum Vars {
    MAX_DENSITY_PER_TILE = 35
@@ -46,7 +47,16 @@ export function generateReeds(surfaceLayer: Layer, riverMainTiles: ReadonlyArray
             const x = (tileX + Math.random()) * Settings.TILE_SIZE;
             const y = (tileY + Math.random()) * Settings.TILE_SIZE;
 
-            if (isTooCloseToSteppingStone(x, y, 13)) {
+            const testEntities = getEntitiesInRange(surfaceLayer, x, y, 13);
+
+            let isTooCloseToSteppingStone = false;
+            for (const entity of testEntities) {
+               if (getEntityType(entity) === EntityType.riverSteppingStone) {
+                  isTooCloseToSteppingStone = true;
+                  break;
+               }
+            }
+            if (isTooCloseToSteppingStone) {
                continue;
             }
 

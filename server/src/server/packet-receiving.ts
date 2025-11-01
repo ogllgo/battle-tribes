@@ -48,48 +48,24 @@ import Tribe from "../Tribe";
 import { Settings } from "../../../shared/src/settings";
 import { broadcastSimulationStatus } from "./packet-sending";
 
-// @Cleanup: Messy as fuck
+// @Speed: would be much faster in many-spectator cases if spectators instead sent their own kind of packets with only the things they need set
 export function processPlayerDataPacket(playerClient: PlayerClient, reader: PacketReader): void {
-   // @HACK to get spectator view updating
-   if (playerClient.isSpectating) {
-      const positionX = reader.readNumber();
-      const positionY = reader.readNumber();
-
-      playerClient.updatePosition(positionX, positionY);
-
-      return;
-   }
-   
-   const player = playerClient.instance;
-   if (!entityExists(player)) {
-      return;
-   }
-
-   const transformComponent = TransformComponentArray.getComponent(player);
-   const playerHitbox = transformComponent.hitboxes[0];
-
-   const playerComponent = PlayerComponentArray.getComponent(player);
-
-   const positionX = reader.readNumber();
-   const positionY = reader.readNumber();
+   const x = reader.readNumber();
+   const y = reader.readNumber();
    const angle = reader.readNumber();
 
-   playerHitbox.previousPosition.x = reader.readNumber();
-   playerHitbox.previousPosition.y = reader.readNumber();
-   // Cuz i've got a thing going on where if a hitbox is carried, then it can't have any acceleration. and if it does then the game will crash when it tries to detach from its parent.
-   if (playerHitbox.parent === null) {
-      playerHitbox.acceleration.x = reader.readNumber();
-      playerHitbox.acceleration.y = reader.readNumber();
-   } else {
-      reader.padOffset(2 * Float32Array.BYTES_PER_ELEMENT);
-   }
+   const previousX = reader.readNumber();
+   const previousY = reader.readNumber();
 
-   playerComponent.movementIntention.x = reader.readNumber();
-   playerComponent.movementIntention.y = reader.readNumber();
+   const accelerationX = reader.readNumber();
+   const accelerationY = reader.readNumber();
 
-   // @HACK just made this not be "playerHitbox.previousRelativeAngle" to fix the overshooting
+   const movementIntentionX = reader.readNumber();
+   const movementIntentionY = reader.readNumber();
+
+   // @HACK just made this not set "playerHitbox.previousRelativeAngle" to fix the overshooting
    const previousRelativeAngle = reader.readNumber();
-   playerHitbox.angularAcceleration = reader.readNumber();
+   const angularAcceleration = reader.readNumber();
 
    const screenWidth = reader.readNumber();
    const screenHeight = reader.readNumber();
@@ -101,70 +77,93 @@ export function processPlayerDataPacket(playerClient: PlayerClient, reader: Pack
    const interactingEntityID = reader.readNumber();
    const gameDataOptions = reader.readNumber();
 
-   const inventoryUseComponent = InventoryUseComponentArray.getComponent(player);
-   const hotbarLimbInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
-   
-   registerDirtyEntity(player);
-   playerHitbox.box.position.x = positionX;
-   playerHitbox.box.position.y = positionY;
-   
-   setHitboxAngle(playerHitbox, angle);
-   
-   if (playerHitbox.parent !== null) {
-      updateBox(playerHitbox.box, playerHitbox.parent.box);
-   } else {
-      playerHitbox.box.angle = playerHitbox.box.relativeAngle;
-   }
-   
-   // @Hack
-   // if (playerHitbox.parent === null) {
-   //    playerHitbox.box.angle = angle;
-   //    playerHitbox.box.relativeAngle = angle;
-
-   //    playerHitbox.previousRelativeAngle = angle;
-   // } else {
-   //    // @HACK cuz this is reaaally broken right now and i dont know what to do D:
-   //    playerHitbox.box.relativeAngle = angle;
-   //    playerHitbox.previousRelativeAngle = angle;
-   // }
-   // @HACK im doing this rn so it stops overshooting but will need to be properly fixed at some point
-   setHitboxAngularVelocity(playerHitbox, 0);
-
    playerClient.screenWidth = screenWidth;
    playerClient.screenHeight = screenHeight;
-   playerClient.updatePosition(playerHitbox.box.position.x, playerHitbox.box.position.y);
+   playerClient.updatePosition(x, y);
    playerClient.gameDataOptions = gameDataOptions;
    
-   transformComponent.isDirty = true;
+   const player = playerClient.instance;
+   if (entityExists(player)) {
+      const transformComponent = TransformComponentArray.getComponent(player);
+      const playerComponent = PlayerComponentArray.getComponent(player);
+      const inventoryUseComponent = InventoryUseComponentArray.getComponent(player);
+
+      const playerHitbox = transformComponent.hitboxes[0];
+
+      playerHitbox.previousPosition.x = previousX;
+      playerHitbox.previousPosition.y = previousY;
+
+      // Cuz i've got a thing going on where if a hitbox is carried, then it can't have any acceleration. and if it does then the game will crash when it tries to detach from its parent.
+      if (playerHitbox.parent === null) {
+         playerHitbox.acceleration.x = accelerationX;
+         playerHitbox.acceleration.y = accelerationY;
+      }
+      
+      playerComponent.movementIntention.x = movementIntentionX;
+      playerComponent.movementIntention.y = movementIntentionY;
+
+      playerHitbox.angularAcceleration = angularAcceleration;
+
+      const hotbarLimbInfo = inventoryUseComponent.getLimbInfo(InventoryName.hotbar);
    
-   if (selectedHotbarItemSlot !== hotbarLimbInfo.selectedItemSlot) {
-      hotbarLimbInfo.selectedItemSlot = selectedHotbarItemSlot;
       registerDirtyEntity(player);
-   }
+      playerHitbox.box.position.x = x;
+      playerHitbox.box.position.y = y;
+      
+      setHitboxAngle(playerHitbox, angle);
+      
+      if (playerHitbox.parent !== null) {
+         updateBox(playerHitbox.box, playerHitbox.parent.box);
+      } else {
+         playerHitbox.box.angle = playerHitbox.box.relativeAngle;
+      }
+      
+      // @Hack
+      // if (playerHitbox.parent === null) {
+      //    playerHitbox.box.angle = angle;
+      //    playerHitbox.box.relativeAngle = angle;
 
-   playerComponent.interactingEntityID = interactingEntityID;
+      //    playerHitbox.previousRelativeAngle = angle;
+      // } else {
+      //    // @HACK cuz this is reaaally broken right now and i dont know what to do D:
+      //    playerHitbox.box.relativeAngle = angle;
+      //    playerHitbox.previousRelativeAngle = angle;
+      // }
+      // @HACK im doing this rn so it stops overshooting but will need to be properly fixed at some point
+      setHitboxAngularVelocity(playerHitbox, 0);
 
-   // @Bug: won't work for using medicine in offhand
-   let overrideOffhand = false;
-   
-   // @CLEANUP @HACK
-   if (mainAction === LimbAction.chargeSpear && hotbarLimbInfo.action !== LimbAction.chargeSpear) {
-      startChargingSpear(playerClient.instance, InventoryName.hotbar);
-   } else if (mainAction === LimbAction.chargeBattleaxe && hotbarLimbInfo.action !== LimbAction.chargeBattleaxe) {
-      startChargingBattleaxe(playerClient.instance, InventoryName.hotbar);
-   } else if (mainAction === LimbAction.engageBow && hotbarLimbInfo.action !== LimbAction.engageBow) {
-      startChargingBow(playerClient.instance);
-   }
+      
+      transformComponent.isDirty = true;
+      
+      if (selectedHotbarItemSlot !== hotbarLimbInfo.selectedItemSlot) {
+         hotbarLimbInfo.selectedItemSlot = selectedHotbarItemSlot;
+         registerDirtyEntity(player);
+      }
 
-   if (!overrideOffhand) {
-      const tribeComponent = TribeComponentArray.getComponent(player);
-      if (tribeComponent.tribe.tribeType === TribeType.barbarians) {
-         const offhandLimbInfo = inventoryUseComponent.getLimbInfo(InventoryName.offhand);
+      playerComponent.interactingEntityID = interactingEntityID;
 
-         if (offhandAction === LimbAction.chargeSpear && offhandLimbInfo.action !== LimbAction.chargeSpear) {
-            startChargingSpear(playerClient.instance, InventoryName.offhand);
-         } else if (offhandAction === LimbAction.chargeBattleaxe && offhandLimbInfo.action !== LimbAction.chargeBattleaxe) {
-            startChargingBattleaxe(playerClient.instance, InventoryName.offhand);
+      // @Bug: won't work for using medicine in offhand
+      let overrideOffhand = false;
+      
+      // @CLEANUP @HACK
+      if (mainAction === LimbAction.chargeSpear && hotbarLimbInfo.action !== LimbAction.chargeSpear) {
+         startChargingSpear(playerClient.instance, InventoryName.hotbar);
+      } else if (mainAction === LimbAction.chargeBattleaxe && hotbarLimbInfo.action !== LimbAction.chargeBattleaxe) {
+         startChargingBattleaxe(playerClient.instance, InventoryName.hotbar);
+      } else if (mainAction === LimbAction.engageBow && hotbarLimbInfo.action !== LimbAction.engageBow) {
+         startChargingBow(playerClient.instance);
+      }
+
+      if (!overrideOffhand) {
+         const tribeComponent = TribeComponentArray.getComponent(player);
+         if (tribeComponent.tribe.tribeType === TribeType.barbarians) {
+            const offhandLimbInfo = inventoryUseComponent.getLimbInfo(InventoryName.offhand);
+
+            if (offhandAction === LimbAction.chargeSpear && offhandLimbInfo.action !== LimbAction.chargeSpear) {
+               startChargingSpear(playerClient.instance, InventoryName.offhand);
+            } else if (offhandAction === LimbAction.chargeBattleaxe && offhandLimbInfo.action !== LimbAction.chargeBattleaxe) {
+               startChargingBattleaxe(playerClient.instance, InventoryName.offhand);
+            }
          }
       }
    }

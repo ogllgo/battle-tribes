@@ -1,30 +1,26 @@
-import { assert, customTickIntervalHasPassed, distance, getAngleDiff, lerp, Point, randAngle, randInt, randSign, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
+import { assert, customTickIntervalHasPassed, getAngleDiff, lerp, Point, randAngle, randInt, randSign, rotateXAroundOrigin, rotateYAroundOrigin } from "battletribes-shared/utils";
 import { Settings } from "battletribes-shared/settings";
 import { TILE_PHYSICS_INFO_RECORD, TileType } from "battletribes-shared/tiles";
-import { RIVER_STEPPING_STONE_SIZES } from "battletribes-shared/client-server-types";
 import Chunk from "../../Chunk";
 import { randFloat } from "battletribes-shared/utils";
 import { PacketReader } from "battletribes-shared/packets";
 import { ServerComponentType } from "battletribes-shared/components";
 import { boxIsCircular, updateBox, Box } from "battletribes-shared/boxes/boxes";
-import { EntityComponentData, getCurrentLayer, getEntityAgeTicks, getEntityLayer, getEntityRenderInfo, getEntityType, surfaceLayer } from "../../world";
+import { EntityComponentData, getCurrentLayer, getEntityAgeTicks, getEntityLayer, getEntityType, surfaceLayer } from "../../world";
 import Board from "../../Board";
-import { Entity, EntityType, EntityTypeString } from "../../../../shared/src/entities";
+import { Entity, EntityType } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
-import { DEFAULT_COLLISION_MASK, CollisionBit } from "../../../../shared/src/collision";
 import { playerInstance } from "../../player";
 import { applyAccelerationFromGround, getHitboxTile, getHitboxVelocity, getRandomPositionInBox, getRootHitbox, Hitbox, readHitboxFromData, setHitboxVelocity, setHitboxVelocityX, setHitboxVelocityY, translateHitbox, updateHitboxFromData, updatePlayerHitboxFromData } from "../../hitboxes";
 import Particle from "../../Particle";
 import { createWaterSplashParticle } from "../../particles";
 import { addTexturedParticleToBufferContainer, ParticleRenderLayer } from "../../rendering/webgl/particle-rendering";
 import { playSoundOnHitbox } from "../../sound";
-import { resolveWallCollisions } from "../../collision";
+import { entitiesAreColliding, resolveWallCollisions } from "../../collision";
 import { keyIsPressed } from "../../keyboard-input";
 import { currentSnapshot } from "../../client";
 
 export interface TransformComponentData {
-   readonly collisionBit: CollisionBit;
-   readonly collisionMask: number;
    readonly traction: number;
    readonly hitboxes: ReadonlyArray<Hitbox>;
 }
@@ -36,9 +32,6 @@ export interface TransformComponent {
    readonly hitboxMap: Map<number, Hitbox>;
 
    readonly rootHitboxes: Array<Hitbox>;
-
-   collisionBit: number;
-   collisionMask: number;
 
    boundingAreaMinX: number;
    boundingAreaMaxX: number;
@@ -56,17 +49,12 @@ const EMPTY_IGNORED_TILE_SPEED_MULTIPLIERS = new Array<TileType>();
 
 export function createTransformComponentData(hitboxes: Array<Hitbox>): TransformComponentData {
    return {
-      collisionBit: CollisionBit.default,
-      collisionMask: DEFAULT_COLLISION_MASK,
       traction: 1,
       hitboxes: hitboxes
    };
 }
 
 function decodeData(reader: PacketReader): TransformComponentData {
-   const collisionBit = reader.readNumber();
-   const collisionMask = reader.readNumber();
-
    const traction = reader.readNumber();
 
    const hitboxes = new Array<Hitbox>();
@@ -79,8 +67,6 @@ function decodeData(reader: PacketReader): TransformComponentData {
    }
 
    return {
-      collisionBit: collisionBit,
-      collisionMask: collisionMask,
       traction: traction,
       hitboxes: hitboxes
    };
@@ -115,24 +101,36 @@ export function removeHitboxFromEntity(transformComponent: TransformComponent, h
    }
 }
 
-export function entityIsInRiver(transformComponent: TransformComponent, entity: Entity): boolean {
-   // @Hack
-   const hitbox = transformComponent.hitboxes[0];
-   
+export function hitboxIsInRiver(hitbox: Hitbox): boolean {
    const tile = getHitboxTile(hitbox);
    if (tile.type !== TileType.water) {
       return false;
    }
-
    
-   // If the game object is standing on a stepping stone they aren't in a river
-   for (const chunk of transformComponent.chunks) {
-      for (const steppingStone of chunk.riverSteppingStones) {
-         const size = RIVER_STEPPING_STONE_SIZES[steppingStone.size];
-         
-         const dist = distance(hitbox.box.position.x, hitbox.box.position.y, steppingStone.positionX, steppingStone.positionY);
-         if (dist <= size/2) {
-            return false;
+   // If the hitbox is standing on a stepping stone they aren't in a river
+
+   const box = hitbox.box;
+   const layer = getEntityLayer(hitbox.entity);
+
+   const minX = box.calculateBoundsMinX();
+   const maxX = box.calculateBoundsMaxX();
+   const minY = box.calculateBoundsMinY();
+   const maxY = box.calculateBoundsMaxY();
+
+   const minChunkX = Math.max(Math.min(Math.floor(minX / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const maxChunkX = Math.max(Math.min(Math.floor(maxX / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const minChunkY = Math.max(Math.min(Math.floor(minY / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   const maxChunkY = Math.max(Math.min(Math.floor(maxY / Settings.CHUNK_UNITS), Settings.WORLD_SIZE_CHUNKS - 1), 0);
+   
+   for (let chunkX = minChunkX; chunkX <= maxChunkX; chunkX++) {
+      for (let chunkY = minChunkY; chunkY <= maxChunkY; chunkY++) {
+         const chunk = layer.getChunk(chunkX, chunkY);
+         for (const currentEntity of chunk.nonGrassEntities) {
+            if (getEntityType(currentEntity) === EntityType.riverSteppingStone) {
+               if (entitiesAreColliding(hitbox.entity, currentEntity)) {
+                  return false;
+               }
+            }
          }
       }
    }
@@ -255,12 +253,12 @@ const tickHitboxAngularPhysics = (hitbox: Hitbox): void => {
    hitbox.box.relativeAngle = newRelativeAngle;
 }
 
-const applyHitboxKinematics = (transformComponent: TransformComponent, entity: Entity, hitbox: Hitbox): void => {
+const applyHitboxKinematics = (hitbox: Hitbox): void => {
    if (isNaN(hitbox.box.position.x) || isNaN(hitbox.box.position.y)) {
       throw new Error("Position was NaN.");
    }
 
-   const layer = getEntityLayer(entity);
+   const layer = getEntityLayer(hitbox.entity);
    const tile = getHitboxTile(hitbox);
 
    if (isNaN(hitbox.box.position.x)) {
@@ -269,7 +267,7 @@ const applyHitboxKinematics = (transformComponent: TransformComponent, entity: E
 
    // @Incomplete: here goes fish suit exception
    // Apply river flow to external velocity
-   if (entityIsInRiver(transformComponent, entity)) {
+   if (hitboxIsInRiver(hitbox)) {
       const flowDirection = layer.getRiverFlowDirection(tile.x, tile.y);
       if (flowDirection > 0) {
          applyAccelerationFromGround(hitbox, 240 * Settings.DT_S * Math.sin(flowDirection - 1), 240 * Settings.DT_S * Math.cos(flowDirection - 1));
@@ -310,7 +308,7 @@ const applyHitboxKinematics = (transformComponent: TransformComponent, entity: E
    hitbox.acceleration.y = 0;
 
    // Mark entity's position as updated
-   cleanEntityTransform(entity);
+   cleanEntityTransform(hitbox.entity);
 }
 
 const collideWithVerticalWorldBorder = (hitbox: Hitbox, tx: number): void => {
@@ -410,16 +408,13 @@ const applyHitboxTethers = (hitbox: Hitbox): void => {
 
 }
 const tickHitboxPhysics = (hitbox: Hitbox): void => {
-   // @CLEANUP
-   const transformComponent = TransformComponentArray.getComponent(hitbox.entity)!;
-
    // @Hackish We don't update the player's angular physics cuz it's handled entirely by the updatePlayerRotation function.
    if (hitbox.entity !== playerInstance) {
       tickHitboxAngularPhysics(hitbox);
    }
 
    if (hitbox.parent === null) {
-      applyHitboxKinematics(transformComponent, hitbox.entity, hitbox);
+      applyHitboxKinematics(hitbox);
    }
    
    // @Incomplete
@@ -430,7 +425,7 @@ const tickHitboxPhysics = (hitbox: Hitbox): void => {
    }
 }
 
-export const TransformComponentArray = new ServerComponentArray<TransformComponent, TransformComponentData, never>(ServerComponentType.transform, true, createComponent, getMaxRenderParts, decodeData);
+export const TransformComponentArray = new ServerComponentArray<TransformComponent, TransformComponentData, never>(ServerComponentType.transform, false, createComponent, getMaxRenderParts, decodeData);
 TransformComponentArray.onLoad = onLoad;
 TransformComponentArray.updateFromData = updateFromData;
 TransformComponentArray.onTick = onTick;
@@ -460,8 +455,6 @@ function createComponent(entityComponentData: EntityComponentData): TransformCom
       hitboxes: hitboxes,
       hitboxMap: hitboxMap,
       rootHitboxes: rootHitboxes,
-      collisionBit: transformComponentData.collisionBit,
-      collisionMask: transformComponentData.collisionMask,
       boundingAreaMinX: Number.MAX_SAFE_INTEGER,
       boundingAreaMaxX: Number.MIN_SAFE_INTEGER,
       boundingAreaMinY: Number.MAX_SAFE_INTEGER,
@@ -482,47 +475,45 @@ function onLoad(entity: Entity): void {
 function onTick(entity: Entity): void {
    const transformComponent = TransformComponentArray.getComponent(entity)!;
    const hitbox = transformComponent.hitboxes[0];
-   console.log(EntityTypeString[getEntityType(entity)]);
-
-   // @SPEED This is so bad
-
-   // Water droplet particles
-   // @Cleanup: Don't hardcode fish condition
-   if (entityIsInRiver(transformComponent, entity) && customTickIntervalHasPassed(getEntityAgeTicks(entity), 0.05) && (getEntityType(entity) !== EntityType.fish)) {
-      createWaterSplashParticle(hitbox.box.position.x, hitbox.box.position.y);
-   }
-   
-   // Water splash particles
-   // @Cleanup: Move to particles file
-   if (entityIsInRiver(transformComponent, entity) && customTickIntervalHasPassed(getEntityAgeTicks(entity), 0.15) && getHitboxVelocity(hitbox).magnitude() > 0&& getEntityType(entity) !== EntityType.fish) {
-      const lifetime = 2.5;
-
-      const particle = new Particle(lifetime);
-      particle.getOpacity = (): number => {
-         return lerp(0.75, 0, Math.sqrt(particle.age / lifetime));
-      }
-      particle.getScale = (): number => {
-         return 1 + particle.age / lifetime * 1.4;
+   if (hitboxIsInRiver(hitbox)) {
+      // Water droplet particles
+      // @Hack @Cleanup: Don't hardcode fish condition
+      if (customTickIntervalHasPassed(getEntityAgeTicks(entity), 0.05) && (getEntityType(entity) !== EntityType.fish)) {
+         createWaterSplashParticle(hitbox.box.position.x, hitbox.box.position.y);
       }
 
-      addTexturedParticleToBufferContainer(
-         particle,
-         ParticleRenderLayer.low,
-         64, 64,
-         hitbox.box.position.x, hitbox.box.position.y,
-         0, 0, 
-         0, 0,
-         0,
-         randAngle(),
-         0,
-         0,
-         0,
-         8 * 1 + 5,
-         0, 0, 0
-      );
-      Board.lowTexturedParticles.push(particle);
+      // Water splash particles
+      // @Cleanup: Move to particles file
+      if (customTickIntervalHasPassed(getEntityAgeTicks(entity), 0.15) && getHitboxVelocity(hitbox).magnitude() > 0 && getEntityType(entity) !== EntityType.fish) {
+         const lifetime = 2.5;
 
-      playSoundOnHitbox("water-splash-" + randInt(1, 3) + ".mp3", 0.25, 1, entity, hitbox, false);
+         const particle = new Particle(lifetime);
+         particle.getOpacity = (): number => {
+            return lerp(0.75, 0, Math.sqrt(particle.age / lifetime));
+         }
+         particle.getScale = (): number => {
+            return 1 + particle.age / lifetime * 1.4;
+         }
+
+         addTexturedParticleToBufferContainer(
+            particle,
+            ParticleRenderLayer.low,
+            64, 64,
+            hitbox.box.position.x, hitbox.box.position.y,
+            0, 0, 
+            0, 0,
+            0,
+            randAngle(),
+            0,
+            0,
+            0,
+            8 * 1 + 5,
+            0, 0, 0
+         );
+         Board.lowTexturedParticles.push(particle);
+
+         playSoundOnHitbox("water-splash-" + randInt(1, 3) + ".mp3", 0.25, 1, entity, hitbox, false);
+      }
    }
 }
 
@@ -575,9 +566,6 @@ function updateFromData(data: TransformComponentData, entity: Entity): void {
    
    const transformComponent = TransformComponentArray.getComponent(entity)!;
    
-   transformComponent.collisionBit = data.collisionBit;
-   transformComponent.collisionMask = data.collisionMask;
-
    // @Speed: would be faster if we split the hitboxes array
    let existingNumCircular = 0;
    let existingNumRectangular = 0;
@@ -590,14 +578,33 @@ function updateFromData(data: TransformComponentData, entity: Entity): void {
       }
    }
 
+   let anyHitboxHasVelocity = false;
+   
    // Update hitboxes
    for (const hitboxData of data.hitboxes) {
-      const existingHitbox = transformComponent.hitboxMap.get(hitboxData.localID);
-      if (typeof existingHitbox === "undefined") {
+      let hitbox = transformComponent.hitboxMap.get(hitboxData.localID);
+      if (typeof hitbox === "undefined") {
          addHitbox(transformComponent, hitboxData);
+         hitbox = hitboxData;
       } else {
-         updateHitboxFromData(existingHitbox, hitboxData);
+         updateHitboxFromData(hitbox, hitboxData);
       }
+
+      if (!getHitboxVelocity(hitbox).isZero()) {
+         anyHitboxHasVelocity = true;
+         // @Temporary @Squeam
+         const entityType = getEntityType(entity);
+         if (entityType === EntityType.decoration || entityType === EntityType.lilypad || entityType === EntityType.reed) {
+            console.log(hitbox);
+            throw new Error();
+         }
+      }
+   }
+
+   if (anyHitboxHasVelocity) {
+      TransformComponentArray.activateComponent(transformComponent, entity);
+   } else if (TransformComponentArray.componentIsActive(entity)) {
+      TransformComponentArray.queueComponentDeactivate(entity);
    }
 
    transformComponent.traction = data.traction;
@@ -621,11 +628,26 @@ function updatePlayerFromData(data: TransformComponentData, isInitialData: boole
       return;
    }
 
+   // @Copynpaste
+   let anyHitboxHasVelocity = false;
+
    const transformComponent = TransformComponentArray.getComponent(playerInstance!)!;
    for (const hitboxData of data.hitboxes) {
       const hitbox = transformComponent.hitboxMap.get(hitboxData.localID);
       assert(typeof hitbox !== "undefined");
       updatePlayerHitboxFromData(hitbox, hitboxData);
+
+      // @Copynpaste
+      if (!getHitboxVelocity(hitbox).isZero()) {
+         anyHitboxHasVelocity = true;
+      }
+   }
+
+   // @Copynpaste
+   if (anyHitboxHasVelocity) {
+      TransformComponentArray.activateComponent(transformComponent, playerInstance!);
+   } else if (TransformComponentArray.componentIsActive(playerInstance!)) {
+      TransformComponentArray.queueComponentDeactivate(playerInstance!);
    }
 }
 

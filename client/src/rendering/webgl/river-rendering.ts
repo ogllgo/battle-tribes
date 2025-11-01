@@ -1,6 +1,6 @@
 import { TileType } from "battletribes-shared/tiles";
-import { Point, lerp, randFloat, rotatePointAroundPivot, rotateXAroundPoint, rotateYAroundPoint } from "battletribes-shared/utils";
-import { RIVER_STEPPING_STONE_SIZES, RiverSteppingStoneData, RiverSteppingStoneSize, WaterRockData, WaterRockSize } from "battletribes-shared/client-server-types";
+import { lerp, randFloat, rotateXAroundPoint, rotateYAroundPoint } from "battletribes-shared/utils";
+import { WaterRockData, WaterRockSize } from "battletribes-shared/client-server-types";
 import { Settings } from "battletribes-shared/settings";
 import { createWebGLProgram, gl } from "../../webgl";
 import { getTexture } from "../../textures";
@@ -8,7 +8,7 @@ import { RenderChunkRiverInfo, WORLD_RENDER_CHUNK_SIZE, getRenderChunkMaxTileX, 
 import { Tile } from "../../Tile";
 import { UBOBindingIndex, bindUBOToProgram } from "../ubos";
 import Layer, { getTileIndexIncludingEdges, tileIsWithinEdge } from "../../Layer";
-import { layers, undergroundLayer } from "../../world";
+import { undergroundLayer } from "../../world";
 import { minVisibleRenderChunkX, maxVisibleRenderChunkX, minVisibleRenderChunkY, maxVisibleRenderChunkY } from "../../camera";
 
 const SHALLOW_WATER_COLOUR = [118/255, 185/255, 242/255] as const;
@@ -31,12 +31,6 @@ const WATER_ROCK_TEXTURES: Record<WaterRockSize, string> = {
    [WaterRockSize.large]: "miscellaneous/river/water-rock-large.png"
 };
 
-const RIVER_STEPPING_STONE_TEXTURES: Record<RiverSteppingStoneSize, string> = {
-   [RiverSteppingStoneSize.small]: "miscellaneous/river/river-stepping-stone-small.png",
-   [RiverSteppingStoneSize.medium]: "miscellaneous/river/river-stepping-stone-medium.png",
-   [RiverSteppingStoneSize.large]: "miscellaneous/river/river-stepping-stone-large.png"
-};
-
 let baseProgram: WebGLProgram;
 let rockProgram: WebGLProgram;
 let highlightsProgram: WebGLProgram;
@@ -53,43 +47,46 @@ const riverSteppingStoneVertexCounts = new Array<number>();
 let baseProgramOpacityUniformLocation: WebGLUniformLocation;
 let baseProgramIsUndergroundUniformLocation: WebGLUniformLocation;
 
-export function createRiverSteppingStoneData(riverSteppingStones: ReadonlyArray<RiverSteppingStoneData>): void {
-   // Group the stepping stones
-   const groups = new Array<Array<RiverSteppingStoneData>>();
-   for (const steppingStone of riverSteppingStones) {
-      if (typeof groups[steppingStone.groupID] === "undefined") {
-         groups[steppingStone.groupID] = [];
-      }
-      groups[steppingStone.groupID].push(steppingStone);
-   }
+// @INCOMPLETE: All the stepping stone stuff!
 
-   // Create data
-   for (const steppingStones of groups) {
-      // 
-      // Foam data
-      // 
+// @SQUEAM
+// export function createRiverSteppingStoneData(riverSteppingStones: ReadonlyArray<RiverSteppingStoneData>): void {
+//    // Group the stepping stones
+//    const groups = new Array<Array<RiverSteppingStoneData>>();
+//    for (const steppingStone of riverSteppingStones) {
+//       if (typeof groups[steppingStone.groupID] === "undefined") {
+//          groups[steppingStone.groupID] = [];
+//       }
+//       groups[steppingStone.groupID].push(steppingStone);
+//    }
 
-      const foamVertexData = calculateFoamVertexData(steppingStones);
-      const foamBuffer = gl.createBuffer()!;
-      gl.bindBuffer(gl.ARRAY_BUFFER, foamBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, foamVertexData, gl.STATIC_DRAW);
+//    // Create data
+//    for (const steppingStones of groups) {
+//       // 
+//       // Foam data
+//       // 
 
-      riverFoamVAOs.push(createFoamVAO(foamBuffer));
-      riverFoamVertexCounts.push(foamVertexData.length / 7);
+//       const foamVertexData = calculateFoamVertexData(steppingStones);
+//       const foamBuffer = gl.createBuffer()!;
+//       gl.bindBuffer(gl.ARRAY_BUFFER, foamBuffer);
+//       gl.bufferData(gl.ARRAY_BUFFER, foamVertexData, gl.STATIC_DRAW);
+
+//       riverFoamVAOs.push(createFoamVAO(foamBuffer));
+//       riverFoamVertexCounts.push(foamVertexData.length / 7);
       
-      // 
-      // Stepping stone data
-      // 
+//       // 
+//       // Stepping stone data
+//       // 
 
-      const steppingStoneVertexData = calculateSteppingStoneVertexData(steppingStones);
-      const steppingStoneBuffer = gl.createBuffer()!;
-      gl.bindBuffer(gl.ARRAY_BUFFER, steppingStoneBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, steppingStoneVertexData, gl.STATIC_DRAW);
+//       const steppingStoneVertexData = calculateSteppingStoneVertexData(steppingStones);
+//       const steppingStoneBuffer = gl.createBuffer()!;
+//       gl.bindBuffer(gl.ARRAY_BUFFER, steppingStoneBuffer);
+//       gl.bufferData(gl.ARRAY_BUFFER, steppingStoneVertexData, gl.STATIC_DRAW);
 
-      riverSteppingStoneVAOs.push(createSteppingStoneVAO(steppingStoneBuffer));
-      riverSteppingStoneVertexCounts.push(steppingStoneVertexData.length / 5);
-   }
-}
+//       riverSteppingStoneVAOs.push(createSteppingStoneVAO(steppingStoneBuffer));
+//       riverSteppingStoneVertexCounts.push(steppingStoneVertexData.length / 5);
+//    }
+// }
 
 export function createRiverShaders(): void {
    // Base shaders
@@ -1020,108 +1017,109 @@ const calculateBaseVertexData = (layer: Layer, waterTiles: ReadonlyArray<Tile>):
    return vertexData;
 }
 
-const calculateFoamVertexData = (steppingStones: ReadonlyArray<RiverSteppingStoneData>): Float32Array => {
-   const vertexData = new Float32Array(steppingStones.length * 6 * 7);
+// @SQUEAM
+// const calculateFoamVertexData = (steppingStones: ReadonlyArray<RiverSteppingStoneData>): Float32Array => {
+//    const vertexData = new Float32Array(steppingStones.length * 6 * 7);
 
-   let i = 0;
-   for (const steppingStone of steppingStones) {
-      // @Speed: Garbage collection
+//    let i = 0;
+//    for (const steppingStone of steppingStones) {
+//       // @Speed: Garbage collection
       
-      const renderSize = RIVER_STEPPING_STONE_SIZES[steppingStone.size];
+//       const renderSize = RIVER_STEPPING_STONE_SIZES[steppingStone.size];
       
-      let x1 = (steppingStone.positionX - renderSize/2 - FOAM_PADDING);
-      let x2 = (steppingStone.positionX + renderSize/2 + FOAM_PADDING);
-      let y1 = (steppingStone.positionY - renderSize/2 - FOAM_PADDING);
-      let y2 = (steppingStone.positionY + renderSize/2 + FOAM_PADDING);
+//       let x1 = (steppingStone.positionX - renderSize/2 - FOAM_PADDING);
+//       let x2 = (steppingStone.positionX + renderSize/2 + FOAM_PADDING);
+//       let y1 = (steppingStone.positionY - renderSize/2 - FOAM_PADDING);
+//       let y2 = (steppingStone.positionY + renderSize/2 + FOAM_PADDING);
 
-      let topLeft = new Point(x1, y2);
-      let topRight = new Point(x2, y2);
-      let bottomRight = new Point(x2, y1);
-      let bottomLeft = new Point(x1, y1);
+//       let topLeft = new Point(x1, y2);
+//       let topRight = new Point(x2, y2);
+//       let bottomRight = new Point(x2, y1);
+//       let bottomLeft = new Point(x1, y1);
 
-      const pos = new Point(steppingStone.positionX, steppingStone.positionY);
+//       const pos = new Point(steppingStone.positionX, steppingStone.positionY);
 
-      // Rotate the points to match the entity's rotation
-      topLeft = rotatePointAroundPivot(topLeft, pos, steppingStone.rotation);
-      topRight = rotatePointAroundPivot(topRight, pos, steppingStone.rotation);
-      bottomRight = rotatePointAroundPivot(bottomRight, pos, steppingStone.rotation);
-      bottomLeft = rotatePointAroundPivot(bottomLeft, pos, steppingStone.rotation);
+//       // Rotate the points to match the entity's rotation
+//       topLeft = rotatePointAroundPivot(topLeft, pos, steppingStone.rotation);
+//       topRight = rotatePointAroundPivot(topRight, pos, steppingStone.rotation);
+//       bottomRight = rotatePointAroundPivot(bottomRight, pos, steppingStone.rotation);
+//       bottomLeft = rotatePointAroundPivot(bottomLeft, pos, steppingStone.rotation);
 
-      const tileX = Math.floor(steppingStone.positionX / Settings.TILE_SIZE);
-      const tileY = Math.floor(steppingStone.positionY / Settings.TILE_SIZE);
-      const flowDirection = layers[0].getRiverFlowDirection(tileX, tileY);
+//       const tileX = Math.floor(steppingStone.positionX / Settings.TILE_SIZE);
+//       const tileY = Math.floor(steppingStone.positionY / Settings.TILE_SIZE);
+//       const flowDirection = layers[0].getRiverFlowDirection(tileX, tileY);
 
-      const offsetX = FOAM_OFFSET * Math.sin(flowDirection);
-      const offsetY = FOAM_OFFSET * Math.cos(flowDirection);
-      topLeft.x -= offsetX;
-      topRight.x -= offsetX;
-      bottomLeft.x -= offsetX;
-      bottomRight.x -= offsetX;
-      topLeft.y -= offsetY;
-      topRight.y -= offsetY;
-      bottomLeft.y -= offsetY;
-      bottomRight.y -= offsetY;
+//       const offsetX = FOAM_OFFSET * Math.sin(flowDirection);
+//       const offsetY = FOAM_OFFSET * Math.cos(flowDirection);
+//       topLeft.x -= offsetX;
+//       topRight.x -= offsetX;
+//       bottomLeft.x -= offsetX;
+//       bottomRight.x -= offsetX;
+//       topLeft.y -= offsetY;
+//       topRight.y -= offsetY;
+//       bottomLeft.y -= offsetY;
+//       bottomRight.y -= offsetY;
 
-      const flowDirectionX = Math.sin(flowDirection - steppingStone.rotation);
-      const flowDirectionY = Math.cos(flowDirection - steppingStone.rotation);
+//       const flowDirectionX = Math.sin(flowDirection - steppingStone.rotation);
+//       const flowDirectionY = Math.cos(flowDirection - steppingStone.rotation);
 
-      const textureOffset = Math.random();
+//       const textureOffset = Math.random();
 
-      const dataOffset = i * 6 * 7;
+//       const dataOffset = i * 6 * 7;
 
-      vertexData[dataOffset] = bottomLeft.x;
-      vertexData[dataOffset + 1] = bottomLeft.y;
-      vertexData[dataOffset + 2] = 0;
-      vertexData[dataOffset + 3] = 0;
-      vertexData[dataOffset + 4] = flowDirectionX;
-      vertexData[dataOffset + 5] = flowDirectionY;
-      vertexData[dataOffset + 6] = textureOffset;
+//       vertexData[dataOffset] = bottomLeft.x;
+//       vertexData[dataOffset + 1] = bottomLeft.y;
+//       vertexData[dataOffset + 2] = 0;
+//       vertexData[dataOffset + 3] = 0;
+//       vertexData[dataOffset + 4] = flowDirectionX;
+//       vertexData[dataOffset + 5] = flowDirectionY;
+//       vertexData[dataOffset + 6] = textureOffset;
 
-      vertexData[dataOffset + 7] = bottomRight.x;
-      vertexData[dataOffset + 8] = bottomRight.y;
-      vertexData[dataOffset + 9] = 1;
-      vertexData[dataOffset + 10] = 0;
-      vertexData[dataOffset + 11] = flowDirectionX;
-      vertexData[dataOffset + 12] = flowDirectionY;
-      vertexData[dataOffset + 13] = textureOffset;
+//       vertexData[dataOffset + 7] = bottomRight.x;
+//       vertexData[dataOffset + 8] = bottomRight.y;
+//       vertexData[dataOffset + 9] = 1;
+//       vertexData[dataOffset + 10] = 0;
+//       vertexData[dataOffset + 11] = flowDirectionX;
+//       vertexData[dataOffset + 12] = flowDirectionY;
+//       vertexData[dataOffset + 13] = textureOffset;
 
-      vertexData[dataOffset + 14] = topLeft.x;
-      vertexData[dataOffset + 15] = topLeft.y;
-      vertexData[dataOffset + 16] = 0;
-      vertexData[dataOffset + 17] = 1;
-      vertexData[dataOffset + 18] = flowDirectionX;
-      vertexData[dataOffset + 19] = flowDirectionY;
-      vertexData[dataOffset + 20] = textureOffset;
+//       vertexData[dataOffset + 14] = topLeft.x;
+//       vertexData[dataOffset + 15] = topLeft.y;
+//       vertexData[dataOffset + 16] = 0;
+//       vertexData[dataOffset + 17] = 1;
+//       vertexData[dataOffset + 18] = flowDirectionX;
+//       vertexData[dataOffset + 19] = flowDirectionY;
+//       vertexData[dataOffset + 20] = textureOffset;
 
-      vertexData[dataOffset + 21] = topLeft.x;
-      vertexData[dataOffset + 22] = topLeft.y;
-      vertexData[dataOffset + 23] = 0;
-      vertexData[dataOffset + 24] = 1;
-      vertexData[dataOffset + 25] = flowDirectionX;
-      vertexData[dataOffset + 26] = flowDirectionY;
-      vertexData[dataOffset + 27] = textureOffset;
+//       vertexData[dataOffset + 21] = topLeft.x;
+//       vertexData[dataOffset + 22] = topLeft.y;
+//       vertexData[dataOffset + 23] = 0;
+//       vertexData[dataOffset + 24] = 1;
+//       vertexData[dataOffset + 25] = flowDirectionX;
+//       vertexData[dataOffset + 26] = flowDirectionY;
+//       vertexData[dataOffset + 27] = textureOffset;
 
-      vertexData[dataOffset + 28] = bottomRight.x;
-      vertexData[dataOffset + 29] = bottomRight.y;
-      vertexData[dataOffset + 30] = 1;
-      vertexData[dataOffset + 31] = 0;
-      vertexData[dataOffset + 32] = flowDirectionX;
-      vertexData[dataOffset + 33] = flowDirectionY;
-      vertexData[dataOffset + 34] = textureOffset;
+//       vertexData[dataOffset + 28] = bottomRight.x;
+//       vertexData[dataOffset + 29] = bottomRight.y;
+//       vertexData[dataOffset + 30] = 1;
+//       vertexData[dataOffset + 31] = 0;
+//       vertexData[dataOffset + 32] = flowDirectionX;
+//       vertexData[dataOffset + 33] = flowDirectionY;
+//       vertexData[dataOffset + 34] = textureOffset;
 
-      vertexData[dataOffset + 35] = topRight.x;
-      vertexData[dataOffset + 36] = topRight.y;
-      vertexData[dataOffset + 37] = 1;
-      vertexData[dataOffset + 38] = 1;
-      vertexData[dataOffset + 39] = flowDirectionX;
-      vertexData[dataOffset + 40] = flowDirectionY;
-      vertexData[dataOffset + 41] = textureOffset;
+//       vertexData[dataOffset + 35] = topRight.x;
+//       vertexData[dataOffset + 36] = topRight.y;
+//       vertexData[dataOffset + 37] = 1;
+//       vertexData[dataOffset + 38] = 1;
+//       vertexData[dataOffset + 39] = flowDirectionX;
+//       vertexData[dataOffset + 40] = flowDirectionY;
+//       vertexData[dataOffset + 41] = textureOffset;
 
-      i++;
-   }
+//       i++;
+//    }
 
-   return vertexData;
-}
+//    return vertexData;
+// }
 
 const createBaseVAO = (buffer: WebGLBuffer): WebGLVertexArrayObject => {
    const vao = gl.createVertexArray()!;
@@ -1352,7 +1350,7 @@ const renderChunkHasBorderingWaterTiles = (layer: Layer, renderChunkX: number, r
    return false;
 }
 
-export function calculateRiverRenderChunkData(layer: Layer, renderChunkX: number, renderChunkY: number, waterRocks: ReadonlyArray<WaterRockData>, edgeSteppingStones: ReadonlyArray<RiverSteppingStoneData>): RenderChunkRiverInfo | null {
+export function calculateRiverRenderChunkData(layer: Layer, renderChunkX: number, renderChunkY: number, waterRocks: ReadonlyArray<WaterRockData>): RenderChunkRiverInfo | null {
    const waterTiles = getRenderChunkWaterTiles(layer, renderChunkX, renderChunkY);
 
    // If there are no water tiles don't calculate any data
@@ -1387,26 +1385,27 @@ export function calculateRiverRenderChunkData(layer: Layer, renderChunkX: number
    gl.bindBuffer(gl.ARRAY_BUFFER, transitionBuffer);
    gl.bufferData(gl.ARRAY_BUFFER, transitionVertexData, gl.STATIC_DRAW);
 
-   // Calculate group IDs present in stepping stones in the chunk
-   const groupIDs = new Array<number>();
-   if (renderChunkX >= 0 && renderChunkX < WORLD_RENDER_CHUNK_SIZE && renderChunkY >= 0 && renderChunkY < WORLD_RENDER_CHUNK_SIZE) {
-      for (let chunkX = renderChunkX * 2; chunkX <= renderChunkX * 2 + 1; chunkX++) {
-         for (let chunkY = renderChunkY * 2; chunkY <= renderChunkY * 2 + 1; chunkY++) {
-            const chunk = layer.getChunk(chunkX, chunkY);
-            for (const steppingStone of chunk.riverSteppingStones) {
-               if (!groupIDs.includes(steppingStone.groupID)) {
-                  groupIDs.push(steppingStone.groupID);
-               }
-            }
-         }
-      }
-   } else {
-      for (const steppingStone of edgeSteppingStones) {
-         if (!groupIDs.includes(steppingStone.groupID)) {
-            groupIDs.push(steppingStone.groupID);
-         }
-      }
-   }
+   // @SQUEAM
+   // // Calculate group IDs present in stepping stones in the chunk
+   // const groupIDs = new Array<number>();
+   // if (renderChunkX >= 0 && renderChunkX < WORLD_RENDER_CHUNK_SIZE && renderChunkY >= 0 && renderChunkY < WORLD_RENDER_CHUNK_SIZE) {
+   //    for (let chunkX = renderChunkX * 2; chunkX <= renderChunkX * 2 + 1; chunkX++) {
+   //       for (let chunkY = renderChunkY * 2; chunkY <= renderChunkY * 2 + 1; chunkY++) {
+   //          const chunk = layer.getChunk(chunkX, chunkY);
+   //          for (const steppingStone of chunk.riverSteppingStones) {
+   //             if (!groupIDs.includes(steppingStone.groupID)) {
+   //                groupIDs.push(steppingStone.groupID);
+   //             }
+   //          }
+   //       }
+   //    }
+   // } else {
+   //    for (const steppingStone of edgeSteppingStones) {
+   //       if (!groupIDs.includes(steppingStone.groupID)) {
+   //          groupIDs.push(steppingStone.groupID);
+   //       }
+   //    }
+   // }
 
    return {
       baseVAO: createBaseVAO(baseBuffer),
@@ -1419,7 +1418,7 @@ export function calculateRiverRenderChunkData(layer: Layer, renderChunkX: number
       transitionVertexCount: transitionVertexData.length / 12,
       noiseVAO: createNoiseVAO(noiseBuffer),
       noiseVertexCount: noiseVertexData.length / 8,
-      riverSteppingStoneGroupIDs: groupIDs,
+      // riverSteppingStoneGroupIDs: groupIDs,
       waterRocks: []
    };
 }
@@ -1514,72 +1513,73 @@ const calculateNoiseVertexData = (layer: Layer, waterTiles: ReadonlyArray<Tile>)
    return vertexData;
 }
 
-const calculateSteppingStoneVertexData = (steppingStones: ReadonlyArray<RiverSteppingStoneData>): Float32Array => {
-   const vertexData = new Float32Array(steppingStones.length * 6 * 5);
+// @SQUEAM
+// const calculateSteppingStoneVertexData = (steppingStones: ReadonlyArray<RiverSteppingStoneData>): Float32Array => {
+//    const vertexData = new Float32Array(steppingStones.length * 6 * 5);
 
-   let i = 0;
-   for (const steppingStone of steppingStones) {
-      const size = RIVER_STEPPING_STONE_SIZES[steppingStone.size];
+//    let i = 0;
+//    for (const steppingStone of steppingStones) {
+//       const size = RIVER_STEPPING_STONE_SIZES[steppingStone.size];
       
-      let x1 = (steppingStone.positionX - size/2);
-      let x2 = (steppingStone.positionX + size/2);
-      let y1 = (steppingStone.positionY - size/2);
-      let y2 = (steppingStone.positionY + size/2);
+//       let x1 = (steppingStone.positionX - size/2);
+//       let x2 = (steppingStone.positionX + size/2);
+//       let y1 = (steppingStone.positionY - size/2);
+//       let y2 = (steppingStone.positionY + size/2);
 
-      const topLeftX =     rotateXAroundPoint(x1, y2, steppingStone.positionX, steppingStone.positionY, steppingStone.rotation);
-      const topLeftY =     rotateYAroundPoint(x1, y2, steppingStone.positionX, steppingStone.positionY, steppingStone.rotation);
-      const topRightX =    rotateXAroundPoint(x2, y2, steppingStone.positionX, steppingStone.positionY, steppingStone.rotation);
-      const topRightY =    rotateYAroundPoint(x2, y2, steppingStone.positionX, steppingStone.positionY, steppingStone.rotation);
-      const bottomRightX = rotateXAroundPoint(x2, y1, steppingStone.positionX, steppingStone.positionY, steppingStone.rotation);
-      const bottomRightY = rotateYAroundPoint(x2, y1, steppingStone.positionX, steppingStone.positionY, steppingStone.rotation);
-      const bottomLeftX =  rotateXAroundPoint(x1, y1, steppingStone.positionX, steppingStone.positionY, steppingStone.rotation);
-      const bottomLeftY =  rotateYAroundPoint(x1, y1, steppingStone.positionX, steppingStone.positionY, steppingStone.rotation);
+//       const topLeftX =     rotateXAroundPoint(x1, y2, steppingStone.positionX, steppingStone.positionY, steppingStone.rotation);
+//       const topLeftY =     rotateYAroundPoint(x1, y2, steppingStone.positionX, steppingStone.positionY, steppingStone.rotation);
+//       const topRightX =    rotateXAroundPoint(x2, y2, steppingStone.positionX, steppingStone.positionY, steppingStone.rotation);
+//       const topRightY =    rotateYAroundPoint(x2, y2, steppingStone.positionX, steppingStone.positionY, steppingStone.rotation);
+//       const bottomRightX = rotateXAroundPoint(x2, y1, steppingStone.positionX, steppingStone.positionY, steppingStone.rotation);
+//       const bottomRightY = rotateYAroundPoint(x2, y1, steppingStone.positionX, steppingStone.positionY, steppingStone.rotation);
+//       const bottomLeftX =  rotateXAroundPoint(x1, y1, steppingStone.positionX, steppingStone.positionY, steppingStone.rotation);
+//       const bottomLeftY =  rotateYAroundPoint(x1, y1, steppingStone.positionX, steppingStone.positionY, steppingStone.rotation);
 
-      const textureIdx = steppingStone.size as number;
+//       const textureIdx = steppingStone.size as number;
 
-      const dataOffset = i * 6 * 5;
+//       const dataOffset = i * 6 * 5;
 
-      vertexData[dataOffset] = bottomLeftX;
-      vertexData[dataOffset + 1] = bottomLeftY;
-      vertexData[dataOffset + 2] = 0;
-      vertexData[dataOffset + 3] = 0;
-      vertexData[dataOffset + 4] = textureIdx;
+//       vertexData[dataOffset] = bottomLeftX;
+//       vertexData[dataOffset + 1] = bottomLeftY;
+//       vertexData[dataOffset + 2] = 0;
+//       vertexData[dataOffset + 3] = 0;
+//       vertexData[dataOffset + 4] = textureIdx;
 
-      vertexData[dataOffset + 5] = bottomRightX;
-      vertexData[dataOffset + 6] = bottomRightY;
-      vertexData[dataOffset + 7] = 1;
-      vertexData[dataOffset + 8] = 0;
-      vertexData[dataOffset + 9] = textureIdx;
+//       vertexData[dataOffset + 5] = bottomRightX;
+//       vertexData[dataOffset + 6] = bottomRightY;
+//       vertexData[dataOffset + 7] = 1;
+//       vertexData[dataOffset + 8] = 0;
+//       vertexData[dataOffset + 9] = textureIdx;
 
-      vertexData[dataOffset + 10] = topLeftX;
-      vertexData[dataOffset + 11] = topLeftY;
-      vertexData[dataOffset + 12] = 0;
-      vertexData[dataOffset + 13] = 1;
-      vertexData[dataOffset + 14] = textureIdx;
+//       vertexData[dataOffset + 10] = topLeftX;
+//       vertexData[dataOffset + 11] = topLeftY;
+//       vertexData[dataOffset + 12] = 0;
+//       vertexData[dataOffset + 13] = 1;
+//       vertexData[dataOffset + 14] = textureIdx;
 
-      vertexData[dataOffset + 15] = topLeftX;
-      vertexData[dataOffset + 16] = topLeftY;
-      vertexData[dataOffset + 17] = 0;
-      vertexData[dataOffset + 18] = 1;
-      vertexData[dataOffset + 19] = textureIdx;
+//       vertexData[dataOffset + 15] = topLeftX;
+//       vertexData[dataOffset + 16] = topLeftY;
+//       vertexData[dataOffset + 17] = 0;
+//       vertexData[dataOffset + 18] = 1;
+//       vertexData[dataOffset + 19] = textureIdx;
 
-      vertexData[dataOffset + 20] = bottomRightX;
-      vertexData[dataOffset + 21] = bottomRightY;
-      vertexData[dataOffset + 22] = 1;
-      vertexData[dataOffset + 23] = 0;
-      vertexData[dataOffset + 24] = textureIdx;
+//       vertexData[dataOffset + 20] = bottomRightX;
+//       vertexData[dataOffset + 21] = bottomRightY;
+//       vertexData[dataOffset + 22] = 1;
+//       vertexData[dataOffset + 23] = 0;
+//       vertexData[dataOffset + 24] = textureIdx;
 
-      vertexData[dataOffset + 25] = topRightX;
-      vertexData[dataOffset + 26] = topRightY;
-      vertexData[dataOffset + 27] = 1;
-      vertexData[dataOffset + 28] = 1;
-      vertexData[dataOffset + 29] = textureIdx;
+//       vertexData[dataOffset + 25] = topRightX;
+//       vertexData[dataOffset + 26] = topRightY;
+//       vertexData[dataOffset + 27] = 1;
+//       vertexData[dataOffset + 28] = 1;
+//       vertexData[dataOffset + 29] = textureIdx;
 
-      i++;
-   }
+//       i++;
+//    }
 
-   return vertexData;
-}
+//    return vertexData;
+// }
 
 const calculateHighlightsVertexData = (waterTiles: ReadonlyArray<Tile>): Float32Array => {
    const vertexData = new Float32Array(waterTiles.length * 6 * 5);
@@ -1721,15 +1721,16 @@ export function renderLowerRiverFeatures(layer: Layer, visibleRenderChunks: Read
 }
 
 export function renderUpperRiverFeatures(layer: Layer, visibleRenderChunks: ReadonlyArray<RenderChunkRiverInfo>): void {
-   // Calculate visible stepping stone groups
-   const steppingStoneGroupIDs = new Array<number>();
-   for (const chunk of visibleRenderChunks) {
-      for (const groupID of chunk.riverSteppingStoneGroupIDs) {
-         if (!steppingStoneGroupIDs.includes(groupID)) {
-            steppingStoneGroupIDs.push(groupID);
-         }
-      }
-   }
+   // @SQUEAM
+   // // Calculate visible stepping stone groups
+   // const steppingStoneGroupIDs = new Array<number>();
+   // for (const chunk of visibleRenderChunks) {
+   //    for (const groupID of chunk.riverSteppingStoneGroupIDs) {
+   //       if (!steppingStoneGroupIDs.includes(groupID)) {
+   //          steppingStoneGroupIDs.push(groupID);
+   //       }
+   //    }
+   // }
 
    // 
    // Base program
@@ -1798,48 +1799,50 @@ export function renderUpperRiverFeatures(layer: Layer, visibleRenderChunks: Read
 
    gl.useProgram(foamProgram);
 
-   // Bind foam texture
-   const foamTexture = getTexture("miscellaneous/river/water-foam.png");
-   gl.activeTexture(gl.TEXTURE0);
-   gl.bindTexture(gl.TEXTURE_2D, foamTexture);
+   // @SQUEAM
    
-   // Bind stepping stone textures
-   for (let size: RiverSteppingStoneSize = 0; size < 3; size++) {
-      const textureSource = RIVER_STEPPING_STONE_TEXTURES[size];
-      const steppingStoneTexture = getTexture(textureSource);
-      gl.activeTexture(gl.TEXTURE1 + size);
-      gl.bindTexture(gl.TEXTURE_2D, steppingStoneTexture);
-   }
-
-   for (let i = 0; i < steppingStoneGroupIDs.length; i++) {
-      const groupID = steppingStoneGroupIDs[i];
-      gl.bindVertexArray(riverFoamVAOs[groupID]);
-      gl.drawArrays(gl.TRIANGLES, 0, riverFoamVertexCounts[groupID]);
-   }
+   // // Bind foam texture
+   // const foamTexture = getTexture("miscellaneous/river/water-foam.png");
+   // gl.activeTexture(gl.TEXTURE0);
+   // gl.bindTexture(gl.TEXTURE_2D, foamTexture);
    
-   // 
-   // Stepping stone program
-   // 
+   // // Bind stepping stone textures
+   // for (let size: RiverSteppingStoneSize = 0; size < 3; size++) {
+   //    const textureSource = RIVER_STEPPING_STONE_TEXTURES[size];
+   //    const steppingStoneTexture = getTexture(textureSource);
+   //    gl.activeTexture(gl.TEXTURE1 + size);
+   //    gl.bindTexture(gl.TEXTURE_2D, steppingStoneTexture);
+   // }
 
-   gl.useProgram(steppingStoneProgram);
-
-   const steppingStoneTexture1 = getTexture(RIVER_STEPPING_STONE_TEXTURES[RiverSteppingStoneSize.small]);
-   gl.activeTexture(gl.TEXTURE0);
-   gl.bindTexture(gl.TEXTURE_2D, steppingStoneTexture1);
-
-   const steppingStoneTexture2 = getTexture(RIVER_STEPPING_STONE_TEXTURES[RiverSteppingStoneSize.medium]);
-   gl.activeTexture(gl.TEXTURE1);
-   gl.bindTexture(gl.TEXTURE_2D, steppingStoneTexture2);
-
-   const steppingStoneTexture3 = getTexture(RIVER_STEPPING_STONE_TEXTURES[RiverSteppingStoneSize.large]);
-   gl.activeTexture(gl.TEXTURE2);
-   gl.bindTexture(gl.TEXTURE_2D, steppingStoneTexture3);
+   // for (let i = 0; i < steppingStoneGroupIDs.length; i++) {
+   //    const groupID = steppingStoneGroupIDs[i];
+   //    gl.bindVertexArray(riverFoamVAOs[groupID]);
+   //    gl.drawArrays(gl.TRIANGLES, 0, riverFoamVertexCounts[groupID]);
+   // }
    
-   for (let i = 0; i < steppingStoneGroupIDs.length; i++) {
-      const groupID = steppingStoneGroupIDs[i];
-      gl.bindVertexArray(riverSteppingStoneVAOs[groupID]);
-      gl.drawArrays(gl.TRIANGLES, 0, riverSteppingStoneVertexCounts[groupID]);
-   }
+   // // 
+   // // Stepping stone program
+   // // 
+
+   // gl.useProgram(steppingStoneProgram);
+
+   // const steppingStoneTexture1 = getTexture(RIVER_STEPPING_STONE_TEXTURES[RiverSteppingStoneSize.small]);
+   // gl.activeTexture(gl.TEXTURE0);
+   // gl.bindTexture(gl.TEXTURE_2D, steppingStoneTexture1);
+
+   // const steppingStoneTexture2 = getTexture(RIVER_STEPPING_STONE_TEXTURES[RiverSteppingStoneSize.medium]);
+   // gl.activeTexture(gl.TEXTURE1);
+   // gl.bindTexture(gl.TEXTURE_2D, steppingStoneTexture2);
+
+   // const steppingStoneTexture3 = getTexture(RIVER_STEPPING_STONE_TEXTURES[RiverSteppingStoneSize.large]);
+   // gl.activeTexture(gl.TEXTURE2);
+   // gl.bindTexture(gl.TEXTURE_2D, steppingStoneTexture3);
+   
+   // for (let i = 0; i < steppingStoneGroupIDs.length; i++) {
+   //    const groupID = steppingStoneGroupIDs[i];
+   //    gl.bindVertexArray(riverSteppingStoneVAOs[groupID]);
+   //    gl.drawArrays(gl.TRIANGLES, 0, riverSteppingStoneVertexCounts[groupID]);
+   // }
 
    gl.bindVertexArray(null);
 

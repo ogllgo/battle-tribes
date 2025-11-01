@@ -49,6 +49,10 @@ export function createAudioContext(): void {
 //    }, 20)
 // }));
 
+export function getNumActiveSounds(): number {
+   return activeSounds.length;
+}
+
 export async function loadSoundEffects(): Promise<void> {
    const AUDIO_FILE_PATHS = [
       "item-pickup.mp3",
@@ -466,7 +470,7 @@ export function playSoundOnHitbox(filePath: string, volume: number, pitchMultipl
 }
 
 export function removeEntitySounds(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
    for (const hitbox of transformComponent.hitboxes) {
       const entityAttachedSounds = soundsAttachedToHitboxes.get(hitbox)!;
       if (typeof entityAttachedSounds === "undefined") {

@@ -24,7 +24,8 @@ export function createSwingAttackConfig(position: Point, angle: number, owner: E
    
    const transformComponent = new TransformComponent();
 
-   const limbHitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), angle, 12), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+   // @HACK SQUEAM: the collision mask, so that the player can mine berries for a horse archer shot
+   const limbHitbox = new Hitbox(transformComponent, null, true, new CircularBox(position, new Point(0, 0), angle, 12), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.planterBox, []);
    addHitboxToTransformComponent(transformComponent, limbHitbox);
 
    setHitboxToLimbState(ownerTransformComponent, transformComponent, limbHitbox, limb.currentActionStartLimbState, isFlipped);
@@ -35,7 +36,8 @@ export function createSwingAttackConfig(position: Point, angle: number, owner: E
       const offset = new Point(damageBoxInfo.offsetX * (isFlipped ? -1 : 1), damageBoxInfo.offsetY);
       const heldItemPosition = position.copy();
       heldItemPosition.add(rotatePoint(offset, angle));
-      const heldItemHitbox = new Hitbox(transformComponent, limbHitbox, true, new RectangularBox(heldItemPosition, offset, damageBoxInfo.rotation * (isFlipped ? -1 : 1), damageBoxInfo.width, damageBoxInfo.height), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK, []);
+      // @HACK SQUEAM: the collision mask, so that the player can mine berries for a horse archer shot
+      const heldItemHitbox = new Hitbox(transformComponent, limbHitbox, true, new RectangularBox(heldItemPosition, offset, damageBoxInfo.rotation * (isFlipped ? -1 : 1), damageBoxInfo.width, damageBoxInfo.height), 0, HitboxCollisionType.soft, CollisionBit.default, DEFAULT_COLLISION_MASK & ~CollisionBit.planterBox, []);
       addHitboxToTransformComponent(transformComponent, heldItemHitbox);
    }
 

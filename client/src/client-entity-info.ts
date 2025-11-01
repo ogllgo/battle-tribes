@@ -2,6 +2,7 @@ import { EntityType } from "battletribes-shared/entities";
 
 interface ClientEntityInfo {
    readonly name: string;
+   // @Memory @Cleanup this is bad to have to do for everything
    readonly internalName: string;
 }
 
@@ -257,6 +258,10 @@ const CLIENT_ENTITY_INFO_RECORD: Record<EntityType, ClientEntityInfo> = {
    [EntityType.decoration]: {
       name: "Decoration",
       internalName: "decoration"
+   },
+   [EntityType.riverSteppingStone]: {
+      name: "River Stepping Stone",
+      internalName: "river-stepping-stone"
    },
    [EntityType.reed]: {
       name: "Reed",
