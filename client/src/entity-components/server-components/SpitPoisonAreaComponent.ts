@@ -7,7 +7,6 @@ import CircularBox from "battletribes-shared/boxes/CircularBox";
 import { TransformComponentArray } from "./TransformComponent";
 import { Entity } from "../../../../shared/src/entities";
 import ServerComponentArray from "../ServerComponentArray";
-import { Hitbox } from "../../hitboxes";
 
 const enum Vars {
    MAX_RANGE = 55
@@ -19,6 +18,7 @@ export interface SpitPoisonAreaComponent {
    soundInfo: SoundInfo | null;
 }
 
+console.log("spit poison area:",ServerComponentType.spitPoisonArea);
 export const SpitPoisonAreaComponentArray = new ServerComponentArray<SpitPoisonAreaComponent, SpitPoisonAreaComponentData, never>(ServerComponentType.spitPoisonArea, true, createComponent, getMaxRenderParts, decodeData);
 SpitPoisonAreaComponentArray.onJoin = onJoin;
 SpitPoisonAreaComponentArray.onTick = onTick;
@@ -39,10 +39,10 @@ function getMaxRenderParts(): number {
 
 // @INCOMPLETE: Won't play when you walk into discovering a previously-offscreen spit poison!
 function onJoin(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
    const hitbox = transformComponent.hitboxes[0];
    
-   const spitPoisonAreaComponent = SpitPoisonAreaComponentArray.getComponent(entity);
+   const spitPoisonAreaComponent = SpitPoisonAreaComponentArray.getComponent(entity)!;
    
    spitPoisonAreaComponent.soundInfo = playSoundOnHitbox("acid-burn.mp3", 0.25, 1, entity, hitbox, true);
    // @Temporary @Bug @Hack: FIX
@@ -54,8 +54,8 @@ function onJoin(entity: Entity): void {
 }
 
 function onTick(entity: Entity): void {
-   const transformComponent = TransformComponentArray.getComponent(entity);
-   const spitPoisonAreaComponent = SpitPoisonAreaComponentArray.getComponent(entity);
+   const transformComponent = TransformComponentArray.getComponent(entity)!;
+   const spitPoisonAreaComponent = SpitPoisonAreaComponentArray.getComponent(entity)!;
 
    const hitbox = transformComponent.hitboxes[0];
    const box = hitbox.box as CircularBox;
