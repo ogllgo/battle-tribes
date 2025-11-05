@@ -149,7 +149,7 @@ const ChatBox = () => {
          <div className="message-history">
             {chatMessages.map((message, i) => {
                return <div key={i} className="chat-message">
-                  {message.senderName} &gt; {message.message}
+                  {message.senderName}: {message.message}
                </div>;
             })}
          </div>

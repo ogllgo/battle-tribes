@@ -1,5 +1,5 @@
 import { ServerComponentTypeString } from "battletribes-shared/components";
-import { Entity, EntityTypeString } from "battletribes-shared/entities";
+import { Entity, EntityType, EntityTypeString } from "battletribes-shared/entities";
 import Layer from "../Layer";
 import { ComponentArrays, getComponentArrayRecord } from "../components/ComponentArray";
 import { InventoryComponentArray, getInventory } from "../components/InventoryComponent";

@@ -270,12 +270,19 @@ function onTick(entity: Entity): void {
       if (currentActionHasFinished(limb)) {
          switch (limb.action) {
             case LimbAction.engageBlock: {
-               const blockAttackConfig = createBlockAttackConfig(entity, limb);
-               limb.blockAttack = createEntity(blockAttackConfig, getEntityLayer(entity), 0);
+               // @Hack
+               const heldItem = getHeldItem(limb);
+               const heldItemAttackInfo = getItemAttackInfo(heldItem !== null ? heldItem.type : null);
+               const damageBoxInfo = heldItemAttackInfo.heldItemDamageBoxInfo;
+               
+               if (damageBoxInfo !== null) {
+                  const blockAttackConfig = createBlockAttackConfig(entity, limb);
+                  limb.blockAttack = createEntity(blockAttackConfig, getEntityLayer(entity), 0);
 
-               limb.action = LimbAction.block;
-               limb.currentActionElapsedTicks = 0;
-               limb.currentActionDurationTicks = 0;
+                  limb.action = LimbAction.block;
+                  limb.currentActionElapsedTicks = 0;
+                  limb.currentActionDurationTicks = 0;
+               }
                   
                break;
             }

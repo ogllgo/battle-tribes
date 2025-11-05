@@ -227,10 +227,12 @@ class GameServer {
                }
 
                // @SQUEAM
-               // setTimeout(() => {
-               //    const config = createTribeWorkerConfig(new Point(spawnPosition.x + 200, spawnPosition.y), 0, new Tribe(TribeType.plainspeople, true, new Point(spawnPosition.x + 200, spawnPosition.y)));
-               //    createEntity(config, layer, 0);
-               // }, 1000);
+               setTimeout(() => {
+                  // const config = createTribeWorkerConfig(new Point(spawnPosition.x + 200, spawnPosition.y), 0, new Tribe(TribeType.plainspeople, true, new Point(spawnPosition.x + 200, spawnPosition.y)));
+                  // createEntity(config, layer, 0);
+                  const config = createCowConfig(new Point(spawnPosition.x + 200, spawnPosition.y), 0, CowSpecies.brown);
+                  createEntity(config, layer, 0);
+               }, 1000);
                
                addPlayerClient(playerClient, surfaceLayer, spawnPosition);
 

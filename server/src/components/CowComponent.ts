@@ -474,127 +474,127 @@ function onTick(cow: Entity): void {
    }
 
    // Graze dirt to recover health
-   if (cowComponent.bowelFullness < 0.3) {
-      if (!entityExists(cowComponent.targetGrass) || (getEntityAgeTicks(cow) + cow * 2) % (Settings.TICK_RATE * 2) === 0) {
-         const target = getTargetGrass(cow);
-         if (target !== null) {
-            cowComponent.targetGrass = target;
-         }
-      }
+   // if (cowComponent.bowelFullness < 0.3) {
+   //    if (!entityExists(cowComponent.targetGrass) || (getEntityAgeTicks(cow) + cow * 2) % (Settings.TICK_RATE * 2) === 0) {
+   //       const target = getTargetGrass(cow);
+   //       if (target !== null) {
+   //          cowComponent.targetGrass = target;
+   //       }
+   //    }
 
-      if (entityExists(cowComponent.targetGrass)) {
-         graze(cow, cowComponent, cowComponent.targetGrass);
-         return;
-      }
-      // @Incomplete: Why is this here?
-      cowComponent.grazeProgressTicks = 0;
-   }
+   //    if (entityExists(cowComponent.targetGrass)) {
+   //       graze(cow, cowComponent, cowComponent.targetGrass);
+   //       return;
+   //    }
+   //    // @Incomplete: Why is this here?
+   //    cowComponent.grazeProgressTicks = 0;
+   // }
 
    const layer = getEntityLayer(cow);
 
    // Eat berries
-   if (wantsToEatBerries(cowComponent)) {
-      for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
-         const itemEntity = aiHelperComponent.visibleEntities[i];
-         if (getEntityType(itemEntity) === EntityType.itemEntity) {
-            const itemComponent = ItemComponentArray.getComponent(itemEntity);
-            if (itemComponent.itemType === ItemType.berry) {
-               const wasEaten = chaseAndEatBerry(cow, cowComponent, itemEntity);
-               if (wasEaten) {
-                  healEntity(cow, 3, cow);
-                  break;
-               }
-               return;
-            }
-         }
-      }
-   }
+   // if (wantsToEatBerries(cowComponent)) {
+   //    for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
+   //       const itemEntity = aiHelperComponent.visibleEntities[i];
+   //       if (getEntityType(itemEntity) === EntityType.itemEntity) {
+   //          const itemComponent = ItemComponentArray.getComponent(itemEntity);
+   //          if (itemComponent.itemType === ItemType.berry) {
+   //             const wasEaten = chaseAndEatBerry(cow, cowComponent, itemEntity);
+   //             if (wasEaten) {
+   //                healEntity(cow, 3, cow);
+   //                break;
+   //             }
+   //             return;
+   //          }
+   //       }
+   //    }
+   // }
 
    // Shake berries off berry bushes
-   const healthComponent = HealthComponentArray.getComponent(cow);
-   if (healthComponent.health < healthComponent.maxHealth) {
-      // Attempt to find a berry bush
-      if (!entityExists(cowComponent.targetBushID)) {
-         let target: Entity | null = null;
-         let minDistance = Number.MAX_SAFE_INTEGER;
-         for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
-            const berryBush = aiHelperComponent.visibleEntities[i];
-            if (getEntityType(berryBush) !== EntityType.berryBush) {
-               continue;
-            }
+   // const healthComponent = HealthComponentArray.getComponent(cow);
+   // if (healthComponent.health < healthComponent.maxHealth) {
+   //    // Attempt to find a berry bush
+   //    if (!entityExists(cowComponent.targetBushID)) {
+   //       let target: Entity | null = null;
+   //       let minDistance = Number.MAX_SAFE_INTEGER;
+   //       for (let i = 0; i < aiHelperComponent.visibleEntities.length; i++) {
+   //          const berryBush = aiHelperComponent.visibleEntities[i];
+   //          if (getEntityType(berryBush) !== EntityType.berryBush) {
+   //             continue;
+   //          }
 
-            // Don't shake bushes without berries
-            const berryBushComponent = BerryBushComponentArray.getComponent(berryBush);
-            if (berryBushComponent.numBerries === 0) {
-               continue;
-            }
+   //          // Don't shake bushes without berries
+   //          const berryBushComponent = BerryBushComponentArray.getComponent(berryBush);
+   //          if (berryBushComponent.numBerries === 0) {
+   //             continue;
+   //          }
 
-            const berryBushTransformComponent = TransformComponentArray.getComponent(berryBush);
-            const berryBushHitbox = berryBushTransformComponent.hitboxes[0];
+   //          const berryBushTransformComponent = TransformComponentArray.getComponent(berryBush);
+   //          const berryBushHitbox = berryBushTransformComponent.hitboxes[0];
             
-            const distance = cowBodyHitbox.box.position.distanceTo(berryBushHitbox.box.position);
-            if (distance < minDistance) {
-               minDistance = distance;
-               target = berryBush;
-            }
-         }
+   //          const distance = cowBodyHitbox.box.position.distanceTo(berryBushHitbox.box.position);
+   //          if (distance < minDistance) {
+   //             minDistance = distance;
+   //             target = berryBush;
+   //          }
+   //       }
 
-         if (target !== null) {
-            cowComponent.targetBushID = target;
-         }
-      }
+   //       if (target !== null) {
+   //          cowComponent.targetBushID = target;
+   //       }
+   //    }
 
-      if (entityExists(cowComponent.targetBushID)) {
-         const targetTransformComponent = TransformComponentArray.getComponent(cowComponent.targetBushID);
-         const targetHitbox = targetTransformComponent.hitboxes[0];
+   //    if (entityExists(cowComponent.targetBushID)) {
+   //       const targetTransformComponent = TransformComponentArray.getComponent(cowComponent.targetBushID);
+   //       const targetHitbox = targetTransformComponent.hitboxes[0];
          
-         aiHelperComponent.moveFunc(cow, targetHitbox.box.position, Vars.SLOW_ACCELERATION);
-         aiHelperComponent.turnFunc(cow, targetHitbox.box.position, Math.PI, 0.4);
+   //       aiHelperComponent.moveFunc(cow, targetHitbox.box.position, Vars.SLOW_ACCELERATION);
+   //       aiHelperComponent.turnFunc(cow, targetHitbox.box.position, Math.PI, 0.4);
 
-         // If the target entity is directly in front of the cow, start eatin it
-         const eatPositionX = cowBodyHitbox.box.position.x + 60 * Math.sin(cowBodyHitbox.box.angle);
-         const eatPositionY = cowBodyHitbox.box.position.y + 60 * Math.cos(cowBodyHitbox.box.angle);
-         if (positionIsInWorld(eatPositionX, eatPositionY)) {
-            // @Hack? The only place which uses this weird function
-            const testEntities = getEntitiesAtPosition(layer, eatPositionX, eatPositionY);
-            if (testEntities.indexOf(cowComponent.targetBushID) !== -1) {
-               cowComponent.bushShakeTimer++;
-               if (cowComponent.bushShakeTimer >= 1.5 * Settings.TICK_RATE) {
-                  const hitPosition = new Point(eatPositionX, eatPositionY);
-                  hitEntityWithoutDamage(cowComponent.targetBushID, targetHitbox, cow, hitPosition);
-                  cowComponent.bushShakeTimer = 0;
-                  cowComponent.targetBushID = 0;
-               }
-            } else {
-               cowComponent.bushShakeTimer = 0;
-            }
-         } else {
-            cowComponent.bushShakeTimer = 0;
-         }
+   //       // If the target entity is directly in front of the cow, start eatin it
+   //       const eatPositionX = cowBodyHitbox.box.position.x + 60 * Math.sin(cowBodyHitbox.box.angle);
+   //       const eatPositionY = cowBodyHitbox.box.position.y + 60 * Math.cos(cowBodyHitbox.box.angle);
+   //       if (positionIsInWorld(eatPositionX, eatPositionY)) {
+   //          // @Hack? The only place which uses this weird function
+   //          const testEntities = getEntitiesAtPosition(layer, eatPositionX, eatPositionY);
+   //          if (testEntities.indexOf(cowComponent.targetBushID) !== -1) {
+   //             cowComponent.bushShakeTimer++;
+   //             if (cowComponent.bushShakeTimer >= 1.5 * Settings.TICK_RATE) {
+   //                const hitPosition = new Point(eatPositionX, eatPositionY);
+   //                hitEntityWithoutDamage(cowComponent.targetBushID, targetHitbox, cow, hitPosition);
+   //                cowComponent.bushShakeTimer = 0;
+   //                cowComponent.targetBushID = 0;
+   //             }
+   //          } else {
+   //             cowComponent.bushShakeTimer = 0;
+   //          }
+   //       } else {
+   //          cowComponent.bushShakeTimer = 0;
+   //       }
 
-         return;
-      }
-   }
+   //       return;
+   //    }
+   // }
 
    // Follow AI
-   const followAI = aiHelperComponent.getFollowAI();
-   updateFollowAIComponent(followAI, aiHelperComponent.visibleEntities, 7);
+   // const followAI = aiHelperComponent.getFollowAI();
+   // updateFollowAIComponent(followAI, aiHelperComponent.visibleEntities, 7);
 
-   if (entityExists(followAI.followTargetID)) {
-      const targetTransformComponent = TransformComponentArray.getComponent(followAI.followTargetID);
-      const targetHitbox = targetTransformComponent.hitboxes[0];
+   // if (entityExists(followAI.followTargetID)) {
+   //    const targetTransformComponent = TransformComponentArray.getComponent(followAI.followTargetID);
+   //    const targetHitbox = targetTransformComponent.hitboxes[0];
       
-      aiHelperComponent.moveFunc(cow, targetHitbox.box.position, Vars.SLOW_ACCELERATION);
-      aiHelperComponent.turnFunc(cow, targetHitbox.box.position, Math.PI, 0.4);
-      return;
-   } else {
-      const [followTarget, isHoldingBerry] = getFollowTarget(cow, followAI, aiHelperComponent.visibleEntities);
-      if (followTarget !== null) {
-         // Follow the entity
-         followAISetFollowTarget(followAI, followTarget, !isHoldingBerry);
-         return;
-      }
-   }
+   //    aiHelperComponent.moveFunc(cow, targetHitbox.box.position, Vars.SLOW_ACCELERATION);
+   //    aiHelperComponent.turnFunc(cow, targetHitbox.box.position, Math.PI, 0.4);
+   //    return;
+   // } else {
+   //    const [followTarget, isHoldingBerry] = getFollowTarget(cow, followAI, aiHelperComponent.visibleEntities);
+   //    if (followTarget !== null) {
+   //       // Follow the entity
+   //       followAISetFollowTarget(followAI, followTarget, !isHoldingBerry);
+   //       return;
+   //    }
+   // }
 
    // Herd AI
    // @Incomplete: Steer the herd away from non-plains biomes
@@ -609,12 +609,12 @@ function onTick(cow: Entity): void {
    // }
 
    // Wander AI
-   const wanderAI = aiHelperComponent.getWanderAI();
-   wanderAI.update(cow);
-   if (wanderAI.targetPosition !== null) {
-      aiHelperComponent.moveFunc(cow, wanderAI.targetPosition, wanderAI.acceleration);
-      aiHelperComponent.turnFunc(cow, wanderAI.targetPosition, wanderAI.turnSpeed, wanderAI.turnDamping);
-   }
+   // const wanderAI = aiHelperComponent.getWanderAI();
+   // wanderAI.update(cow);
+   // if (wanderAI.targetPosition !== null) {
+   //    aiHelperComponent.moveFunc(cow, wanderAI.targetPosition, wanderAI.acceleration);
+   //    aiHelperComponent.turnFunc(cow, wanderAI.targetPosition, wanderAI.turnSpeed, wanderAI.turnDamping);
+   // }
 }
 
 function getDataLength(): number {
