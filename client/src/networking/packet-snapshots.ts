@@ -1,4 +1,4 @@
-import { ServerComponentType } from "../../../shared/src/components";
+import { ServerComponentType, ServerComponentTypeString } from "../../../shared/src/components";
 import { Entity, EntityType, EntityTypeString } from "../../../shared/src/entities";
 import { PacketReader } from "../../../shared/src/packets";
 import { setCameraSubject } from "../camera";
@@ -170,7 +170,7 @@ const entityShouldInterpolate = (newTransformData: TransformComponentData, previ
 }
 
 const decodeEntitySnapshot = (reader: PacketReader, interpolatingEntities: Array<Entity>, previousSnapshot: PacketSnapshot | null, entity: Entity): EntitySnapshot => {
-   const entityType = reader.readNumber() as EntityType;
+   const entityType: EntityType = reader.readNumber();
    const spawnTicks = reader.readNumber();
    
    const layerIdx = reader.readNumber();
@@ -183,16 +183,12 @@ const decodeEntitySnapshot = (reader: PacketReader, interpolatingEntities: Array
    // Component data
    const numComponents = reader.readNumber();
    for (let i = 0; i < numComponents; i++) {
-      const componentType = reader.readNumber() as ServerComponentType;
+      const componentType: ServerComponentType = reader.readNumber();
+      assert(!entityServerComponentTypes.includes(componentType));
       entityServerComponentTypes.push(componentType);
 
       const componentArray = getServerComponentArray(componentType);
 
-      if (typeof componentArray === "undefined") {
-         console.log(componentType, componentArray)
-         throw new Error();
-      }
-      
       // @Cleanup: cast
       entityServerComponentData[componentType] = componentArray.decodeData(reader) as any;
 

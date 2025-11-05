@@ -7,7 +7,7 @@
    "license": "MIT",
    "scripts": {
       "start": "tsc -b -w",
-      "build": "tsc --build"
+      "build": "rm -r ./dist && tsc --build"
    },
    "devDependencies": {
       "typescript": "^4.9.4"

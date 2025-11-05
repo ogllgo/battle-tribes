@@ -48,6 +48,8 @@ import "./css/game/spectator-controls.css";
 
 // We have to manually import this so that the component arrays are all detected
 import "./entity-components/components";
+import { ServerComponentType, ServerComponentTypeString } from '../../shared/src/components';
+import { getServerComponentArray } from './entity-components/ComponentArray';
 
 const root = ReactDOM.createRoot(
    document.getElementById('root') as HTMLElement

@@ -13,7 +13,6 @@ import { ComponentArray } from "./ComponentArray";
 import { getInventory, hasSpaceForRecipe, InventoryComponentArray } from "./InventoryComponent";
 import { TransformComponentArray } from "./TransformComponent";
 import { TribeComponentArray } from "./TribeComponent";
-import { Hitbox } from "../hitboxes";
 
 export class AIAssignmentComponent {
    public wholeAssignment: AIPlanAssignment | null = null;
