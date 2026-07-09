@@ -2,7 +2,7 @@
    "license": "UNLICENSED",
    "type": "module",
    "scripts": {
-      "start": "tsc; node dist/server/server.js",
+      "start": "npm run build && node dist/server/server.js",
       "build": "tsc",
       "perf": "NODE_OPTIONS='--cpu-prof --cpu-prof-interval=100' node dist/server/server.js",
       "gigaperf": "node --log-deopt --redirect-code-traces --redirect-code-traces-to=./NUL --log-ic --log-maps --log-maps-details --log-code --log-source-code --prof --log-internal-timer-events --detailed-line-info --logfile=v8.log --no-logfile-per-isolate dist/server/server.js",
