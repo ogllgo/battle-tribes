@@ -25,6 +25,10 @@ package-lock.json
 /client/build
 /client/dist
 
+client/public/atlas.png
+client/public/atlas-meta.json
+client/src/texture-index.ts
+
 # ------------------------------ #
 #            SERVER              #
 # ------------------------------ #
