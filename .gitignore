@@ -37,3 +37,10 @@ package-lock.json
 
 /shared/node_modules
 /shared/dist
+
+# ------------------------------ #
+#          EDITOR CRUFT          #
+# ------------------------------ #
+tags
+tags.*
+*.swp
