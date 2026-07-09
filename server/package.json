@@ -1,5 +1,5 @@
 {
-   "license": "UNLICENSED",
+   "license": "MIT",
    "type": "module",
    "scripts": {
       "start": "npm run build && node dist/server/server.js",
